@@ -73,29 +73,36 @@ SeviAI/
 
 ## 🚀 Quick Start
 
-### Option 1: Local Development (Simplest)
+### New Machine Setup
 
-```bash
-# 1. Install dependencies
-pip install -r deployment/requirements_minimal.txt
+```powershell
+# 1. Create and activate virtual environment (Python 3.11 required)
+py -3.11 -m venv .venv
+.venv\Scripts\activate
 
-# 2. Start API
-python -m uvicorn api.app:app --host 0.0.0.0 --port 8000
+# 2. Install dependencies
+pip install -r requirements.txt
 
-# 3. Open browser
-# API Docs:  http://localhost:8000/docs
-# Chat UI:   Open web/web_interface.html
+# 3. Download NLTK data (required on first run)
+python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('wordnet')"
+
+# 4. Start the API (model files are already in repo — no retraining needed)
+uvicorn api.app:app --host 0.0.0.0 --port 8009
 ```
 
-### Option 2: Docker (Recommended for Production)
+API Docs: http://localhost:8009/docs
+
+### Tunnel (expose to other devices)
+
+```powershell
+# Using ngrok — tunnels both API and SeviWeb in one URL
+ngrok http 5173
+```
+
+### Option: Docker (Production)
 
 ```bash
-# 1. Build and start
 docker-compose -f deployment/docker-compose.yml up -d
-
-# 2. Access
-# API:       http://localhost:8000
-# Docs:      http://localhost:8000/docs
 ```
 
 ---
