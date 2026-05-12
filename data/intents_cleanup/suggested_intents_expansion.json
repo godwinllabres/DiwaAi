@@ -1,0 +1,619 @@
+{
+  "_meta": {
+    "purpose": "Expansion pack of additional intents to push DIWA past 100 total intents.",
+    "weighting": "Broad coverage with extra depth on student-life and admissions/enrollment per user request.",
+    "guidelines": [
+      "Every response redirects time-sensitive specifics (deadlines, fees, contact details) to https://cvsu.edu.ph.",
+      "No fabricated phone numbers, statistics, specific dates, or invented offices.",
+      "Tagalog response variants are included where the question would commonly be asked in Tagalog/Taglish.",
+      "Patterns include common English + Tagalog/Taglish wording but DO NOT include templated noise like 'Please help me with X for CvSU Indang?' — those bloat the corpus without adding linguistic signal."
+    ],
+    "categories": {
+      "admissions_enrollment": "intents 1-15",
+      "academic_processes":    "intents 16-25",
+      "course_programs":       "intents 26-32",
+      "documents_registrar":   "intents 33-37",
+      "student_life":          "intents 38-50",
+      "tech_portal":           "intents 51-53",
+      "career_postgrad":       "intents 54-56",
+      "safety_emergency":      "intents 57-60",
+      "misc_practical":        "intents 61-65"
+    }
+  },
+  "intents": [
+    {
+      "tag": "transferee_admission",
+      "patterns": ["transferee CvSU","I want to transfer to CvSU","how to transfer to CvSU","transferee requirements","credit evaluation transferee","TOR for transfer","honorable dismissal CvSU","transferee deadline","can I transfer to CvSU 2nd year","transferee acceptance rate","transferee from private school","transferee from another SUC","mag-transfer sa CvSU","papasok sa CvSU as transferee","nagshift to CvSU"],
+      "responses": [
+        "Transferee applicants to CvSU typically need a Transcript of Records (TOR) and Certificate of Honorable Dismissal from the previous school, plus the same documents required of freshmen (PSA birth certificate, Good Moral, 2x2 photos, application form). After admission, your previous subjects undergo credit evaluation by the receiving college — some may credit toward your CvSU curriculum, others may not. Acceptance depends on slot availability per program and your previous academic standing. For the current transferee window, requirements, and exact contact, please check https://cvsu.edu.ph.",
+        "Transferees need TOR, Honorable Dismissal, and the standard freshman documents. Credit evaluation is done by the receiving college after admission. Slots and exact rules vary per program — verify with the Admissions Office through https://cvsu.edu.ph.",
+        "Ang mga transferee sa CvSU ay kailangan ng TOR at Honorable Dismissal mula sa dating paaralan, kasama ang standard na requirements ng freshman. Ang credit evaluation ay gagawin ng tatanggap na college pagkatapos ng admission. Para sa kasalukuyang window at requirements, bisitahin ang https://cvsu.edu.ph."
+      ]
+    },
+    {
+      "tag": "second_courser",
+      "patterns": ["second course CvSU","second degree CvSU","I already have a degree","another degree at CvSU","second course requirements","second courser","balik aral CvSU","graduate na ako gusto kumuha ulit","mag-aaral ulit","take another bachelor's degree","take another bachelors","get another degree at CvSU"],
+      "responses": [
+        "Yes, CvSU generally accepts second-coursers (applicants who already hold an undergraduate degree). You'll typically submit your previous TOR, diploma copy, Honorable Dismissal, and the standard application documents. Note: RA 10931 (free tuition) usually does NOT cover students who already earned an undergraduate degree, so a second course is likely subject to applicable tuition and fees. For the current procedure, eligible programs, and fee schedule, please verify with the Admissions Office and Cashier's Office through https://cvsu.edu.ph.",
+        "Second-coursers can apply to CvSU with their previous TOR, diploma, and Honorable Dismissal. RA 10931 may not cover a second undergraduate degree, so tuition may apply — verify with the Cashier's Office.",
+        "Tumatanggap ang CvSU ng second-courser. Kailangan ng dating TOR, diploma, at Honorable Dismissal. Tandaan: maaaring hindi sakop ng RA 10931 ang second degree — magtanong sa Cashier's Office sa https://cvsu.edu.ph."
+      ]
+    },
+    {
+      "tag": "shifting_program",
+      "patterns": ["how to shift course","shifting procedure CvSU","change my program","I want to shift","mag-shift sa CvSU","shifting form CvSU","papalit ng kurso","change major CvSU","shifting deadline","approval to shift","slot for shifting","gusto ko palitan kurso ko","shifting requirements"],
+      "responses": [
+        "To shift programs within CvSU: (1) secure the shifting form from the Registrar / your current Dean, (2) get endorsement from your current Dean, (3) apply to the receiving college (your target program may require interview, minimum GWA, or available slots), (4) once approved, the Registrar processes the shift and credit evaluation. Shifting is normally done before or during the enrollment period. For the current shifting window and any program-specific cutoffs (some competitive programs have stricter requirements), please coordinate with your current and target Dean's Offices.",
+        "Program shifting at CvSU requires endorsement from your current Dean and acceptance by the receiving college. Submit the shifting form, your grades, and any required personal statement to the Registrar during the open shifting period. Exact rules differ by program — verify with both Dean's offices.",
+        "Para mag-shift ng programa sa CvSU: kumuha ng shifting form sa Registrar/Dean, kumuha ng endorsement mula sa kasalukuyang Dean, mag-apply sa target na college, at hintayin ang approval. Ang competitive programs ay may stricter requirements. Kumpirmahin sa parehong Dean's office."
+      ]
+    },
+    {
+      "tag": "returning_student",
+      "patterns": ["returning student CvSU","I want to come back to CvSU","re-admission CvSU","re-enrollment after LOA","balik CvSU","I dropped out and want to return","I was AWOL CvSU","absent for one semester","missed a semester","returning after gap","comebacker","returnee CvSU","kung pwede pa bumalik"],
+      "responses": [
+        "Returning students (those who took a Leave of Absence, dropped out for a semester, or were AWOL) typically need to apply for re-admission through the Registrar and their college Dean's Office. Required documents usually include: written letter/application for re-admission, your most recent COR or grade record, clearance documents, and any medical/personal documentation that supported your absence (if applicable). Eligibility depends on how long you've been away and your academic standing when you left. Maximum residency rules also apply. For the verified process at your campus, please contact the Registrar through https://cvsu.edu.ph.",
+        "To return to CvSU after an absence, file a re-admission request with your Dean and the Registrar. Required documents typically include a letter of intent, your prior records, and clearance. Eligibility and timelines depend on duration of absence and standing.",
+        "Para bumalik sa CvSU pagkatapos ng pagkawala (LOA, AWOL, drop-out), kailangan ng aplikasyon ng re-admission sa Dean at Registrar. Karaniwang kailangan ng letter of intent at dating records. Ang eligibility ay depende sa haba ng pagkakaroon."
+      ]
+    },
+    {
+      "tag": "late_enrollment",
+      "patterns": ["late enrollment","I missed the enrollment","huli ako sa enrollment","late enrollment fee","late registration CvSU","nag-late ako mag-enroll","add me late","I forgot to enroll","window for late enrollment","extension for enrollment","reopen enrollment"],
+      "responses": [
+        "Late enrollment may be allowed at CvSU within a brief grace window after the regular enrollment period closes, usually with a late-enrollment fee. Beyond that window, you typically need to file for a Leave of Absence for the semester and re-enroll in the next term. Specific late-enrollment dates, penalties, and limits vary per campus and per academic year. Please contact your campus Registrar urgently — late-enrollment grace periods are short. For current dates, see https://cvsu.edu.ph.",
+        "Late enrollment is usually permitted within a short window with a penalty fee. If you miss it entirely, you may need to file an LOA for the semester. Verify the exact grace dates with your campus Registrar.",
+        "Maaaring pwede ang late enrollment sa loob ng maikling palugit na may kaakibat na multa. Lampas doon, maaaring kailangan mong mag-file ng LOA. Makipag-ugnayan kaagad sa Registrar ng inyong campus."
+      ]
+    },
+    {
+      "tag": "add_drop_subjects",
+      "patterns": ["add drop subjects","add subject CvSU","drop a subject CvSU","change schedule","change subject","add drop period","add drop deadline","gusto kong i-drop yung subject","add subject after enrollment","drop class CvSU","official drop","unofficial drop","DRP grade"],
+      "responses": [
+        "Adding or dropping a subject at CvSU is allowed only within the Add/Drop Period, which is typically the first 1–2 weeks of the semester (exact dates published per semester). To add: secure approval from your adviser and submit the add form. To officially drop: submit a drop form through your adviser and the Registrar — an officially dropped subject is recorded as DRP, not as a failing grade. Dropping AFTER the deadline without filing may result in a 5.0 (Failed) grade. For the current Add/Drop window, check the academic calendar and your campus Registrar.",
+        "Adds and drops are processed during the Add/Drop period at the start of each semester. Officially dropped subjects get a DRP code; unofficial drops or drops after the deadline can become 5.0. Coordinate with your adviser and the Registrar.",
+        "Ang add/drop ng subject sa CvSU ay sa loob lamang ng Add/Drop Period sa simula ng semester. Ang opisyal na dropped subject ay tinatakan ng DRP, hindi 5.0. Mag-coordinate sa iyong adviser at Registrar."
+      ]
+    },
+    {
+      "tag": "subject_load_limits",
+      "patterns": ["how many subjects can I take","maximum load CvSU","minimum load CvSU","overload CvSU","underload CvSU","carry overload","take less than 18 units","carry more units","graduating overload","load limit per semester","maximum units","minimum units","ilang units ang pwede"],
+      "responses": [
+        "The normal study load at CvSU is the load prescribed in your curriculum for the semester (typically 18–24 units depending on program and year level). Overload (carrying more units than prescribed) usually requires Dean's approval and is most commonly granted to graduating students or those with very strong academic standing. Underload (fewer units than prescribed) may be allowed with adviser approval if you're working, have health concerns, or are catching up on grades — but it may extend your time to graduate. Specific load limits vary per program; consult your adviser and the College Dean.",
+        "Normal load is what's prescribed in your curriculum. Overload requires Dean's approval (usually for graduating or top-performing students); underload requires adviser approval. Verify the exact limits with your adviser.",
+        "Ang normal na load sa CvSU ay ang nakatakda sa kurikulum (kadalasang 18–24 units). Ang overload ay nangangailangan ng pag-apruba ng Dean. Ang underload ay maaari ngunit posibleng makaapekto sa oras ng graduation. Magtanong sa adviser."
+      ]
+    },
+    {
+      "tag": "prerequisites",
+      "patterns": ["prerequisite subjects","prereq CvSU","take a subject without prereq","skip prerequisite","co-requisite CvSU","co-req CvSU","I haven't taken the prereq","prereq waiver","what is a prerequisite","subject prerequisite list"],
+      "responses": [
+        "Many CvSU subjects have prerequisites — subjects you must pass first before enrolling in the next one. The prerequisite list is in your curriculum and the course catalog of your program. In most cases, taking a subject without its prerequisite is not allowed; petitions or waivers may be considered by the Dean only in special circumstances. Co-requisites are subjects that must be taken together (or one must be taken first). Always check prerequisites before enrolling — the Registrar's system normally enforces them.",
+        "Prerequisites are enforced — you generally can't enroll in a subject without having passed its prereq. Waivers are rare and require Dean approval. Check the curriculum or ask your adviser.",
+        "May mga subject sa CvSU na may prerequisite — kailangan munang pumasa sa isa bago kumuha ng kasunod. Tingnan ang inyong kurikulum o magtanong sa adviser."
+      ]
+    },
+    {
+      "tag": "summer_class",
+      "patterns": ["summer class CvSU","summer course","take summer at CvSU","is there summer at CvSU","summer offering","summer semester","mag-summer class","fast tracking subjects","summer enrollment","summer schedule","summer subjects available"],
+      "responses": [
+        "A Summer Term is offered by CvSU when there is sufficient demand for a subject and faculty availability — typically used to retake failed subjects, advance in a curriculum, or catch up after an LOA. Summer offerings vary per campus and per program; not all subjects are offered every summer. Summer enrollment usually opens after the second semester ends. Note: tuition coverage under RA 10931 generally applies to summer for qualified undergraduate students, but verify with the Cashier's Office. Check https://cvsu.edu.ph for current summer offerings.",
+        "Summer Term offerings at CvSU vary per campus and per program. Used commonly for retakes or to advance. Enrollment opens after the second semester. For current summer offerings, check with your Dean's Office or https://cvsu.edu.ph.",
+        "Mayroong Summer Term sa CvSU kapag may sapat na demand at faculty availability. Karaniwang ginagamit ito para sa retake o pagkadami ng units. Ang summer offerings ay nag-iiba bawat campus."
+      ]
+    },
+    {
+      "tag": "ladderized_education",
+      "patterns": ["ladderized program CvSU","stepped degree","ladderized education law","RA 10647","I want a certificate first","stepping out and stepping in","TESDA to CvSU","TESDA credentials at CvSU","NC II to bachelors","NC III at CvSU","ladder type program","may ladderized ba sa CvSU"],
+      "responses": [
+        "Ladderized education in the Philippines is governed by RA 10647 (Ladderized Education Act of 2014), which allows TESDA-issued National Certificates (NC I, II, III) and CHED-recognized undergraduate units to ladder into each other under qualified programs. Some CvSU programs participate in ladderized arrangements, allowing students to exit with a certificate or AS/AAS credential and re-enter to complete a bachelor's degree later. Availability is program-specific — verify which CvSU programs are ladderized with the Office of Academic Affairs through https://cvsu.edu.ph.",
+        "RA 10647 enables ladderized education between TESDA NCs and CHED-aligned bachelor's programs. CvSU participates in select ladderized programs — verify availability with the Office of Academic Affairs.",
+        "Ang ladderized education (RA 10647) ay nagpapahintulot ng pagdaloy mula TESDA papunta sa bachelor's degree. May ilang programa sa CvSU na ladderized — kumpirmahin sa Office of Academic Affairs."
+      ]
+    },
+    {
+      "tag": "senior_high_to_college",
+      "patterns": ["from senior high to CvSU","SHS to CvSU","what strand for engineering at CvSU","what strand for IT at CvSU","what strand for nursing","strand requirements CvSU","grade 12 to CvSU","HUMSS to CvSU","STEM to CvSU","ABM to CvSU","TVL to CvSU","GAS to CvSU","is strand important"],
+      "responses": [
+        "CvSU generally welcomes graduates of any Senior High School (SHS) strand for admission, but the strand you finished can influence how well-prepared you are for a specific program and, in some cases, whether you need bridging subjects. For example, STEM aligns naturally with engineering, IT, computer science, and the health sciences; ABM aligns with business and accountancy; HUMSS aligns with education, social sciences, and communication; TVL with technology and trade programs. You can still cross-apply from any strand — academic readiness is assessed via the entrance exam and the receiving college's evaluation. Specific bridging requirements vary per program.",
+        "Any SHS strand can apply to CvSU programs, but alignment may simplify your transition. STEM → engineering/IT/health, ABM → business, HUMSS → education/social sciences/communication, TVL → technology/trades. Cross-strand applicants may need bridging subjects depending on the program.",
+        "Tumatanggap ang CvSU ng kahit anong SHS strand para sa admission. Maaaring magkaroon ng bridging subjects depende sa programa. Ang STEM ay angkop para sa engineering/IT, ABM sa business, HUMSS sa edukasyon/social sciences, at TVL sa technology/trade."
+      ]
+    },
+    {
+      "tag": "als_admission",
+      "patterns": ["ALS to CvSU","ALS passer CvSU","alternative learning system CvSU","I passed the ALS exam","ALS A&E test","ALS certificate","ALS C&E","does CvSU accept ALS","accreditation and equivalency","ALS Grade 12 equivalent","tanggap ba ang ALS sa CvSU"],
+      "responses": [
+        "Yes, CvSU accepts ALS (Alternative Learning System) Accreditation & Equivalency (A&E) passers. As an ALS applicant you generally submit your ALS Certificate of Rating / Diploma in lieu of Form 138, plus the other standard freshman documents (PSA birth certificate, Good Moral, 2x2 photos, application form). You take the same CvSU entrance examination and are evaluated together with other applicants. For the current process and any additional requirements for ALS applicants, please confirm with the Admissions Office through https://cvsu.edu.ph.",
+        "CvSU accepts ALS A&E passers. Submit your ALS Certificate of Rating in place of Form 138, plus the standard freshman documents. You'll take the same entrance exam.",
+        "Tumatanggap ang CvSU ng ALS A&E passer. Ipakita ang inyong ALS Certificate of Rating bilang katumbas ng Form 138, kasama ang ibang standard na requirements. Kukuha rin kayo ng CvSU entrance exam."
+      ]
+    },
+    {
+      "tag": "homeschool_admission",
+      "patterns": ["homeschool to CvSU","homeschooled student CvSU","does CvSU accept homeschool","homeschool graduate","DepEd homeschool","accreditation for homeschool","homeschool credentials","I was homeschooled","homeschool admission requirements"],
+      "responses": [
+        "Homeschooled applicants are generally admitted to CvSU if they hold a recognized DepEd Senior High School completion certificate or its equivalent (e.g., through a DepEd-accredited homeschool provider, or through the ALS A&E pathway). You'll typically submit the equivalent of Form 138 (issued by your accredited provider or DepEd), and the standard freshman documents. The CvSU entrance examination still applies. For the current requirements specific to homeschooled applicants, please verify with the Admissions Office through https://cvsu.edu.ph.",
+        "Homeschooled applicants are accepted at CvSU if their credentials are DepEd-recognized (accredited homeschool provider or ALS pathway). The standard entrance exam and freshman requirements still apply. Confirm details with Admissions.",
+        "Tumatanggap ang CvSU ng homeschooled applicants kung ang kanilang credentials ay kilala ng DepEd. Karaniwang ginagamit ang katumbas ng Form 138 mula sa accredited provider. Magtanong sa Admissions Office sa https://cvsu.edu.ph."
+      ]
+    },
+    {
+      "tag": "enrollment_problems",
+      "patterns": ["I can't enroll","enrollment error","portal error during enrollment","stuck in enrollment","missing subjects in portal","COR not generating","enrollment problem","hindi ako maka-enroll","enrollment glitch","subject conflict CvSU","no slot in subject","section full","wala na slot"],
+      "responses": [
+        "Common enrollment problems and where to go:\n- Account or portal login issue → ICT/MIS Office at your campus\n- Subjects not appearing or unable to select → your adviser, then the Registrar\n- Section full / no slots → coordinate with your Dean's Office; petition for a class may be allowed if enough students are affected\n- Schedule conflict between subjects → adjust with your adviser; one or both may need to be moved or dropped\n- COR not generating after subject selection → Registrar's Office\n- Holds on your record (unpaid balance, unreturned books, missing clearance) → settle with the relevant office (Cashier, Library, etc.)\nIf you're stuck, your first stop is usually your academic adviser, then the Registrar.",
+        "If you can't enroll: log in issues → ICT/MIS; subject/COR issues → Registrar; section full → Dean's Office; account holds → settle with the office that issued them (Cashier, Library, etc.). Start with your adviser if you're not sure which office to approach.",
+        "Para sa mga problema sa enrollment: login issues → ICT/MIS; problema sa subject o COR → Registrar; punong section → Dean's Office; account holds → ayusin sa kaukulang opisina (Cashier, Library, atbp.). Magsimula sa inyong adviser kung hindi sigurado."
+      ]
+    },
+    {
+      "tag": "credit_transfer",
+      "patterns": ["credit transfer CvSU","credit my subjects","accredit subjects","credit evaluation CvSU","subject equivalency","crediting","transfer credits","may credit ba","pwede ba ipa-credit","cross enrollment credit","credit subject from another school"],
+      "responses": [
+        "Credit transfer / accreditation of subjects from a previous school or a cross-enrollment is processed by the receiving CvSU college after you are officially admitted/enrolled. The procedure typically: submit your previous TOR and the syllabi of the subjects you wish to credit, the college evaluates equivalency against CvSU's curriculum, and approved units are reflected in your CvSU record. Not all subjects credit — equivalency depends on content match, credit hours, and CHED guidelines. Coordinate with your Dean's Office for the form and timeline.",
+        "Credit transfer is evaluated by your receiving college after admission. Submit previous TOR and course syllabi; equivalency depends on content match and credit hours. Coordinate with your Dean's Office.",
+        "Ang credit transfer ay sinusuri ng tatanggap na college pagkatapos ng admission. Magdala ng TOR at syllabi ng mga subject. Ang equivalency ay depende sa nilalaman at credit hours. Magtanong sa Dean's Office."
+      ]
+    },
+
+    {
+      "tag": "thesis_capstone",
+      "patterns": ["thesis CvSU","capstone CvSU","thesis defense","capstone defense","thesis format CvSU","thesis adviser","thesis topic","capstone topic","panelist thesis","thesis requirements","thesis pass","thesis manuscript","graduate na ako sa thesis","walang thesis CvSU","is thesis required"],
+      "responses": [
+        "Most CvSU undergraduate programs require a thesis, capstone project, or culminating activity (the form varies by program — e.g., research thesis in science programs, capstone software project for IT/CS, business plan for entrepreneurship). The general flow: form a group (if required), choose a topic and adviser, defend a proposal, conduct the study/build the project, defend the final manuscript before a panel, revise as required, and submit the bound copy to the library/department. The exact format manual, deadlines, and committee composition vary per college; consult your department's thesis/capstone handbook.",
+        "Most CvSU programs require a thesis or capstone project. The flow: topic + adviser → proposal defense → execution → final defense → revisions → submission. Exact format and timelines vary per department.",
+        "Karamihan ng CvSU undergraduate programs ay may thesis o capstone. Ang flow: topic + adviser → proposal defense → ehekusyon → final defense → revisions → submission. Ang format at timelines ay depende sa departamento."
+      ]
+    },
+    {
+      "tag": "comprehensive_exam",
+      "patterns": ["comprehensive exam CvSU","comprex CvSU","comp exam graduate","comp exam masters","comprehensive examination","passed the comprex","failed the comprex","retake comprex","when is the comprex","comprehensive exam schedule","comprehensive exam requirements"],
+      "responses": [
+        "A comprehensive examination is commonly required for graduate students (Master's, Doctoral) and sometimes for certain undergraduate programs as a culminating evaluation. It typically covers major subjects in your program and is administered by a department panel. Schedule, coverage, passing mark, and number of allowed retakes vary by program. Coordinate with your department's Graduate Coordinator (for graduate programs) or your College Dean for the current rules.",
+        "Comprehensive exams are typically required for graduate students and some undergraduate programs. Coverage, schedule, and retake rules vary by program. Coordinate with your department or Graduate Coordinator.",
+        "Ang comprehensive examination ay karaniwang kailangan sa graduate programs at sa ilang undergraduate programs. Ang sakop at retake rules ay depende sa programa. Magtanong sa Department/Graduate Coordinator."
+      ]
+    },
+    {
+      "tag": "removal_exam",
+      "patterns": ["removal exam CvSU","removal of failing grade","retake exam","make up exam CvSU","second chance exam","I failed the subject removal","removal exam fee","retake test","balik sa subject","exam to remove failure","conditional grade removal"],
+      "responses": [
+        "A removal examination (commonly called 'removal') may be offered at the end of the semester to students with a conditional grade or who failed a specific subject under defined circumstances — but availability is at the discretion of the instructor and the department, and not all subjects permit one. The procedure and fee are usually set per department. If a removal is not available or you fail it, the standard path is to retake the subject in a future semester. Confirm with your subject teacher and Department Chair.",
+        "Removal exams may be allowed at end-of-semester for conditional/failed grades — availability varies per subject and instructor. If unavailable or if you fail it, retake the subject. Confirm with your Department Chair.",
+        "Ang removal exam ay maaaring iaalok sa katapusan ng semester para sa conditional/failed grade — ngunit hindi lahat ng subject ay may removal. Magtanong sa instructor at Department Chair."
+      ]
+    },
+    {
+      "tag": "special_class",
+      "patterns": ["special class CvSU","petition for class","tutorial class","pasok ng walang section","sariling section ng subject","limited offering","petition class minimum","class with few students","one-on-one class","independent study CvSU","tutoring class CvSU"],
+      "responses": [
+        "A special class (sometimes called a 'tutorial', 'petition class', or 'independent study') may be allowed at CvSU when a subject is not offered in the current semester but a small number of students need it (often graduating students or those affected by curriculum changes). The procedure typically requires: a petition signed by the affected students (a minimum number applies), a willing faculty member, approval of the Department Chair and the College Dean, and any applicable fees. Approval is not guaranteed. Coordinate with your Department Chair early.",
+        "Special/petition classes are allowed when a subject isn't offered but several students need it. Requires a faculty member willing to teach, a minimum number of petitioners, and Department/Dean approval.",
+        "Maaaring magkaroon ng special/petition class kung hindi inaalok ang isang subject. Kailangan ng faculty na handa, minimum na bilang ng nag-pe-petition, at pag-apruba ng Department at Dean. Magtanong sa Department Chair."
+      ]
+    },
+    {
+      "tag": "audit_subject",
+      "patterns": ["audit a subject CvSU","sit in class","listen only","auditor subject","I want to audit","attend without credit","no grade subject","audit student"],
+      "responses": [
+        "Auditing a subject (attending classes without earning credit) may be allowed at CvSU at the instructor's discretion and with the approval of the Dean. Audit students typically don't take exams or receive a grade, and the subject doesn't count toward graduation. Specific rules — including any fees and whether your status (current student, alumnus, non-student) qualifies — vary per campus. Inquire with the Department Chair and the Registrar.",
+        "Auditing classes (no credit, no grade) is at the instructor and Dean's discretion. Fees and eligibility vary — verify with the Department and Registrar.",
+        "Ang pag-audit ng subject (walang credit, walang grado) ay maaari ngunit nasa pag-apruba ng instructor at Dean. Magtanong sa Department at Registrar."
+      ]
+    },
+    {
+      "tag": "remove_inc_grade",
+      "patterns": ["remove INC grade","INC grade removal","complete INC requirements","INC sa CvSU","inc grade","incomplete grade removal","clear INC grade","INC deadline","INC pre-empted to 5.0"],
+      "responses": [
+        "An INC (Incomplete) grade at CvSU means the subject's requirements are not yet fully met. To remove it, you must complete the deficient requirement (project, exam, paper) with your subject teacher within the prescribed period — usually within one academic year. Once the teacher submits the completion to the Registrar, your INC is replaced with the final grade. If you fail to complete within the prescribed period, the INC typically converts to 5.0 (Failed). Coordinate directly with the subject teacher and verify deadlines with the Registrar.",
+        "INC means an unfulfilled requirement. Complete it with the teacher within the prescribed period (usually one year), and the teacher submits the corrected grade to the Registrar. Unresolved INCs may become 5.0.",
+        "Ang INC ay kulang na requirement. Tapusin ito sa loob ng prescribed period (kadalasang isang taon) at i-submit ng instructor sa Registrar ang final grade. Kung hindi natapos, maaaring maging 5.0."
+      ]
+    },
+    {
+      "tag": "deans_list_latin_honors",
+      "patterns": ["dean's list CvSU","GWA for dean's list","cum laude CvSU","magna cum laude","summa cum laude","latin honors requirements","honor student CvSU","graduation honors","with honors CvSU","ranking honors","top student CvSU"],
+      "responses": [
+        "CvSU honors are governed by the University Student Handbook. The two main categories are:\n- DEAN'S LIST — semestral recognition for students who meet a high-GWA standard with no failing/INC/DRP grades and a minimum study load.\n- LATIN HONORS — at graduation: Cum Laude, Magna Cum Laude, and Summa Cum Laude, awarded based on cumulative GWA with strict additional conditions (no failing grades, no dropped subjects, minimum residency at CvSU, no academic dishonesty, etc.).\nExact GWA thresholds and conditions vary and are set in the Student Handbook. Verify the current cutoffs with the Registrar.",
+        "Honors at CvSU: Dean's List (semestral, high GWA + no failing grades + minimum load) and Latin Honors at graduation (Cum/Magna/Summa, by cumulative GWA + strict conditions). Exact thresholds in the Student Handbook — verify with the Registrar.",
+        "Mga honors sa CvSU: Dean's List (per semester) at Latin Honors sa graduation (Cum, Magna, Summa). May mga GWA thresholds at strict conditions. Tingnan ang Student Handbook o magtanong sa Registrar."
+      ]
+    },
+    {
+      "tag": "academic_integrity",
+      "patterns": ["plagiarism CvSU","academic dishonesty","cheating in exam","cheating CvSU","I was caught cheating","penalty for cheating","plagiarism penalty","copy paste essay","ghostwriting CvSU","academic integrity policy","Turnitin CvSU","contract cheating"],
+      "responses": [
+        "Academic integrity at CvSU is governed by the University Student Handbook and applicable codes of conduct. Violations include plagiarism, cheating in examinations, contract cheating/ghostwriting, fabrication of data, and unauthorized collaboration. Penalties range from a failing grade in the specific requirement, a failing grade in the subject, to suspension or dismissal for serious or repeated offenses. Reports are typically reviewed by the College Dean and, depending on severity, by a Student Discipline Committee. Always cite sources properly and follow the prescribed citation style of your program.",
+        "Plagiarism and cheating at CvSU carry penalties ranging from a failing grade in a requirement to dismissal for serious cases. Review the Student Handbook and follow your program's citation requirements.",
+        "Ang academic dishonesty (plagiarism, cheating) sa CvSU ay may parusang nag-uumpisa sa failing grade hanggang dismissal sa malalang kaso. Tingnan ang Student Handbook at gamitin nang tama ang citation."
+      ]
+    },
+    {
+      "tag": "research_ethics",
+      "patterns": ["research ethics CvSU","IRB CvSU","ethics review","ethics board CvSU","human subjects research","animal research ethics","DPA in research","informed consent CvSU","ethics clearance","research clearance form"],
+      "responses": [
+        "Research involving human or animal subjects at CvSU is reviewed by the appropriate research ethics committee (IRB or its equivalent) to ensure compliance with national rules (PHREB / DOST-PCHRD guidelines, the Data Privacy Act of 2012, the Animal Welfare Act, etc.). Typical requirements include: research proposal, data privacy plan, informed consent forms, and adviser endorsement. Submit through your College Research Office or the University Research Office. For the current ethics clearance process and forms, please contact the research office at your campus.",
+        "Human/animal subjects research at CvSU goes through ethics review (IRB or equivalent), with national rules from PHREB, the Data Privacy Act, and Animal Welfare Act applying. Coordinate through your College Research Office.",
+        "Ang research na may human o animal subjects sa CvSU ay sumasailalim sa ethics review batay sa PHREB, Data Privacy Act, at Animal Welfare Act. Mag-coordinate sa College Research Office."
+      ]
+    },
+    {
+      "tag": "grade_dispute",
+      "patterns": ["dispute my grade","grade correction CvSU","I think my grade is wrong","challenge a grade","I deserve a higher grade","wrong grade in portal","grade complaint","appeal grade CvSU","change of grade","correction of final grade"],
+      "responses": [
+        "If you believe a grade was recorded incorrectly or was unfair, the standard escalation path at CvSU is: (1) raise the concern with your subject teacher first — minor errors can be fixed by a change-of-grade form filed by the instructor; (2) if unresolved, escalate to the Department Chair; (3) then to the College Dean; (4) finally, to the Registrar if the issue is documentary. Timelines for grade disputes are strict — usually within one semester of the grade being posted. Bring evidence (graded papers, attendance records, submitted work).",
+        "Grade disputes escalate teacher → Department Chair → Dean → Registrar. Strict timelines apply (usually within one semester of posting). Bring evidence to support your claim.",
+        "Para sa grade dispute: instructor → Department Chair → Dean → Registrar. Mahigpit ang deadline (kadalasang isang semester mula sa pag-post). Magdala ng ebidensya."
+      ]
+    },
+
+    {
+      "tag": "agriculture_programs",
+      "patterns": ["BS Agriculture CvSU","BSA CvSU","BS Agricultural Engineering","BS Animal Science","BS Crop Science","BS Horticulture","BS Forestry CvSU","BS Agribusiness","BS Agroforestry","BS Food Technology","agriculture program CvSU","CvSU College of Agriculture"],
+      "responses": [
+        "CvSU offers a range of agriculture-related undergraduate programs through the College of Agriculture, Food, Environment and Natural Resources (or its current equivalent name) — typically including BS Agriculture (with specializations), BS Agricultural and Biosystems Engineering, BS Animal Science, BS Food Technology, BS Forestry/Agroforestry, BS Agribusiness Management, and related programs. Availability varies per campus. For the current program list and the campuses that offer each, please check https://cvsu.edu.ph.",
+        "CvSU's agriculture cluster typically offers BS Agriculture (with specializations), BS Agricultural Engineering, BS Animal Science, BS Food Technology, BS Agroforestry, and BS Agribusiness. Availability varies per campus.",
+        "Ang CvSU ay nag-aalok ng mga agriculture-related programs: BS Agriculture, BS Agricultural Engineering, BS Animal Science, BS Food Technology, atbp. Ang availability ay nag-iiba bawat campus."
+      ]
+    },
+    {
+      "tag": "engineering_programs",
+      "patterns": ["engineering at CvSU","BS Civil Engineering","BS Electrical Engineering","BS Mechanical Engineering","BS Industrial Engineering","BS Chemical Engineering","BS Electronics Engineering","BS Geodetic Engineering","BSEE CvSU","BSCE CvSU","BSME CvSU","BSIE CvSU","BSChE CvSU","engineering board exam","engineering accreditation"],
+      "responses": [
+        "CvSU's College of Engineering and Information Technology (CEIT) offers a range of engineering programs — commonly including Civil, Electrical, Mechanical, Electronics, Industrial, and Computer Engineering. Engineering graduates take the board examination administered by the Professional Regulation Commission (PRC). For the current list of engineering programs, their accreditation status, board pass rates, and the campuses that offer each, please check https://cvsu.edu.ph or contact CEIT.",
+        "CvSU's CEIT typically offers Civil, Electrical, Mechanical, Electronics, Industrial, and Computer Engineering. Graduates take the PRC board exam. Verify program availability and accreditation via the College.",
+        "Ang CEIT ng CvSU ay karaniwang nag-aalok ng Civil, Electrical, Mechanical, Electronics, Industrial, at Computer Engineering. Ang mga graduates ay kumukuha ng PRC board exam. Kumpirmahin ang availability sa College."
+      ]
+    },
+    {
+      "tag": "education_programs",
+      "patterns": ["BSE CvSU","BS Education","BSEd CvSU","BEEd CvSU","BS Elementary Education","BS Secondary Education","Math major Ed","English major Ed","Science major Ed","TLE major","education major CvSU","teacher training CvSU","LET review","teaching license"],
+      "responses": [
+        "CvSU offers teacher-education programs commonly including: Bachelor of Elementary Education (BEEd) and Bachelor of Secondary Education (BSEd) with majors in English, Mathematics, Science, Filipino, Social Studies, TLE, and similar fields. Bachelor of Special Needs Education (BSNEd) and Bachelor of Early Childhood Education (BECEd) may also be offered at certain campuses. Graduates take the Licensure Examination for Teachers (LET) administered by the PRC. Program availability and majors vary per campus.",
+        "CvSU offers BEEd and BSEd (with majors) and may offer BSNEd and BECEd at certain campuses. Graduates take the PRC LET to become licensed teachers.",
+        "Ang CvSU ay nag-aalok ng BEEd at BSEd (na may iba't ibang mejor) at maaaring BSNEd at BECEd sa ilang campus. Ang mga graduates ay kumukuha ng LET."
+      ]
+    },
+    {
+      "tag": "nursing_health_programs",
+      "patterns": ["BS Nursing CvSU","nursing program CvSU","BSN CvSU","CHED accreditation nursing","BS Midwifery","BS Medical Technology","health science CvSU","caregiving CvSU","health-related programs","kursong nursing","is BSN available"],
+      "responses": [
+        "Health-related undergraduate programs at CvSU may include BS Nursing and other allied health programs at select campuses, depending on CHED accreditation and program permits. Availability and admission quotas vary by academic year and per campus. For verified current availability of BS Nursing or any health-science program — and the campuses offering them — please check https://cvsu.edu.ph or contact the relevant College.",
+        "Health-related programs (e.g., BS Nursing) may be offered at select CvSU campuses subject to CHED accreditation. Availability varies per year — verify via https://cvsu.edu.ph.",
+        "Ang health-related programs (hal. BS Nursing) ay maaaring inaalok sa ilang CvSU campus. Ang availability ay nag-iiba bawat taon — kumpirmahin sa https://cvsu.edu.ph."
+      ]
+    },
+    {
+      "tag": "veterinary_medicine",
+      "patterns": ["BS Veterinary Medicine","DVM CvSU","veterinary medicine CvSU","vet med CvSU","pre-vet CvSU","veterinarian CvSU","CvSU vet med program","DVM admission","BS Animal Science to Vet Med"],
+      "responses": [
+        "CvSU offers Veterinary Medicine through its dedicated college (College of Veterinary Medicine and Biomedical Sciences, or its current equivalent name) — typically a Doctor of Veterinary Medicine (DVM) program preceded by a pre-veterinary undergraduate sequence. Admission is competitive and may include an entrance interview and academic prerequisites. Graduates take the Veterinary Medicine Licensure Examination administered by the PRC. For the current admission process and prerequisites, please contact the CVMBS through https://cvsu.edu.ph.",
+        "CvSU offers a Doctor of Veterinary Medicine (DVM) program with pre-vet prerequisites. Admission is competitive; graduates take the PRC Veterinary licensure exam.",
+        "Ang CvSU ay nag-aalok ng Doctor of Veterinary Medicine (DVM) program. Mahigpit ang admission, at ang mga graduates ay kumukuha ng PRC Veterinary licensure exam."
+      ]
+    },
+    {
+      "tag": "business_management",
+      "patterns": ["BSBA CvSU","BS Business Administration","BS Accountancy","BSA accountancy","BS Entrepreneurship","BS Marketing","BS Management","BS Office Administration","BSBA major","BS Hospitality Management","BSHM CvSU","BS Tourism","BSTM CvSU","accountancy CvSU","CPA review CvSU"],
+      "responses": [
+        "CvSU's business and management cluster typically offers programs such as BS Business Administration (with majors in Marketing, Management, etc.), BS Entrepreneurship, BS Accountancy, BS Office Administration, BS Hospitality Management (BSHM), and BS Tourism Management (BSTM). Some programs (like Accountancy) feed into PRC board examinations (CPA Licensure). Availability varies per campus. For the current list of business/management programs and the campuses that offer each, please check https://cvsu.edu.ph.",
+        "Business cluster at CvSU typically includes BSBA, BS Entrepreneurship, BS Accountancy, BSHM, and BSTM. Graduates of select programs (e.g., Accountancy) take PRC board exams. Availability varies per campus.",
+        "Ang business cluster ng CvSU ay karaniwang may BSBA, BS Entrepreneurship, BS Accountancy, BSHM, at BSTM. Ang availability ay nag-iiba bawat campus."
+      ]
+    },
+    {
+      "tag": "criminology_program",
+      "patterns": ["BS Criminology CvSU","criminology CvSU","criminologist","criminology board exam","CLE CvSU","BS Public Safety","forensic science CvSU","police science CvSU","criminology requirements"],
+      "responses": [
+        "Bachelor of Science in Criminology may be offered at select CvSU campuses subject to CHED program permits and accreditation. The program prepares graduates for the Criminologist Licensure Examination administered by the PRC. Availability and admission requirements vary per campus and per year. For the current list of campuses offering BS Criminology and the verified requirements, please check https://cvsu.edu.ph.",
+        "BS Criminology may be offered at select CvSU campuses. Graduates take the PRC Criminologist Licensure Examination. Availability varies — verify via https://cvsu.edu.ph.",
+        "Maaaring inaalok ang BS Criminology sa ilang CvSU campus. Ang mga graduates ay kumukuha ng PRC Criminologist Licensure Exam. Kumpirmahin sa https://cvsu.edu.ph."
+      ]
+    },
+
+    {
+      "tag": "transcript_request_details",
+      "patterns": ["how to get TOR","request transcript CvSU","TOR processing time","TOR fee","TOR online","TOR for board exam","TOR for employment","TOR for transfer","TOR for embassy","number of TOR copies","CAV","TOR with red ribbon","TOR with apostille","DFA authentication TOR"],
+      "responses": [
+        "To request a Transcript of Records (TOR) from CvSU: (1) file the request at the Office of the University Registrar (online or in person, depending on what your campus supports), (2) pay the applicable fee at the Cashier, (3) attach any clearance required, (4) claim the document or have it mailed if that option is available. Common uses (board exam, employment, transfer, embassy) each may require a different number of copies and additional authentication (CAV for CHED, DFA apostille for foreign use, red ribbon for older documents). Processing time and fees vary — verify with the Registrar at your campus.",
+        "TOR request: file at the Registrar, pay at the Cashier, attach clearance, claim or have it mailed. Different uses (board, work, transfer, embassy) may need different authentication (CAV, DFA apostille). Verify fees and processing time with the Registrar.",
+        "Para sa TOR request: mag-file sa Registrar, magbayad sa Cashier, isumite ang clearance, at kunin o ipadala. Iba't ibang gamit (board exam, trabaho, transfer, embahada) ay maaaring kailangan ng iba't ibang authentication. Magtanong sa Registrar."
+      ]
+    },
+    {
+      "tag": "diploma_request",
+      "patterns": ["request diploma","diploma CvSU","diploma replacement","lost diploma","reprint diploma","duplicate diploma","CTC of diploma","certified true copy diploma","when do I get my diploma","diploma release date","claim diploma"],
+      "responses": [
+        "Your CvSU diploma is typically released after graduation, once the Registrar has finalized all records and the Special Order (SO) from CHED has been received (where applicable). To claim: present a valid ID and your graduation clearance. Lost diploma → request a replacement or Certified True Copy (CTC) from the Registrar; you'll typically need a notarized Affidavit of Loss and pay applicable fees. Processing time and the exact fee schedule vary — verify with the Registrar.",
+        "Diplomas are released after Registrar finalizes records and (where applicable) the CHED Special Order arrives. Lost diploma → notarized Affidavit of Loss + request CTC/replacement from the Registrar. Fees and timing vary.",
+        "Ang diploma sa CvSU ay ibinibigay pagkatapos ma-finalize ng Registrar ang records at madatnan ang CHED Special Order. Para sa nawalang diploma — kailangan ng Affidavit of Loss at request ng CTC sa Registrar."
+      ]
+    },
+    {
+      "tag": "good_moral_certificate",
+      "patterns": ["good moral CvSU","certificate of good moral","good moral character","GMC CvSU","good moral fee","need good moral for board exam","good moral for transferring","CGMC"],
+      "responses": [
+        "A Certificate of Good Moral Character from CvSU is issued by the Office of Student Affairs and Services (OSAS), or in some campuses by the Guidance Office or Registrar, depending on internal procedure. To request: fill out the form, pay any applicable fee at the Cashier, and claim per the published schedule. Commonly used for transferring to another school, applying for board exams, and employment. Processing time varies — verify with your campus OSAS/Registrar.",
+        "Good Moral certificates are issued by OSAS (or the Registrar/Guidance Office depending on campus). File request, pay fee, claim. Used for transfer, board exam, and employment.",
+        "Ang Certificate of Good Moral Character ay ibinibigay ng OSAS (o Registrar/Guidance Office). Mag-file ng request, magbayad ng bayad, at kunin. Karaniwang ginagamit sa transfer, board exam, at trabaho."
+      ]
+    },
+    {
+      "tag": "authentication_apostille",
+      "patterns": ["DFA apostille CvSU","authentication CvSU documents","CHED CAV CvSU","red ribbon CvSU","apostille for embassy","work abroad documents","TOR for abroad","authenticate diploma for abroad","apostille for visa","CAV at CvSU"],
+      "responses": [
+        "If you need CvSU documents authenticated for use abroad, the typical path is: (1) request the document (TOR / Diploma / Good Moral) from the CvSU Registrar; (2) obtain a Certification, Authentication, and Verification (CAV) from CHED for tertiary documents; (3) apostille the authenticated document at the DFA (the apostille has replaced the old 'red ribbon' under the Apostille Convention since 2019). Processing fees and times apply at each step. Plan ahead — the full chain can take weeks. For the current CHED/DFA process, check the agencies' official websites; for CvSU document fees, check with the Registrar.",
+        "Documents-for-abroad chain: CvSU Registrar → CHED CAV → DFA apostille. Apostille replaced the old red ribbon in 2019. Plan ahead — the full chain can take weeks.",
+        "Para sa dokumentong gagamitin sa ibang bansa: CvSU Registrar → CHED CAV → DFA apostille. Ang apostille ang pumalit sa 'red ribbon' simula 2019. Magbalak nang maaga."
+      ]
+    },
+    {
+      "tag": "name_correction_records",
+      "patterns": ["change name in CvSU records","correct name CvSU","misspelled name diploma","name discrepancy CvSU","corrected name PSA","name change after marriage","update records CvSU","correction of records CvSU","middle name correction CvSU"],
+      "responses": [
+        "To correct a name or other personal data in your CvSU records: file a written request at the Registrar's Office, attach supporting documents (e.g., PSA Birth Certificate, Marriage Certificate, court order for change of name, valid IDs), and pay any applicable fees. Corrections to issued documents (TOR, Diploma) may require additional steps and processing time. Some corrections — particularly to a printed diploma — are not always possible after release; verify the procedure with the Registrar.",
+        "Name/data corrections in CvSU records require a written request at the Registrar with PSA-issued supporting documents. Corrections to issued diplomas may have additional rules — verify with the Registrar.",
+        "Para sa pagwawasto ng pangalan sa CvSU records: mag-file sa Registrar na may PSA documents at IDs. Ang pagwawasto sa nailabas na diploma ay maaaring may karagdagang proseso — magtanong sa Registrar."
+      ]
+    },
+
+    {
+      "tag": "sports_athletics",
+      "patterns": ["CvSU sports","varsity team CvSU","athletics CvSU","SCUAA","SCUAA CvSU","intercollegiate sports","try out for varsity","basketball team CvSU","volleyball team CvSU","football team CvSU","esports CvSU","athletic scholarship CvSU","sports director CvSU","intramurals sports"],
+      "responses": [
+        "CvSU has varsity teams that compete in inter-collegiate and inter-university tournaments, including the State Colleges and Universities Athletic Association (SCUAA) Region IV-A and national qualifiers. Common varsity sports include basketball, volleyball, football, athletics (track & field), and others. Try-outs are typically held before each season and announced through the Sports Director's Office and Student Affairs. Athletic scholarships and stipends may be available for selected varsity athletes — terms vary. Check with your campus Sports Office for the current try-out schedule.",
+        "CvSU varsity teams compete in SCUAA and other tournaments. Try-outs happen before each season — check with your campus Sports Office for the current schedule. Athletic scholarships may be available for select varsity athletes.",
+        "May mga varsity team ang CvSU na sumasali sa SCUAA at iba pang tournament. May try-outs bago bawat season — magtanong sa Sports Office ng inyong campus. May athletic scholarship sa ilang varsity athletes."
+      ]
+    },
+    {
+      "tag": "intramurals_sportsfest",
+      "patterns": ["intramurals CvSU","sportsfest CvSU","intrams","palaro sa CvSU","sports week","when is intrams","cheering competition","mr ms intrams","muse intramurals","department games","college vs college games","intercollege games","intercollege CvSU"],
+      "responses": [
+        "Intramurals (Sportsfest) at CvSU is the annual university or campus-level competition pitting colleges/departments against each other in sports, cheering, cultural performances, and academic events. Dates are set each academic year by Student Affairs and the Sports Office. Participation is typically free for enrolled students — try-outs and team selection are handled at the college/department level. For the current year's schedule and event list, follow CvSU's verified Facebook page and your campus Student Affairs office.",
+        "Intramurals at CvSU is an annual college-vs-college sports and culture festival. Dates set per year; team selection at the college/department level. Follow OSAS announcements for the schedule.",
+        "Ang Intramurals/Sportsfest sa CvSU ay taunang labanan ng mga college/department sa sports, cheer, at kultura. Itinatakda ang petsa bawat taon. Sumunod sa anunsiyo ng OSAS at Sports Office."
+      ]
+    },
+    {
+      "tag": "supreme_student_government",
+      "patterns": ["SSG CvSU","Supreme Student Government","student government CvSU","SSG elections","run for SSG","SSG president","COMELEC CvSU","student council elections","ssgo CvSU","when are ssg elections","SSG officers","college student council"],
+      "responses": [
+        "The Supreme Student Government (SSG) is the umbrella student government of CvSU, with a university-wide body and college/department-level councils. SSG elections are typically held once each academic year, with COMELEC-equivalent oversight by Student Affairs. To run, you generally need to be a bona fide enrolled student, meet academic and conduct requirements set by the election code, and follow the filing/campaign rules announced during election season. For this year's election dates and the SSG constitution/by-laws, check with OSAS at your campus.",
+        "The SSG is CvSU's umbrella student government, with annual elections overseen by Student Affairs. Eligibility and filing rules are set by the SSG election code. Check OSAS for this year's election dates.",
+        "Ang Supreme Student Government (SSG) ang student government ng CvSU. May taunang halalan na pinangangasiwaan ng Student Affairs. Sumangguni sa OSAS para sa eligibility, deadlines, at petsa ng halalan."
+      ]
+    },
+    {
+      "tag": "student_publication",
+      "patterns": ["student publication CvSU","campus paper CvSU","The Gazette","CvSU paper","write for the paper","join the publication","campus journalist","staff writer CvSU","photojournalist CvSU","cartoonist CvSU","publication tryout","applications writer","publication exam"],
+      "responses": [
+        "CvSU campuses operate official student publications (the Main Campus's paper is The Gazette, with other campuses having their own publications). They typically recruit through writing tryouts/screening tests each academic year for staff writers, photojournalists, cartoonists, layout artists, and copy editors. Membership rules and recruitment timing vary per publication. To join, attend the publication's open call announcement (usually early in the semester) or visit their office at your campus.",
+        "Student publications at CvSU (e.g., The Gazette at Main Campus) recruit through writing tryouts each year. Watch for the open-call announcement or visit the publication office at your campus.",
+        "Ang student publications ng CvSU (tulad ng The Gazette sa Main Campus) ay may taunang tryouts. Sumunod sa open-call announcement o pumunta sa publication office ng inyong campus."
+      ]
+    },
+    {
+      "tag": "religious_orgs",
+      "patterns": ["catholic group CvSU","christian fellowship CvSU","muslim group CvSU","bible study CvSU","mass schedule CvSU","chapel CvSU","prayer room CvSU","INC group CvSU","born again org CvSU","religious organization","singkay","faith based org"],
+      "responses": [
+        "CvSU has student organizations across various faith traditions — typically including Catholic groups, evangelical/Christian fellowships, and others, depending on campus. The Main Campus and some others have a chapel; prayer rooms may be available at other campuses. Mass and worship schedules are set by the resident chaplain or partner ministries and posted at the chapel. For the list of recognized religious organizations at your campus, contact OSAS.",
+        "Faith-based student organizations are present at CvSU (Catholic groups, Christian fellowships, and others, depending on campus). For schedules and the recognized-org list, contact your campus OSAS.",
+        "May iba't ibang faith-based student organizations sa CvSU. Para sa iskedyul ng misa o worship at listahan ng recognized religious orgs, makipag-ugnayan sa OSAS."
+      ]
+    },
+    {
+      "tag": "lgbtq_support",
+      "patterns": ["LGBTQ CvSU","SOGIE CvSU","gender identity CvSU","gay students CvSU","trans students CvSU","gender pronouns CvSU","pride CvSU","SOGIESC","preferred name CvSU","non-binary CvSU","bakla sa CvSU","tomboy sa CvSU","LGBTQIA+ support"],
+      "responses": [
+        "CvSU is committed to a respectful and inclusive learning environment for all students, including LGBTQ+ students. Discrimination, harassment, or bullying based on Sexual Orientation, Gender Identity and Expression (SOGIE) is prohibited under the Safe Spaces Act (RA 11313) and the Anti-Bullying Act (RA 10627). If you experience or witness discrimination, you can report to the Office of Student Affairs and Services (OSAS), Guidance Office, or the campus Gender and Development (GAD) Office. For policies on preferred name, pronouns, and other gender-related student services, please coordinate with OSAS and the GAD Office at your campus.",
+        "CvSU prohibits SOGIE-based discrimination under the Safe Spaces Act and Anti-Bullying Act. Report concerns to OSAS, Guidance, or the campus GAD Office.",
+        "Ipinagbabawal ng CvSU ang diskriminasyon batay sa SOGIE alinsunod sa Safe Spaces Act at Anti-Bullying Act. Maaaring iulat ang anumang isyu sa OSAS, Guidance, o sa GAD Office ng inyong campus."
+      ]
+    },
+    {
+      "tag": "pwd_accessibility",
+      "patterns": ["PWD student CvSU","disabled student CvSU","wheelchair access CvSU","accessibility CvSU","ramp CvSU","sign language interpreter CvSU","blind student CvSU","deaf student CvSU","may accommodation ba sa CvSU","accessibility services","special accommodation exam","reasonable accommodation"],
+      "responses": [
+        "CvSU follows national laws on access for persons with disabilities, including the Magna Carta for Persons with Disabilities (RA 7277, as amended). Students with disabilities are entitled to reasonable accommodations for academic activities and assessments. Common services include ramp/lift access (where infrastructure permits), priority seating, exam accommodations (extended time, scribe, accessible format), and coordination with the Guidance/OSAS office. To request accommodations, contact the OSAS / Guidance Office and your College Dean as early as possible — preferably at enrollment.",
+        "PWD students at CvSU are entitled to reasonable accommodations under RA 7277. Request via OSAS/Guidance and your Dean as early as possible (ideally at enrollment).",
+        "Ang mga PWD students ay may karapatan sa reasonable accommodations sa CvSU sa ilalim ng RA 7277. Magrequest sa OSAS/Guidance at sa Dean nang maaga, idealmente sa enrollment."
+      ]
+    },
+    {
+      "tag": "transport_to_campus",
+      "patterns": ["how to get to CvSU","jeepney to CvSU","bus to CvSU","tricycle CvSU","commute to CvSU","paano makarating sa CvSU","jeep papuntang Indang","FX papuntang CvSU","DLTBCo to CvSU","Saulog to Indang","UV Express to CvSU","Grab to CvSU","sakay CvSU","public transport CvSU"],
+      "responses": [
+        "Public transport routes to CvSU vary by destination campus. For the Main Campus in Indang, common options include jeepneys/UV vans from nearby town terminals (e.g., from Dasmariñas, Trece Martires, or Tagaytay) into Indang town proper, then a tricycle to the campus gate. Other CvSU campuses have local terminals served by jeepneys and buses. Travel time and fare depend on traffic and route. For up-to-date local route information, ask current CvSU students at your target campus or check current commuting forums — bus/jeepney route schedules change.",
+        "Public transport to the Main Campus (Indang) typically goes via jeepneys/UV vans from Dasmariñas, Trece Martires, or Tagaytay, then tricycle to the gate. For other campuses, local terminals serve them. Route schedules change — verify locally.",
+        "Para sa Main Campus sa Indang, karaniwang sumasakay ng jeep/UV mula Dasmariñas, Trece, o Tagaytay, tapos tricycle papasok sa campus. Para sa ibang campus, may lokal na terminals. Magbago ang ruta — tanungin nang lokal."
+      ]
+    },
+    {
+      "tag": "parking_oncampus",
+      "patterns": ["parking CvSU","park my car","park motorcycle CvSU","student parking","faculty parking","parking sticker CvSU","car pass CvSU","is parking allowed","saan magpark","may parking ba","parking fee"],
+      "responses": [
+        "Parking on CvSU campuses is typically allowed for students, faculty, and staff in designated lots — usually with a campus parking sticker/pass issued by Security or the Administrative Services office. Motorcycle and car parking areas are separate. Rules, sticker fees, and pass procedures vary per campus. For the current parking-pass procedure at your campus, please contact your campus Security/Administrative office.",
+        "Parking on CvSU campuses uses designated lots with a parking sticker/pass issued by Security or Admin Services. Rules and fees vary per campus.",
+        "May designated parking sa mga CvSU campus, na may parking sticker/pass mula sa Security o Admin Services. Iba-iba ang patakaran at bayad bawat campus."
+      ]
+    },
+    {
+      "tag": "food_canteen",
+      "patterns": ["canteen CvSU","cafeteria CvSU","food at CvSU","mura ba sa canteen","baon CvSU","saan kumain CvSU","food court CvSU","carinderia near CvSU","tindahan sa loob CvSU","may halal ba","vegetarian options CvSU","food allergy CvSU","kumain sa CvSU"],
+      "responses": [
+        "Most CvSU campuses have a canteen / cafeteria and student-accessible food stalls offering affordable meals. Outside the gates, additional carinderias and small eateries usually serve students. Operating hours typically align with class hours. Specific options (vegetarian, halal, food-allergy-safe meals) vary per campus and vendor — ask the vendor directly when ordering. For specific dietary needs, you may also coordinate with the Health Service Unit and Guidance Office if relevant.",
+        "CvSU campuses typically have canteens and food stalls inside, plus carinderias outside the gates. Options for vegetarian/halal/allergen-safe meals vary per vendor — ask directly.",
+        "Karaniwang may canteen at food stalls sa loob ng CvSU campuses, at mga carinderia sa labas. Ang vegetarian, halal, o allergen-safe na pagkain ay nag-iiba bawat vendor — magtanong nang direkta."
+      ]
+    },
+    {
+      "tag": "wifi_internet_access",
+      "patterns": ["wifi CvSU","internet CvSU","wifi password CvSU","CvSU wifi sa loob","free wifi CvSU","slow wifi CvSU","login eduroam","eduroam CvSU","CvSU hotspot","CvSU internet connection","mabilis ba ang wifi sa CvSU","wifi sa library","wifi password student"],
+      "responses": [
+        "Wi-Fi is typically available at CvSU campuses in libraries, computer laboratories, and certain common areas. Access usually requires a student account or campus-issued credentials; the ICT/MIS Office at your campus issues these. Coverage, speed, and the specific SSIDs available vary per campus and per area. For Wi-Fi access requests, password resets, or coverage issues, please contact the ICT/MIS Office.",
+        "Wi-Fi is available at CvSU in libraries, computer labs, and common areas. Access usually requires campus credentials from ICT/MIS. Coverage and speed vary — report issues to ICT/MIS.",
+        "May Wi-Fi sa CvSU sa mga library, computer lab, at common areas. Karaniwang kailangan ng campus credentials mula sa ICT/MIS. Magreport ng issues sa ICT/MIS."
+      ]
+    },
+    {
+      "tag": "printing_photocopy",
+      "patterns": ["where to print at CvSU","printing service CvSU","photocopy CvSU","xerox CvSU","print thesis CvSU","scan documents CvSU","binding service CvSU","saan magpa-print","library print","print near campus","printing rates CvSU"],
+      "responses": [
+        "Printing, photocopying, scanning, and binding services are typically available at the campus library and at private shops just outside campus gates — these are operated by third parties, so rates and turnaround vary. For thesis printing and binding, allow extra time around graduation rush. There is no university-wide standard rate that I can verify.",
+        "Printing/photocopy/scan/binding services are usually available at the library and outside-gate shops. Rates and turnaround vary by provider — especially during graduation rush.",
+        "Karaniwang may printing, photocopy, scan, at binding sa library at sa labas ng gate ng CvSU. Ang presyo at oras ng paghahanda ay nag-iiba bawat tindahan."
+      ]
+    },
+    {
+      "tag": "bookstore_supplies",
+      "patterns": ["bookstore CvSU","school supplies CvSU","textbook CvSU","saan bumili ng libro","saan bumili ng uniform","official uniform CvSU","department uniform","PE uniform","NSTP uniform","engineering apron","lab gown CvSU","saan bumili ng lab gown","supply list CvSU"],
+      "responses": [
+        "Many CvSU campuses have a small student store or coop selling school supplies, and accredited tailors/uniform suppliers near campus for departmental uniforms (PE, NSTP, lab gowns, engineering aprons, etc.). For textbooks, the library is the first stop — books may be borrowed; some books are required reading and may need personal copies. Specific textbook requirements come from your instructor's syllabus. Uniform requirements and the accredited suppliers vary per program and campus.",
+        "Student stores, coops, and outside-gate tailors supply CvSU students with school supplies and uniforms. Textbook requirements come per syllabus — start at the library.",
+        "May student store o coop, at mga tailor sa labas ng gate ng CvSU para sa school supplies at uniform. Para sa textbooks, magsimula sa library — ang specific requirements ay nasa syllabus."
+      ]
+    },
+    {
+      "tag": "uniform_dress_code",
+      "patterns": ["dress code CvSU","what to wear CvSU","uniform CvSU","strict ba sa uniform","casual wear CvSU","allowed clothing CvSU","slippers CvSU","tsinelas CvSU","shorts CvSU","sleeveless CvSU","hat at school","jacket CvSU","pwede ba shorts","attire CvSU"],
+      "responses": [
+        "CvSU enforces a basic dress code consistent with a professional learning environment — typically prohibiting overly revealing clothing, slippers in classrooms, and similar inappropriate attire. Specific departments may have stricter standards (e.g., lab gowns, closed shoes in engineering labs, PE attire, formal attire during department-specific activities). For everyday dress code rules and any campus-specific provisions, refer to the Student Handbook at your campus.",
+        "CvSU's dress code expects clothing appropriate to a professional learning environment. Some departments (engineering labs, PE, hospital practicum) have stricter requirements. See your Student Handbook.",
+        "May basic dress code ang CvSU na angkop sa propesyonal na pag-aaral. May mga departamento (engineering lab, PE, klinikal) na mas mahigpit. Tingnan ang Student Handbook."
+      ]
+    },
+    {
+      "tag": "mental_health_immediate",
+      "patterns": ["I want to hurt myself","I'm thinking of ending it","suicide hotline","ayoko na mabuhay","mental health emergency","kailangan ko ng tulong agad","I'm in crisis","panic attack at school","emergency mental health","mag-end ako ng buhay ko","may iniisip akong masama","I'm not safe","I'm having a breakdown"],
+      "responses": [
+        "Please know you are not alone, and what you're feeling matters. If you are in immediate danger or thinking of hurting yourself, please reach out right now:\n\n- NCMH Crisis Line (24/7, toll-free landline in the Philippines): 1553\n- Hopeline Philippines: (02) 8804-4673 / 0917 558-4673 / 0918 873-4673\n- In life-threatening emergencies, call 911.\n\nIf you can, also reach out to someone you trust — a family member, friend, faculty member, or your campus Guidance and Counseling Office during office hours. CvSU's Guidance Office can connect you with longer-term support.\n\nYou matter, and there are people ready to help right now.",
+        "Please reach out right now if you're in crisis:\n- NCMH Crisis Line (24/7, toll-free landline): 1553\n- Hopeline Philippines: (02) 8804-4673 / 0917 558-4673\n- In emergencies, call 911.\nYou can also contact your campus Guidance Office for ongoing support. You matter — please reach out.",
+        "Mahalaga ang iyong buhay. Kung nasa krisis ka, mangyaring tumawag agad:\n- NCMH Crisis Line (24/7, toll-free): 1553\n- Hopeline Philippines: (02) 8804-4673 / 0917 558-4673\n- Sa emergency, tumawag ng 911.\nMaaari ka ring sumangguni sa Guidance Office ng iyong campus para sa patuloy na suporta. Hindi ka nag-iisa."
+      ]
+    },
+
+    {
+      "tag": "cvsu_email_account",
+      "patterns": ["CvSU email","official CvSU email","my CvSU account","activate CvSU email","CvSU Gmail","CvSU Google account","CvSU student email","CvSU email password","forgot email password CvSU","CvSU Microsoft account","Office 365 CvSU","domain @cvsu.edu.ph","email format CvSU"],
+      "responses": [
+        "Your official CvSU email account (typically on the cvsu.edu.ph domain) is issued by the ICT/MIS Office, usually during your first enrollment. This account is your channel for official notifications, learning-management-system access, and other digital services CvSU subscribes to. To activate, reset a password, or report problems, contact the ICT/MIS Office at your campus with your student ID. Avoid sharing the password or using the account for personal sign-ups — it's tied to university policies.",
+        "CvSU's official student email is on cvsu.edu.ph, issued by ICT/MIS at enrollment. Use it for official notifications and university services. For activation/password resets, contact your campus ICT/MIS Office.",
+        "Ang opisyal na CvSU email sa cvsu.edu.ph ay ibinibigay ng ICT/MIS sa enrollment. Gamitin ito para sa official notifications. Para sa activation/password reset, makipag-ugnayan sa ICT/MIS."
+      ]
+    },
+    {
+      "tag": "lms_online_classes",
+      "patterns": ["learning management system","LMS CvSU","Google Classroom CvSU","online classes CvSU","Moodle CvSU","Microsoft Teams CvSU","Zoom for class","virtual classroom CvSU","asynchronous class CvSU","synchronous class CvSU","may online class ba","video lecture CvSU","Edmodo CvSU"],
+      "responses": [
+        "CvSU instructors deliver online and hybrid components of their courses through various platforms — commonly Google Classroom, Microsoft Teams, Zoom, and (where deployed) the university's learning-management system. Which platform you'll use depends on your instructor. Your CvSU email account is typically used to access these platforms. For platform-specific access issues or account problems, contact your instructor first, then ICT/MIS if it's an account/permissions issue.",
+        "Online/hybrid classes at CvSU use various platforms (Google Classroom, MS Teams, Zoom, the campus LMS). Your CvSU email logs you in. For access issues, ask your instructor; for account problems, ICT/MIS.",
+        "Ang mga online/hybrid class sa CvSU ay gumagamit ng iba't ibang platform (Google Classroom, MS Teams, Zoom, LMS). Ang CvSU email ay nagiging login. Magtanong sa instructor o ICT/MIS."
+      ]
+    },
+    {
+      "tag": "free_software_microsoft",
+      "patterns": ["free Office 365 CvSU","Microsoft Office for students","free MS Office","free Word Excel CvSU","Adobe student license","free software CvSU","educational license CvSU","student software discount","free Photoshop CvSU"],
+      "responses": [
+        "CvSU students may have access to Microsoft 365 (Office apps + cloud storage) and/or Google Workspace for Education through the university's institutional subscription, sign-in tied to your @cvsu.edu.ph account. Additional educational licenses (Adobe, Autodesk, etc.) may be offered by specific colleges (e.g., engineering, design programs) for in-classroom use. Specific entitlements and how to claim them vary — contact your campus ICT/MIS Office or your College for the current list.",
+        "Microsoft 365 and Google Workspace for Education may be accessible via your @cvsu.edu.ph account. Additional educational software (Adobe, Autodesk, etc.) may come through specific colleges. Check with ICT/MIS and your College.",
+        "Maaaring may access ka sa Microsoft 365 at Google Workspace for Education gamit ang iyong @cvsu.edu.ph account. Ang ibang educational software (Adobe, Autodesk) ay maaaring mula sa iyong college. Magtanong sa ICT/MIS."
+      ]
+    },
+
+    {
+      "tag": "board_exam_review",
+      "patterns": ["board exam review CvSU","CPA review CvSU","LET review CvSU","CE board review","ECE board exam","BSN nursing board","review center CvSU","PRC review","review classes after grad","board exam tips CvSU","first take CvSU"],
+      "responses": [
+        "CvSU graduates of board-program courses (Education, Engineering, Accountancy, Criminology, Nursing, Veterinary Medicine, etc.) take their licensure examinations under the Professional Regulation Commission (PRC). Some colleges offer in-house review classes or partner with accredited review centers; others let graduates choose external review centers. Board pass rates and review schedules vary per program and per academic year. For your college's review program (if offered) and tips for the relevant board exam, contact your Department Chair and check your alumni network.",
+        "Board exam reviews at CvSU vary by program — some colleges offer in-house review; others partner with external review centers. Verify with your Department Chair after graduation.",
+        "Ang board exam review sa CvSU ay nag-iiba bawat programa — may in-house, may external partner. Magtanong sa inyong Department Chair pagkatapos ng graduation."
+      ]
+    },
+    {
+      "tag": "graduate_school_abroad",
+      "patterns": ["study abroad after CvSU","grad school abroad","masters abroad","PhD abroad","Fulbright CvSU","DAAD CvSU","Australia Awards","Chevening","Erasmus","scholarship for abroad studies","take TOEFL CvSU","IELTS CvSU","GRE CvSU","GMAT CvSU"],
+      "responses": [
+        "If you plan to pursue graduate studies abroad after CvSU, the typical preparation includes: (1) good academic standing and an authenticated TOR (CAV + DFA apostille), (2) standardized exams as required by your target country/program (TOEFL/IELTS for English; GRE/GMAT for many graduate programs in the US), (3) recommendation letters from your CvSU professors, (4) a strong statement of purpose, and (5) scholarship application materials (Fulbright, DAAD, Chevening, Australia Awards, Erasmus, country-specific scholarships, etc.). Start research and document preparation 12–18 months ahead of your target intake.",
+        "For abroad graduate studies: authenticated TOR (CAV + DFA apostille), standardized exams (TOEFL/IELTS, possibly GRE/GMAT), recommendation letters, statement of purpose, and scholarship apps (Fulbright, DAAD, Chevening, Australia Awards, Erasmus). Plan 12–18 months ahead.",
+        "Para sa graduate studies sa ibang bansa pagkatapos ng CvSU: authenticated TOR (CAV + DFA apostille), standardized exams (TOEFL/IELTS, GRE/GMAT), recommendation letters, statement of purpose, at scholarship applications. Maghanda nang 12–18 buwan bago ang target."
+      ]
+    },
+    {
+      "tag": "employment_certification",
+      "patterns": ["certificate of employment CvSU","employment cert from CvSU","working student certification","character reference","reference letter CvSU","recommendation letter request","I need a recommendation","work experience cert","internship completion certificate","certificate of attendance CvSU"],
+      "responses": [
+        "For verification of your CvSU studies or graduation for an employer, you'll typically request a Certification of Enrollment or Graduation from the Registrar. For a personal recommendation letter, approach a professor or adviser who knows your work — give them at least 1–2 weeks' notice, an updated CV, and a brief on the role/program you're applying to. For Certificate of Internship Completion, your department's OJT coordinator issues this after you complete the OJT requirements. Specific fees and turnaround vary by document and campus.",
+        "Employment-related certifications: Registrar issues Certificates of Enrollment/Graduation; OJT coordinator issues Internship Completion; professors issue recommendation letters (give 1–2 weeks' notice + CV).",
+        "Para sa employment-related certifications: ang Registrar ang nagbibigay ng Certificate of Enrollment/Graduation; ang OJT coordinator ang nagbibigay ng Internship Completion; ang propesor naman ang nagbibigay ng recommendation letter (bigyan ng 1–2 linggo + CV)."
+      ]
+    },
+
+    {
+      "tag": "class_suspension",
+      "patterns": ["class suspension CvSU","walang pasok CvSU","typhoon suspension","heavy rain class cancel","habagat suspension","earthquake CvSU","brownout CvSU","is class suspended","walang klase ngayon","class cancellation announcement"],
+      "responses": [
+        "Class suspensions at CvSU follow the LGU's announcement (governor or municipal mayor) and/or the university's official announcement during weather events, calamities, brownouts, or other emergencies. The Office of the President/Campus Administrator releases the official suspension notice through CvSU's verified Facebook page and other official channels. Do NOT rely on unofficial posts — check the verified CvSU pages or contact your College directly. In life-threatening conditions, prioritize safety regardless of an official notice.",
+        "Class suspensions follow LGU and/or CvSU official announcements via the verified Facebook page and official channels. Don't rely on unverified posts — check official pages or contact your College.",
+        "Ang class suspension sa CvSU ay sumusunod sa LGU at/o sa opisyal na anunsiyo ng CvSU sa verified Facebook page. Huwag umasa sa hindi opisyal na post — tingnan ang official channels."
+      ]
+    },
+    {
+      "tag": "emergency_oncampus",
+      "patterns": ["fire on campus CvSU","earthquake CvSU drill","accident CvSU","first aid CvSU","emergency on campus","help on campus","may emergency","tumawag ng help","911 CvSU","campus security","sino ang tatawagan kapag may aksidente"],
+      "responses": [
+        "For on-campus emergencies at CvSU:\n- Life-threatening emergencies (medical, fire, crime): call 911 (national emergency number) immediately, then notify campus Security and the Health Service Unit.\n- Minor medical concerns: go to the Health Service Unit (clinic) at your campus.\n- Fire: activate the nearest fire alarm if available, evacuate via marked routes, do not use elevators, and gather at the assembly point.\n- Earthquake: drop, cover, hold; evacuate after shaking stops via stairs to the assembly point.\nCampus Security desks have direct contact lines to local emergency responders. Save your campus Security and Clinic numbers from the official directory.",
+        "On-campus emergency steps: 911 for life-threatening situations, Health Service Unit for minor medical issues, follow fire/earthquake protocols (alarm, evacuate via stairs, assemble at marked point). Save campus Security and Clinic contacts.",
+        "Para sa emergency sa CvSU campus: tumawag ng 911 para sa malubha, pumunta sa Health Service Unit para sa hindi mabigat na medical issue, sumunod sa fire/earthquake protocols. I-save ang Security at Clinic numbers ng inyong campus."
+      ]
+    },
+    {
+      "tag": "lost_and_found",
+      "patterns": ["lost and found CvSU","nawalan ako CvSU","I lost my phone CvSU","I lost my wallet CvSU","I lost my book CvSU","nakuha ko si claim","may nakapulot sa akin","saan ang lost and found","CvSU security lost item"],
+      "responses": [
+        "If you lost an item on campus, check with Campus Security first — most CvSU campuses maintain a Lost & Found at the Security Office or OSAS. Describe the item, where and approximately when you lost it, and leave your contact details so they can reach you if it turns up. For stolen items, file a report with Campus Security; serious incidents may also be reported to the local PNP station. For lost IDs, see the ID replacement intent.",
+        "Lost items: check with Campus Security/OSAS — they maintain Lost & Found. For stolen items, file a report with Security; serious cases also go to local PNP. For lost IDs, request replacement.",
+        "Para sa nawalan: tanungin ang Campus Security/OSAS — sila ang may Lost & Found. Para sa ninakaw, mag-file ng report sa Security; sa malulubha, sa lokal na PNP."
+      ]
+    },
+
+    {
+      "tag": "compare_to_other_school",
+      "patterns": ["CvSU vs UP","CvSU vs DLSU","CvSU vs Ateneo","CvSU vs other SUC","mas maganda ba CvSU","is CvSU better than","CvSU rankings","CvSU vs Polytechnic University","compare CvSU to TUP","CvSU vs CSU"],
+      "responses": [
+        "I won't make a 'better than' comparison between schools — every university has its strengths, and the right fit depends on your program, finances, distance, learning style, and goals. What I can say about CvSU: it is a Philippine state university covered by RA 10931 (free tuition for qualified Filipino undergraduate students), located in Cavite with a Main Campus in Indang and additional campuses across the province, with a wide range of programs in agriculture, engineering and IT, education, business, arts and sciences, and others. For verified specifics — accreditations, board pass rates, employment outcomes — please check https://cvsu.edu.ph and CHED's published data.",
+        "I won't rank CvSU against other schools — fit depends on your program, finances, distance, and goals. CvSU is a Philippine SUC, covered by RA 10931, with a main campus in Indang and additional campuses, offering a wide range of programs. Check https://cvsu.edu.ph for verified specifics.",
+        "Hindi ko ikinukumpara ang CvSU sa ibang paaralan — depende sa programa, pinansyal, distansya, at layunin ang tamang piliin. Ang CvSU ay isang state university (SUC) na sakop ng RA 10931, nasa Cavite, at may iba't ibang programa. Tingnan ang https://cvsu.edu.ph para sa detalye."
+      ]
+    },
+    {
+      "tag": "choosing_program",
+      "patterns": ["which course is best at CvSU","what course should I take","help me choose a program","I don't know what to take","anong kurso ang mainam","aling kurso pwede sa STEM","aling kurso pwede sa HUMSS","what program fits me","best program at CvSU","most in-demand course CvSU"],
+      "responses": [
+        "Choosing a program is a personal decision — the 'best' course depends on your interests, strengths, financial situation, career goals, and the demand in your field. A useful approach: (1) list your interests and what energizes you to study, (2) check what programs CvSU offers that match, (3) look at the curriculum and the kind of work alumni do, (4) factor in your SHS strand and entrance-exam readiness, (5) consider career outcomes (board exam, employability). CvSU's Guidance Office offers career counseling — they can help you think this through.",
+        "Choosing a program depends on your interests, strengths, finances, and career goals. Check the curriculum, talk to alumni, factor in your SHS strand, and consider career outcomes. CvSU's Guidance Office offers career counseling.",
+        "Ang pagpili ng kurso ay personal — depende sa interes, kakayahan, pinansyal, at career goals. Tingnan ang curriculum, kausapin ang alumni, isaalang-alang ang SHS strand mo, at career outcomes. May career counseling sa Guidance Office."
+      ]
+    },
+
+    {
+      "tag": "off_topic_homework",
+      "patterns": ["solve this math","compute this","give me the answer","what is x in this equation","derive this","integrate this","do my assignment","write my essay","translate to Tagalog this whole paragraph","summarize this whole book","write my thesis"],
+      "responses": [
+        "I'm focused on helping you with CvSU information rather than doing your coursework. Submitting work that isn't your own may violate CvSU's academic integrity policy. I'd be happy to point you to CvSU resources that can help you do the work yourself — for example, your campus library, tutoring services through the Guidance Office, or your subject teacher's consultation hours. Is there a CvSU service I can help you find?",
+        "I won't do your coursework — it goes against CvSU's academic integrity policy. I can point you to CvSU resources that help you do it yourself: library, tutoring services through Guidance, or your teacher's consultation hours.",
+        "Hindi po ako tutulong sa inyong assignment dahil labag ito sa academic integrity policy ng CvSU. Maaari ko kayong ituro sa library, tutoring service ng Guidance, o consultation hours ng inyong guro."
+      ]
+    },
+    {
+      "tag": "verify_against_official",
+      "patterns": ["is this true CvSU","is this accurate","is this verified","can I trust this info","saan ko mababasa","saan ko makikita ang official","official source CvSU","verify this","double check","is this from CvSU"],
+      "responses": [
+        "Good instinct to verify. I provide general guidance based on training data — I am NOT an official spokesperson for CvSU and I do NOT have real-time access to current university announcements, your personal records, or live data. For anything time-sensitive (deadlines, fees, official policies, contact details) please verify directly with https://cvsu.edu.ph or the relevant CvSU office. CvSU's verified Facebook page is linked from the website.",
+        "I'm not an official CvSU source — verify time-sensitive info directly with https://cvsu.edu.ph or the relevant office. CvSU's verified Facebook page is linked from the website.",
+        "Hindi po ako opisyal na pinagmumulan — para sa kahit anong time-sensitive na impormasyon, mangyaring i-verify sa https://cvsu.edu.ph o sa kaukulang opisina."
+      ]
+    }
+  ]
+}

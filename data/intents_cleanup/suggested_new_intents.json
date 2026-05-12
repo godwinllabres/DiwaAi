@@ -1,0 +1,298 @@
+{
+  "_meta": {
+    "purpose": "Suggested NEW intents to add to cavsu_intents.json after merging in intents_cleaned.json.",
+    "guideline": "All responses redirect to https://cvsu.edu.ph or the relevant CvSU office for specifics. No fabricated phone numbers, fees, dates, or statistics.",
+    "how_to_use": "Append the items in `intents` below to the `intents` array of cavsu_intents.json (or copy the chosen ones)."
+  },
+  "intents": [
+    {
+      "tag": "ojt_internship",
+      "patterns": [
+        "OJT",
+        "on the job training",
+        "internship",
+        "internship program CvSU",
+        "how to apply for OJT",
+        "OJT requirements CvSU",
+        "OJT placement",
+        "OJT coordinator",
+        "practicum CvSU",
+        "internship placement",
+        "where can I do my OJT",
+        "OJT companies CvSU",
+        "OJT hours required",
+        "OJT report",
+        "OJT MOA",
+        "OJT memorandum of agreement",
+        "industry immersion",
+        "paano mag-OJT",
+        "saan pwede mag-OJT",
+        "ilang oras ang OJT",
+        "OJT for IT students",
+        "OJT for engineering students",
+        "OJT for education students",
+        "OJT requirements"
+      ],
+      "responses": [
+        "OJT / Internship at CvSU is typically coordinated by your college's OJT coordinator together with the Career and Placement Office (or its campus equivalent under OSAS). Required hours, eligible companies, and documentation (MOA, endorsement letter, daily time record, internship report) vary by program and college. To get started: (1) confirm the OJT requirement and prerequisite subjects in your curriculum, (2) attend the OJT orientation announced by your department, (3) coordinate placement with your OJT coordinator and the partner company. For the current list of partner industries and exact requirements, please coordinate with your department and check https://cvsu.edu.ph.",
+        "Inquire with your department's OJT coordinator and the campus Career/Placement Office under OSAS. Specific requirements (hours, MOA, endorsement, daily time record) and the list of accredited partner companies differ per program — verify with your department for the official, current details.",
+        "Para sa OJT, makipag-ugnayan sa OJT coordinator ng inyong department at sa Career/Placement Office sa ilalim ng OSAS. Ang required na oras, accredited na partner companies, at dokumentasyon ay nag-iiba bawat programa — kumpirmahin sa inyong department para sa pinakabagong detalye."
+      ]
+    },
+    {
+      "tag": "lost_id_replacement",
+      "patterns": [
+        "lost ID",
+        "I lost my student ID",
+        "lost CvSU ID",
+        "replace student ID",
+        "ID replacement CvSU",
+        "how to get a new ID",
+        "affidavit of loss CvSU",
+        "lost school ID procedure",
+        "nawala ang ID ko",
+        "nawawalang student ID",
+        "paano mag-pa replace ng ID",
+        "process for lost ID",
+        "lost CvSU ID fee",
+        "lost ID requirements",
+        "renewal of student ID"
+      ],
+      "responses": [
+        "To replace a lost CvSU student ID, you'll typically need to: (1) execute a notarized Affidavit of Loss describing how the ID was lost, (2) secure the ID replacement form from the Office of Student Affairs and Services (OSAS) or the Registrar (process varies per campus), (3) submit the affidavit, your COR/registration form, and a recent ID photo, (4) pay the applicable replacement fee at the Cashier's Office, (5) claim your new ID per the schedule given. The replacement fee, exact office, and processing time vary by campus — please confirm with your campus OSAS/Registrar. For verified contact details, visit https://cvsu.edu.ph.",
+        "Lost-ID replacement typically requires a notarized Affidavit of Loss, a recent photo, your COR/registration form, and a replacement fee paid at the Cashier. The exact office handling this and the processing time vary per campus — please confirm with your campus OSAS or Registrar.",
+        "Para sa replacement ng nawalang CvSU ID: kailangan ng notarized Affidavit of Loss, bagong ID picture, COR, at replacement fee na ibabayad sa Cashier. Ang opisina na hahawak nito at ang processing time ay nag-iiba bawat campus — kumpirmahin sa OSAS o Registrar ng inyong campus."
+      ]
+    },
+    {
+      "tag": "guidance_counseling",
+      "patterns": [
+        "guidance office",
+        "guidance counselor",
+        "counseling services",
+        "mental health services CvSU",
+        "I need someone to talk to",
+        "I need counseling",
+        "psychological services CvSU",
+        "stress at school",
+        "academic counseling",
+        "career counseling",
+        "personal counseling",
+        "talk to a counselor",
+        "guidance and counseling office CvSU",
+        "where is the guidance office",
+        "may guidance ba sa CvSU",
+        "kailangan ko ng makakausap",
+        "kailangan ko ng counselor",
+        "depressed at school",
+        "anxiety at school",
+        "I'm struggling emotionally",
+        "guidance services hours",
+        "schedule with counselor",
+        "wellbeing support CvSU"
+      ],
+      "responses": [
+        "CvSU has a Guidance and Counseling Office available to students at most campuses. Services typically include academic counseling, career guidance, personal/individual counseling, group counseling, and referrals. If you'd like to talk to a counselor, you can drop by your campus's Guidance Office during office hours, or contact them to schedule an appointment. If you're experiencing distress and need immediate help outside university hours, the Philippines' 24/7 mental-health crisis hotline NCMH Crisis Line is reachable at 1553 (landline, toll-free). For verified Guidance Office contact details at your campus, please refer to https://cvsu.edu.ph.",
+        "The Guidance and Counseling Office at your CvSU campus offers academic, career, and personal counseling. You can visit during office hours or set an appointment. For after-hours mental-health concerns, the NCMH Crisis Line is available 24/7 at 1553 (toll-free landline). Please refer to https://cvsu.edu.ph for campus-specific Guidance Office contact details.",
+        "May Guidance and Counseling Office ang CvSU sa karamihan ng campus, kung saan maaari kayong humingi ng tulong sa academic, career, o personal na bagay. Maaari kayong dumalaw o mag-set ng appointment sa Guidance Office sa inyong campus. Para sa 24/7 mental-health crisis support sa buong Pilipinas, tawagan ang NCMH Crisis Line sa 1553 (toll-free landline)."
+      ]
+    },
+    {
+      "tag": "health_services",
+      "patterns": [
+        "school clinic",
+        "campus clinic CvSU",
+        "health service unit",
+        "HSU CvSU",
+        "where is the clinic",
+        "may clinic ba sa CvSU",
+        "school nurse CvSU",
+        "medical certificate from CvSU",
+        "medical exam for enrollment",
+        "annual physical exam CvSU",
+        "free medicine CvSU clinic",
+        "vaccination at CvSU",
+        "first aid CvSU",
+        "I am sick at school",
+        "campus doctor",
+        "may doctor ba sa CvSU clinic",
+        "klinika ng CvSU"
+      ],
+      "responses": [
+        "CvSU operates a Health Service Unit (clinic) at major campuses, typically providing first aid, basic consultation, issuance of medical certificates for school-related purposes, and the pre-enrollment medical examination required for new students. Service hours, available staff (nurse on duty / visiting physician), and the specific services offered vary per campus. For verified Health Service Unit hours and contact details, please check https://cvsu.edu.ph or visit your campus's Student Services area. For medical emergencies, go to the nearest hospital or call 911.",
+        "Your campus Health Service Unit (clinic) provides basic care, first aid, and pre-enrollment medical clearance. Hours and staff differ per campus — verify with your campus's Student Services or https://cvsu.edu.ph. For emergencies, call 911 or go to the nearest hospital.",
+        "May Health Service Unit (klinika) ang CvSU sa mga pangunahing campus, na nag-aalok ng first aid, basic consultation, at medical certificate para sa school-related needs. Ang oras at available na staff ay nag-iiba bawat campus. Para sa medical emergency, tumawag ng 911 o pumunta sa pinakamalapit na ospital."
+      ]
+    },
+    {
+      "tag": "free_tuition_law_details",
+      "patterns": [
+        "RA 10931 details",
+        "what does RA 10931 cover",
+        "free tuition law eligibility",
+        "Universal Access to Quality Tertiary Education Act",
+        "free higher education law",
+        "UniFAST",
+        "TES eligibility",
+        "tertiary education subsidy details",
+        "free tuition for transferees",
+        "free tuition for shifters",
+        "free tuition for second-degree students",
+        "free tuition for graduate school",
+        "how to qualify for free tuition",
+        "free tuition opt out",
+        "opting out of RA 10931",
+        "free tuition Filipino citizenship",
+        "free tuition academic standing",
+        "kwalipikado ba ako sa libreng tuition",
+        "saan saklaw ang RA 10931"
+      ],
+      "responses": [
+        "RA 10931 — Universal Access to Quality Tertiary Education Act of 2017 — provides free tuition and other school fees (per the law's implementing rules) for qualified Filipino students in undergraduate programs at state universities and colleges, including CvSU.\n\nGENERAL ELIGIBILITY (verify current rules with UniFAST and your CvSU Cashier/OSAS office):\n- Filipino citizen\n- Admitted to CvSU\n- Enrolled in an undergraduate degree program\n- Maintains the academic standing required by the institution and the law\n- Has not earned a previous undergraduate degree\n\nIMPORTANT NOTES:\n- The Tertiary Education Subsidy (TES) is a separate cash subsidy under the same law, processed via UniFAST — priority goes to students from low-income households.\n- RA 10931 may not cover graduate programs the same way as undergraduate programs.\n- Students may opt out of the free-tuition benefit if they wish.\n- Some fees may still apply (replacement IDs, certain personal items, etc.).\n\nFor the verified, current implementation at CvSU, please check https://cvsu.edu.ph or contact your campus Cashier/OSAS.",
+        "RA 10931 provides free tuition and selected fees for qualified Filipino students in undergraduate programs at SUCs, including CvSU. Eligibility requires Filipino citizenship, admission to an undergraduate program, and maintaining required academic standing. The TES is a separate cash subsidy under the same law. For current implementation details, please contact your campus Cashier or OSAS.",
+        "Ang RA 10931 ay nagbibigay ng libreng tuition at iba pang school fees para sa qualified Filipino na undergraduate students sa mga SUC tulad ng CvSU. Kailangan ng Filipino citizenship, admission sa undergraduate program, at pagsunod sa academic standing. Ang TES ay hiwalay na cash subsidy sa ilalim ng parehong batas. Para sa kasalukuyang detalye sa CvSU, makipag-ugnayan sa Cashier o OSAS ng inyong campus."
+      ]
+    },
+    {
+      "tag": "graduation_requirements",
+      "patterns": [
+        "graduation requirements",
+        "how do I graduate",
+        "requirements to graduate at CvSU",
+        "clearance for graduation",
+        "graduation clearance CvSU",
+        "graduation candidates CvSU",
+        "kailangan para mag-graduate",
+        "graduation application CvSU",
+        "filing for graduation",
+        "exit interview CvSU",
+        "graduation fee CvSU",
+        "march in graduation",
+        "graduation rites CvSU",
+        "diploma after graduation",
+        "candidate for graduation",
+        "graduation 2026 CvSU",
+        "thesis defense",
+        "capstone defense",
+        "graduation requirements engineering",
+        "graduation requirements education",
+        "NSTP certificate for graduation"
+      ],
+      "responses": [
+        "Graduation at CvSU typically requires: (1) completing all academic units in your curriculum (including any minor/major electives and the NSTP requirement for undergraduate programs), (2) passing the comprehensive exam, thesis/capstone, or practicum required by your program, (3) filing your application as a candidate for graduation through your Dean's Office and the Registrar within the announced window, (4) settling all clearances (library, dormitory if applicable, college, etc.), and (5) paying any graduation-related fees. Exact deadlines, fees, and forms vary per academic year and per campus — please verify with your Dean's Office and the Registrar through https://cvsu.edu.ph.",
+        "To graduate from CvSU you need to complete the units in your curriculum, finish program-specific exit requirements (thesis/capstone/practicum/comprehensive exam as applicable), complete NSTP for undergraduate programs, file a graduation application with your Dean and the Registrar in the announced window, and settle all clearances and fees. Deadlines and forms vary per year — please verify with your Dean's Office.",
+        "Para mag-graduate sa CvSU, kailangang kumpleto ang units sa inyong kurikulum (kasama ang NSTP), matapos ang thesis/capstone/practicum o comprehensive exam (depende sa programa), maghain ng aplikasyon bilang candidate for graduation sa Dean at Registrar, at ayusin ang lahat ng clearance at fees. Ang deadlines at forms ay nag-iiba bawat taon — kumpirmahin sa Dean's Office at sa Registrar."
+      ]
+    },
+    {
+      "tag": "data_privacy",
+      "patterns": [
+        "data privacy CvSU",
+        "Data Privacy Act CvSU",
+        "RA 10173",
+        "how does CvSU handle my personal data",
+        "is my information private at CvSU",
+        "privacy policy CvSU",
+        "request access to my records",
+        "request deletion of records CvSU",
+        "request correction of records CvSU",
+        "data protection officer CvSU",
+        "DPO CvSU",
+        "saan ipinapadala ang aking personal data",
+        "ligtas ba ang impormasyon ko sa CvSU",
+        "complaint about data privacy CvSU"
+      ],
+      "responses": [
+        "CvSU, as a Philippine state university, is governed by the Data Privacy Act of 2012 (RA 10173). Personal data collected from students and staff (e.g., during admission, enrollment, scholarship application, and document requests) is processed only for legitimate university purposes and protected per the law's requirements. As a data subject, you generally have the right to be informed about how your data is used, to access and correct your data, and to file a complaint. To exercise these rights — or to request access, correction, or deletion of your records — please contact the CvSU Data Protection Officer (DPO) through the verified contact channel on https://cvsu.edu.ph.",
+        "CvSU complies with the Data Privacy Act of 2012 (RA 10173). You have the right to be informed about how your personal data is processed, to access and correct your records, and to file a complaint. To exercise these rights, please contact the university's Data Protection Officer through the verified contact channel on https://cvsu.edu.ph.",
+        "Sinusunod ng CvSU ang Data Privacy Act of 2012 (RA 10173). Bilang data subject, may karapatan kang malaman kung paano ginagamit ang iyong personal data, baguhin o ayusin ang iyong impormasyon, at maghain ng reklamo. Para sa Data Protection Officer ng CvSU, mangyaring tingnan ang opisyal na contact sa https://cvsu.edu.ph."
+      ]
+    },
+    {
+      "tag": "anti_bullying_safe_spaces",
+      "patterns": [
+        "anti-bullying policy CvSU",
+        "report bullying CvSU",
+        "safe spaces act CvSU",
+        "RA 11313",
+        "RA 10627",
+        "report harassment CvSU",
+        "report gender-based violence CvSU",
+        "GBV at CvSU",
+        "VAWC at CvSU",
+        "RA 9262 CvSU",
+        "sexual harassment policy CvSU",
+        "I was bullied at CvSU",
+        "I was harassed at CvSU",
+        "online harassment CvSU",
+        "stalking at CvSU",
+        "may anti-bullying ba ang CvSU",
+        "kung saan magreklamo sa CvSU",
+        "report a teacher CvSU",
+        "report a student CvSU"
+      ],
+      "responses": [
+        "CvSU is governed by Philippine laws that protect students from bullying, harassment, and gender-based violence — including the Anti-Bullying Act (RA 10627), the Safe Spaces Act (RA 11313), the Anti-Sexual Harassment Act (RA 7877), and the Anti-VAWC Act (RA 9262). The university has internal policies and committees to receive and act on reports.\n\nIF YOU ARE EXPERIENCING OR HAVE WITNESSED BULLYING / HARASSMENT / GBV at CvSU:\n- Document what happened (date, place, people involved, what was said/done) if it is safe to do so.\n- Report to the Office of Student Affairs and Services (OSAS), your Guidance Office, or the campus Committee on Decorum and Investigation (CODI) / Gender and Development (GAD) Office — whichever your campus designates as the receiving channel.\n- You may also seek support from the Guidance and Counseling Office.\n\nFor immediate danger, call 911 or local authorities. For the verified reporting channel at your campus, please refer to https://cvsu.edu.ph.",
+        "CvSU follows Philippine laws including the Anti-Bullying Act (RA 10627), Safe Spaces Act (RA 11313), Anti-Sexual Harassment Act (RA 7877), and Anti-VAWC Act (RA 9262). Reports are typically received by OSAS, the Guidance Office, or your campus's CODI/GAD Office. For immediate danger call 911. For the official reporting channel at your campus, please refer to https://cvsu.edu.ph.",
+        "Sumusunod ang CvSU sa Anti-Bullying Act (RA 10627), Safe Spaces Act (RA 11313), Anti-Sexual Harassment Act (RA 7877), at Anti-VAWC Act (RA 9262). Maaaring iulat ang insidente sa OSAS, Guidance Office, o sa CODI/GAD ng inyong campus. Para sa agarang panganib, tumawag ng 911."
+      ]
+    },
+    {
+      "tag": "id_verification_disambiguation",
+      "patterns": [
+        "are you affiliated with CvSU",
+        "are you an official CvSU bot",
+        "is DIWA official",
+        "who built you",
+        "who made you",
+        "are you from Anthropic",
+        "are you ChatGPT",
+        "do you have real-time data",
+        "do you know my grades",
+        "can you see my CvSU records",
+        "are your answers official",
+        "is this information official",
+        "official ka ba ng CvSU",
+        "DIWA official ba",
+        "sino ang gumawa sayo"
+      ],
+      "responses": [
+        "I'm DIWA — a digital interface assistant providing general guidance about CvSU based on training data. I am NOT an official spokesperson of CvSU and I do NOT have real-time access to your records, your grades, current enrollment data, or live announcements. I always recommend verifying anything time-sensitive (deadlines, fees, official policies, contact details) with https://cvsu.edu.ph or the relevant CvSU office directly. If you need authoritative information, please contact CvSU through official channels.",
+        "I'm DIWA, a digital assistant providing general guidance about CvSU. I do not have access to your personal student records or real-time university announcements, and my answers are not a substitute for official information. For anything binding — deadlines, fees, your records, or formal policies — please verify directly with CvSU through https://cvsu.edu.ph.",
+        "Ako po si DIWA, isang digital assistant para sa pangkalahatang impormasyon tungkol sa CvSU. Hindi po ako opisyal na tagapagsalita ng CvSU at wala akong real-time access sa inyong personal na records, grades, o live na anunsiyo. Para sa opisyal na impormasyon, mangyaring tingnan ang https://cvsu.edu.ph o makipag-ugnayan sa CvSU."
+      ]
+    },
+    {
+      "tag": "out_of_scope",
+      "patterns": [
+        "what is the weather",
+        "tell me the news",
+        "stock price",
+        "sports score",
+        "celebrity news",
+        "movie recommendation",
+        "song recommendation",
+        "best restaurant near me",
+        "translate this for me",
+        "write me a poem",
+        "do my homework",
+        "solve this math problem for me",
+        "write my essay",
+        "what is the meaning of life",
+        "tell me about another university",
+        "tell me about UP",
+        "tell me about Ateneo",
+        "tell me about DLSU",
+        "compare CvSU to UP",
+        "ano ang balita ngayon",
+        "anong kanta ang maganda",
+        "gawan mo ako ng essay"
+      ],
+      "responses": [
+        "That question is outside my scope — I'm focused on CvSU-related information. I can help with admissions, enrollment, programs, tuition, scholarships, campus services, and similar university topics. Is there something CvSU-related I can help you with instead?",
+        "I specialize in CvSU information, so I can't really help with that. Is there a CvSU-related question — about admissions, programs, fees, scholarships, or campus services — I can answer for you?",
+        "Hindi po sakop ng aking tulong ang katanungang iyon — nakatuon po ako sa impormasyon tungkol sa CvSU. May maitutulong po ba ako sa inyo tungkol sa admissions, programa, bayarin, scholarship, o serbisyo ng campus?"
+      ]
+    }
+  ]
+}

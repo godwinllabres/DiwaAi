@@ -1,0 +1,48 @@
+tag,patterns_in_cleaned,patterns_in_raw,patterns_dropped,responses_in_cleaned,is_new_intent
+greeting,61,103,42,3,
+goodbye,58,76,18,3,
+thanks,76,152,76,3,
+about_cvsu,122,426,304,3,
+vision_mission,48,79,31,3,
+campus_location,30,63,33,3,
+campus_facilities,40,81,41,3,
+library,53,56,3,3,
+courses_offered,48,101,53,3,
+it_cs_courses,25,48,23,3,
+graduate_programs,34,114,80,3,
+admissions_requirements,84,133,49,3,
+admissions_exam,30,61,31,3,
+enrollment_procedure,44,85,41,3,
+enrollment_schedule,23,57,34,3,
+tuition_fees,51,90,39,3,
+scholarship,42,118,76,3,
+academic_calendar,34,58,24,3,
+events,29,39,10,3,
+contact_info,28,72,44,3,
+registrar,52,68,16,3,
+student_organizations,34,50,16,3,
+campus_specific,122,263,141,3,
+nlu_fallback,5,5,0,3,
+chitchat,141,270,129,3,
+nstp,43,52,9,3,
+academic_policies,84,145,61,3,
+dormitory,44,59,15,3,
+student_portal,39,39,0,3,
+international_students,31,55,24,3,
+online_programs,38,55,17,3,
+alumni,46,46,0,3,
+career_opportunity,60,60,0,3,
+directory,49,49,0,3,
+retention_policy,85,85,0,3,
+retention_policy_grades,43,43,0,3,
+retention_policy_appeal,30,30,0,3,
+ojt_internship,24,0,new (24),3,new
+lost_id_replacement,15,0,new (15),3,new
+guidance_counseling,23,0,new (23),3,new
+health_services,17,0,new (17),3,new
+free_tuition_law_details,19,0,new (19),3,new
+graduation_requirements,21,0,new (21),3,new
+data_privacy,14,0,new (14),3,new
+anti_bullying_safe_spaces,19,0,new (19),3,new
+id_verification_disambiguation,15,0,new (15),3,new
+out_of_scope,22,0,new (22),3,new
