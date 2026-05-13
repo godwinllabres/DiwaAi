@@ -15,4 +15,4 @@ services:
       - key: PYTHONUNBUFFERED
         value: "1"
       - key: CORS_ORIGINS
-        value: "https://godwinllabres.github.io,https://winozz.github.io,http://localhost:5173"
+        value: "https://godwincreates.net,https://www.godwincreates.net,https://godwinllabres.github.io,http://localhost:5173"
