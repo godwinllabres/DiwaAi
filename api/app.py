@@ -126,9 +126,15 @@ app = FastAPI(
 )
 
 # Enable CORS for web app integration
+_cors_origins = os.getenv("CORS_ORIGINS", "*")
+_allowed_origins = (
+    [o.strip() for o in _cors_origins.split(",")]
+    if _cors_origins != "*"
+    else ["*"]
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change to specific origins in production
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
