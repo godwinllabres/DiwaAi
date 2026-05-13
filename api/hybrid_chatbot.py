@@ -261,7 +261,8 @@ class LocalLLM:
         when Ollama is exposed via a remote URL.
         """
         try:
-            req = urllib.request.Request(f"{self.base_url}/api/tags", method="GET")
+            req = urllib.request.Request(f"{self.base_url}/api/tags", method="GET",
+                                         headers={"User-Agent": "DIWA/1.0"})
             with urllib.request.urlopen(req, timeout=15):
                 return True
         except Exception as e:
@@ -302,7 +303,7 @@ class LocalLLM:
             req = urllib.request.Request(
                 f"{self.base_url}/api/chat",
                 data=payload,
-                headers={"Content-Type": "application/json"},
+                headers={"Content-Type": "application/json", "User-Agent": "DIWA/1.0"},
                 method="POST",
             )
             with urllib.request.urlopen(req, timeout=self.TIMEOUT_SECONDS) as resp:
