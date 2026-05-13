@@ -255,10 +255,14 @@ class LocalLLM:
         self.available = self._probe()
 
     def _probe(self) -> bool:
-        """Return True if the Ollama server is reachable."""
+        """Return True if the Ollama server is reachable.
+
+        Uses a generous timeout to accommodate Cloudflare Tunnel latency
+        when Ollama is exposed via a remote URL.
+        """
         try:
             req = urllib.request.Request(f"{self.base_url}/api/tags", method="GET")
-            with urllib.request.urlopen(req, timeout=3):
+            with urllib.request.urlopen(req, timeout=15):
                 return True
         except Exception:
             return False
@@ -266,6 +270,8 @@ class LocalLLM:
     def generate(self, user_message: str, conversation_context: list = None) -> Optional[str]:
         """
         Send a message to the local LLM and return its reply, or None on error.
+        Re-probes if previously unavailable so a transient outage doesn't
+        permanently disable the fallback.
 
         Args:
             user_message: The user's raw input.
@@ -273,7 +279,9 @@ class LocalLLM:
                                   for multi-turn context (last N turns).
         """
         if not self.available:
-            return None
+            self.available = self._probe()
+            if not self.available:
+                return None
 
         messages = []
         if self.system_prompt:
