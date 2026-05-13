@@ -1,13 +1,19 @@
 """Date-aware topic recommendations for the DIWA homepage.
 
-The Philippine academic year (and CvSU's in particular) has predictable rhythms
-- application/CvSUCAT in summer, enrollment in Aug + Jan, finals + graduation
-in Mar-May. When someone opens DIWA we surface the topics that are most
-likely to be on their mind right now, before they type.
+CvSU Academic Calendar:
+  First Semester  : July – December
+    Registration  : May 15 – June 30
+    Classes start : July 1
+    Commencement  : December 15-16
 
-The mapping is deliberately conservative: the cards still represent topics
-that exist in the intents DB, and we fall back to a balanced default when
-nothing strongly matches the current month.
+  Second Semester : January – June
+    Registration  : November 15 – December 31
+    Classes start : January 2
+    Commencement  : May 25-26
+
+We surface the topics most likely to be on the visitor's mind right now,
+before they type. Falls back to a balanced default when nothing strongly
+matches the current month.
 """
 
 from __future__ import annotations
@@ -35,77 +41,73 @@ class Season:
 
 
 SEASONS: List[Season] = [
-    Season(
-        key="freshman_application",
-        label="Applying to CvSU",
-        reason="Application & CvSUCAT season — start here.",
-        tags=[
-            "admissions_requirements",
-            "admissions_exam",
-            "courses_offered",
-            "tuition_fees",
-            "scholarship",
-            "campus_location",
-        ],
-    ),
+    # May–June: 1st sem registration open (May 15 – June 30)
     Season(
         key="enrollment_first_sem",
-        label="Enrollment is open",
-        reason="It's enrollment week for the 1st semester.",
+        label="1st-semester enrollment is open",
+        reason="Registration for the 1st semester runs until June 30.",
         tags=[
             "enrollment_procedure",
             "enrollment_schedule",
             "tuition_fees",
+            "admissions_requirements",
             "scholarship",
             "registrar",
-            "courses_offered",
         ],
     ),
+    # July–August: 1st sem just started (classes begin July 1)
     Season(
-        key="midterms",
-        label="Mid-semester",
-        reason="Midterm period — academics-heavy questions.",
+        key="first_sem_start",
+        label="First semester has started",
+        reason="Classes began July 1 — orientation and schedule questions are common.",
         tags=[
             "academic_calendar",
+            "courses_offered",
+            "campus_facilities",
+            "campus_location",
+            "registrar",
+            "scholarship",
+        ],
+    ),
+    # September–October: 1st sem midterms
+    Season(
+        key="first_sem_midterms",
+        label="First semester — midterm period",
+        reason="Midterms are underway — academic policy questions peak now.",
+        tags=[
             "academic_policies",
+            "academic_calendar",
             "registrar",
             "campus_facilities",
             "scholarship",
         ],
     ),
+    # November–December: 1st sem ending + 2nd sem registration opens (Nov 15–Dec 31)
+    # + 1st sem commencement (Dec 15-16)
     Season(
         key="enrollment_second_sem",
-        label="2nd-semester enrollment",
-        reason="Second-semester enrollment is happening now.",
+        label="2nd-semester enrollment is open",
+        reason="Registration for the 2nd semester runs November 15 – December 31.",
         tags=[
             "enrollment_procedure",
             "enrollment_schedule",
             "tuition_fees",
             "registrar",
             "academic_calendar",
+            "scholarship",
         ],
     ),
+    # January–April: 2nd sem ongoing (classes start Jan 2, midterms ~Mar)
     Season(
-        key="graduation",
-        label="Graduation season",
-        reason="Finals + graduation period — registrar requests spike.",
+        key="second_sem_ongoing",
+        label="Second semester is ongoing",
+        reason="2nd semester is in session — common questions about courses and schedules.",
         tags=[
-            "registrar",
             "academic_calendar",
-            "academic_policies",
-            "events",
-            "contact_info",
-        ],
-    ),
-    Season(
-        key="summer",
-        label="Summer break",
-        reason="Off-cycle — many people are exploring options for next year.",
-        tags=[
             "courses_offered",
-            "campus_location",
+            "academic_policies",
+            "registrar",
             "campus_facilities",
-            "about_cvsu",
             "scholarship",
         ],
     ),
@@ -113,20 +115,18 @@ SEASONS: List[Season] = [
 
 
 def _season_for(today: date) -> Season:
-    """Map a calendar month to a Season. PH school year approximations."""
+    """Map a calendar month to a Season based on the CvSU academic calendar."""
     m = today.month
-    if m in (4, 5):
-        return SEASONS[0]  # freshman application + CvSUCAT
-    if m in (8, 9):
-        return SEASONS[1]  # 1st sem enrollment
-    if m in (10, 11):
-        return SEASONS[2]  # midterms
-    if m in (1, 2):
-        return SEASONS[3]  # 2nd sem enrollment
-    if m == 3:
-        return SEASONS[4]  # graduation
-    # 6, 7, 12 — summer / off-cycle
-    return SEASONS[5]
+    if m in (5, 6):
+        return SEASONS[0]  # 1st sem registration (May 15 – June 30)
+    if m in (7, 8):
+        return SEASONS[1]  # 1st sem just started (July 1)
+    if m in (9, 10):
+        return SEASONS[2]  # 1st sem midterms
+    if m in (11, 12):
+        return SEASONS[3]  # 2nd sem registration (Nov 15 – Dec 31) + 1st sem commencement
+    # January – April: 2nd sem ongoing (starts Jan 2, commencement May 25-26)
+    return SEASONS[4]
 
 
 def recommend(
