@@ -1,6 +1,6 @@
 {
   "greeting": [
-    "Hello! Welcome to DIWA, the CvSU Digital Interface Web Assistant. How can I help you today?",
+    "Hello! Welcome to DIWA, the CvSU Digital Intelligent Web Assistant. How can I help you today?",
     "Hi there! I'm the CvSU chatbot. What would you like to know about Cavite State University?",
     "Greetings! I'm here to assist you with information about CvSU - admissions, programs, fees, and more. How may I help?"
   ],
@@ -120,7 +120,7 @@
     "I'm here to help with CvSU-related questions. Try asking about: admissions, programs offered, tuition fees, scholarships, campus locations, or how to contact CvSU."
   ],
   "chitchat": [
-    "Hi! I'm DIWA, your CvSU Digital Interface Web Assistant. I can help you with admissions, courses, tuition fees, scholarships, enrollment, campus info, and more. What would you like to know?",
+    "Hi! I'm DIWA, your CvSU Digital Intelligent Web Assistant. I can help you with admissions, courses, tuition fees, scholarships, enrollment, campus info, and more. What would you like to know?",
     "Hello! I'm here to answer your CvSU questions. Try asking about admissions requirements, tuition fees, scholarship programs, enrollment schedules, or campus facilities!",
     "I'm DIWA, the CvSU chatbot! I specialize in Cavite State University information. Ask me anything about admissions, programs, fees, scholarships, or campus life."
   ],

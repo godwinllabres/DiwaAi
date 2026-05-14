@@ -296,7 +296,7 @@ class LocalLLM:
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "options": {"temperature": 0.4, "num_predict": 300},
+            "options": {"temperature": 0.3, "num_predict": 512},
         }).encode("utf-8")
 
         try:
@@ -357,7 +357,7 @@ class ScopeGate:
 
     REFUSAL_MESSAGES = [
         "I can only help with questions about Cavite State University — programs, admissions, fees, scholarships, campus services, and policies. Is there something CvSU-related I can help with?",
-        "That's outside my scope. I'm DIWA, the CvSU Digital Interface Web Assistant — I focus on Cavite State University topics like enrollment, courses, scholarships, and campus information. What would you like to know about CvSU?",
+        "That's outside my scope. I'm DIWA, the CvSU Digital Intelligent Web Assistant — I focus on Cavite State University topics like enrollment, courses, scholarships, and campus information. What would you like to know about CvSU?",
         "I'm not able to answer that — I'm built to help with CvSU-related questions only (admissions, programs, fees, campus services). Please ask me something about Cavite State University.",
     ]
 
@@ -641,7 +641,7 @@ class HybridChatbot:
     def _system_prompt_text() -> str:
         """Compact system prompt passed to the local LLM for deep-fallback answers."""
         return (
-            "You are DIWA, the Digital Interface Web Assistant for Cavite State University. "
+            "You are DIWA, the Digital Intelligent Web Assistant for Cavite State University. "
             "Answer questions about academic programs, admissions, fees, scholarships, "
             "campus services, and university policies concisely and accurately. "
             "If you are unsure, say so and direct the user to the relevant CvSU office. "
@@ -831,7 +831,7 @@ class HybridChatbot:
     @property
     def system_instructions(self) -> str:
         """System instructions for the chatbot"""
-        return """You are DIWA, the Digital Interface Web Assistant for Cavite State University - a helpful, friendly guide.
+        return """You are DIWA, the Digital Intelligent Web Assistant for Cavite State University - a helpful, friendly guide.
 
 1. IDENTITY AND SCOPE
 - You serve prospective students, current students, parents, faculty, and the general public.
