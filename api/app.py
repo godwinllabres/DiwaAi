@@ -13,6 +13,7 @@ import json
 import os
 import random
 import re
+import secrets
 import time
 from collections import defaultdict
 from datetime import datetime
@@ -29,6 +30,15 @@ from .hybrid_chatbot import HybridChatbot
 # Seasonal topic recommender + intent-onboarding sanitation checks
 from .topic_recommender import recommend as _recommend_topics
 from .intent_curation import sanitize_candidate_intent as _sanitize_candidate_intent
+# AIS MCP bridge — routes finance queries to the CvSU AIS MCP server
+from .ais_mcp import try_handle as _try_ais
+from .ais_mcp import metrics_snapshot as _ais_metrics_snapshot
+from .ais_mcp import close_pool as _ais_close_pool
+from .ais_mcp import call_tool as _ais_call_tool
+from .ais_mcp import ToolCallError as _AisToolCallError
+from .ais_mcp import _sanitize_tool_error as _ais_sanitize_tool_error
+# Phase 2A Wave 2 — per-user AIS authentication for write actions.
+from . import auth_ais as _ais_auth
 
 import logging as _logging
 _logger = _logging.getLogger("diwa.api")
@@ -124,12 +134,28 @@ You are a helpful starting point and information aggregator, not the final autho
 # FastAPI Application
 # ============================================================================
 _is_production = os.getenv("RENDER", "") != "" or os.getenv("PRODUCTION", "") != ""
+
+
+# Closes the cached AIS MCP session when uvicorn shuts down so we don't
+# leak the SSE stream + transport. Open is lazy on first use; close is
+# eager here.
+from contextlib import asynccontextmanager  # noqa: E402
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    try:
+        yield
+    finally:
+        await _ais_close_pool()
+
+
 app = FastAPI(
     title="DIWA API",
     version="1.0.0",
     docs_url=None if _is_production else "/docs",
     redoc_url=None if _is_production else "/redoc",
     openapi_url=None if _is_production else "/openapi.json",
+    lifespan=_lifespan,
 )
 
 # Enable CORS — explicit origins only (never wildcard in production).
@@ -169,6 +195,26 @@ def _record_attempt(client_ip: str) -> None:
     _pin_attempts.setdefault(client_ip, []).append(time.time())
 
 
+# Per-session rate limiter for /chat. Cloudflare Access protects Desk but
+# Diwa's /chat is intentionally anonymous, so defense-in-depth here matters.
+# Keyed by session_id when present, else by client IP, so a single browser
+# tab can't burst-query indefinitely. In-memory only — single-worker uvicorn
+# is assumed; multi-worker deploys need Redis.
+_CHAT_MAX_REQUESTS  = int(os.getenv("CHAT_RATE_LIMIT_MAX", "30"))
+_CHAT_WINDOW_SECONDS = float(os.getenv("CHAT_RATE_LIMIT_WINDOW", "60"))
+_chat_hits: Dict[str, list] = {}
+
+
+def _check_chat_rate_limit(key: str) -> None:
+    """Raise 429 if `key` has exceeded the chat-call budget for the window."""
+    now = time.time()
+    hits = [t for t in _chat_hits.get(key, []) if now - t < _CHAT_WINDOW_SECONDS]
+    if len(hits) >= _CHAT_MAX_REQUESTS:
+        raise HTTPException(429, "Too many chat requests. Slow down for a moment.")
+    hits.append(now)
+    _chat_hits[key] = hits
+
+
 async def require_admin(request: Request) -> None:
     """Dependency: verify the X-Admin-Pin header matches DASHBOARD_PIN."""
     if not DASHBOARD_PIN:
@@ -185,6 +231,11 @@ class ChatRequest(BaseModel):
     message: str
     user_id: Optional[str] = None
     session_id: Optional[str] = None
+    # Optional escape hatch for external clients (e.g. an admin tool or another
+    # service) to call a specific AIS MCP tool without going through the
+    # router. When set, `message` is still logged but `intent_hint` wins.
+    intent_hint: Optional[str] = None
+    intent_args: Optional[Dict[str, Any]] = None
 
 # Campus map (48 official locations) — see api/campus_places.py
 # All functions are now DB-primary with hardcoded fallback.
@@ -290,6 +341,24 @@ def _extract_summary(text: str, max_chars: int = 240) -> str:
     return text[:max_chars].strip()
 
 
+class DvCard(BaseModel):
+    """Structured DV detail surfaced when the AIS MCP bridge handles a get_dv."""
+    name: str
+    control_number: Optional[str] = None
+    payee: str = ""
+    amount: float = 0.0
+    workflow_status: str = ""
+    posting_date: Optional[str] = None
+    fund_cluster: Optional[str] = None
+    ors_burs_reference: Optional[str] = None
+    dv_type: Optional[str] = None
+    desk_url: str
+    # Phase 2A Wave 2 — frontend round-trips this as expected_modified on
+    # /ais/write so the server-side optimistic-lock check can catch stale
+    # writes when another session changed the DV between read and confirm.
+    modified: Optional[str] = None
+
+
 class ChatResponse(BaseModel):
     model_config = ConfigDict(protected_namespaces=())
     response: str
@@ -299,6 +368,16 @@ class ChatResponse(BaseModel):
     session_id: Optional[str] = None
     map_data: Optional[MapData] = None
     directory: Optional[Directory] = None   # structured office/location card
+    dv_card: Optional[DvCard] = None        # AIS Disbursement Voucher detail card
+    # Conversation context the frontend can surface as a "talking about …"
+    # chip. Currently keys: `dv`, `uacs_kind`, `uacs_query`, `report`.
+    context_set: Optional[Dict[str, Any]] = None
+    # Multi-row table for list/find/group results. Frontend renders as an
+    # HTML table; the text response is kept as a fallback for older clients.
+    table: Optional[Dict[str, Any]] = None
+    # Follow-up prompts the user is likely to want next, surfaced as
+    # clickable chips below the response. Re-fire as new chat messages.
+    suggestions: Optional[List[str]] = None
 
 class IntentInfo(BaseModel):
     tag: str
@@ -396,7 +475,7 @@ async def health_check():
 
 @app.post("/chat", response_model=ChatResponse, tags=["Chat"],
           responses={400: {"description": "Message cannot be empty"}})
-async def chat_endpoint(request: ChatRequest):
+async def chat_endpoint(request: ChatRequest, http_request: Request):
     """
     Send a message to the chatbot (Hierarchical Hybrid Model).
 
@@ -415,15 +494,58 @@ async def chat_endpoint(request: ChatRequest):
     if not request.message or not request.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty")
 
+    # Rate-limit by session_id (so a single tab can't hammer us) with a
+    # client-IP fallback for sessionless callers. Raises 429 when exceeded.
+    rl_key = request.session_id or (http_request.client.host if http_request.client else "anon")
+    _check_chat_rate_limit(f"chat:{rl_key}")
+
+    if request.intent_hint is not None or request.intent_args is not None:
+        internal_key = os.getenv("INTERNAL_KEY", "")
+        provided = http_request.headers.get("X-Internal-Key", "")
+        if not (internal_key and secrets.compare_digest(provided, internal_key)):
+            raise HTTPException(
+                status_code=403,
+                detail="intent_hint requires a valid X-Internal-Key header",
+            )
+
     # Measure response time
     start_time = time.time()
 
-    # Get response from hybrid chatbot with NLU enhancements
-    intent, response, confidence, model_used, nlu_data = chatbot.chat(
+    # AIS MCP short-circuit — if the query looks like a finance/accounting
+    # lookup (DV name, budget balance, RAPAL/RAOD report, UACS lookup),
+    # answer it from the AIS MCP server instead of the student-facing NLU.
+    # On transient AIS failure (timeout/transport error), `failure_note` is
+    # set and we fall back to NLU with a discreet annotation prepended —
+    # better UX than dumping a stack trace into the chat bubble.
+    ais_reply = await _try_ais(
         request.message,
-        user_id=request.user_id,
-        session_id=request.session_id
+        session_id=request.session_id,
+        intent_hint=request.intent_hint,
+        intent_args=request.intent_args,
     )
+    ais_dv_card: Optional[DvCard] = None
+    ais_failure_note: Optional[str] = None
+    ais_context_set: Optional[Dict[str, Any]] = None
+    ais_table: Optional[Dict[str, Any]] = None
+    ais_suggestions: Optional[List[str]] = None
+    if ais_reply is not None and ais_reply.get("text") is not None:
+        ais_dv_card = DvCard(**ais_reply["dv_card"]) if ais_reply.get("dv_card") else None
+        ais_context_set = ais_reply.get("context_set")
+        ais_table = ais_reply.get("table")
+        ais_suggestions = ais_reply.get("suggestions") or None
+        intent, response, confidence, model_used, nlu_data = (
+            "ais_mcp", ais_reply["text"], 1.0, "ais_mcp", {},
+        )
+    else:
+        if ais_reply is not None:
+            ais_failure_note = ais_reply.get("failure_note")
+        intent, response, confidence, model_used, nlu_data = chatbot.chat(
+            request.message,
+            user_id=request.user_id,
+            session_id=request.session_id
+        )
+        if ais_failure_note:
+            response = f"{ais_failure_note}\n\n{response}"
 
     response_time_ms = (time.time() - start_time) * 1000
 
@@ -447,6 +569,10 @@ async def chat_endpoint(request: ChatRequest):
         session_id=request.session_id,
         map_data=_resolve_map_data(request.message, intent),
         directory=_resolve_directory(intent),
+        dv_card=ais_dv_card,
+        context_set=ais_context_set,
+        table=ais_table,
+        suggestions=ais_suggestions,
     )
 
 @app.get("/intents", tags=["Intents"])
@@ -457,6 +583,168 @@ async def get_intents():
         "total_intents": len(intents),
         "intents": intents
     }
+
+
+@app.get("/ais_mcp_stats", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def ais_mcp_stats():
+    """Per-tool call counts, p50/p95 latency, error rate, and circuit-breaker
+    status for the AIS MCP bridge. In-memory aggregates only — no persistence.
+    Gated by `X-Admin-Pin` (matches DASHBOARD_PIN)."""
+    snapshot = _ais_metrics_snapshot()
+    snapshot["sessions"] = {"active_ais_logins": _ais_auth.session_count()}
+    return snapshot
+
+
+# ============================================================================
+# AIS Auth Endpoints (Phase 2A, Wave 2)
+# ============================================================================
+# These let a Sevi web user log into AIS as their actual Frappe identity so
+# subsequent write actions run with their SoD-relevant role instead of the
+# shared bot identity. Tokens live in-memory keyed by `session_id` and
+# evaporate on uvicorn restart.
+
+class AuthLoginRequest(BaseModel):
+    session_id: str
+    username: str
+    password: str
+
+
+class AuthLogoutRequest(BaseModel):
+    session_id: str
+
+
+def _auth_handle(handler):
+    """Translate AuthError into the standard FastAPI HTTPException pattern.
+    Keeps the endpoint bodies trivial."""
+    async def wrapper(*args, **kwargs):
+        try:
+            return await handler(*args, **kwargs)
+        except _ais_auth.AuthError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+    return wrapper
+
+
+@app.post("/auth/login", tags=["AIS Auth"])
+async def auth_login(request: AuthLoginRequest):
+    """Exchange CvSU credentials for an AIS OAuth token cached under
+    session_id. Subsequent /ais/write calls with the same session_id will
+    act as this user. Returns the user's identity claims (NOT the token)."""
+    return await _auth_handle(_ais_auth.login)(
+        request.session_id, request.username, request.password,
+    )
+
+
+@app.post("/auth/logout", tags=["AIS Auth"])
+async def auth_logout(request: AuthLogoutRequest):
+    """Drop the cached AIS token for this session. Idempotent — succeeds
+    even if there was no session to begin with."""
+    await _ais_auth.logout(request.session_id)
+    return {"ok": True}
+
+
+@app.get("/auth/whoami", tags=["AIS Auth"])
+async def auth_whoami(session_id: str):
+    """Identity snapshot for an active session. Returns {"logged_in": false}
+    when no session is cached so the frontend can decide whether to show
+    the login modal — no error, just a fact."""
+    snapshot = await _ais_auth.whoami(session_id)
+    if snapshot is None:
+        return {"logged_in": False}
+    return {"logged_in": True, **snapshot}
+
+
+# ============================================================================
+# AIS Write Endpoint (Phase 2A, Wave 2)
+# ============================================================================
+# Out-of-band entry point for confirmed DV write actions from the Sevi web
+# UI. Distinct from /chat by design — /chat is anonymous and free-form;
+# /ais/write requires an authenticated session AND a UI-driven confirm
+# modal AND a tool-specific arg shape. There is intentionally NO natural-
+# language path to writes anywhere.
+
+_WRITE_ACTION_TOOL_MAP: Dict[str, str] = {
+    "approve_dv":    "approve_dv",
+    "post_dv":       "post_dv",
+    "cancel_dv":     "cancel_dv",
+    "set_dv_status": "set_dv_status",
+}
+
+
+class AisWriteRequest(BaseModel):
+    session_id: str
+    action: str                          # one of _WRITE_ACTION_TOOL_MAP keys
+    name: str                            # DV name
+    idempotency_key: str
+    expected_modified: Optional[str] = None
+    reason: Optional[str] = None         # cancel_dv requires this
+    new_status: Optional[str] = None     # set_dv_status requires this
+
+
+@app.post("/ais/write", tags=["AIS Write"])
+async def ais_write(request: AisWriteRequest):
+    """Invoke an AIS write tool as the end user behind `session_id`.
+
+    Steps:
+      1. Resolve the session_id → cached AIS access token (refreshing if
+         expiring). 401 if no session.
+      2. Translate the action into the MCP tool name and assemble the
+         tool's required args (incl. the hidden `__auth_token`).
+      3. Call the MCP write tool. The MCP server enforces the kill switch
+         (returning PILOT when off) and translates Frappe 403s into a
+         clean FORBIDDEN response.
+      4. Return the tool's response verbatim — the frontend treats `ok`
+         as the success flag.
+    """
+    if request.action not in _WRITE_ACTION_TOOL_MAP:
+        raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}")
+
+    # 1. Token resolution (may refresh).
+    try:
+        token = await _ais_auth.get_user_token(request.session_id)
+    except _ais_auth.AuthError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+
+    # 2. Assemble args. Drop None values so the tool's schema validation
+    # doesn't complain about extra fields it doesn't expect for THIS action.
+    args: Dict[str, Any] = {
+        "name": request.name,
+        "confirm": True,                  # /ais/write is invoked from a confirm modal — implicit
+        "idempotency_key": request.idempotency_key,
+        "__auth_token": token,
+    }
+    if request.expected_modified:
+        args["expected_modified"] = request.expected_modified
+    if request.reason and request.action == "cancel_dv":
+        args["reason"] = request.reason
+    if request.new_status and request.action == "set_dv_status":
+        args["new_status"] = request.new_status
+
+    # 3. Call. Three failure modes to distinguish:
+    #    - ToolCallError: Frappe rejected the action (validation, SoD, stale
+    #      lock, missing certs). Return a structured non-200 response with
+    #      the sanitized message so the modal can show it.
+    #    - Other Exception: transport / SDK / circuit-open → 503.
+    #    - Success: forward the tool's response verbatim.
+    tool_name = _WRITE_ACTION_TOOL_MAP[request.action]
+    try:
+        result = await _ais_call_tool(tool_name, args)
+    except _AisToolCallError as exc:
+        # ToolCallError = MCP reachable, Frappe said no. Sanitize the
+        # message (strips the "Error calling X: TypeName: " wrapper and
+        # extracts the meaningful exception text from Frappe's JSON body).
+        user_text, treat_as_unreachable = _ais_sanitize_tool_error(str(exc))
+        if treat_as_unreachable:
+            _logger.exception("ais_write tool=%s name=%s reason=server_5xx", tool_name, request.name)
+            raise HTTPException(status_code=503, detail="AIS is temporarily unreachable — try again.") from exc
+        _logger.info("ais_write tool=%s name=%s reason=tool_rejected msg=%s",
+                     tool_name, request.name, user_text[:200])
+        return {"ok": False, "error_code": "REJECTED", "message": user_text}
+    except Exception as exc:  # noqa: BLE001 — transport/SDK/circuit failure
+        _logger.exception("ais_write tool=%s name=%s reason=transport", tool_name, request.name)
+        raise HTTPException(status_code=503, detail="AIS write failed — try again.") from exc
+
+    return result
+
 
 # ============================================================================
 # Campus Map Endpoints
