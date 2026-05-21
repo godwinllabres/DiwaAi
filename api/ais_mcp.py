@@ -635,6 +635,35 @@ async def call_tool(name: str, arguments: dict) -> Any:
 _TIMEOUT_NOTE     = "(AIS is taking too long to respond right now — answering from general knowledge below.)"
 _UNREACHABLE_NOTE = "(AIS is temporarily unreachable — answering from general knowledge below.)"
 
+# Compact AIS glossary served in degraded mode. Lets the LLM answer
+# "what is a DV?" / "what does ORS mean?" without live data — better than
+# dropping the user into the campus NLU which only knows admissions topics.
+_AIS_GLOSSARY = """\
+AIS = CvSU Accounting Information System (Frappe app 'accounting').
+DV = Disbursement Voucher — the payment authorization document. Drafted by a
+    clerk, certified by budget + IA, approved by the accountant, then posted.
+ORS / BURS = Obligation Request and Status / Budget Utilization Request and
+    Status — registers an obligation against an allotment. ORS for Regular
+    Agency Fund, BURS for STF (internally generated funds).
+LDDAP-ADA = bank transmittal that releases approved DV payments to suppliers
+    (List of Due and Demandable Accounts Payable — Advice to Debit Account).
+BIR 2307 = withholding tax certificate issued per DV to the payee.
+NCA = Notice of Cash Allocation — DBM authority to draw against the Bureau
+    of Treasury for MDS payments.
+RAPAL / RAOD / RBUD / RANCA / FAR = budget execution reports.
+UACS = Unified Accounts Code Structure: funding_source + pap_code +
+    location_code + expense_class (PS/MOOE/FE/CO) + account.
+Fund clusters: 01 Regular Agency, 05 STF, 07 Trust. STF cannot fund PS."""
+
+_LLM_GLOSSARY_SYSTEM = (
+	"You are the CvSU AIS assistant operating in degraded mode — live AIS "
+	"data is unavailable. Answer the user from the glossary below in 1-3 "
+	"sentences. If the question asks about a specific record (DV name, "
+	"report run, balance) say you can't look it up while AIS is down and "
+	"suggest retrying. Never invent record names, numbers, or amounts.\n\n"
+	f"AIS glossary:\n{_AIS_GLOSSARY}"
+)
+
 # MCP server wraps tool failures as "Error calling {tool}: {ExcType}: {detail}".
 # Frappe's http_client further wraps as "{method_path} returned {NNN}: {json}"
 # OR "Rate limit on {path}: {json}" for 417 (Frappe uses 417 for ALL
@@ -1063,6 +1092,81 @@ async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict]]:
 	return tool_name, args
 
 
+async def _llm_glossary_reply(text: str) -> Optional[str]:
+	"""Degraded-mode answer using only the AIS glossary — no tools, no data.
+
+	Same provider selection as _llm_route; returns plain text or None on
+	failure. Used when MCP is unreachable but the query was AIS-shaped, so
+	the user gets a useful definition instead of the campus NLU's "not in
+	glossary" reply.
+	"""
+	explicit = (os.environ.get("LLM_PROVIDER") or "").lower().strip()
+	use_ollama = bool(_OLLAMA_BASE_URL) and explicit in ("", "ollama")
+	if explicit in ("claude", "anthropic"):
+		use_ollama = False
+
+	t0 = time.monotonic()
+	out = ""
+	if use_ollama:
+		try:
+			async with httpx.AsyncClient(timeout=12.0) as http:
+				resp = await http.post(
+					f"{_OLLAMA_BASE_URL}/v1/chat/completions",
+					json={
+						"model": _OLLAMA_MODEL,
+						"messages": [
+							{"role": "system", "content": _LLM_GLOSSARY_SYSTEM},
+							{"role": "user", "content": text},
+						],
+						"max_tokens": 220,
+					},
+				)
+				resp.raise_for_status()
+				data = resp.json()
+			choices = data.get("choices") or []
+			msg = (choices[0].get("message") if choices else None) or {}
+			out = (msg.get("content") or "").strip()
+		except Exception:  # noqa: BLE001 — never block chat on LLM failure
+			_logger.exception("ais_mcp glossary_reply provider=ollama failed text=%r", text[:200])
+			return None
+	else:
+		if not (_ANTHROPIC_AVAILABLE and os.environ.get("ANTHROPIC_API_KEY")):
+			return None
+		try:
+			client = anthropic.AsyncAnthropic()
+			resp = await client.messages.create(
+				model=os.environ.get("AIS_MCP_LLM_MODEL", "claude-haiku-4-5-20251001"),
+				max_tokens=220,
+				system=_LLM_GLOSSARY_SYSTEM,
+				messages=[{"role": "user", "content": text}],
+			)
+			out = "".join(
+				getattr(b, "text", "") for b in resp.content
+				if getattr(b, "type", None) == "text"
+			).strip()
+		except Exception:  # noqa: BLE001
+			_logger.exception("ais_mcp glossary_reply provider=anthropic failed text=%r", text[:200])
+			return None
+
+	elapsed_ms = int((time.monotonic() - t0) * 1000)
+	_logger.info("ais_mcp glossary_reply elapsed=%dms ok=%s", elapsed_ms, bool(out))
+	return out or None
+
+
+async def _degraded_reply(message: str, note: str) -> dict:
+	"""Assemble a degraded-mode reply: glossary LLM answer if available,
+	else the historical text=None+failure_note shape that app.py falls
+	through to the campus NLU with."""
+	answer = await _llm_glossary_reply(message)
+	if answer:
+		return {
+			"text": f"{note}\n\n{answer}",
+			"dv_card": None,
+			"context_set": None,
+		}
+	return {"text": None, "failure_note": note}
+
+
 def _update_context_after_call(session_id: Optional[str], tool_name: str, args: dict, data: Any) -> None:
 	"""Remember the latest entity per session for pronoun follow-ups."""
 	if not session_id:
@@ -1127,7 +1231,7 @@ async def try_handle(
 			"ais_mcp tool=%s args=%s ok=False reason=circuit_open",
 			tool_name, _redact_args(args),
 		)
-		return {"text": None, "failure_note": _UNREACHABLE_NOTE}
+		return await _degraded_reply(message, _UNREACHABLE_NOTE)
 	except asyncio.TimeoutError:
 		_circuit_record_failure()
 		elapsed_ms = int((time.monotonic() - t0) * 1000)
@@ -1136,7 +1240,7 @@ async def try_handle(
 			"ais_mcp tool=%s args=%s elapsed=%dms ok=False reason=timeout limit=%.1fs",
 			tool_name, _redact_args(args), elapsed_ms, _CALL_TIMEOUT_SECONDS,
 		)
-		return {"text": None, "failure_note": _TIMEOUT_NOTE}
+		return await _degraded_reply(message, _TIMEOUT_NOTE)
 	except ToolCallError as exc:
 		# Tool-side error (validation, not-found, etc.) — MCP is healthy.
 		# Treat as a success for the breaker so transient app-level errors
@@ -1151,8 +1255,8 @@ async def try_handle(
 		user_text, treat_as_unreachable = _sanitize_tool_error(str(exc))
 		if treat_as_unreachable:
 			# Server-side 5xx — the message contains internals we shouldn't leak.
-			# Fall through to NLU with the standard "unreachable" note.
-			return {"text": None, "failure_note": _UNREACHABLE_NOTE}
+			# Use degraded-mode glossary reply instead of NLU fallthrough.
+			return await _degraded_reply(message, _UNREACHABLE_NOTE)
 		return {"text": user_text, "dv_card": None, "context_set": _public_context(session_id)}
 	except Exception:  # noqa: BLE001 — transport/SDK failure; classify as unreachable
 		_circuit_record_failure()
@@ -1162,7 +1266,7 @@ async def try_handle(
 			"ais_mcp tool=%s args=%s elapsed=%dms ok=False reason=exception",
 			tool_name, _redact_args(args), elapsed_ms,
 		)
-		return {"text": None, "failure_note": _UNREACHABLE_NOTE}
+		return await _degraded_reply(message, _UNREACHABLE_NOTE)
 
 	_circuit_record_success()
 	_update_context_after_call(session_id, tool_name, args, data)
