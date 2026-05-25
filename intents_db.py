@@ -96,21 +96,33 @@ def create_intents_database(
 
 
 def load_intents_from_db(db_path: str = DEFAULT_DB_PATH) -> List[Dict]:
-    """Load intents from the SQLite database."""
+    """Load intents from the SQLite database.
+
+    NB: we materialize the outer SELECT into a list before iterating, and use
+    a *separate* cursor for the inner pattern/response queries. Reusing one
+    cursor for nested SELECTs clobbers the outer rowset after the first
+    inner execute, so the loop would silently terminate with just one intent
+    — which is exactly what was happening before this fix.
+    """
     if not os.path.exists(db_path):
         raise FileNotFoundError(f"Intent database not found: {db_path}")
 
     conn = _connect(db_path)
-    cursor = conn.cursor()
+    outer = conn.cursor()
+    inner = conn.cursor()
+
+    intent_rows = outer.execute(
+        "SELECT id, tag, description, active FROM intents ORDER BY tag"
+    ).fetchall()
 
     intents = []
-    for intent_row in cursor.execute("SELECT id, tag, description, active FROM intents ORDER BY tag"):
+    for intent_row in intent_rows:
         intent_id = intent_row["id"]
-        patterns = [row["pattern_text"] for row in cursor.execute(
+        patterns = [row["pattern_text"] for row in inner.execute(
             "SELECT pattern_text FROM patterns WHERE intent_id = ? ORDER BY id",
             (intent_id,)
         )]
-        responses = [row["response_text"] for row in cursor.execute(
+        responses = [row["response_text"] for row in inner.execute(
             "SELECT response_text FROM responses WHERE intent_id = ? ORDER BY id",
             (intent_id,)
         )]
