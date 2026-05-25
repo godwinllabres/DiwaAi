@@ -616,7 +616,7 @@ class HybridChatbot:
     Strategy: Use fast NB first, fallback to accurate NN if uncertain
     """
 
-    NB_CONFIDENCE_THRESHOLD = 0.70  # If NB confidence > 70%, use it; otherwise defer to NN
+    NB_CONFIDENCE_THRESHOLD = 0.55  # If NB confidence > 55%, use it; otherwise defer to NN
     NN_CONFIDENCE_THRESHOLD = 0.50  # NN minimum confidence threshold
     FALLBACK_INTENT = "nlu_fallback"
 
@@ -1126,15 +1126,21 @@ class NeuralNetworkTrainer:
 
         print(model.summary())
 
+        # Monitor val_accuracy, not val_loss. With 120 imbalanced intents and
+        # ~20 patterns each, val_loss climbs even after val_accuracy plateaus —
+        # the misclassified samples dominate the cross-entropy as the model
+        # gets confident. Restoring on val_loss picks an under-trained epoch.
         callbacks = [
             tf.keras.callbacks.EarlyStopping(
-                monitor="val_loss",
+                monitor="val_accuracy",
+                mode="max",
                 patience=NeuralNetworkTrainer.EARLY_STOPPING_PATIENCE,
                 restore_best_weights=True,
                 verbose=1,
             ),
             tf.keras.callbacks.ReduceLROnPlateau(
-                monitor="val_loss",
+                monitor="val_accuracy",
+                mode="max",
                 factor=NeuralNetworkTrainer.LR_REDUCE_FACTOR,
                 patience=NeuralNetworkTrainer.LR_REDUCE_PATIENCE,
                 min_lr=NeuralNetworkTrainer.LR_MIN,

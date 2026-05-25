@@ -1026,7 +1026,14 @@
         "What is the CvSU scholarship grant?",
         "Is there a stipend with the CvSU scholarship?",
         "Is there a working student program at CvSU?",
-        "May scholarship ba sa CvSU para sa mahirap na estudyante?"
+        "May scholarship ba sa CvSU para sa mahirap na estudyante?",
+        "tell me about scholarships",
+        "tell me about scholarship",
+        "I want to know about scholarships",
+        "what scholarships do you offer",
+        "what about scholarships",
+        "do you have scholarship info",
+        "anong scholarship meron sa CvSU"
       ],
       "responses": [
         "CvSU offers several scholarship and financial-assistance programs, including (per the official Office of Student Affairs and Services and Citizens Charter):\n- CvSU State Scholarship\n- Job Experience Program\n- RA 7160 scholarship\n- Entrance Scholarships for Valedictorian, Salutatorian, and 1st/2nd/3rd Honorable Mention high-school graduates\n- Government scholarships (e.g., DOST-SEI, CHED) and LGU scholarships availed through CvSU\n- Tertiary Education Subsidy (TES) and free tuition under RA 10931 for qualified undergraduate Filipino students\n\nApplication is managed by the Financial Assistance Services Unit and distributed through OSAS. You'll typically need an accomplished scholarship form and supporting documents such as your parents' joint income tax return or a BIR Affidavit of Non-Filing.\n\nFor current eligibility, deadlines, and the specific scholarships open at your campus, visit OSAS or https://cvsu.edu.ph/office-of-student-affairs-and-services/. Source: https://cvsu.edu.ph/office-of-student-affairs-and-services/",
@@ -1144,7 +1151,14 @@
         "How do I contact the CvSU guidance office?",
         "What is the CvSU contact number?",
         "What is the email address of CvSU?",
-        "How do I reach CvSU main campus"
+        "How do I reach CvSU main campus",
+        "How can I contact CvSU?",
+        "how do I contact you",
+        "how can I reach CvSU",
+        "what is your contact",
+        "where can I call CvSU",
+        "give me CvSU contact info",
+        "paano ko macocontact ang CvSU"
       ],
       "responses": [
         "CvSU CONTACT INFORMATION\n\nMAIN CAMPUS — Don Severino delas Alas Campus, Indang, Cavite, Philippines\nUniversity website: https://cvsu.edu.ph\n\nVERIFIED CONTACT POINTS FROM THE OFFICIAL SITE:\n- Office of the Vice President for Research and Extension: landline (046) 862-0850; mobile +63 998 937 2020 / +63 995 971 5511 (per https://cvsu.edu.ph/ovpre-contact-us/)\n- Admission inquiries: admission@cvsu.edu.ph\n- OSAS Main / Guidance: osasmain.guidance@cvsu.edu.ph\n\nOTHER CAMPUSES have their own contact directories — please use the campus-specific subdomain (e.g., trece.cvsu.edu.ph, naic.cvsu.edu.ph, bacoor.cvsu.edu.ph, etc.) or the campus directory at https://cvsu.edu.ph/category/campuses/.",
