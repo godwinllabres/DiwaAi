@@ -6,8 +6,9 @@ FastAPI-based endpoint for integration with web applications
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict
-from typing import Optional, List, Dict, Any
+from enum import Enum
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Annotated, Optional, List, Dict, Any, Literal, Union
 import asyncio
 import json
 import os
@@ -341,8 +342,64 @@ def _extract_summary(text: str, max_chars: int = 240) -> str:
     return text[:max_chars].strip()
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Chat response envelope (v2)
+#
+# A `/chat` reply is the text plus a typed list of cards (map, directory, DV
+# detail, table) plus provenance (which tier answered) plus a hint to the UI
+# about how to lay it out. Replaces the v1 flat shape with `map_data /
+# directory / dv_card / table` as separate optional fields.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class ResponseSource(str, Enum):
+    """Which tier of the cascade produced the reply."""
+    NAIVE_BAYES     = "naive_bayes"
+    NEURAL_NETWORK  = "neural_network"
+    LLM_LOCAL       = "llm_local"
+    LLM_CLAUDE      = "llm_claude"
+    AIS_MCP         = "ais_mcp"
+    FALLBACK        = "fallback"
+    REFUSAL         = "refusal"
+
+
+class RefusalReason(str, Enum):
+    """Set when source == REFUSAL — why the reply is a refusal."""
+    NONSENSE      = "nonsense"
+    OUT_OF_SCOPE  = "out_of_scope"
+    PROHIBITED    = "prohibited"
+
+
+class DisplayHint(str, Enum):
+    """How the frontend should lay out the response."""
+    DEFAULT     = "default"      # text bubble first, cards under
+    MAP_FIRST   = "map_first"    # show the map above the text
+    CARD_FIRST  = "card_first"   # show the structured card (DV / table) first
+    TEXT_ONLY   = "text_only"    # no cards expected; tighten spacing
+
+
+class DirectoryCard(BaseModel):
+    """Office / contact card."""
+    kind: Literal["directory"] = "directory"
+    office: str
+    location: Optional[str] = None
+    place_id: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    hours: Optional[str] = None
+
+
+class MapCard(BaseModel):
+    """Campus map preview, expandable to fullscreen on the frontend."""
+    kind: Literal["map"] = "map"
+    place_id: str
+    label: str
+    default_open: bool = False
+
+
 class DvCard(BaseModel):
     """Structured DV detail surfaced when the AIS MCP bridge handles a get_dv."""
+    kind: Literal["dv"] = "dv"
     name: str
     control_number: Optional[str] = None
     payee: str = ""
@@ -359,25 +416,67 @@ class DvCard(BaseModel):
     modified: Optional[str] = None
 
 
+class TableColumn(BaseModel):
+    key: str
+    label: str
+    align: Optional[Literal["left", "right", "center"]] = None
+
+
+class TableCard(BaseModel):
+    """Multi-row table for list/find/group results.
+    Rows are keyed by column.key (matches the existing frontend TableCard
+    component which accesses `row[c.key]`)."""
+    kind: Literal["table"] = "table"
+    title: str = ""
+    columns: List[TableColumn] = Field(default_factory=list)
+    rows: List[Dict[str, Any]] = Field(default_factory=list)
+    footer: Optional[str] = None
+    total_rows: Optional[int] = None
+
+
+ChatCard = Annotated[
+    Union[DirectoryCard, MapCard, DvCard, TableCard],
+    Field(discriminator="kind"),
+]
+
+
+class UacsContext(BaseModel):
+    kind: Literal["object", "funding_source", "responsibility_center"]
+    query: Optional[str] = None
+
+
+class ChatContext(BaseModel):
+    """Conversation memory the frontend can surface as a 'talking about …' chip."""
+    dv: Optional[str] = None
+    uacs: Optional[UacsContext] = None
+    report: Optional[str] = None
+
+
 class ChatResponse(BaseModel):
     model_config = ConfigDict(protected_namespaces=())
-    response: str
-    summary: Optional[str] = None      # short lead-in for UI cards / previews
-    intent: str
+
+    # Identity
+    message_id: int
     user_id: Optional[str] = None
     session_id: Optional[str] = None
-    map_data: Optional[MapData] = None
-    directory: Optional[Directory] = None   # structured office/location card
-    dv_card: Optional[DvCard] = None        # AIS Disbursement Voucher detail card
-    # Conversation context the frontend can surface as a "talking about …"
-    # chip. Currently keys: `dv`, `uacs_kind`, `uacs_query`, `report`.
-    context_set: Optional[Dict[str, Any]] = None
-    # Multi-row table for list/find/group results. Frontend renders as an
-    # HTML table; the text response is kept as a fallback for older clients.
-    table: Optional[Dict[str, Any]] = None
-    # Follow-up prompts the user is likely to want next, surfaced as
-    # clickable chips below the response. Re-fire as new chat messages.
-    suggestions: Optional[List[str]] = None
+
+    # Content
+    text: str
+    summary: Optional[str] = None
+
+    # Classification + provenance
+    intent: str
+    confidence: float = 0.0
+    source: ResponseSource
+    refusal_reason: Optional[RefusalReason] = None
+
+    # Structured attachments — empty list if none
+    cards: List[ChatCard] = Field(default_factory=list)
+    context: Optional[ChatContext] = None
+    suggestions: List[str] = Field(default_factory=list)
+
+    # Layout hint for the renderer
+    display_hint: DisplayHint = DisplayHint.DEFAULT
 
 class IntentInfo(BaseModel):
     tag: str
@@ -473,6 +572,125 @@ async def health_check():
         "llm_ready": llm_ok,
     }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Response-shape helpers (v2 envelope)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Intents whose answer is about *where* something is — the map should render
+# above the text in those cases. Kept in sync with the frontend's
+# MAP_FIRST_INTENT_RE in ChatMessage.tsx.
+_MAP_FIRST_INTENT_RE = re.compile(r"direction|location|where|map|find_place|navigate|route", re.I)
+
+# Maps the `model_used` string the chatbot returns into the public-facing
+# (source, refusal_reason) pair on ChatResponse.
+def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optional[RefusalReason]]:
+    if not model_used:
+        return ResponseSource.FALLBACK, None
+    m = model_used
+    if m.startswith("Naive Bayes"):
+        return ResponseSource.NAIVE_BAYES, None
+    if m == "Neural Network":
+        return ResponseSource.NEURAL_NETWORK, None
+    if m == "ais_mcp":
+        return ResponseSource.AIS_MCP, None
+    if m.startswith("NonsenseGate"):
+        return ResponseSource.REFUSAL, RefusalReason.NONSENSE
+    if m.startswith("ScopeGate") or "(out-of-scope)" in m:
+        return ResponseSource.REFUSAL, RefusalReason.OUT_OF_SCOPE
+    if m.startswith("Claude"):
+        return ResponseSource.LLM_CLAUDE, None
+    if m.startswith("Local LLM") or m.startswith("Ollama"):
+        return ResponseSource.LLM_LOCAL, None
+    return ResponseSource.FALLBACK, None
+
+
+def _context_from_ais(ctx: Optional[Dict[str, Any]]) -> Optional[ChatContext]:
+    """Lift the AIS bridge's free-form context dict into a typed ChatContext."""
+    if not ctx:
+        return None
+    uacs: Optional[UacsContext] = None
+    if ctx.get("uacs_kind"):
+        try:
+            uacs = UacsContext(kind=ctx["uacs_kind"], query=ctx.get("uacs_query"))
+        except Exception:
+            uacs = None
+    return ChatContext(dv=ctx.get("dv") or None, uacs=uacs, report=ctx.get("report") or None)
+
+
+def _table_from_dict(t: Optional[Dict[str, Any]]) -> Optional[TableCard]:
+    """Convert the AIS bridge's raw table dict into a typed TableCard."""
+    if not t:
+        return None
+    try:
+        cols = [
+            TableColumn(key=c.get("key", ""), label=c.get("label", c.get("key", "")), align=c.get("align"))
+            for c in t.get("columns", [])
+        ]
+        return TableCard(
+            title=t.get("title", ""),
+            columns=cols,
+            rows=t.get("rows", []) or [],
+            footer=t.get("footer"),
+            total_rows=t.get("total_rows"),
+        )
+    except Exception as exc:
+        _logger.warning("Could not coerce AIS table into TableCard: %s", exc)
+        return None
+
+
+def _build_attachments(
+    *,
+    message: str,
+    intent: str,
+    ais_dv_card: Optional[DvCard],
+    ais_table: Optional[Dict[str, Any]],
+    ais_context_set: Optional[Dict[str, Any]],
+) -> tuple[List[ChatCard], Optional[ChatContext], DisplayHint]:
+    """Resolve every typed card the reply should carry, plus the layout hint."""
+    cards: List[ChatCard] = []
+
+    # AIS card / table take top billing when present.
+    if ais_dv_card is not None:
+        cards.append(ais_dv_card)
+    table_card = _table_from_dict(ais_table)
+    if table_card is not None:
+        cards.append(table_card)
+
+    # Directory card (office contact). Resolved from the intent.
+    dir_data = _resolve_directory(intent)
+    if dir_data is not None:
+        cards.append(
+            DirectoryCard(
+                office=dir_data.office,
+                location=dir_data.location,
+                place_id=dir_data.place_id,
+                email=dir_data.email,
+                phone=dir_data.phone,
+                hours=dir_data.hours,
+            )
+        )
+
+    # Map preview / accordion.
+    map_data = _resolve_map_data(message, intent)
+    if map_data is not None:
+        is_map_first = bool(intent and _MAP_FIRST_INTENT_RE.search(intent))
+        cards.append(
+            MapCard(place_id=map_data.place_id, label=map_data.label, default_open=is_map_first)
+        )
+
+    # Display hint
+    if ais_dv_card is not None or table_card is not None:
+        hint = DisplayHint.CARD_FIRST
+    elif map_data is not None and _MAP_FIRST_INTENT_RE.search(intent or ""):
+        hint = DisplayHint.MAP_FIRST
+    elif not cards:
+        hint = DisplayHint.TEXT_ONLY
+    else:
+        hint = DisplayHint.DEFAULT
+
+    return cards, _context_from_ais(ais_context_set), hint
+
+
 @app.post("/chat", response_model=ChatResponse, tags=["Chat"],
           responses={400: {"description": "Message cannot be empty"}})
 async def chat_endpoint(request: ChatRequest, http_request: Request):
@@ -561,18 +779,29 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         response_time_ms=response_time_ms
     )
 
-    return ChatResponse(
-        response=response,
-        summary=_extract_summary(response),
+    cards, context, hint = _build_attachments(
+        message=request.message,
         intent=intent,
+        ais_dv_card=ais_dv_card,
+        ais_table=ais_table,
+        ais_context_set=ais_context_set,
+    )
+    source, refusal_reason = _classify_source(model_used)
+
+    return ChatResponse(
+        message_id=message_id,
         user_id=request.user_id,
         session_id=request.session_id,
-        map_data=_resolve_map_data(request.message, intent),
-        directory=_resolve_directory(intent),
-        dv_card=ais_dv_card,
-        context_set=ais_context_set,
-        table=ais_table,
-        suggestions=ais_suggestions,
+        text=response,
+        summary=_extract_summary(response),
+        intent=intent,
+        confidence=confidence,
+        source=source,
+        refusal_reason=refusal_reason,
+        cards=cards,
+        context=context,
+        suggestions=ais_suggestions or [],
+        display_hint=hint,
     )
 
 @app.get("/intents", tags=["Intents"])
@@ -929,7 +1158,7 @@ async def batch_chat(requests: List[ChatRequest]):
         response_time_ms = (time.time() - start_time) * 1000
 
         # Log each message
-        chat_logger.log_chat(
+        message_id = chat_logger.log_chat(
             user_id=request.user_id or "anonymous",
             user_message=request.message,
             bot_response=response,
@@ -940,14 +1169,28 @@ async def batch_chat(requests: List[ChatRequest]):
             response_time_ms=response_time_ms
         )
 
-        results.append(ChatResponse(
-            response=response,
-            summary=_extract_summary(response),
+        cards, context, hint = _build_attachments(
+            message=request.message,
             intent=intent,
+            ais_dv_card=None,
+            ais_table=None,
+            ais_context_set=None,
+        )
+        source, refusal_reason = _classify_source(model_used)
+
+        results.append(ChatResponse(
+            message_id=message_id,
             user_id=request.user_id,
             session_id=request.session_id,
-            map_data=_resolve_map_data(request.message, intent),
-            directory=_resolve_directory(intent),
+            text=response,
+            summary=_extract_summary(response),
+            intent=intent,
+            confidence=confidence,
+            source=source,
+            refusal_reason=refusal_reason,
+            cards=cards,
+            context=context,
+            display_hint=hint,
         ))
     return {"count": len(results), "results": results}
 
