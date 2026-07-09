@@ -5,7 +5,7 @@ FastAPI-based endpoint for integration with web applications
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, List
@@ -152,14 +152,192 @@ from api.campus_places import (
     has_place as _has_place,
 )
 
+# ============================================================================
+# ChatResponse v2 envelope — typed cards + provenance
+# Mirrors SeviWeb app/lib/api.ts. The flat v1 shape (response / map_data) is
+# preserved as compat aliases so the Python web/ UI and Postman keep working.
+# ============================================================================
+from typing import Literal, Union
+
+ResponseSource = Literal[
+    "naive_bayes", "neural_network", "llm_local", "llm_claude",
+    "ais_mcp", "fallback", "refusal",
+]
+RefusalReason = Literal["nonsense", "out_of_scope", "prohibited"]
+DisplayHint = Literal["default", "map_first", "card_first", "text_only"]
+
+
+class DirectoryCard(BaseModel):
+    kind: Literal["directory"] = "directory"
+    office: str
+    location: Optional[str] = None
+    place_id: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    hours: Optional[str] = None
+
+
+class MapCard(BaseModel):
+    kind: Literal["map"] = "map"
+    place_id: str
+    label: str
+    default_open: Optional[bool] = None
+
+
+class TableColumn(BaseModel):
+    key: str
+    label: str
+    align: Optional[Literal["left", "right", "center"]] = None
+
+
+class TableCard(BaseModel):
+    kind: Literal["table"] = "table"
+    title: str
+    columns: List[TableColumn]
+    rows: List[dict]
+    footer: Optional[str] = None
+    total_rows: Optional[int] = None
+
+
+# DvCard is defined in api.ts for the AIS surface; the CvSU chatbot never
+# emits one, so it is intentionally omitted here (add if AIS routes land).
+ChatCard = Union[DirectoryCard, MapCard, TableCard]
+
+
 class ChatResponse(BaseModel):
-    response: str
-    intent: str
-    confidence: float
+    # Identity
+    message_id: Optional[int] = None
     user_id: Optional[str] = None
     session_id: Optional[str] = None
-    message_id: Optional[int] = None
+
+    # Content
+    text: str
+    summary: Optional[str] = None
+
+    # Classification + provenance
+    intent: str
+    confidence: float
+    source: ResponseSource = "fallback"
+    refusal_reason: Optional[RefusalReason] = None
+
+    # Structured attachments
+    cards: List[ChatCard] = []
+    context: Optional[dict] = None
+    suggestions: List[str] = []
+
+    # Layout hint for the renderer
+    display_hint: DisplayHint = "default"
+
+    # ── v1 compat aliases (kept so web/ UI + Postman still parse) ──
+    response: Optional[str] = None
     map_data: Optional[MapData] = None
+
+
+# model_used strings from hybrid_chatbot.predict() → v2 source + refusal_reason.
+def _source_from_model_used(model_used: str) -> tuple[ResponseSource, Optional[RefusalReason]]:
+    mu = (model_used or "").lower()
+    if mu.startswith("naive bayes"):
+        return "naive_bayes", None
+    if mu.startswith("neural network"):
+        return "neural_network", None
+    if mu.startswith("claude"):
+        # "Claude LLM" answered, or "Claude (out-of-scope)" refused
+        return ("refusal", "out_of_scope") if "out-of-scope" in mu else ("llm_claude", None)
+    if mu.startswith("local llm") or mu.startswith("ollama"):
+        return ("refusal", "out_of_scope") if "out-of-scope" in mu else ("llm_local", None)
+    if mu.startswith("scopegate"):
+        # "ScopeGate (nonsense)" / "(out_of_scope)" / "(prohibited)"
+        for reason in ("nonsense", "prohibited", "out_of_scope"):
+            if reason in mu:
+                return "refusal", reason  # type: ignore[return-value]
+        return "refusal", "out_of_scope"
+    # "context" (multi-turn college pick), "Fallback", anything else
+    return "fallback", None
+
+
+# Intent tags that are themselves refusals — regardless of which tier produced
+# them (the NN can classify a query straight into `out_of_scope`). Maps the
+# intent tag to the refusal_reason the UI renders.
+_REFUSAL_INTENTS = {
+    "out_of_scope": "out_of_scope",
+    "prohibited": "prohibited",
+    "nonsense": "nonsense",
+}
+
+# Contact-style intents render as a structured directory (object list of
+# offices with email/phone) instead of a wall of text. Verified official
+# contact points — same source as the responses_map contact copy.
+_CONTACT_INTENTS = {"contact_info", "directory"}
+
+_CVSU_DIRECTORY: List[dict] = [
+    {
+        "office": "Office of Student Affairs and Services (OSAS) — University Registrar",
+        "location": "CvSU Main, Don Severino delas Alas Campus, Indang, Cavite",
+        "email": "osasmain.guidance@cvsu.edu.ph",
+        "place_id": "osas",
+    },
+    {
+        "office": "Office of Admissions",
+        "location": "CvSU Main, Indang, Cavite",
+        "email": "admission@cvsu.edu.ph",
+        "place_id": "admin",
+    },
+    {
+        "office": "Office of the VP for Research and Extension (OVPRE)",
+        "location": "CvSU Main, Indang, Cavite",
+        "phone": "(046) 862-0850 / +63 998 937 2020",
+    },
+]
+
+
+def _directory_cards() -> "List[ChatCard]":
+    return [DirectoryCard(**entry) for entry in _CVSU_DIRECTORY]
+
+
+def _build_chat_response(
+    *, text: str, intent: str, confidence: float, model_used: str,
+    message: str, user_id, session_id, message_id,
+) -> ChatResponse:
+    """Assemble the v2 envelope from the chatbot's flat tuple."""
+    source, refusal_reason = _source_from_model_used(model_used)
+
+    # A refusal *intent* is a refusal even when a classifier tier answered it.
+    if intent in _REFUSAL_INTENTS:
+        source = "refusal"
+        refusal_reason = _REFUSAL_INTENTS[intent]  # type: ignore[assignment]
+
+    cards: List[ChatCard] = []
+    display_hint: DisplayHint = "default"
+    md = None
+
+    if intent in _CONTACT_INTENTS:
+        # Contact/directory → structured object list, not a routing map.
+        cards.extend(_directory_cards())
+        display_hint = "card_first"
+    else:
+        md = _resolve_map_data(message, intent)
+        if md is not None:
+            # Attach the map as a collapsed card. display_hint stays "default":
+            # the UI shows a coachmark on first trigger rather than auto-opening
+            # the map modal.
+            cards.append(MapCard(place_id=md.place_id, label=md.label))
+
+    return ChatResponse(
+        message_id=message_id,
+        user_id=user_id,
+        session_id=session_id,
+        text=text,
+        intent=intent,
+        confidence=confidence,
+        source=source,
+        refusal_reason=refusal_reason,
+        cards=cards,
+        suggestions=[],
+        display_hint=display_hint,
+        # compat
+        response=text,
+        map_data=md,
+    )
 
 
 class FeedbackRequest(BaseModel):
@@ -414,19 +592,24 @@ async def chat_endpoint(request: ChatRequest):
                     response_time_ms=response_time_ms,
                 )
                 return ChatResponse(
+                    text=college_response,
                     response=college_response,
                     intent="courses_offered",
                     confidence=1.0,
+                    source="fallback",
                     user_id=request.user_id,
                     session_id=request.session_id,
                     message_id=message_id,
                 )
             else:
                 # Number out of range — gently re-prompt, keep state
+                reprompt = "Please enter a number between 1 and 11 to select a college, or ask me something else!"
                 return ChatResponse(
-                    response=f"Please enter a number between 1 and 11 to select a college, or ask me something else!",
+                    text=reprompt,
+                    response=reprompt,
                     intent="courses_offered",
                     confidence=1.0,
+                    source="fallback",
                     user_id=request.user_id,
                     session_id=request.session_id,
                     message_id=None,
@@ -462,14 +645,15 @@ async def chat_endpoint(request: ChatRequest):
         response_time_ms=response_time_ms
     )
 
-    return ChatResponse(
-        response=response,
+    return _build_chat_response(
+        text=response,
         intent=intent,
         confidence=confidence,
+        model_used=model_used,
+        message=request.message,
         user_id=request.user_id,
         session_id=request.session_id,
         message_id=message_id,
-        map_data=_resolve_map_data(request.message, intent),
     )
 
 # ============================================================================
@@ -576,11 +760,15 @@ async def batch_chat(requests: List[ChatRequest]):
             response_time_ms=response_time_ms
         )
 
-        results.append(ChatResponse(
-            response=response,
+        results.append(_build_chat_response(
+            text=response,
             intent=intent,
             confidence=confidence,
-            user_id=request.user_id
+            model_used=model_used,
+            message=request.message,
+            user_id=request.user_id,
+            session_id=request.session_id,
+            message_id=None,
         ))
     return {"count": len(results), "results": results}
 
@@ -767,12 +955,20 @@ async def cleanup_old_logs(days: int = 30):
 # ============================================================================
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
-    """Custom HTTP exception handler."""
-    return {
-        "error": True,
-        "status_code": exc.status_code,
-        "message": exc.detail
-    }
+    """Custom HTTP exception handler.
+
+    Must return a Response — returning a bare dict makes Starlette try to
+    call it as an ASGI app ('dict' object is not callable → 500), which
+    turned every legitimate 400 (e.g. empty /chat message) into a 500.
+    """
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": True,
+            "status_code": exc.status_code,
+            "message": exc.detail,
+        },
+    )
 
 # ============================================================================
 # Run Server

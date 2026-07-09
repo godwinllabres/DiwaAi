@@ -298,6 +298,9 @@ class LocalLLM:
         self.base_url = (base_url or os.getenv("OLLAMA_BASE_URL", self.DEFAULT_BASE_URL)).rstrip("/")
         self.model = model or os.getenv("OLLAMA_MODEL", self.DEFAULT_MODEL)
         self.system_prompt = system_prompt
+        # Thinking off by default so reasoning models answer directly rather
+        # than exhausting the token budget in <think>. OLLAMA_THINK=1 re-enables.
+        self.think = os.getenv("OLLAMA_THINK", "0").strip().lower() in ("1", "true", "yes")
         self.available = self._probe()
 
     def _probe(self) -> bool:
@@ -323,12 +326,16 @@ class LocalLLM:
             "model": self.model,
             "messages": messages,
             "stream": False,
+            # Reasoning models (qwen3, etc.) otherwise spend the whole
+            # num_predict budget inside <think> and return empty content
+            # (done_reason=length, content=""). Disabling thinking makes them
+            # answer directly. Override with OLLAMA_THINK=1 for a CoT model.
+            "think": self.think,
             # keep_alive: keep model resident in RAM for 30m so successive
-            # queries skip the cold-load cost. num_predict capped to keep
-            # responses tight (CPU inference of 8B is ~15-25 tok/s, so 180
-            # tokens ≈ 8-12s per reply).
+            # queries skip the cold-load cost. num_predict sized for a full
+            # short answer (~15-25 tok/s on CPU, so 350 tokens ≈ 15-25s).
             "keep_alive": "30m",
-            "options": {"temperature": 0.4, "num_predict": 180},
+            "options": {"temperature": 0.4, "num_predict": 350},
         }).encode("utf-8")
 
         try:
