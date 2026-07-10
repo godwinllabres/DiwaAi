@@ -361,6 +361,7 @@ class ResponseSource(str, Enum):
     LLM_CLAUDE      = "llm_claude"
     AIS_MCP         = "ais_mcp"
     CONNECTORS_MCP  = "connectors_mcp"
+    CHARTER_RAG     = "charter_rag"
     FALLBACK        = "fallback"
     REFUSAL         = "refusal"
 
@@ -597,6 +598,8 @@ def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optiona
         return ResponseSource.AIS_MCP, None
     if m == "connectors_mcp":
         return ResponseSource.CONNECTORS_MCP, None
+    if m.startswith("Charter RAG"):
+        return ResponseSource.CHARTER_RAG, None
     if m.startswith("NonsenseGate"):
         return ResponseSource.REFUSAL, RefusalReason.NONSENSE
     if m.startswith("ScopeGate") or "(out-of-scope)" in m:

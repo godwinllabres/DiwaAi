@@ -42,6 +42,9 @@ try:
 except ImportError:
     NLU_AVAILABLE = False
 
+# Citizens' Charter retrieval tier (document tier of the hybrid brain)
+from . import charter_rag
+
 # TensorFlow imports (optional - graceful fallback if not available)
 try:
     import tensorflow as tf
@@ -851,7 +854,20 @@ class HybridChatbot:
                 self.model_usage_stats["scope_gate_blocked"] += 1
                 return self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, f"ScopeGate ({reason})", nlu_data
 
-            llm_reply = self.llm.generate(user_input, conversation_context=self._llm_context(user_id))
+            # Charter RAG augmentation — when the Citizens' Charter has a
+            # passage relevant to the question, hand it to the LLM so the
+            # answer is grounded in the official document (with a page cite)
+            # instead of general knowledge.
+            charter_suffix = ""
+            llm_input = user_input
+            charter_index = charter_rag.get_index()
+            if charter_index is not None:
+                passages = charter_index.retrieve(user_input, k=3)
+                if passages and passages[0].score >= charter_rag.AUGMENT_MIN_SCORE:
+                    llm_input = charter_rag.augment_prompt(user_input, passages[:2])
+                    charter_suffix = " (charter-grounded)"
+
+            llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id))
             # LLM emitted the refusal token → out of scope per the model's own judgment
             if llm_reply and LLM_REFUSAL_TOKEN in llm_reply:
                 self.model_usage_stats["scope_gate_blocked"] += 1
@@ -861,7 +877,36 @@ class HybridChatbot:
             if llm_reply:
                 self.model_usage_stats["llm_fallback_used"] += 1
                 provider_label = "Claude LLM" if isinstance(self.llm, ClaudeLLM) else "Local LLM"
-                return self.FALLBACK_INTENT, llm_reply, 0.0, provider_label, nlu_data
+                return self.FALLBACK_INTENT, llm_reply, 0.0, f"{provider_label}{charter_suffix}", nlu_data
+
+        # Step 3.5: Charter RAG verbatim tier — no LLM (or it returned
+        # nothing), but the Citizens' Charter has a strongly-matching passage.
+        # Quote it with a page citation instead of shrugging. Gated by BOTH
+        # gates (nonsense + scope) so gibberish or off-topic queries can't
+        # dredge up an arbitrary quote, and by a stricter score threshold
+        # than the augmentation path.
+        charter_index = charter_rag.get_index()
+        if (
+            charter_index is not None
+            and self.nonsense_gate.allows(user_input)[0]
+            and self.scope_gate.allows(user_input)[0]
+        ):
+            passages = charter_index.retrieve(user_input, k=1)
+            if (
+                passages
+                and passages[0].score >= charter_rag.QUOTE_MIN_SCORE
+                and passages[0].bigram_hits >= 1
+            ):
+                self.model_usage_stats["charter_rag_used"] = (
+                    self.model_usage_stats.get("charter_rag_used", 0) + 1
+                )
+                return (
+                    "charter_info",
+                    charter_rag.verbatim_reply(passages[0]),
+                    passages[0].score,
+                    "Charter RAG",
+                    nlu_data,
+                )
 
         # Step 4: Static fallback
         self.model_usage_stats["fallback_used"] += 1
