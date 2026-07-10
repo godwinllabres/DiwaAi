@@ -61,7 +61,21 @@ _LLM_ROUTER_ENABLED = os.environ.get("AIS_MCP_LLM_ROUTER", "0") == "1"
 # so we get structured tool_calls back. Any chat model that supports tool
 # calling works (qwen2.5+, qwen3, llama3.1+, etc.).
 _OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
-_OLLAMA_MODEL = os.environ.get("AIS_MCP_OLLAMA_MODEL") or os.environ.get("OLLAMA_MODEL", "qwen3:8b")
+
+
+# Router models are read PER CALL so the admin LLM toggle (which rewrites
+# OLLAMA_MODEL / CLAUDE_MODEL) steers this router. An explicit AIS_MCP_*
+# override still wins when set.
+def _router_ollama_model() -> str:
+	return os.environ.get("AIS_MCP_OLLAMA_MODEL") or os.environ.get("OLLAMA_MODEL") or "qwen3:8b"
+
+
+def _router_anthropic_model() -> str:
+	return (
+		os.environ.get("AIS_MCP_LLM_MODEL")
+		or os.environ.get("CLAUDE_MODEL")
+		or "claude-haiku-4-5-20251001"
+	)
 
 # Conversation context — keeps the last DV/UACS/report mentioned per session
 # so the user can say "what's its status" without retyping the DV name.
@@ -993,7 +1007,7 @@ async def _llm_route_anthropic(text: str) -> Optional[tuple[str, dict]]:
 	try:
 		client = anthropic.AsyncAnthropic()
 		resp = await client.messages.create(
-			model=os.environ.get("AIS_MCP_LLM_MODEL", "claude-haiku-4-5-20251001"),
+			model=_router_anthropic_model(),
 			max_tokens=256,
 			system=_LLM_SYSTEM,
 			tools=_LLM_TOOLS,
@@ -1032,7 +1046,7 @@ async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict]]:
 			resp = await http.post(
 				f"{_OLLAMA_BASE_URL}/v1/chat/completions",
 				json={
-					"model": _OLLAMA_MODEL,
+					"model": _router_ollama_model(),
 					"messages": [
 						{"role": "system", "content": _LLM_SYSTEM},
 						{"role": "user", "content": text},
@@ -1113,7 +1127,7 @@ async def _llm_glossary_reply(text: str) -> Optional[str]:
 				resp = await http.post(
 					f"{_OLLAMA_BASE_URL}/v1/chat/completions",
 					json={
-						"model": _OLLAMA_MODEL,
+						"model": _router_ollama_model(),
 						"messages": [
 							{"role": "system", "content": _LLM_GLOSSARY_SYSTEM},
 							{"role": "user", "content": text},
@@ -1135,7 +1149,7 @@ async def _llm_glossary_reply(text: str) -> Optional[str]:
 		try:
 			client = anthropic.AsyncAnthropic()
 			resp = await client.messages.create(
-				model=os.environ.get("AIS_MCP_LLM_MODEL", "claude-haiku-4-5-20251001"),
+				model=_router_anthropic_model(),
 				max_tokens=220,
 				system=_LLM_GLOSSARY_SYSTEM,
 				messages=[{"role": "user", "content": text}],

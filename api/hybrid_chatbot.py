@@ -10,6 +10,7 @@ import random
 import re
 import pickle
 import threading
+from collections import OrderedDict
 import urllib.request
 import urllib.error
 import numpy as np
@@ -677,8 +678,14 @@ class HybridChatbot:
             self.responses_map = json.load(f)
         print(f"[OK] Loaded {len(self.responses_map)} intent responses")
 
-        # Initialize conversation tracking
-        self.conversation_history = {}
+        # Conversation tracking. Bounded LRU: the public cvsu.edu.ph widget
+        # mints a fresh session per visitor, so an unbounded dict would grow one
+        # never-freed entry per visitor. Cap the number of tracked sessions and
+        # the turns kept per session (only the last few are ever read for LLM
+        # context anyway).
+        self.conversation_history = OrderedDict()
+        self._MAX_HISTORY_SESSIONS = int(os.getenv("MAX_HISTORY_SESSIONS", "2000"))
+        self._MAX_HISTORY_TURNS = int(os.getenv("MAX_HISTORY_TURNS", "50"))
         self.model_usage_stats = {
             "naive_bayes_used": 0,
             "neural_network_used": 0,
@@ -993,12 +1000,18 @@ class HybridChatbot:
 
         intent, response, confidence, model_used, nlu_data = self.predict(user_input, user_id, skip_intents=skip_intents)
 
-        # Track conversation
+        # Track conversation (bounded LRU — see __init__).
         if user_id:
             if user_id not in self.conversation_history:
+                # Evict the least-recently-used session when at capacity.
+                while len(self.conversation_history) >= self._MAX_HISTORY_SESSIONS:
+                    self.conversation_history.popitem(last=False)
                 self.conversation_history[user_id] = []
+            else:
+                self.conversation_history.move_to_end(user_id)
 
-            self.conversation_history[user_id].append({
+            turns = self.conversation_history[user_id]
+            turns.append({
                 "user_message": user_input,
                 "bot_response": response,
                 "intent": intent,
@@ -1008,6 +1021,8 @@ class HybridChatbot:
                 "entities": nlu_data.get("entities", {}),
                 "is_follow_up": nlu_data.get("is_follow_up", False),
             })
+            if len(turns) > self._MAX_HISTORY_TURNS:
+                del turns[: -self._MAX_HISTORY_TURNS]
 
         return intent, response, confidence, model_used, nlu_data
 

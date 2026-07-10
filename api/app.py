@@ -703,6 +703,74 @@ def _build_attachments(
     return cards, _context_from_ais(ais_context_set), hint
 
 
+def _short_circuit_response(
+    request: "ChatRequest",
+    log_message: str,
+    start_time: float,
+    *,
+    text: str,
+    intent: str,
+    source: ResponseSource,
+    model_used: str,
+    refusal_reason: Optional[RefusalReason] = None,
+    suggestions: Optional[List[str]] = None,
+) -> ChatResponse:
+    """Build + log a terminal (no-cards) reply for a gate that answers before
+    the NLU cascade (safety refusal, campus clarify). `log_message` is the
+    user's ORIGINAL text — request.message may have been mutated by a gate."""
+    message_id = chat_logger.log_chat(
+        user_id=request.user_id or "anonymous",
+        user_message=log_message,
+        bot_response=text,
+        intent=intent,
+        confidence=1.0,
+        model_used=model_used,
+        session_id=request.session_id,
+        response_time_ms=(time.time() - start_time) * 1000,
+    )
+    return ChatResponse(
+        message_id=message_id,
+        user_id=request.user_id,
+        session_id=request.session_id,
+        text=text,
+        summary=None,
+        intent=intent,
+        confidence=1.0,
+        source=source,
+        refusal_reason=refusal_reason,
+        cards=[],
+        context=None,
+        suggestions=suggestions or [],
+        display_hint=DisplayHint.TEXT_ONLY,
+    )
+
+
+def _safety_screen(message: str, session_id: Optional[str]):
+    """Front-door SafetyGate, shared by /chat and /batch so neither is an
+    unscreened path. Returns (block, effective_message):
+      • block is a dict of ChatResponse fields when the message must be
+        refused (self-harm / threat / abuse), else None;
+      • effective_message is the message to process downstream (sanitized when
+        profanity was mere seasoning, otherwise unchanged)."""
+    result = _safety.classify(message)
+    if result.category in ("self_harm", "threat", "abuse"):
+        _safety.record(result.category, message, session_id, result.max_severity)
+        return {
+            "text": _safety.RESPONSES[result.category],
+            "intent": f"safety_{result.category}",
+            "source": ResponseSource.REFUSAL,
+            "model_used": f"SafetyGate ({result.category})",
+            "refusal_reason": (
+                RefusalReason.ABUSIVE if result.category == "abuse" else RefusalReason.SAFETY
+            ),
+            "suggestions": _safety.SUGGESTIONS[result.category],
+        }, message
+    if result.category == "intensifier":
+        _safety.record("intensifier", message, session_id, result.max_severity)
+        return None, result.sanitized
+    return None, message
+
+
 @app.post("/chat", response_model=ChatResponse, tags=["Chat"],
           responses={400: {"description": "Message cannot be empty"}})
 async def chat_endpoint(request: ChatRequest, http_request: Request):
@@ -740,55 +808,16 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
 
     # Measure response time
     start_time = time.time()
+    # The gates below may rewrite request.message (profanity sanitize, campus
+    # grounding); keep the user's original for the audit log.
+    original_message = request.message
 
     # Safety screen — runs before the MCP bridges and the intent tiers so no
     # path answers an abusive/threatening message cheerfully (the Nonsense/
     # Scope gates only guard the LLM tier). See docs/moderation_plan.md.
-    safety_result = _safety.classify(request.message)
-    if safety_result.category in ("self_harm", "threat", "abuse"):
-        _safety.record(
-            safety_result.category, request.message, request.session_id,
-            safety_result.max_severity,
-        )
-        safety_text = _safety.RESPONSES[safety_result.category]
-        message_id = chat_logger.log_chat(
-            user_id=request.user_id or "anonymous",
-            user_message=request.message,
-            bot_response=safety_text,
-            intent=f"safety_{safety_result.category}",
-            confidence=1.0,
-            model_used=f"SafetyGate ({safety_result.category})",
-            session_id=request.session_id,
-            response_time_ms=(time.time() - start_time) * 1000,
-        )
-        return ChatResponse(
-            message_id=message_id,
-            user_id=request.user_id,
-            session_id=request.session_id,
-            text=safety_text,
-            summary=None,
-            intent=f"safety_{safety_result.category}",
-            confidence=1.0,
-            source=ResponseSource.REFUSAL,
-            refusal_reason=(
-                RefusalReason.ABUSIVE
-                if safety_result.category == "abuse"
-                else RefusalReason.SAFETY
-            ),
-            cards=[],
-            context=None,
-            suggestions=_safety.SUGGESTIONS[safety_result.category],
-            display_hint=DisplayHint.TEXT_ONLY,
-        )
-    if safety_result.category == "intensifier":
-        # Profanity as seasoning around a real ask — answer the ask. The
-        # sanitized text feeds routing/classification; the log keeps the
-        # original via log_chat below.
-        _safety.record(
-            "intensifier", request.message, request.session_id,
-            safety_result.max_severity,
-        )
-        request.message = safety_result.sanitized
+    block, request.message = _safety_screen(request.message, request.session_id)
+    if block:
+        return _short_circuit_response(request, original_message, start_time, **block)
 
     # Campus context — CvSU has 11 campuses; "where is the campus located?"
     # is ambiguous. Remember the session's campus, clarify when unknown
@@ -798,31 +827,13 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         request.session_id or request.user_id, request.message
     )
     if campus_routing.action == "clarify":
-        clarify_text = _campus.CLARIFY_TEXT
-        message_id = chat_logger.log_chat(
-            user_id=request.user_id or "anonymous",
-            user_message=request.message,
-            bot_response=clarify_text,
+        return _short_circuit_response(
+            request, original_message, start_time,
+            text=_campus.CLARIFY_TEXT,
             intent="campus_disambiguation",
-            confidence=1.0,
-            model_used="CampusContext (clarify)",
-            session_id=request.session_id,
-            response_time_ms=(time.time() - start_time) * 1000,
-        )
-        return ChatResponse(
-            message_id=message_id,
-            user_id=request.user_id,
-            session_id=request.session_id,
-            text=clarify_text,
-            summary=None,
-            intent="campus_disambiguation",
-            confidence=1.0,
             source=ResponseSource.FALLBACK,
-            refusal_reason=None,
-            cards=[],
-            context=None,
+            model_used="CampusContext (clarify)",
             suggestions=_campus.CLARIFY_SUGGESTIONS,
-            display_hint=DisplayHint.TEXT_ONLY,
         )
     campus_grounded = campus_routing.action in ("augment", "answer_pending")
     if campus_grounded:
@@ -884,10 +895,12 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
 
     response_time_ms = (time.time() - start_time) * 1000
 
-    # Log the chat
+    # Log the chat — record the user's ORIGINAL text, not the gate-rewritten
+    # message (sanitized profanity / campus-grounded), so the moderation and
+    # audit trail reflects what was actually sent.
     message_id = chat_logger.log_chat(
         user_id=request.user_id or "anonymous",
-        user_message=request.message,
+        user_message=original_message,
         bot_response=response,
         intent=intent,
         confidence=confidence,
@@ -1316,6 +1329,9 @@ async def clear_conversation(user_id: str):
         return {"status": "cleared", "user_id": user_id}
     return {"status": "no_history", "user_id": user_id}
 
+_BATCH_MAX = int(os.getenv("BATCH_MAX", "20"))
+
+
 @app.post("/batch", tags=["Chat"])
 async def batch_chat(requests: List[ChatRequest]):
     """
@@ -1323,9 +1339,18 @@ async def batch_chat(requests: List[ChatRequest]):
 
     Useful for integration with web apps that need multiple responses.
     """
+    if len(requests) > _BATCH_MAX:
+        raise HTTPException(status_code=413, detail=f"Batch too large (max {_BATCH_MAX})")
     results = []
     for request in requests:
         start_time = time.time()
+        # Same front-door SafetyGate as /chat — /batch must not be an
+        # unscreened second entrance for abusive/self-harm messages.
+        original_message = request.message
+        block, request.message = _safety_screen(request.message, request.session_id)
+        if block:
+            results.append(_short_circuit_response(request, original_message, start_time, **block))
+            continue
         intent, response, confidence, model_used, nlu_data = chatbot.chat(
             request.message,
             user_id=request.user_id,
@@ -1333,10 +1358,10 @@ async def batch_chat(requests: List[ChatRequest]):
         )
         response_time_ms = (time.time() - start_time) * 1000
 
-        # Log each message
+        # Log each message (original text — request.message may be sanitized)
         message_id = chat_logger.log_chat(
             user_id=request.user_id or "anonymous",
-            user_message=request.message,
+            user_message=original_message,
             bot_response=response,
             intent=intent,
             confidence=confidence,

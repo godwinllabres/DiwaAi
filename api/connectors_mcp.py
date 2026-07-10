@@ -60,12 +60,25 @@ _CALL_TIMEOUT_SECONDS = float(os.environ.get("CONNECTORS_MCP_TIMEOUT_SECONDS", "
 # {tool, args}. Provider chosen like ais_mcp: LLM_PROVIDER env, else Ollama.
 _LLM_ROUTER_ENABLED = os.environ.get("CONNECTORS_MCP_LLM_ROUTER", "0") == "1"
 _OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
-# Routing is JSON extraction, not prose — the small/fast model is the default.
-_ROUTER_OLLAMA_MODEL = (
-	os.environ.get("CONNECTORS_MCP_OLLAMA_MODEL")
-	or os.environ.get("OLLAMA_MODEL", "llama3.2:3b")
-)
-_ROUTER_ANTHROPIC_MODEL = os.environ.get("CONNECTORS_MCP_LLM_MODEL", "claude-haiku-4-5-20251001")
+
+
+# Router models are read PER CALL (not frozen at import) so the admin LLM
+# toggle — which rewrites OLLAMA_MODEL / CLAUDE_MODEL — actually steers this
+# router. An explicit CONNECTORS_MCP_* override still wins when set.
+def _router_ollama_model() -> str:
+	return (
+		os.environ.get("CONNECTORS_MCP_OLLAMA_MODEL")
+		or os.environ.get("OLLAMA_MODEL")
+		or "llama3.2:3b"
+	)
+
+
+def _router_anthropic_model() -> str:
+	return (
+		os.environ.get("CONNECTORS_MCP_LLM_MODEL")
+		or os.environ.get("CLAUDE_MODEL")
+		or "claude-haiku-4-5-20251001"
+	)
 
 _FAILURE_NOTE = (
 	"(The campus services lookup is temporarily unreachable — answering from "
@@ -250,14 +263,14 @@ def _valid_routed(tool_name: Any, args: Any) -> Optional[tuple[str, dict[str, An
 	return tool_name, {k: v for k, v in args.items() if k in allowed}
 
 
-async def _llm_route(text: str) -> Optional[tuple[str, dict[str, Any]]]:
+async def _llm_route(text: str, available: Optional[set[str]]) -> Optional[tuple[str, dict[str, Any]]]:
 	if not _LLM_ROUTER_ENABLED or not _SHAPED_RE.search(text):
 		return None
 	# Advertise only tools the server actually has enabled — routing to a
 	# disabled group wastes LLM latency and can only dead-end. When the
 	# server is unreachable (None), advertise everything and let the
-	# transport-failure path produce the failure_note.
-	available = await _server_tools()
+	# transport-failure path produce the failure_note. `available` is fetched
+	# once per request by the caller.
 	tools = _LLM_TOOLS_OPENAI
 	if available is not None:
 		tools = [t for t in _LLM_TOOLS_OPENAI if t["function"]["name"] in available]
@@ -279,7 +292,7 @@ async def _llm_route_ollama(text: str, tools: list[dict[str, Any]]) -> Optional[
 			resp = await http.post(
 				f"{_OLLAMA_BASE_URL}/v1/chat/completions",
 				json={
-					"model": _ROUTER_OLLAMA_MODEL,
+					"model": _router_ollama_model(),
 					"messages": [
 						{"role": "system", "content": _LLM_SYSTEM},
 						{"role": "user", "content": text},
@@ -322,7 +335,7 @@ async def _llm_route_anthropic(text: str, tools: list[dict[str, Any]]) -> Option
 	try:
 		client = anthropic.AsyncAnthropic()
 		resp = await client.messages.create(
-			model=_ROUTER_ANTHROPIC_MODEL,
+			model=_router_anthropic_model(),
 			max_tokens=192,
 			system=_LLM_SYSTEM,
 			tools=[
@@ -384,27 +397,35 @@ def metrics_snapshot() -> dict[str, Any]:
 # ─────────────────────────────────────────────────────────────────────────────
 
 _HEALTH_URL = _MCP_URL.rsplit("/sse", 1)[0] + "/health"
-_TOOLS_CACHE_TTL_SECONDS = 60.0
-_tools_cache: dict[str, Any] = {"tools": None, "at": 0.0}
+_TOOLS_CACHE_TTL_SECONDS = 60.0   # how long a successful tool list stays fresh
+_TOOLS_FAIL_TTL_SECONDS = 10.0    # negative-cache: don't re-hammer a down server
+# good_at: last successful fetch; checked_at: last attempt (success or failure).
+_tools_cache: dict[str, Any] = {"tools": None, "good_at": 0.0, "checked_at": 0.0}
 
 
 async def _server_tools() -> Optional[set[str]]:
-	"""The server's live tool names, cached. None = server unreachable
-	(unknown) — callers should then attempt the call and let the transport
-	failure path produce the failure_note."""
+	"""The server's live tool names, cached. Returns a set on success, or None
+	only when the tool list has NEVER been fetched successfully (genuinely
+	unknown → callers fail open). A transient blip does NOT wipe a known-good
+	list: the last good set is served through the outage (fail-safe), and
+	failures are negative-cached so the 3s health GET isn't re-paid per message."""
 	now = time.monotonic()
-	if _tools_cache["tools"] is not None and now - _tools_cache["at"] < _TOOLS_CACHE_TTL_SECONDS:
+	# Fresh success.
+	if _tools_cache["tools"] is not None and now - _tools_cache["good_at"] < _TOOLS_CACHE_TTL_SECONDS:
 		return _tools_cache["tools"]
+	# Checked recently (ok or failed) — serve last known without another GET.
+	if now - _tools_cache["checked_at"] < _TOOLS_FAIL_TTL_SECONDS:
+		return _tools_cache["tools"]
+	_tools_cache["checked_at"] = now
 	try:
 		async with httpx.AsyncClient(timeout=3.0) as http:
 			resp = await http.get(_HEALTH_URL)
 			resp.raise_for_status()
 			tools = set(resp.json().get("tools") or [])
-	except Exception:  # noqa: BLE001 — server down/old: availability unknown
-		_tools_cache["tools"] = None
-		return None
+	except Exception:  # noqa: BLE001 — keep the last known-good list, don't wipe
+		return _tools_cache["tools"]
 	_tools_cache["tools"] = tools
-	_tools_cache["at"] = now
+	_tools_cache["good_at"] = now
 	return tools
 
 
@@ -621,10 +642,13 @@ async def try_handle(message: str, session_id: Optional[str] = None) -> Optional
 	"""
 	if not (_MCP_AVAILABLE and _ENABLED):
 		return None
+	# Fetch the server's enabled-tool list once per request (cached); both the
+	# LLM router and the post-routing availability gate below reuse it.
+	available = await _server_tools()
 	routed = route(message)
 	routed_by = "regex"
 	if routed is None:
-		routed = await _llm_route(message)
+		routed = await _llm_route(message, available)
 		routed_by = "llm"
 	if routed is None:
 		return None
@@ -632,7 +656,6 @@ async def try_handle(message: str, session_id: Optional[str] = None) -> Optional
 	# The server enables groups per-env, so its menu is dynamic. A routed
 	# tool the server doesn't have falls through to the NLU tiers, which can
 	# often answer from intents (e.g. programs offered) — never dead-end.
-	available = await _server_tools()
 	if available is not None and tool_name not in available:
 		_metrics_bump("skipped_not_enabled", tool_name)
 		_logger.info("connectors_mcp tool=%s skipped reason=not_enabled", tool_name)
