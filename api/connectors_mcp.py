@@ -160,7 +160,8 @@ _SHAPED_RE = re.compile(
 )
 
 _LLM_SYSTEM = (
-	"You route CvSU university-chatbot queries to live-data tools. Call a tool "
+	"You route CvSU university-chatbot queries to live-data tools. Most "
+	"queries need NO tool — calling none is the normal outcome. Call a tool "
 	"ONLY when the query asks for data a tool provides AND every required "
 	"argument can be filled verbatim from the query. If no tool fits, or a "
 	"required argument is missing, do not call any tool. Queries may be in "
@@ -221,6 +222,14 @@ _ROUTER_REQUIRED = {
 	t["function"]["name"]: list(t["function"]["parameters"].get("required", []))
 	for t in _LLM_TOOLS_OPENAI
 }
+# Plausibility floor per identifier argument: a real ticket/reference number
+# contains a digit. Small models sometimes shoehorn an unrelated query into
+# whichever tool is advertised, inventing args like "CvSU" — reject those so
+# the query falls through to the NLU instead of firing a nonsense lookup.
+_ARG_MUST_HAVE_DIGIT = {
+	"orps_track_ticket": "ticket_number",
+	"dts_track_document": "reference_number",
+}
 
 
 def _valid_routed(tool_name: Any, args: Any) -> Optional[tuple[str, dict[str, Any]]]:
@@ -228,6 +237,9 @@ def _valid_routed(tool_name: Any, args: Any) -> Optional[tuple[str, dict[str, An
 	if tool_name not in _ROUTER_REQUIRED or not isinstance(args, dict):
 		return None
 	if any(not str(args.get(req, "")).strip() for req in _ROUTER_REQUIRED[tool_name]):
+		return None
+	digit_arg = _ARG_MUST_HAVE_DIGIT.get(tool_name)
+	if digit_arg and not any(ch.isdigit() for ch in str(args.get(digit_arg, ""))):
 		return None
 	allowed = {
 		p
@@ -241,15 +253,25 @@ def _valid_routed(tool_name: Any, args: Any) -> Optional[tuple[str, dict[str, An
 async def _llm_route(text: str) -> Optional[tuple[str, dict[str, Any]]]:
 	if not _LLM_ROUTER_ENABLED or not _SHAPED_RE.search(text):
 		return None
+	# Advertise only tools the server actually has enabled — routing to a
+	# disabled group wastes LLM latency and can only dead-end. When the
+	# server is unreachable (None), advertise everything and let the
+	# transport-failure path produce the failure_note.
+	available = await _server_tools()
+	tools = _LLM_TOOLS_OPENAI
+	if available is not None:
+		tools = [t for t in _LLM_TOOLS_OPENAI if t["function"]["name"] in available]
+		if not tools:
+			return None
 	provider = (os.environ.get("LLM_PROVIDER") or "").lower()
 	if provider in ("claude", "anthropic"):
-		return await _llm_route_anthropic(text)
+		return await _llm_route_anthropic(text, tools)
 	if provider == "ollama" or _OLLAMA_BASE_URL:
-		return await _llm_route_ollama(text)
-	return await _llm_route_anthropic(text)
+		return await _llm_route_ollama(text, tools)
+	return await _llm_route_anthropic(text, tools)
 
 
-async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict[str, Any]]]:
+async def _llm_route_ollama(text: str, tools: list[dict[str, Any]]) -> Optional[tuple[str, dict[str, Any]]]:
 	t0 = time.monotonic()
 	try:
 		# 30s: the first call after idle pays the model cold-load (~10s+).
@@ -262,7 +284,7 @@ async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict[str, Any]]]:
 						{"role": "system", "content": _LLM_SYSTEM},
 						{"role": "user", "content": text},
 					],
-					"tools": _LLM_TOOLS_OPENAI,
+					"tools": tools,
 					"tool_choice": "auto",
 					"max_tokens": 192,
 				},
@@ -294,7 +316,7 @@ async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict[str, Any]]]:
 	return routed
 
 
-async def _llm_route_anthropic(text: str) -> Optional[tuple[str, dict[str, Any]]]:
+async def _llm_route_anthropic(text: str, tools: list[dict[str, Any]]) -> Optional[tuple[str, dict[str, Any]]]:
 	if not _ANTHROPIC_AVAILABLE or not os.environ.get("ANTHROPIC_API_KEY"):
 		return None
 	try:
@@ -309,7 +331,7 @@ async def _llm_route_anthropic(text: str) -> Optional[tuple[str, dict[str, Any]]
 					"description": t["function"]["description"],
 					"input_schema": t["function"]["parameters"],
 				}
-				for t in _LLM_TOOLS_OPENAI
+				for t in tools
 			],
 			messages=[{"role": "user", "content": text}],
 		)
@@ -355,6 +377,38 @@ def metrics_snapshot() -> dict[str, Any]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Server tool discovery — groups are enabled per-server by env, so the menu is
+# dynamic. Route only to tools the server actually has; a query for a disabled
+# group falls through to the NLU tiers (which can often answer from intents)
+# instead of dead-ending with an "unreachable" apology.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_HEALTH_URL = _MCP_URL.rsplit("/sse", 1)[0] + "/health"
+_TOOLS_CACHE_TTL_SECONDS = 60.0
+_tools_cache: dict[str, Any] = {"tools": None, "at": 0.0}
+
+
+async def _server_tools() -> Optional[set[str]]:
+	"""The server's live tool names, cached. None = server unreachable
+	(unknown) — callers should then attempt the call and let the transport
+	failure path produce the failure_note."""
+	now = time.monotonic()
+	if _tools_cache["tools"] is not None and now - _tools_cache["at"] < _TOOLS_CACHE_TTL_SECONDS:
+		return _tools_cache["tools"]
+	try:
+		async with httpx.AsyncClient(timeout=3.0) as http:
+			resp = await http.get(_HEALTH_URL)
+			resp.raise_for_status()
+			tools = set(resp.json().get("tools") or [])
+	except Exception:  # noqa: BLE001 — server down/old: availability unknown
+		_tools_cache["tools"] = None
+		return None
+	_tools_cache["tools"] = tools
+	_tools_cache["at"] = now
+	return tools
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # MCP call — one fresh SSE session per call, hard timeout. Low traffic makes
 # pooling unnecessary here; if this bridge grows hot, lift the session pool
 # and circuit breaker from ais_mcp.py.
@@ -368,7 +422,12 @@ async def _call_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
 				await session.initialize()
 				result = await session.call_tool(name, arguments)
 		raw = result.content[0].text if result.content else "{}"
-		return json.loads(raw)
+		try:
+			return json.loads(raw)
+		except json.JSONDecodeError:
+			# e.g. the SDK's own "Input validation error: ..." text — a bad
+			# call, not a transport failure.
+			return {"ok": False, "error": f"bad tool call: {raw[:160]}"}
 
 	return await asyncio.wait_for(_inner(), timeout=_CALL_TIMEOUT_SECONDS)
 
@@ -570,6 +629,14 @@ async def try_handle(message: str, session_id: Optional[str] = None) -> Optional
 	if routed is None:
 		return None
 	tool_name, args = routed
+	# The server enables groups per-env, so its menu is dynamic. A routed
+	# tool the server doesn't have falls through to the NLU tiers, which can
+	# often answer from intents (e.g. programs offered) — never dead-end.
+	available = await _server_tools()
+	if available is not None and tool_name not in available:
+		_metrics_bump("skipped_not_enabled", tool_name)
+		_logger.info("connectors_mcp tool=%s skipped reason=not_enabled", tool_name)
+		return None
 	_metrics_bump(f"{routed_by}_routed")
 
 	try:
@@ -588,6 +655,17 @@ async def try_handle(message: str, session_id: Optional[str] = None) -> Optional
 			tool_name, exc.__class__.__name__,
 		)
 		return {"text": None, "failure_note": _FAILURE_NOTE}
+
+	error_text = str(envelope.get("error", ""))
+	if not envelope.get("ok") and (
+		error_text.startswith("unknown tool") or error_text.startswith("bad tool call")
+	):
+		# Disabled group (stale availability cache) or a malformed call the
+		# router produced — the NLU is a better answer than a misleading
+		# "unreachable" apology.
+		_metrics_bump("skipped_bad_call", tool_name)
+		_logger.warning("connectors_mcp tool=%s ok=False reason=%r", tool_name, error_text[:80])
+		return None
 
 	_metrics_bump("tool_ok" if envelope.get("ok") else "tool_fail", tool_name)
 	reply = _REPLY_BUILDERS[tool_name](args, envelope)
