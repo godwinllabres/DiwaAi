@@ -868,25 +868,36 @@ class HybridChatbot:
             context.append({"role": "assistant", "content": turn["bot_response"]})
         return context
 
-    def predict(self, user_input: str, user_id: str = None) -> Tuple[str, str, float, str, dict]:
+    def predict(self, user_input: str, user_id: str = None, skip_intents: bool = False) -> Tuple[str, str, float, str, dict]:
         """
         Hierarchical prediction: NB → NN → Local LLM → static fallback.
+
+        skip_intents: bypass the NB/NN tiers and go straight to the deep
+        tiers (charter RAG + LLM). Used for context-rewritten queries (e.g.
+        campus-grounded follow-ups) where a canned intent answer would drop
+        the context the rewrite added. Only honored when the LLM is
+        available — otherwise a canned answer beats a static fallback.
 
         Returns:
             (intent, response, confidence, model_used, nlu_data)
         """
-        # Step 1: Naive Bayes (+ optional NLU enhancement)
-        nb_intent, nb_confidence, nlu_data = self._nb_result(user_input, user_id)
-        if nb_intent and nb_confidence >= self.NB_CONFIDENCE_THRESHOLD:
-            self.model_usage_stats["naive_bayes_used"] += 1
-            return nb_intent, random.choice(self.responses_map[nb_intent]), nb_confidence, "Naive Bayes (NLU Enhanced)", nlu_data
+        if skip_intents and not (self.llm and self.llm.available):
+            skip_intents = False
 
-        # Step 2: Neural Network with adaptive per-intent threshold
-        nn_intent, nn_confidence = self._nn_result(user_input)
-        if nn_intent and nn_confidence >= self.nn_model.get_threshold(nn_intent):
-            response = random.choice(self.responses_map.get(nn_intent, self.responses_map[self.FALLBACK_INTENT]))
-            self.model_usage_stats["neural_network_used"] += 1
-            return nn_intent, response, nn_confidence, "Neural Network", nlu_data
+        nlu_data = {}
+        if not skip_intents:
+            # Step 1: Naive Bayes (+ optional NLU enhancement)
+            nb_intent, nb_confidence, nlu_data = self._nb_result(user_input, user_id)
+            if nb_intent and nb_confidence >= self.NB_CONFIDENCE_THRESHOLD:
+                self.model_usage_stats["naive_bayes_used"] += 1
+                return nb_intent, random.choice(self.responses_map[nb_intent]), nb_confidence, "Naive Bayes (NLU Enhanced)", nlu_data
+
+            # Step 2: Neural Network with adaptive per-intent threshold
+            nn_intent, nn_confidence = self._nn_result(user_input)
+            if nn_intent and nn_confidence >= self.nn_model.get_threshold(nn_intent):
+                response = random.choice(self.responses_map.get(nn_intent, self.responses_map[self.FALLBACK_INTENT]))
+                self.model_usage_stats["neural_network_used"] += 1
+                return nn_intent, response, nn_confidence, "Neural Network", nlu_data
 
         # Step 3: LLM fallback — fires only when NB+NN are both below threshold
         if self.llm and self.llm.available:
@@ -966,7 +977,8 @@ class HybridChatbot:
         self,
         user_input: str,
         user_id: Optional[str] = None,
-        session_id: Optional[str] = None
+        session_id: Optional[str] = None,
+        skip_intents: bool = False,
     ) -> Tuple[str, str, float, str, dict]:
         """
         Chat with conversation tracking and NLU enhancements
@@ -974,7 +986,12 @@ class HybridChatbot:
         Returns:
             (intent, response, confidence, model_used, nlu_data)
         """
-        intent, response, confidence, model_used, nlu_data = self.predict(user_input, user_id)
+        # Conversation history keys on user_id, but anonymous web sessions may
+        # only carry a session_id — fall back so multi-turn LLM context works
+        # for them too.
+        user_id = user_id or session_id
+
+        intent, response, confidence, model_used, nlu_data = self.predict(user_input, user_id, skip_intents=skip_intents)
 
         # Track conversation
         if user_id:

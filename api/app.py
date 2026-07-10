@@ -41,6 +41,7 @@ from .ais_mcp import _sanitize_tool_error as _ais_sanitize_tool_error
 from .connectors_mcp import try_handle as _try_connectors
 from .connectors_mcp import metrics_snapshot as _connectors_metrics_snapshot
 from . import safety as _safety
+from . import campus_context as _campus
 # Phase 2A Wave 2 — per-user AIS authentication for write actions.
 from . import auth_ais as _ais_auth
 
@@ -789,6 +790,46 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         )
         request.message = safety_result.sanitized
 
+    # Campus context — CvSU has 11 campuses; "where is the campus located?"
+    # is ambiguous. Remember the session's campus, clarify when unknown
+    # (suggestions become clickable campus chips), and rewrite follow-ups to
+    # carry the campus so intents/charter-RAG/LLM retrieve the right one.
+    campus_routing = _campus.resolve(
+        request.session_id or request.user_id, request.message
+    )
+    if campus_routing.action == "clarify":
+        clarify_text = _campus.CLARIFY_TEXT
+        message_id = chat_logger.log_chat(
+            user_id=request.user_id or "anonymous",
+            user_message=request.message,
+            bot_response=clarify_text,
+            intent="campus_disambiguation",
+            confidence=1.0,
+            model_used="CampusContext (clarify)",
+            session_id=request.session_id,
+            response_time_ms=(time.time() - start_time) * 1000,
+        )
+        return ChatResponse(
+            message_id=message_id,
+            user_id=request.user_id,
+            session_id=request.session_id,
+            text=clarify_text,
+            summary=None,
+            intent="campus_disambiguation",
+            confidence=1.0,
+            source=ResponseSource.FALLBACK,
+            refusal_reason=None,
+            cards=[],
+            context=None,
+            suggestions=_campus.CLARIFY_SUGGESTIONS,
+            display_hint=DisplayHint.TEXT_ONLY,
+        )
+    campus_grounded = campus_routing.action in ("augment", "answer_pending")
+    if campus_grounded:
+        # A canned intent answer would drop the campus the rewrite added —
+        # send these to the deep tiers (charter RAG + LLM) instead.
+        request.message = campus_routing.message
+
     # AIS MCP short-circuit — if the query looks like a finance/accounting
     # lookup (DV name, budget balance, RAPAL/RAOD report, UACS lookup),
     # answer it from the AIS MCP server instead of the student-facing NLU.
@@ -835,7 +876,8 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
             intent, response, confidence, model_used, nlu_data = chatbot.chat(
                 request.message,
                 user_id=request.user_id,
-                session_id=request.session_id
+                session_id=request.session_id,
+                skip_intents=campus_grounded,
             )
             if ais_failure_note:
                 response = f"{ais_failure_note}\n\n{response}"
