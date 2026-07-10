@@ -10,37 +10,69 @@ Graded categories, priority order:
   abuse      → profanity/insult DIRECTED at a person or the bot → boundary
   intensifier→ profanity as seasoning around a real ask → sanitize, continue
 
-False-positive guards (the other direction matters just as much):
-word-boundary regexes on a leetspeak-normalized copy, no bare high-risk
-substrings ("ass", "hayop", "leche" alone are legitimate words/phrases),
-explicit lookaheads (puta≠putahe, leche≠leche flan). test_safety_gate.py
-carries a benign trap corpus that must never trip.
+Profanity matching is powered by the Philippine Profanity Lexicon at
+data/profanities/ph_profanity_lexicon.json (207 entries, 328 variants,
+10 PH languages) and follows its own matching_guidance:
+  • normalization: lowercase, diacritic fold, leetspeak map, collapse 3+
+    repeated letters, separator-squeeze for severe multiword phrases
+  • boundaries: word boundaries for short/mild terms; substring only for
+    severity>=3 terms longer than 5 chars
+  • allowlist masked out BEFORE matching (putahe, puto, reputasyon, …)
+  • context_dependent entries (identity terms like bakla/bayot — "do not
+    auto-block") only count with hostile framing (directed marker nearby)
+If the lexicon file is unreadable the gate falls back to a built-in regex —
+the front door never goes unguarded.
 """
 from __future__ import annotations
 
+import json
+import logging
+import os
 import re
 import time
+import unicodedata
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Optional
 
+_logger = logging.getLogger("diwa.safety")
+
+_LEXICON_PATH = os.environ.get(
+    "SAFETY_LEXICON_PATH",
+    os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "data", "profanities", "ph_profanity_lexicon.json",
+    ),
+)
+
 # ─────────────────────────────────────────────────────────────────────────────
-# Normalization — collapse the usual masking so t@ngina / p0ta / f*ck match.
+# Normalization — per the lexicon's matching_guidance.
 # ─────────────────────────────────────────────────────────────────────────────
 
-_LEET = str.maketrans({"@": "a", "0": "o", "1": "i", "3": "e", "5": "s", "$": "s", "!": "i"})
+_LEET = str.maketrans(
+    {"@": "a", "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "$": "s", "!": "i"}
+)
 
 
 def _normalize(text: str) -> str:
-    t = text.lower().translate(_LEET)
-    t = t.replace("*", "")          # f*ck -> fck (patterns cover vowel-dropped forms)
-    t = re.sub(r"[^\w\sñ]", " ", t)  # punctuation to spaces, keep ñ
+    t = unicodedata.normalize("NFC", text).lower().translate(_LEET)
+    t = "".join(
+        c for c in unicodedata.normalize("NFD", t) if unicodedata.category(c) != "Mn"
+    )  # fold diacritics (ñ -> n)
+    t = t.replace("*", "")
+    t = re.sub(r"(.)\1{2,}", r"\1", t)      # gagooo -> gago
+    t = re.sub(r"[^\w\s]", " ", t)
     return re.sub(r"\s+", " ", t).strip()
 
 
+def _squeeze(text: str) -> str:
+    """Separator-stripped copy for severe multiword phrases (t a n g i n a)."""
+    return re.sub(r"[\s._-]+", "", text)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
-# Lexicons (EN + Filipino/Taglish). Word-boundary anchored; keep entries
-# specific — when a bare word is also a legitimate word, require the phrase.
+# Self-harm and threats — outside the lexicon's scope, kept as curated rules.
+# NOTE: patterns run on _normalize()d text — apostrophes are already spaces.
 # ─────────────────────────────────────────────────────────────────────────────
 
 _SELF_HARM_RE = re.compile(
@@ -51,8 +83,6 @@ _SELF_HARM_RE = re.compile(
     re.IGNORECASE,
 )
 
-# NOTE: patterns run on _normalize()d text — apostrophes are already spaces,
-# so "i'm"/"i'll" arrive as "i m"/"i ll".
 _THREAT_RE = re.compile(
     r"\b(i ?(?:will|ll|m going to|am going to|wanna|want to|gonna)\s+(?:hurt|kill|stab|shoot|attack|beat up)\s+"
     r"(?:you|him|her|them|someone|somebody|my|the|that)"
@@ -63,10 +93,8 @@ _THREAT_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Profanity/insults. NOTE the guards: puta(?!he) spares "putahe" (a dish),
-# leche(?! ?flan) spares the dessert, tanga(?:ng)?\b avoids "tangan",
-# "hayop"/"ass" appear only inside directed phrases, never bare.
-_PROFANITY_RE = re.compile(
+# Fallback profanity matcher — used only when the lexicon can't be loaded.
+_FALLBACK_PROFANITY_RE = re.compile(
     r"\b(puta(?!he)\w*|putang ?ina\w*|(?:t|k)ang ?ina\w*|kinang ?ina\w*|king ?ina\w*"
     r"|tarantado\w*|gago\w*|gaga\b|tanga(?:ng)?\b|bobo(?:ng)?\b|inutil|ulol|ungas"
     r"|hinayupak|hayop ka\w*|buwisit\w*|bwisit\w*|leche(?! ?flan)\w*|lintik\w*"
@@ -76,10 +104,132 @@ _PROFANITY_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Second-person markers that turn profanity into directed abuse when they sit
-# within a few characters of the match ("tanga KA", "tangina MO", "stupid BOT").
 _DIRECTED_RE = re.compile(r"\b(ka|kayo|kita|mo|niyo|nyo|you|u|ur|your|bot|diwa)\b", re.IGNORECASE)
-_DIRECTED_WINDOW = 12  # chars around the profanity match to scan for a marker
+_DIRECTED_WINDOW = 12
+_DIRECTED_SUFFIXES = ("mo", "ka", "kita", "you", "kayo", "nyo")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Lexicon loading — compiled once, lazily.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class _Lexicon:
+    def __init__(self, path: str):
+        self.loaded = False
+        self.version: Optional[str] = None
+        self.entry_count = 0
+        self.form_count = 0
+        try:
+            with open(path, encoding="utf-8") as fh:
+                data = json.load(fh)
+        except Exception as exc:  # noqa: BLE001 — fail soft, fallback regex guards
+            _logger.warning("profanity lexicon not loaded (%s) — using built-in fallback", exc)
+            return
+
+        # (normalized form, severity, is_slur, context_dependent)
+        forms: list[tuple[str, int, bool, bool]] = []
+        for entry in data.get("entries", []):
+            severity = int(entry.get("severity", 2))
+            slur = bool(entry.get("is_slur"))
+            # False friends ("boto" = vote, "atay" = liver) are innocent
+            # without hostile framing — same directed-only treatment as
+            # context-dependent identity terms (matching_guidance).
+            ctx = bool(entry.get("context_dependent")) or bool(entry.get("false_friends"))
+            for raw in [entry.get("term", "")] + list(entry.get("variants") or []):
+                form = _normalize(raw)
+                if form:
+                    forms.append((form, severity, slur, ctx))
+
+        self._meta = {f: (sev, slur, ctx) for f, sev, slur, ctx in forms}
+
+        def _alt(items: list[str]) -> Optional[re.Pattern]:
+            if not items:
+                return None
+            items = sorted(set(items), key=len, reverse=True)
+            return re.compile(
+                r"\b(" + "|".join(re.escape(i) for i in items) + r")\b", re.IGNORECASE
+            )
+
+        # Pools per matching_guidance.boundaries. Context-dependent forms sit
+        # in their own pool: they only count with a directed marker nearby.
+        ctx_forms = [f for f, _, _, c in forms if c]
+        plain = [(f, s) for f, s, _, c in forms if not c]
+        self._ctx_re = _alt(ctx_forms)
+        self._bound_re = _alt([f for f, s in plain if len(f) <= 4 or s <= 2])
+        sub_forms = sorted(
+            {f for f, s in plain if s >= 3 and len(f) > 5}, key=len, reverse=True
+        )
+        self._sub_re = (
+            re.compile("(" + "|".join(re.escape(f) for f in sub_forms) + ")", re.IGNORECASE)
+            if sub_forms
+            else None
+        )
+        # Severe multiword phrases, matched against separator-squeezed text.
+        squeezed = sorted(
+            {_squeeze(f) for f, s in plain if s >= 3 and " " in f}, key=len, reverse=True
+        )
+        self._squeezed_re = (
+            re.compile("(" + "|".join(re.escape(f) for f in squeezed) + ")", re.IGNORECASE)
+            if squeezed
+            else None
+        )
+        # Allowlist phrases are masked out of the text before any matching.
+        allow = [_normalize(a.get("phrase", "")) for a in data.get("allowlist", [])]
+        self._allow_re = (
+            re.compile(
+                r"\b(" + "|".join(re.escape(a) for a in sorted(set(allow), key=len, reverse=True) if a) + r")\w*",
+                re.IGNORECASE,
+            )
+            if allow
+            else None
+        )
+
+        self.version = data.get("version")
+        self.entry_count = int(data.get("entry_count") or len(data.get("entries", [])))
+        self.form_count = len(forms)
+        self.loaded = True
+        _logger.info(
+            "profanity lexicon v%s loaded: %d entries, %d forms",
+            self.version, self.entry_count, self.form_count,
+        )
+
+    def mask_allowlist(self, norm: str) -> str:
+        return self._allow_re.sub(" ", norm) if self._allow_re else norm
+
+    def find(self, masked: str) -> tuple[list[str], list[str]]:
+        """Return (counted_hits, directed_only_hits_pending_evidence)."""
+        hits: list[str] = []
+        pending: list[str] = []
+        for pattern in (self._bound_re, self._sub_re):
+            if pattern:
+                hits.extend(m.group(0) for m in pattern.finditer(masked))
+        if self._squeezed_re:
+            hits.extend(m.group(0) for m in self._squeezed_re.finditer(_squeeze(masked)))
+        if self._ctx_re:
+            pending.extend(m.group(0) for m in self._ctx_re.finditer(masked))
+        return hits, pending
+
+    def severity(self, form: str) -> int:
+        return self._meta.get(_normalize(form), (2, False, False))[0]
+
+    def is_slur(self, form: str) -> bool:
+        return self._meta.get(_normalize(form), (2, False, False))[1]
+
+
+_lexicon: Optional[_Lexicon] = None
+
+
+def _get_lexicon() -> _Lexicon:
+    global _lexicon
+    if _lexicon is None:
+        _lexicon = _Lexicon(_LEXICON_PATH)
+    return _lexicon
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Classification
+# ─────────────────────────────────────────────────────────────────────────────
 
 
 @dataclass
@@ -87,35 +237,67 @@ class SafetyResult:
     category: Optional[str]        # self_harm | threat | abuse | intensifier | None
     matches: list = field(default_factory=list)
     sanitized: str = ""            # message with profanity removed (intensifier path)
+    max_severity: int = 0
+
+
+def _directed_near(norm: str, token: str) -> bool:
+    token_l = token.lower()
+    if token_l.replace(" ", "").endswith(_DIRECTED_SUFFIXES):
+        return True
+    for m in re.finditer(re.escape(token_l), norm):
+        lo = max(0, m.start() - _DIRECTED_WINDOW)
+        hi = min(len(norm), m.end() + _DIRECTED_WINDOW)
+        if _DIRECTED_RE.search(norm[lo:hi]):
+            return True
+    return False
+
+
+def _sanitize(original: str, tokens: list[str]) -> str:
+    out = original
+    for token in sorted(set(tokens), key=len, reverse=True):
+        # Separator-tolerant pattern so "t a n g-i n a" is removed too.
+        pattern = r"[\W_]{0,2}".join(re.escape(c) for c in _squeeze(token))
+        out = re.sub(pattern, " ", out, flags=re.IGNORECASE)
+    return re.sub(r"\s+", " ", out).strip(" ,.!?")
 
 
 def classify(text: str) -> SafetyResult:
     if not text or not text.strip():
         return SafetyResult(None)
+    lex = _get_lexicon()
     norm = _normalize(text)
+    masked = lex.mask_allowlist(norm) if lex.loaded else norm
 
-    if m := _SELF_HARM_RE.search(norm):
+    if m := _SELF_HARM_RE.search(masked):
         return SafetyResult("self_harm", [m.group(0)])
-    if m := _THREAT_RE.search(norm):
+    if m := _THREAT_RE.search(masked):
         return SafetyResult("threat", [m.group(0)])
 
-    hits = list(_PROFANITY_RE.finditer(norm))
+    # The lexicon is PH-focused; its guidance says to run English lists
+    # alongside. The built-in regex stays in the union so generic English
+    # insults (stupid bot, asshole) keep tripping.
+    hits = [m.group(0) for m in _FALLBACK_PROFANITY_RE.finditer(masked)]
+    hard_slur = False
+    if lex.loaded:
+        lex_hits, pending = lex.find(masked)
+        # Context-dependent / false-friend terms count only with hostile framing.
+        lex_hits += [p for p in pending if _directed_near(masked, p)]
+        seen = {h.lower() for h in hits}
+        hits += [h for h in lex_hits if h.lower() not in seen]
+        # Non-context-dependent slurs are never "seasoning".
+        hard_slur = any(lex.is_slur(h) for h in lex_hits)
     if not hits:
         return SafetyResult(None)
+    max_sev = max((lex.severity(h) for h in hits), default=2) if lex.loaded else 3
+    directed = any(_directed_near(masked, h) for h in hits)
 
-    for m in hits:
-        lo = max(0, m.start() - _DIRECTED_WINDOW)
-        hi = min(len(norm), m.end() + _DIRECTED_WINDOW)
-        if _DIRECTED_RE.search(norm[lo:hi]) or m.group(0).lower().endswith(("mo", "ka", "kita", "you")):
-            return SafetyResult("abuse", [m.group(0) for m in hits])
+    if directed or hard_slur:
+        return SafetyResult("abuse", hits, max_severity=max_sev)
 
-    # Intensifier: profanity but not directed. Sanitize and, if a real ask
-    # remains, let the cascade answer it; otherwise treat as abuse-lite.
-    sanitized = _PROFANITY_RE.sub(" ", text)
-    sanitized = re.sub(r"\s+", " ", sanitized).strip(" ,.!?")
+    sanitized = _sanitize(text, hits)
     if len(re.findall(r"[A-Za-zñÑ]{3,}", sanitized)) >= 2:
-        return SafetyResult("intensifier", [m.group(0) for m in hits], sanitized)
-    return SafetyResult("abuse", [m.group(0) for m in hits])
+        return SafetyResult("intensifier", hits, sanitized, max_severity=max_sev)
+    return SafetyResult("abuse", hits, max_severity=max_sev)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -160,12 +342,13 @@ _stats: dict = {"self_harm": 0, "threat": 0, "abuse": 0, "intensifier": 0}
 _recent: deque = deque(maxlen=20)
 
 
-def record(category: str, message: str, session_id: Optional[str]) -> None:
+def record(category: str, message: str, session_id: Optional[str], max_severity: int = 0) -> None:
     _stats[category] = _stats.get(category, 0) + 1
     _recent.append(
         {
             "at": time.strftime("%Y-%m-%d %H:%M:%S"),
             "category": category,
+            "severity": max_severity or None,
             "message": message[:120],
             "session_id": session_id,
         }
@@ -173,4 +356,14 @@ def record(category: str, message: str, session_id: Optional[str]) -> None:
 
 
 def snapshot() -> dict:
-    return {"counts": dict(_stats), "recent": list(_recent)}
+    lex = _get_lexicon()
+    return {
+        "counts": dict(_stats),
+        "recent": list(_recent),
+        "lexicon": {
+            "loaded": lex.loaded,
+            "version": lex.version,
+            "entries": lex.entry_count,
+            "forms": lex.form_count,
+        },
+    }

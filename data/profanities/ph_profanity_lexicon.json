@@ -1,0 +1,6899 @@
+{
+  "name": "ph-profanity-lexicon",
+  "title": "Philippine Profanity & Offensive-Language Lexicon",
+  "version": "0.1.0",
+  "generated": "2026-07-10",
+  "description": "Lexicon of profanity, vulgarity, slurs, euphemisms and minced oaths across Philippine languages plus English/Spanish loans as used in code-switched Philippine speech. Built for content moderation, NLP research, and linguistics reference.",
+  "intended_use": "Profanity detection/filtering, toxicity-dataset bootstrapping, linguistic reference. NOT for generating harassment. Identity terms flagged context_dependent must not be auto-blocked.",
+  "license_recommendation": "Data: CC BY-SA 4.0; code wrappers: MIT (see README)",
+  "severity_scale": {
+    "1": "mild - impolite interjections, teasing (log-only in most moderation)",
+    "2": "moderate - clear insults; often playful among friends (review queue)",
+    "3": "strong - vulgar anatomy/acts, strong insults, most slurs (block by default)",
+    "4": "severe - mother-directed curses, gravest slurs and threats (block)"
+  },
+  "registers": {
+    "formal": "usable in formal/literary prose yet still insulting (e.g. mangmang)",
+    "standard": "established everyday word, dictionary-attested",
+    "slang": "street/youth/swardspeak currency",
+    "euphemism": "minced/softened substitute (pucha, yati, coconana)",
+    "textspeak": "chat abbreviation (reserved; textspeak forms mostly live in variants)",
+    "archaic": "historical, kept for linguistic completeness"
+  },
+  "languages": {
+    "tgl": {
+      "name": "Tagalog / Filipino",
+      "iso639_3": "tgl",
+      "note": "Filipino (fil) is the standardized register built on Tagalog; entries apply to both.",
+      "entry_count": 112
+    },
+    "ceb": {
+      "name": "Cebuano / Bisaya",
+      "iso639_3": "ceb",
+      "entry_count": 24
+    },
+    "ilo": {
+      "name": "Ilocano",
+      "iso639_3": "ilo",
+      "entry_count": 8
+    },
+    "hil": {
+      "name": "Hiligaynon / Ilonggo",
+      "iso639_3": "hil",
+      "entry_count": 17
+    },
+    "war": {
+      "name": "Waray-Waray",
+      "iso639_3": "war",
+      "entry_count": 4
+    },
+    "bcl": {
+      "name": "Bikol Central",
+      "iso639_3": "bcl",
+      "entry_count": 11
+    },
+    "pam": {
+      "name": "Kapampangan",
+      "iso639_3": "pam",
+      "entry_count": 9
+    },
+    "pag": {
+      "name": "Pangasinan",
+      "iso639_3": "pag",
+      "entry_count": 3
+    },
+    "cbk": {
+      "name": "Chavacano (Zamboangueño)",
+      "iso639_3": "cbk",
+      "entry_count": 10
+    },
+    "eng": {
+      "name": "English (Philippine code-switching)",
+      "iso639_3": "eng",
+      "note": "English profanity as used in Taglish/Bislish, incl. localized spellings.",
+      "entry_count": 9
+    }
+  },
+  "sources": {
+    "wp": {
+      "title": "Wikipedia - Tagalog profanity",
+      "url": "https://en.wikipedia.org/wiki/Tagalog_profanity",
+      "type": "encyclopedia"
+    },
+    "lingopie": {
+      "title": "Lingopie - 30+ Tagalog Swear Words",
+      "url": "https://lingopie.com/blog/tagalog-swear-words/",
+      "type": "language-blog"
+    },
+    "spotph": {
+      "title": "Spot.ph - Meaning of Popular Filipino Bad Words",
+      "url": "https://www.spot.ph/newsfeatures/the-latest-news-features/87051/meaning-of-filipino-bad-words-like-leche-gago-and-yawa-a833-20210812",
+      "type": "magazine"
+    },
+    "talkbisaya": {
+      "title": "TalkBisaya - Bisaya Bad Words",
+      "url": "https://www.talkbisaya.com/bisaya-bad-words",
+      "type": "language-blog"
+    },
+    "bisdak": {
+      "title": "Bisdak Words - Common Bisaya Swear Words",
+      "url": "https://bisdakwords.com/common-bisaya-swear-words/",
+      "type": "language-blog"
+    },
+    "gelhmo": {
+      "title": "Gelhmo - Hiligaynon Bad/Curse Words to Know",
+      "url": "https://gelhmo.com/hiligaynon-bad-curse-words-to-know/",
+      "type": "language-blog"
+    },
+    "aninipot": {
+      "title": "The Aninipot - How to Swear in Bikol (6 common curse words)",
+      "url": "https://theaninipot.wordpress.com/2016/01/16/how-to-swear-in-bikol-6-most-commonly-used-bikol-curse-words-and-how-to-use-them-correctly/",
+      "type": "blog"
+    },
+    "sunstar": {
+      "title": "SunStar - Tantingco: Are Kapampangans Foul-mouthed?",
+      "url": "https://www.sunstar.com.ph/more-articles/tantingco-are-kapampangans-foul-mouthed",
+      "type": "newspaper-column"
+    },
+    "fb-pampanga": {
+      "title": "Taga Pampanga Ku - Dana, Nakputa and other 'offensive' Kapampangan words",
+      "url": "https://m.facebook.com/tagapampangakuofficial/photos/904183026423877/",
+      "type": "community-page"
+    },
+    "bienchabacano": {
+      "title": "Bien Chabacano - The F Word in Chabacano",
+      "url": "https://bienchabacano.blogspot.com/2010/09/f-word-in-chabacano.html",
+      "type": "language-blog"
+    },
+    "warayblogger": {
+      "title": "WarayBlogger - What is Iroy?",
+      "url": "https://www.warayblogger.com/2012/01/waray-tutorial-what-is-iroy.html",
+      "type": "language-blog"
+    },
+    "glosbe-pag": {
+      "title": "Glosbe Pangasinan-English dictionary (ambagel)",
+      "url": "https://glosbe.com/pag/en/ambagel",
+      "type": "dictionary"
+    },
+    "kaikki": {
+      "title": "Kaikki.org Cebuano dictionary (Wiktionary extract): kayat/kayata",
+      "url": "https://kaikki.org/dictionary/Cebuano/meaning/k/ka/kayata.html",
+      "type": "dictionary"
+    },
+    "quora-ceb": {
+      "title": "Quora - Cebuano 'kayata' vs 'kulira/kulera'",
+      "url": "https://www.quora.com/What-s-the-difference-between-the-Cebuano-swear-words-kayata-and-kulira-kulera-Are-they-used-in-the-same-way-What-does-the-expression-puwa-og-ulok-mean",
+      "type": "forum"
+    },
+    "model": {
+      "title": "Compiler knowledge (Claude) - native-level familiarity with Philippine usage",
+      "url": null,
+      "type": "compiler-knowledge",
+      "note": "Entries citing only this source should get native-speaker review before production use."
+    }
+  },
+  "matching_guidance": {
+    "normalization": [
+      "lowercase + Unicode NFC before matching",
+      "fold diacritics (n-tilde -> n) but preserve original for display",
+      "collapse 3+ repeated letters to one (gagooo -> gago)",
+      "strip separators (spaces, dots, hyphens, asterisks) when checking multi-word severity>=3 phrases (t a n g i n a)",
+      "apply leetspeak map: 0->o 1->i 3->e 4->a 5->s 7->t @->a $->s (g4go -> gago)"
+    ],
+    "boundaries": [
+      "require word boundaries for terms with length <= 4 OR severity <= 2",
+      "require word boundaries for ALL textspeak variants (pi, amp, bs, mf, sob)",
+      "substring matching only for severity >= 3 terms longer than 5 chars, and still subject to the allowlist"
+    ],
+    "language_hinting": [
+      "false friends (puke, buto, libog, agi, boto, burat, atay, supot) must not fire without a language hint or language-ID pass",
+      "code-switching is the norm: run Tagalog+English+regional lists together, then resolve conflicts via the allowlist"
+    ],
+    "context_dependence": [
+      "entries with context_dependent=true (esp. identity terms bakla/bayot/agi/badi/tomboy/bading) need hostile-context evidence (e.g. second-person attack frames 'ka'/'mo', toxicity score) before flagging",
+      "several expletives are affectionate among friends (anakputa in Kapampangan, buang in Cebuano) - prefer review queues over hard blocks at severity 2"
+    ],
+    "phrase_exceptions": [
+      "allowlist phrases always override token hits (leche flan vs leche)"
+    ],
+    "recommended_thresholds": {
+      "block": "severity >= 3",
+      "review_queue": "severity == 2",
+      "log_only": "severity == 1"
+    }
+  },
+  "allowlist": [
+    {
+      "phrase": "putahe",
+      "lang": "tgl",
+      "reason": "dish/course (fr. Sp. potaje)",
+      "collides_with": "tgl-puta"
+    },
+    {
+      "phrase": "puto",
+      "lang": "tgl",
+      "reason": "rice cake (Sp. 'puto' is vulgar, Filipino 'puto' is food)",
+      "collides_with": "tgl-puta"
+    },
+    {
+      "phrase": "disputa",
+      "lang": "tgl",
+      "reason": "dispute",
+      "collides_with": "tgl-puta"
+    },
+    {
+      "phrase": "reputasyon",
+      "lang": "tgl",
+      "reason": "reputation",
+      "collides_with": "tgl-puta"
+    },
+    {
+      "phrase": "deputado",
+      "lang": "tgl",
+      "reason": "deputy",
+      "collides_with": "tgl-puta"
+    },
+    {
+      "phrase": "magaganda",
+      "lang": "tgl",
+      "reason": "beautiful (plural)",
+      "collides_with": "tgl-gago"
+    },
+    {
+      "phrase": "kagagawan",
+      "lang": "tgl",
+      "reason": "deed / doing",
+      "collides_with": "tgl-gago"
+    },
+    {
+      "phrase": "pagtae",
+      "lang": "tgl",
+      "reason": "bowel movement (clinical)",
+      "collides_with": "tgl-tae"
+    },
+    {
+      "phrase": "pagtatae",
+      "lang": "tgl",
+      "reason": "diarrhea (clinical)",
+      "collides_with": "tgl-tae"
+    },
+    {
+      "phrase": "dumi",
+      "lang": "tgl",
+      "reason": "formal register for feces",
+      "collides_with": "tgl-tae"
+    },
+    {
+      "phrase": "leche flan",
+      "lang": "tgl",
+      "reason": "dessert",
+      "collides_with": "tgl-leche"
+    },
+    {
+      "phrase": "buto",
+      "lang": "tgl",
+      "reason": "bone / seed (Tagalog)",
+      "collides_with": "ilo-buto"
+    },
+    {
+      "phrase": "suso",
+      "lang": "tgl",
+      "reason": "breast (non-profane, breastfeeding contexts) / snail",
+      "collides_with": null
+    },
+    {
+      "phrase": "supot",
+      "lang": "tgl",
+      "reason": "paper or plastic bag",
+      "collides_with": "tgl-supot"
+    },
+    {
+      "phrase": "tsaka",
+      "lang": "tgl",
+      "reason": "'and then'",
+      "collides_with": "tgl-chaka"
+    },
+    {
+      "phrase": "libog",
+      "lang": "ceb",
+      "reason": "confused (Cebuano)",
+      "collides_with": "tgl-libog"
+    },
+    {
+      "phrase": "pokpok",
+      "lang": "tgl",
+      "reason": "to hammer / pound",
+      "collides_with": "tgl-pokpok"
+    },
+    {
+      "phrase": "atay",
+      "lang": "tgl",
+      "reason": "liver (food contexts, e.g. adobong atay)",
+      "collides_with": "ceb-atay"
+    },
+    {
+      "phrase": "agi",
+      "lang": "ceb",
+      "reason": "to pass by / trace (Cebuano, Waray)",
+      "collides_with": "hil-agi"
+    },
+    {
+      "phrase": "boto",
+      "lang": "tgl",
+      "reason": "vote / ballot",
+      "collides_with": "bcl-boto"
+    },
+    {
+      "phrase": "puke",
+      "lang": "eng",
+      "reason": "to vomit (English)",
+      "collides_with": "tgl-puke"
+    },
+    {
+      "phrase": "kiki",
+      "lang": "eng",
+      "reason": "party/gossip session (ballroom slang); pet name",
+      "collides_with": "tgl-kiki"
+    },
+    {
+      "phrase": "pepe",
+      "lang": "eng",
+      "reason": "Spanish nickname for Jose; meme name",
+      "collides_with": "tgl-pepe"
+    },
+    {
+      "phrase": "amp",
+      "lang": "eng",
+      "reason": "ampere / amplifier",
+      "collides_with": "tgl-amputa"
+    },
+    {
+      "phrase": "pi",
+      "lang": "eng",
+      "reason": "the number pi; initials",
+      "collides_with": "tgl-putang-ina"
+    },
+    {
+      "phrase": "scunthorpe",
+      "lang": "eng",
+      "reason": "place name (classic substring false positive)",
+      "collides_with": null
+    },
+    {
+      "phrase": "class",
+      "lang": "eng",
+      "reason": "substring 'ass' test word",
+      "collides_with": null
+    },
+    {
+      "phrase": "assessment",
+      "lang": "eng",
+      "reason": "substring 'ass' test word",
+      "collides_with": null
+    },
+    {
+      "phrase": "bass",
+      "lang": "eng",
+      "reason": "substring 'ass' test word",
+      "collides_with": null
+    }
+  ],
+  "entry_count": 207,
+  "entries": [
+    {
+      "id": "bcl-boto",
+      "term": "boto",
+      "lang": "bcl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "penis (vulgar)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "'boto' = vote in Tagalog/Bikol civic usage — innocent and extremely common"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "aninipot"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "bcl-buraot",
+      "term": "buraot",
+      "lang": "bcl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "mooch; greedy freeloader",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Bikol slang that spread nationally through memes and showbiz.",
+      "false_friends": [],
+      "also_used_in": [
+        "tgl"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "bcl-buray",
+      "term": "buray",
+      "lang": "bcl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "vagina (vulgar)",
+      "literal_en": null,
+      "variants": [
+        "buday"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "aninipot",
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "bcl-buray-ni-ina-mo",
+      "term": "buray ni ina mo",
+      "lang": "bcl",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 4,
+      "categories": [
+        "sexual-anatomy",
+        "family-honor"
+      ],
+      "gloss_en": "your mother's vagina — the heavy Bikol curse",
+      "literal_en": null,
+      "variants": [
+        "burayniinamo",
+        "buray ni ina"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "severe"
+    },
+    {
+      "id": "bcl-etoks",
+      "term": "etoks",
+      "lang": "bcl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "annoying attention-seeker (from 'stalker')",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "low",
+      "sources": [
+        "aninipot"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "bcl-kado",
+      "term": "kado",
+      "lang": "bcl",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "sexual-act",
+        "expletive"
+      ],
+      "gloss_en": "sex-act expletive used for frustration or surprise",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "aninipot"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "bcl-lintian",
+      "term": "lintian",
+      "lang": "bcl",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "expletive",
+        "malediction"
+      ],
+      "gloss_en": "lightning-curse (cf. lintik/linte)",
+      "literal_en": null,
+      "variants": [
+        "linti"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "bcl-masimot",
+      "term": "masimot",
+      "lang": "bcl",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "malediction"
+      ],
+      "gloss_en": "'may you be eaten (by an aswang)' — ill-wishing curse",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Invokes the aswang of Bikol folklore.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "aninipot"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "bcl-masing-gan",
+      "term": "masing-gan",
+      "lang": "bcl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "motor-mouth; nag (from 'machine gun')",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "English 'machine gun'",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "aninipot"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "bcl-pisot",
+      "term": "pisot",
+      "lang": "bcl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "masculinity-taunt"
+      ],
+      "gloss_en": "uncircumcised (taunt; cf. Tagalog 'supot')",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "bcl-uyam",
+      "term": "uyam",
+      "lang": "bcl",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "expression of deep annoyance/frustration",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "aninipot"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "cbk-carajo",
+      "term": "carajo",
+      "lang": "cbk",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "damn it (Spanish 'carajo')",
+      "literal_en": null,
+      "variants": [
+        "karaho"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "cbk-chinga",
+      "term": "chinga",
+      "lang": "cbk",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 4,
+      "categories": [
+        "expletive",
+        "sexual-act"
+      ],
+      "gloss_en": "fuck (the Chavacano F-word)",
+      "literal_en": null,
+      "variants": [
+        "chinga vos",
+        "chingar"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'chingar'",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "bienchabacano"
+      ],
+      "severity_label": "severe"
+    },
+    {
+      "id": "cbk-chingona",
+      "term": "chingona",
+      "lang": "cbk",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "female-directed 'chinga' derivative — offensive, though sometimes affectionate between close friends",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "bienchabacano"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "cbk-cono",
+      "term": "coño",
+      "lang": "cbk",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy",
+        "expletive"
+      ],
+      "gloss_en": "cunt; damn (retains full Spanish vulgarity in Chavacano)",
+      "literal_en": null,
+      "variants": [
+        "cono",
+        "konyo"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "Manila slang 'conyo/konyo' = posh rich kid — mild tease, not vulgar"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "bienchabacano"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "cbk-cono-de-vos-nana",
+      "term": "coño de vos nana",
+      "lang": "cbk",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 4,
+      "categories": [
+        "sexual-anatomy",
+        "family-honor"
+      ],
+      "gloss_en": "your mother's cunt",
+      "literal_en": null,
+      "variants": [
+        "conyobohnana",
+        "coño vos nana",
+        "cono de vos nana"
+      ],
+      "euphemisms": [
+        "coconana",
+        "chipla te"
+      ],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "bienchabacano"
+      ],
+      "severity_label": "severe"
+    },
+    {
+      "id": "cbk-de-mal-herencia",
+      "term": "de mal herencia",
+      "lang": "cbk",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character",
+        "family-honor"
+      ],
+      "gloss_en": "of bad breeding / bad blood",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "bienchabacano"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "cbk-maleducao",
+      "term": "maleducao",
+      "lang": "cbk",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "ill-mannered; rude",
+      "literal_en": null,
+      "variants": [
+        "mal educao"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "bienchabacano"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "cbk-pendejo",
+      "term": "pendejo",
+      "lang": "cbk",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "idiot; coward",
+      "literal_en": null,
+      "variants": [
+        "pendeja"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "bienchabacano"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "cbk-salvaje",
+      "term": "salvaje",
+      "lang": "cbk",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "savage; brute (cf. Tagalog 'salbahe')",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "bienchabacano"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "cbk-tonto",
+      "term": "tonto",
+      "lang": "cbk",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "fool",
+      "literal_en": null,
+      "variants": [
+        "tonta"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "bienchabacano"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-amaw",
+      "term": "amaw",
+      "lang": "ceb",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "fool; dimwit",
+      "literal_en": null,
+      "variants": [
+        "amew"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "talkbisaya",
+        "bisdak"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-animal",
+      "term": "animal",
+      "lang": "ceb",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "animal-comparison"
+      ],
+      "gloss_en": "beast! — person without manners",
+      "literal_en": null,
+      "variants": [
+        "animel",
+        "animala",
+        "nimal",
+        "animal ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "hil",
+        "tgl"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "bisdak",
+        "gelhmo"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-atay",
+      "term": "atay",
+      "lang": "ceb",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "'liver!' — damn / shoot",
+      "literal_en": "liver",
+      "variants": [
+        "ataya",
+        "atay atay",
+        "taya"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Everyday frustration word; escalates in combos ('ataya sad nimo oy').",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "talkbisaya",
+        "bisdak"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "ceb-bayot",
+      "term": "bayot",
+      "lang": "ceb",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "slur-homophobic"
+      ],
+      "gloss_en": "gay man — neutral identity term in-group; slur in hostile use; also 'coward' taunt",
+      "literal_en": null,
+      "variants": [
+        "bayut",
+        "bayota",
+        "bayot ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Same moderation caution as Tagalog 'bakla': do not auto-block.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "homophobic",
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-bilat",
+      "term": "bilat",
+      "lang": "ceb",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "vagina (vulgar)",
+      "literal_en": null,
+      "variants": [
+        "bilata",
+        "bilat nimo"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Recognized (and offensive) far beyond the Visayas.",
+      "false_friends": [],
+      "also_used_in": [
+        "hil"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "gelhmo",
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "ceb-bilat-sa-iyang-ina",
+      "term": "bilat sa iyang ina",
+      "lang": "ceb",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 4,
+      "categories": [
+        "sexual-anatomy",
+        "family-honor"
+      ],
+      "gloss_en": "his/her mother's vagina — top-tier Bisaya curse",
+      "literal_en": null,
+      "variants": [
+        "bilat sa imong ina",
+        "bilat sa ina",
+        "bilatsaiyangina",
+        "bsii"
+      ],
+      "euphemisms": [
+        "bilat sa manok"
+      ],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "severe"
+    },
+    {
+      "id": "ceb-bilat-sa-manok",
+      "term": "bilat sa manok",
+      "lang": "ceb",
+      "pos": "phrase",
+      "register": "euphemism",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "'chicken's vagina' — jokey minced form of the mother curse",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "ceb-bisong",
+      "term": "bisong",
+      "lang": "ceb",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "vagina (vulgar, Cebu street usage)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "ceb-bogo",
+      "term": "bogo",
+      "lang": "ceb",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "stupid; slow-witted",
+      "literal_en": null,
+      "variants": [
+        "bogo-bogo",
+        "ka bogo"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "talkbisaya"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-buang",
+      "term": "buang",
+      "lang": "ceb",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-mental"
+      ],
+      "gloss_en": "crazy; fool",
+      "literal_en": null,
+      "variants": [
+        "boang",
+        "buanga",
+        "buang-buang",
+        "binuang",
+        "buing",
+        "kabuang"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Ranges from playful teasing to genuine insult depending on tone.",
+      "false_friends": [],
+      "also_used_in": [
+        "hil",
+        "war",
+        "tgl"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "talkbisaya",
+        "bisdak",
+        "lingopie",
+        "gelhmo"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-giatay",
+      "term": "giatay",
+      "lang": "ceb",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "expletive",
+        "malediction"
+      ],
+      "gloss_en": "'struck by (chicken) liver-plague' — damn it / drop dead",
+      "literal_en": null,
+      "variants": [
+        "gi-atay",
+        "giatay!",
+        "giatayng"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "gi- (affected by) + atay (liver); references fowl pest disease",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-hungog",
+      "term": "hungog",
+      "lang": "ceb",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "stupid; dense",
+      "literal_en": null,
+      "variants": [
+        "hungug"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-iyot",
+      "term": "iyot",
+      "lang": "ceb",
+      "pos": "v",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-act"
+      ],
+      "gloss_en": "to fuck (pan-Visayan)",
+      "literal_en": null,
+      "variants": [
+        "yot",
+        "i-yot",
+        "giiyot",
+        "iyota",
+        "iyot ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "hil",
+        "war",
+        "tgl"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "gelhmo",
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "ceb-kayat",
+      "term": "kayat",
+      "lang": "ceb",
+      "pos": "v",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-act"
+      ],
+      "gloss_en": "to copulate (vulgar, dialectal)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "kaikki"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "ceb-kayata",
+      "term": "kayata",
+      "lang": "ceb",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "strong exclamation derived from 'kayat' — roughly 'fucking hell'",
+      "literal_en": null,
+      "variants": [
+        "kayatah",
+        "kayasa"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "bisdak",
+        "kaikki",
+        "quora-ceb"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-kulira",
+      "term": "kulira",
+      "lang": "ceb",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "expletive",
+        "malediction"
+      ],
+      "gloss_en": "cholera-curse — like 'giatay'",
+      "literal_en": null,
+      "variants": [
+        "kulera"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'colera' (cholera)",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "quora-ceb"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-ngitngit",
+      "term": "ngitngit",
+      "lang": "ceb",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-appearance"
+      ],
+      "gloss_en": "dark/gloomy — used to call someone ugly",
+      "literal_en": null,
+      "variants": [
+        "ngit-ngit"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "talkbisaya"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-otin",
+      "term": "otin",
+      "lang": "ceb",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "penis (vulgar)",
+      "literal_en": null,
+      "variants": [
+        "utin",
+        "otina"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "war",
+        "tgl"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "ceb-pakyas",
+      "term": "pakyas",
+      "lang": "ceb",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "failure; loser",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "talkbisaya"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-pesteng-yawa",
+      "term": "pesteng yawa",
+      "lang": "ceb",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "expletive",
+        "religious"
+      ],
+      "gloss_en": "damn devil! — intensified double expletive",
+      "literal_en": null,
+      "variants": [
+        "pisting yawa",
+        "pesting yawa"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "hil",
+        "tgl"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie",
+        "gelhmo"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-pisti",
+      "term": "pisti",
+      "lang": "ceb",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "pest! — damn",
+      "literal_en": null,
+      "variants": [
+        "piste",
+        "pisti!",
+        "piskot",
+        "piskat"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'peste' (plague)",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "hil",
+        "war"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "talkbisaya",
+        "bisdak"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-walay-ulaw",
+      "term": "walay ulaw",
+      "lang": "ceb",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "shameless",
+      "literal_en": null,
+      "variants": [
+        "way ulaw",
+        "walay ulaw ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ceb-yati",
+      "term": "yati",
+      "lang": "ceb",
+      "pos": "intj",
+      "register": "euphemism",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "minced 'yawa' — dang",
+      "literal_en": null,
+      "variants": [
+        "yatis",
+        "yati ra"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "ceb-yawa",
+      "term": "yawa",
+      "lang": "ceb",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "expletive",
+        "religious"
+      ],
+      "gloss_en": "devil! — the signature Bisaya expletive",
+      "literal_en": null,
+      "variants": [
+        "yawa!",
+        "yawaa",
+        "yaws",
+        "yawards",
+        "yawa ka",
+        "ka yawa"
+      ],
+      "euphemisms": [
+        "yati",
+        "yamat"
+      ],
+      "formal_equivalent": null,
+      "etymology": "From Malitong Yawa, a figure in the Panay epic Hinilawod; demonized under Spanish evangelization and turned into a curse",
+      "notes": "Playful among friends, strong in anger; ubiquitous across the Visayas and Mindanao.",
+      "false_friends": [],
+      "also_used_in": [
+        "war",
+        "hil",
+        "tgl"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "talkbisaya",
+        "bisdak",
+        "spotph",
+        "gelhmo"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "eng-asshole",
+      "term": "asshole",
+      "lang": "eng",
+      "pos": "expr",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "asshole",
+      "literal_en": null,
+      "variants": [
+        "a-hole",
+        "asshat"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "eng-bitch",
+      "term": "bitch",
+      "lang": "eng",
+      "pos": "expr",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "insult-character",
+        "slur-sexist"
+      ],
+      "gloss_en": "bitch (gendered insult)",
+      "literal_en": null,
+      "variants": [
+        "btch",
+        "bish",
+        "bicth"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "'bish'/'beshie-bish' can be affectionate among friends — context matters.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "sexist",
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "eng-bullshit",
+      "term": "bullshit",
+      "lang": "eng",
+      "pos": "expr",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "expletive",
+        "scatological"
+      ],
+      "gloss_en": "bullshit",
+      "literal_en": null,
+      "variants": [
+        "bs",
+        "bullsht"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "eng-damn",
+      "term": "damn",
+      "lang": "eng",
+      "pos": "expr",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "damn",
+      "literal_en": null,
+      "variants": [
+        "dammit",
+        "damn it",
+        "damn ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "eng-fuck",
+      "term": "fuck",
+      "lang": "eng",
+      "pos": "expr",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "expletive",
+        "sexual-act"
+      ],
+      "gloss_en": "fuck (freely mixed into Taglish)",
+      "literal_en": null,
+      "variants": [
+        "fck",
+        "fk",
+        "fvck",
+        "fuk",
+        "fucking",
+        "fckng"
+      ],
+      "euphemisms": [
+        "pak",
+        "pakshet",
+        "frick",
+        "eff"
+      ],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Upper/middle-class Taglish uses raw English profanity heavily.",
+      "false_friends": [],
+      "also_used_in": [
+        "tgl",
+        "ceb"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "eng-motherfucker",
+      "term": "motherfucker",
+      "lang": "eng",
+      "pos": "expr",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "expletive",
+        "family-honor"
+      ],
+      "gloss_en": "motherfucker (less common in PH usage than putang ina)",
+      "literal_en": null,
+      "variants": [
+        "mf",
+        "mofo",
+        "motherfcker"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "eng-retard",
+      "term": "retard",
+      "lang": "eng",
+      "pos": "expr",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "slur-ableist"
+      ],
+      "gloss_en": "ableist slur (borrowed intact into PH online speech)",
+      "literal_en": null,
+      "variants": [
+        "retarded",
+        "tard"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "ableist",
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "eng-shit",
+      "term": "shit",
+      "lang": "eng",
+      "pos": "expr",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "expletive",
+        "scatological"
+      ],
+      "gloss_en": "shit",
+      "literal_en": null,
+      "variants": [
+        "sht",
+        "shitty"
+      ],
+      "euphemisms": [
+        "shet",
+        "shocks",
+        "shux"
+      ],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "tgl",
+        "ceb"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "eng-son-of-a-bitch",
+      "term": "son of a bitch",
+      "lang": "eng",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "family-honor",
+        "insult-character"
+      ],
+      "gloss_en": "son of a bitch",
+      "literal_en": null,
+      "variants": [
+        "sob",
+        "sonofabitch"
+      ],
+      "euphemisms": [
+        "sanamagan",
+        "sonamagan"
+      ],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "hil-agi",
+      "term": "agi",
+      "lang": "hil",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "slur-homophobic"
+      ],
+      "gloss_en": "gay man (Ilonggo/Karay-a) — derogatory in hostile use, reclaimed by some in-group",
+      "literal_en": null,
+      "variants": [
+        "agi ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "'agi' in Cebuano/Waray = 'to pass by / trace' — innocent"
+      ],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "homophobic",
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "hil-agitot",
+      "term": "agitot",
+      "lang": "hil",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "slur-homophobic"
+      ],
+      "gloss_en": "harsher derivative of 'agi'",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "homophobic",
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "hil-alpot",
+      "term": "alpot",
+      "lang": "hil",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sex-work",
+        "insult-character"
+      ],
+      "gloss_en": "promiscuous person; whore",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "hil-batinggilan",
+      "term": "batinggilan",
+      "lang": "hil",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "stubborn; hard-headed",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "hil-bigaon",
+      "term": "biga-on",
+      "lang": "hil",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "sexual-general",
+        "insult-character"
+      ],
+      "gloss_en": "lustful / horny (typically hurled at women)",
+      "literal_en": null,
+      "variants": [
+        "bigaon"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "hil-bilat-sang-iloy-mo",
+      "term": "bilat sang iloy mo",
+      "lang": "hil",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 4,
+      "categories": [
+        "sexual-anatomy",
+        "family-honor"
+      ],
+      "gloss_en": "your mother's vagina",
+      "literal_en": null,
+      "variants": [
+        "bilat sang iloy",
+        "bilat inana",
+        "bilat inamo"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "severe"
+    },
+    {
+      "id": "hil-bulay-ug",
+      "term": "bulay-ug",
+      "lang": "hil",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "useless; good-for-nothing",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "hil-burat",
+      "term": "burat",
+      "lang": "hil",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "drunk; wasted (mild colloquial)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "Tagalog 'burat' = penis (strong vulgarity) — same string, very different weight"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "hil-burikat",
+      "term": "burikat",
+      "lang": "hil",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sex-work",
+        "slur-sexist"
+      ],
+      "gloss_en": "prostitute (derogatory)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "ceb"
+      ],
+      "is_slur": true,
+      "slur_type": "sexist",
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "hil-damuhal",
+      "term": "damuhal",
+      "lang": "hil",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "crude; ill-mannered",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "hil-hangag",
+      "term": "hangag",
+      "lang": "hil",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "stupid; airheaded",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "hil-linte",
+      "term": "linte",
+      "lang": "hil",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "expletive",
+        "malediction"
+      ],
+      "gloss_en": "lightning! — damn (Visayan counterpart of 'lintik')",
+      "literal_en": null,
+      "variants": [
+        "linti",
+        "lintian",
+        "lilintian",
+        "linte ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "ceb",
+        "war"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "hil-panulay",
+      "term": "panulay",
+      "lang": "hil",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "religious",
+        "insult-character"
+      ],
+      "gloss_en": "devil; tempter",
+      "literal_en": null,
+      "variants": [
+        "panulay ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "hil-putyong",
+      "term": "putyong",
+      "lang": "hil",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "masculinity-taunt"
+      ],
+      "gloss_en": "uncircumcised (taunt; cf. Tagalog 'supot')",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "hil-wala-sing-huya",
+      "term": "wala sing huya",
+      "lang": "hil",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "shameless",
+      "literal_en": null,
+      "variants": [
+        "wala huya",
+        "wala sing huya ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "hil-yamuhat",
+      "term": "yamuhat",
+      "lang": "hil",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "general insult (roughly 'wretch')",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Attested in an Ilonggo word list with an unclear gloss — verify with native speakers.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "low",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "hil-yudiputa",
+      "term": "yudiputa",
+      "lang": "hil",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 4,
+      "categories": [
+        "family-honor",
+        "expletive"
+      ],
+      "gloss_en": "son of a whore (from Spanish 'hijo de puta')",
+      "literal_en": null,
+      "variants": [
+        "diputa",
+        "dipuga",
+        "yudi puta"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'hijo de puta'",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "gelhmo"
+      ],
+      "severity_label": "severe"
+    },
+    {
+      "id": "ilo-bagtit",
+      "term": "bagtit",
+      "lang": "ilo",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-mental"
+      ],
+      "gloss_en": "crazy",
+      "literal_en": null,
+      "variants": [
+        "agbagtit"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ilo-buto",
+      "term": "buto",
+      "lang": "ilo",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "penis (vulgar)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "Tagalog 'buto' = bone / seed — completely innocent; flagship cross-language false friend"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "ilo-lastog",
+      "term": "lastog",
+      "lang": "ilo",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "braggart; boastful",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "ilo-maag",
+      "term": "maag",
+      "lang": "ilo",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "fool; simpleton",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ilo-takki",
+      "term": "takki",
+      "lang": "ilo",
+      "pos": "n",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "scatological"
+      ],
+      "gloss_en": "shit",
+      "literal_en": null,
+      "variants": [
+        "takki!",
+        "agtakki"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "ilo-tunggak",
+      "term": "tunggak",
+      "lang": "ilo",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "dimwit; dunce",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "tgl"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "spotph",
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "ilo-uki",
+      "term": "uki",
+      "lang": "ilo",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "vagina (vulgar)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "'uke' in anime/BL fandom slang and 'uki' as a nickname are innocent"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "ilo-ukinnam",
+      "term": "ukinnam",
+      "lang": "ilo",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 4,
+      "categories": [
+        "sexual-anatomy",
+        "family-honor"
+      ],
+      "gloss_en": "your mother's vagina — THE Ilocano curse",
+      "literal_en": null,
+      "variants": [
+        "ukininam",
+        "okinnam",
+        "okinam",
+        "ukinam",
+        "ukinnana",
+        "kinnam"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "uki (vagina) + ina (mother) + -m (your)",
+      "notes": "'ukinnana' is the third-person form ('his/her mother's...'); 'kinnam' is a clipped variant.",
+      "false_friends": [],
+      "also_used_in": [
+        "pag"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "severe"
+    },
+    {
+      "id": "pag-ambagel",
+      "term": "ambagel",
+      "lang": "pag",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-mental"
+      ],
+      "gloss_en": "crazy; stupid",
+      "literal_en": null,
+      "variants": [
+        "ambagel ka",
+        "ambagel ka lasi"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Dictionary-attested (Glosbe); 'ambagel ka lasi' is a common combo taunt.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "glosbe-pag"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "pag-anak-na-lasi",
+      "term": "anak na lasi",
+      "lang": "pag",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "malediction",
+        "family-honor"
+      ],
+      "gloss_en": "'child of lightning' — signature Pangasinan curse",
+      "literal_en": null,
+      "variants": [
+        "analasi",
+        "anak lasi"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "glosbe-pag",
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "pag-lasi",
+      "term": "lasi",
+      "lang": "pag",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "expletive",
+        "malediction"
+      ],
+      "gloss_en": "lightning! — damn (cf. Tagalog 'lintik')",
+      "literal_en": null,
+      "variants": [
+        "ka lasi",
+        "lasi!"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "glosbe-pag",
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "pam-anakputa",
+      "term": "anakputa",
+      "lang": "pam",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "family-honor",
+        "expletive"
+      ],
+      "gloss_en": "son of a whore — but culturally softened, an all-purpose Kapampangan exclamation",
+      "literal_en": null,
+      "variants": [
+        "nakputa",
+        "anak na puta",
+        "anakaputa"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'puta'",
+      "notes": "Kapampangans famously use it for joy, grief, anger, fear, even affection ('Lab da ka, anakputa!') — treat as severity 2 in clearly friendly contexts.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "sunstar",
+        "fb-pampanga"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "pam-antac-nang-inda-mo",
+      "term": "antac nang inda mo",
+      "lang": "pam",
+      "pos": "phrase",
+      "register": "archaic",
+      "severity": 4,
+      "categories": [
+        "sexual-anatomy",
+        "family-honor"
+      ],
+      "gloss_en": "your mother's private parts (recorded in a 1732 dictionary)",
+      "literal_en": null,
+      "variants": [
+        "antak nang inda mo"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Historical/archaic; kept for linguistic completeness rather than live moderation.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "low",
+      "sources": [
+        "sunstar"
+      ],
+      "severity_label": "severe"
+    },
+    {
+      "id": "pam-bolang",
+      "term": "bolang",
+      "lang": "pam",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "stupid",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "sunstar"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "pam-dana",
+      "term": "dana",
+      "lang": "pam",
+      "pos": "intj",
+      "register": "euphemism",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "all-purpose exclamation ('oh my God'), euphemized from an ancient genital reference",
+      "literal_en": null,
+      "variants": [
+        "'dana",
+        "damo",
+        "'damo"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Clipped from an old Kapampangan vulgarity recorded in colonial dictionaries",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "sunstar",
+        "fb-pampanga"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "pam-kesehoda",
+      "term": "kesehoda",
+      "lang": "pam",
+      "pos": "intj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "'to hell with it / whatever' (from Spanish 'que se joda')",
+      "literal_en": null,
+      "variants": [
+        "que se hoda",
+        "keseoda",
+        "kesejoda"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'que se joda'",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "tgl"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "sunstar",
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "pam-maburug-ka-sa",
+      "term": "maburug ka sa",
+      "lang": "pam",
+      "pos": "phrase",
+      "register": "archaic",
+      "severity": 3,
+      "categories": [
+        "malediction"
+      ],
+      "gloss_en": "may your body be covered in scabies (ancestral curse)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "low",
+      "sources": [
+        "sunstar"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "pam-murit",
+      "term": "murit",
+      "lang": "pam",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "moron",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "sunstar"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "pam-sakdapul",
+      "term": "sakdapul",
+      "lang": "pam",
+      "pos": "intj",
+      "register": "archaic",
+      "severity": 3,
+      "categories": [
+        "malediction"
+      ],
+      "gloss_en": "may you burn / may you vanish (ancestral curse)",
+      "literal_en": null,
+      "variants": [
+        "sacdapul"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "low",
+      "sources": [
+        "sunstar"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "pam-tarantadu",
+      "term": "tarantadu",
+      "lang": "pam",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "jerk; scoundrel (shared with Tagalog 'tarantado')",
+      "literal_en": null,
+      "variants": [
+        "gagu"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Borrowed Tagalog/Spanish insults take Kapampangan spelling (-u endings).",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-abnoy",
+      "term": "abnoy",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "slur-ableist"
+      ],
+      "gloss_en": "clipped 'abnormal' — derogatory for people with disabilities; also a political taunt",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "ableist",
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-ahas",
+      "term": "ahas",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "animal-comparison"
+      ],
+      "gloss_en": "'snake' — traitor; backstabber",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-amputa",
+      "term": "amputa",
+      "lang": "tgl",
+      "pos": "expr",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "clipped 'ay, puta!' (oh, whore) — damn it",
+      "literal_en": null,
+      "variants": [
+        "ampota",
+        "amputang"
+      ],
+      "euphemisms": [
+        "amp"
+      ],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "'amp' is the ubiquitous chat/text softened form (severity 1).",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-anak-ng-puta",
+      "term": "anak ng puta",
+      "lang": "tgl",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 4,
+      "categories": [
+        "family-honor",
+        "expletive"
+      ],
+      "gloss_en": "son of a whore",
+      "literal_en": null,
+      "variants": [
+        "anak ka ng puta",
+        "anakngputa",
+        "anak ng pota"
+      ],
+      "euphemisms": [
+        "anak ng tokwa",
+        "anak ng tinapa",
+        "anak ng tipaklong",
+        "anak ng kamote",
+        "anak ng pating"
+      ],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "The 'anak ng <food/animal>' euphemism series is productive and playful (severity 1).",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "model"
+      ],
+      "severity_label": "severe"
+    },
+    {
+      "id": "tgl-baboy",
+      "term": "baboy",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "animal-comparison"
+      ],
+      "gloss_en": "'pig' — slob; glutton",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Innocent literal sense (pork/pig) is extremely common — context required.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-badaf",
+      "term": "badaf",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "slur-homophobic"
+      ],
+      "gloss_en": "gay (swardspeak)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "homophobic",
+      "context_dependent": true,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-bading",
+      "term": "bading",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "slur-homophobic"
+      ],
+      "gloss_en": "gay (colloquial, usually light)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "homophobic",
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-baduy",
+      "term": "baduy",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-character",
+        "insult-appearance"
+      ],
+      "gloss_en": "tacky; unfashionable",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-bakla",
+      "term": "bakla",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "slur-homophobic"
+      ],
+      "gloss_en": "gay man / effeminate man — neutral identity term in most everyday and in-group use; slur only in hostile framing",
+      "literal_en": null,
+      "variants": [
+        "baklang",
+        "mga bakla",
+        "bakla ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "IMPORTANT for moderation: widely self-applied and affectionate; auto-blocking it over-censors LGBT speech. Flag only with hostile context.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "homophobic",
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-baklang-kanal",
+      "term": "baklang kanal",
+      "lang": "tgl",
+      "pos": "phrase",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "slur-homophobic"
+      ],
+      "gloss_en": "'gutter gay' — vulgar mocking phrase",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "homophobic",
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-baliw",
+      "term": "baliw",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "insult-mental"
+      ],
+      "gloss_en": "crazy",
+      "literal_en": null,
+      "variants": [
+        "kabaliwan",
+        "baliw ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-baluga",
+      "term": "baluga",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "slur-ethnic"
+      ],
+      "gloss_en": "term for Aeta/Negrito people — derogatory when used as an insult",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Also appears in neutral community/place names; do not auto-block.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "ethnic",
+      "context_dependent": true,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-bansot",
+      "term": "bansot",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-appearance"
+      ],
+      "gloss_en": "stunted; runt",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-batuta",
+      "term": "batuta",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 2,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "penis (jokey slang; literally 'nightstick/baton')",
+      "literal_en": "baton",
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Literal 'baton' sense is innocent and common.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-bayag",
+      "term": "bayag",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "testicles / scrotum (vulgar)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [
+        "itlog"
+      ],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "'itlog' (egg) is a jokey euphemism — innocent in food contexts.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-bobo",
+      "term": "bobo",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "dumb; slow-witted",
+      "literal_en": null,
+      "variants": [
+        "boba",
+        "bobong",
+        "kabobohan",
+        "bobo mo"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'bobo' (silly)",
+      "notes": null,
+      "false_friends": [
+        "'bobo' is a harmless word/name in Spanish and several languages"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie",
+        "wp"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-brotsa",
+      "term": "brotsa",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "sexual-act"
+      ],
+      "gloss_en": "cunnilingus (vulgar)",
+      "literal_en": null,
+      "variants": [
+        "brocha"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'brocha' (paintbrush)",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-bruha",
+      "term": "bruha",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "witch; shrew (gendered)",
+      "literal_en": null,
+      "variants": [
+        "bruho",
+        "bruhang"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'bruja'",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-bugok",
+      "term": "bugok",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "idiot; literally 'rotten egg'",
+      "literal_en": "rotten egg",
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "hil",
+        "pam"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "gelhmo",
+        "sunstar"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-bumbay",
+      "term": "bumbay",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "slur-ethnic"
+      ],
+      "gloss_en": "for Indians (from 'Bombay'); stereotype-laden",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "ethnic",
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-burat",
+      "term": "burat",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy",
+        "expletive"
+      ],
+      "gloss_en": "penis (vulgar); in street slang also 'blind drunk'",
+      "literal_en": null,
+      "variants": [
+        "burats"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "Hiligaynon/Ilonggo 'burat' = drunk (mild colloquial), not anatomical"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-buwaya",
+      "term": "buwaya",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "animal-comparison"
+      ],
+      "gloss_en": "'crocodile' — corrupt / greedy (esp. politicians)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-buwisit",
+      "term": "buwisit",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "jinx; annoyance — 'damn nuisance'",
+      "literal_en": null,
+      "variants": [
+        "bwisit",
+        "bwiset",
+        "buset",
+        "nakakabuwisit",
+        "bwisit na buhay"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Hokkien 'bo-ui-sit' (without clothes or food)",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "ceb"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie",
+        "talkbisaya"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-chaka",
+      "term": "chaka",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-appearance"
+      ],
+      "gloss_en": "ugly (swardspeak / gay lingo)",
+      "literal_en": null,
+      "variants": [
+        "chakang chaka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "'tsaka' (= and then) is an innocent near-homograph"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-conyo",
+      "term": "conyo",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "posh code-switching rich kid; pretentious upper-class mannerism (teasing, classist)",
+      "literal_en": null,
+      "variants": [
+        "konyo",
+        "conyo kids"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'coño' (cunt) — meaning shifted completely in Manila usage",
+      "notes": "In Chavacano/Spanish the source word is strongly vulgar; in Manila slang it is a mild class tease.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model",
+        "bienchabacano"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-demonyo",
+      "term": "demonyo",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "religious"
+      ],
+      "gloss_en": "devil; 'demonyo ka' = you devil",
+      "literal_en": null,
+      "variants": [
+        "demonyo ka",
+        "demonyong"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'demonio'",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "ceb",
+        "hil",
+        "war"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "gelhmo",
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-ebak",
+      "term": "ebak",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "scatological"
+      ],
+      "gloss_en": "poop (street slang)",
+      "literal_en": null,
+      "variants": [
+        "umebak"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-engot",
+      "term": "engot",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "dimwit",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-epal",
+      "term": "epal",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "attention-grabber; scene-stealer (from 'pumapapel')",
+      "literal_en": null,
+      "variants": [
+        "epal ka",
+        "kaepalan"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-gago",
+      "term": "gago",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "stupid; fool; jerk",
+      "literal_en": null,
+      "variants": [
+        "gaga",
+        "gagu",
+        "gags",
+        "gagi",
+        "ogag",
+        "gagong",
+        "kagaguhan",
+        "nakakagago",
+        "gago ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'gago' (stutterer)",
+      "notes": "'gaga' is the feminine form. On KBP broadcast auto-censor lists. Escalates with 'mo'/'ka' or with putang-ina compounds.",
+      "false_friends": [
+        "substring traps: 'magaganda' (beautiful, pl.), 'kagagawan' (deed), 'Lady Gaga' — use word boundaries"
+      ],
+      "also_used_in": [
+        "ceb",
+        "hil",
+        "pam"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie",
+        "spotph"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-gunggong",
+      "term": "gunggong",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "stupid; blockhead",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-hangal",
+      "term": "hangal",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "formal",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "fool; ignoramus (literary/formal register)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Formal-register insult — appears in literature, sermons, and editorials.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-hayop",
+      "term": "hayop",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "animal-comparison",
+        "expletive"
+      ],
+      "gloss_en": "'animal!' — beastly person; also an expletive of frustration",
+      "literal_en": null,
+      "variants": [
+        "hayup",
+        "hayop ka",
+        "mga hayop"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Innocent literal sense 'animal'; profane only when directed or exclaimed.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-hinayupak",
+      "term": "hinayupak",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "animal-comparison"
+      ],
+      "gloss_en": "beastly person; son of a beast",
+      "literal_en": null,
+      "variants": [
+        "hinayupak ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "from 'hayop' (animal)",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-hindot",
+      "term": "hindot",
+      "lang": "tgl",
+      "pos": "v",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-act",
+        "expletive"
+      ],
+      "gloss_en": "to fuck; also an expletive of disgust",
+      "literal_en": null,
+      "variants": [
+        "hindutan",
+        "hinindot",
+        "indot",
+        "hindot ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-hudas",
+      "term": "hudas",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "religious",
+        "insult-character"
+      ],
+      "gloss_en": "Judas — traitor",
+      "literal_en": null,
+      "variants": [
+        "hudas ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-hunghang",
+      "term": "hunghang",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "formal",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "foolish; senseless (literary register)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-impakta",
+      "term": "impakta",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character",
+        "religious"
+      ],
+      "gloss_en": "she-demon; wicked woman",
+      "literal_en": null,
+      "variants": [
+        "impakto"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-intsik",
+      "term": "intsik",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "slur-ethnic"
+      ],
+      "gloss_en": "for Chinese / Chinese-Filipinos; dated everyday word now considered derogatory ('Tsinoy' preferred)",
+      "literal_en": null,
+      "variants": [
+        "intsik beho",
+        "intsik beho tulo laway"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Hokkien 'in chek' (his uncle)",
+      "notes": "'Intsik beho tulo laway' is a schoolyard taunt — severity 3-4.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "ethnic",
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-inutil",
+      "term": "inutil",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "useless; good-for-nothing",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'inutil'",
+      "notes": "Acceptable even in formal scolding registers.",
+      "false_friends": [],
+      "also_used_in": [
+        "ceb"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "talkbisaya",
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-iskwater",
+      "term": "iskwater",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 2,
+      "categories": [
+        "slur-classist"
+      ],
+      "gloss_en": "'squatter' (informal settler) used as a class insult",
+      "literal_en": null,
+      "variants": [
+        "skwater",
+        "squatter ka",
+        "mukhang iskwater"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "classist",
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-jakol",
+      "term": "jakol",
+      "lang": "tgl",
+      "pos": "v",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "sexual-act"
+      ],
+      "gloss_en": "to masturbate (male, vulgar)",
+      "literal_en": null,
+      "variants": [
+        "dyakol",
+        "jakolero",
+        "nagjajakol",
+        "jinakol"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": "masturbesyon (clinical loan)",
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-jebs",
+      "term": "jebs",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "scatological"
+      ],
+      "gloss_en": "poop (swardspeak)",
+      "literal_en": null,
+      "variants": [
+        "mag-jebs",
+        "jebs na jebs"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-jologs",
+      "term": "jologs",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 2,
+      "categories": [
+        "slur-classist"
+      ],
+      "gloss_en": "low-class; tacky (dated 2000s slang)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "classist",
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-kadyot",
+      "term": "kadyot",
+      "lang": "tgl",
+      "pos": "v",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "sexual-act"
+      ],
+      "gloss_en": "to hump / quickie (vulgar slang)",
+      "literal_en": null,
+      "variants": [
+        "kadyutan",
+        "isang kadyot"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Older/rural literal sense 'sudden jerk' survives in set phrases; assume vulgar in modern usage.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-kainin-mo-tae-ko",
+      "term": "kainin mo ang tae ko",
+      "lang": "tgl",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "scatological",
+        "insult-character"
+      ],
+      "gloss_en": "eat my shit",
+      "literal_en": null,
+      "variants": [
+        "kainin mo tae ko",
+        "kumain ka ng tae"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-kalapating-mababa",
+      "term": "kalapating mababa ang lipad",
+      "lang": "tgl",
+      "pos": "phrase",
+      "register": "euphemism",
+      "severity": 2,
+      "categories": [
+        "sex-work"
+      ],
+      "gloss_en": "'low-flying dove' — press euphemism for a prostitute",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-kantot",
+      "term": "kantot",
+      "lang": "tgl",
+      "pos": "v",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-act"
+      ],
+      "gloss_en": "to fuck; sexual intercourse (vulgar)",
+      "literal_en": null,
+      "variants": [
+        "kantutan",
+        "kinantot",
+        "kantutin",
+        "kakantutin",
+        "nakantot",
+        "kantot mo"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": "pagtatalik / pakikipagtalik (formal 'intercourse')",
+      "etymology": null,
+      "notes": "Severity 4 when used as a directed threat (e.g. 'kakantutin kita').",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-kantotero",
+      "term": "kantotero",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "sexual-act",
+        "insult-character"
+      ],
+      "gloss_en": "someone who sleeps around (male); womanizer (vulgar)",
+      "literal_en": null,
+      "variants": [
+        "kantotera"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-kapalmuks",
+      "term": "kapalmuks",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "thick-faced; shameless (from 'makapal ang mukha')",
+      "literal_en": null,
+      "variants": [
+        "makapal ang mukha",
+        "kapal muks",
+        "kapal ng mukha mo"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-kiki",
+      "term": "kiki",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "vagina (slang)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "'kiki' in ballroom/drag slang = a party/gossip session; also a common pet name"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-kupal",
+      "term": "kupal",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "insult-character",
+        "sexual-anatomy"
+      ],
+      "gloss_en": "asshole; jerk (literally 'smegma')",
+      "literal_en": "smegma",
+      "variants": [
+        "kupal ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-leche",
+      "term": "leche",
+      "lang": "tgl",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "damn (literally 'milk')",
+      "literal_en": null,
+      "variants": [
+        "letse",
+        "leche ka",
+        "letseng",
+        "lecheng"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'me cago en la leche'; popularized during the Spanish era",
+      "notes": null,
+      "false_friends": [
+        "'leche flan' (the dessert) is innocent — phrase-level exception needed"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie",
+        "spotph"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-libog",
+      "term": "libog",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "sexual-general"
+      ],
+      "gloss_en": "lust; horniness (vulgar in Tagalog)",
+      "literal_en": null,
+      "variants": [
+        "malibog",
+        "kalibugan",
+        "libugan"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "Cebuano/Bisaya 'libog' = confused — completely innocent; a classic cross-language trap"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-linta",
+      "term": "linta",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "animal-comparison"
+      ],
+      "gloss_en": "'leech' — exploiter",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-lintik",
+      "term": "lintik",
+      "lang": "tgl",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "expletive",
+        "malediction"
+      ],
+      "gloss_en": "'lightning!' — damn; may lightning strike you",
+      "literal_en": null,
+      "variants": [
+        "lintek",
+        "lintik ka",
+        "malilintikan ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "'Malilintikan ka sa akin' (you'll get it from me) is a severity-2 threat form.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-loko",
+      "term": "loko",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "insult-mental"
+      ],
+      "gloss_en": "crazy; trickster",
+      "literal_en": null,
+      "variants": [
+        "loka",
+        "loko-loko",
+        "luko-luko",
+        "loko ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'loco'",
+      "notes": "Very often playful/affectionate ('loko ka talaga!'); rarely worth blocking alone.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-maharot",
+      "term": "maharot",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character",
+        "sexual-general"
+      ],
+      "gloss_en": "wild / flirty (of a woman); unruly",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-malandi",
+      "term": "malandi",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character",
+        "sexual-general"
+      ],
+      "gloss_en": "flirty / promiscuous (gendered sting, usually aimed at women)",
+      "literal_en": null,
+      "variants": [
+        "landi",
+        "lumalandi",
+        "malandi ka",
+        "pagkalandi"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-mangmang",
+      "term": "mangmang",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "formal",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "ignorant; unlettered (formal register)",
+      "literal_en": null,
+      "variants": [
+        "kamangmangan"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-ngongo",
+      "term": "ngongo",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "slur-ableist"
+      ],
+      "gloss_en": "mocks hypernasal / cleft-palate speech",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "ableist",
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-nognog",
+      "term": "nognog",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "slur-ethnic",
+        "insult-appearance"
+      ],
+      "gloss_en": "mocks dark skin (colorist slur)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "ethnic",
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-pak",
+      "term": "pak",
+      "lang": "tgl",
+      "pos": "intj",
+      "register": "euphemism",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "minced 'fuck' — dang; also a meme interjection",
+      "literal_en": null,
+      "variants": [
+        "pak!",
+        "pak ganern"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-pakshet",
+      "term": "pakshet",
+      "lang": "tgl",
+      "pos": "intj",
+      "register": "slang",
+      "severity": 2,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "fuck-shit blend — damn it",
+      "literal_en": null,
+      "variants": [
+        "pak shet",
+        "pakshet ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Portmanteau of English 'fuck' + 'shit'; popularized by the 2002 film 'Jologs'",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-pakyu",
+      "term": "pakyu",
+      "lang": "tgl",
+      "pos": "intj",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "fuck you (localized spelling)",
+      "literal_en": null,
+      "variants": [
+        "pak yu",
+        "pakyu ka",
+        "fakyu"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-pandak",
+      "term": "pandak",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "insult-appearance"
+      ],
+      "gloss_en": "shorty",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-pangit",
+      "term": "pangit",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "insult-appearance"
+      ],
+      "gloss_en": "ugly",
+      "literal_en": null,
+      "variants": [
+        "panget",
+        "pangit mo"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Also an innocent descriptor of things ('pangit ang lasa' = tastes bad); severity 2 when aimed at a person.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-patutot",
+      "term": "patutot",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sex-work"
+      ],
+      "gloss_en": "prostitute (dated, derogatory)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-pekpek",
+      "term": "pekpek",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "vagina (slang)",
+      "literal_en": null,
+      "variants": [
+        "pek-pek"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "'pekpek shorts' (very short shorts) is established fashion slang — partially lexicalized.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-pepe",
+      "term": "pepe",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 2,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "vagina (child register / slang)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "Spanish nickname 'Pepe' (for Jose); Pepe the Frog meme"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-peste",
+      "term": "peste",
+      "lang": "tgl",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "pest! — damn",
+      "literal_en": null,
+      "variants": [
+        "pesteng"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'peste' (plague)",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "ceb",
+        "hil",
+        "war"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-plastik",
+      "term": "plastik",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "fake; two-faced",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Literal 'plastic' is innocent.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-pokpok",
+      "term": "pokpok",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "sex-work",
+        "slur-sexist"
+      ],
+      "gloss_en": "prostitute (derogatory, gendered)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "'pokpok' also means 'to hammer/pound' — innocent literal sense"
+      ],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "sexist",
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-praning",
+      "term": "praning",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-mental"
+      ],
+      "gloss_en": "paranoid; jumpy-crazy (from 'paranoid')",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-promdi",
+      "term": "promdi",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 2,
+      "categories": [
+        "slur-classist"
+      ],
+      "gloss_en": "'from the province' — provincial rube",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Sometimes a neutral or proud self-label; hostile when aimed at others.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "classist",
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-pucha",
+      "term": "pucha",
+      "lang": "tgl",
+      "pos": "expr",
+      "register": "euphemism",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "minced 'puta' — darn / shoot",
+      "literal_en": null,
+      "variants": [
+        "putsa",
+        "pucha naman",
+        "puchang"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie",
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-puke",
+      "term": "puke",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "vagina (vulgar)",
+      "literal_en": null,
+      "variants": [
+        "puki",
+        "pukeng"
+      ],
+      "euphemisms": [
+        "mani",
+        "bibingka",
+        "bulaklak"
+      ],
+      "formal_equivalent": "ari ng babae / kaselanan (formal); 'vagina' as clinical loan",
+      "etymology": null,
+      "notes": null,
+      "false_friends": [
+        "English 'puke' (to vomit) is innocent — language context required"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-puke-ng-ina-mo",
+      "term": "puke ng ina mo",
+      "lang": "tgl",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 4,
+      "categories": [
+        "sexual-anatomy",
+        "family-honor"
+      ],
+      "gloss_en": "your mother's vagina",
+      "literal_en": null,
+      "variants": [
+        "puking ina mo",
+        "pukinginamo"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie"
+      ],
+      "severity_label": "severe"
+    },
+    {
+      "id": "tgl-punyeta",
+      "term": "punyeta",
+      "lang": "tgl",
+      "pos": "intj",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "damn it; (of a person) asshole",
+      "literal_en": null,
+      "variants": [
+        "punieta",
+        "punyeta ka",
+        "mga punyeta kayo",
+        "punyemas"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'puñeta'",
+      "notes": "'punyemas' is a minced variant (severity 1).",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-puta",
+      "term": "puta",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "expletive",
+        "sex-work"
+      ],
+      "gloss_en": "whore; as interjection 'damn / fuck'",
+      "literal_en": null,
+      "variants": [
+        "pota",
+        "putah",
+        "mga puta",
+        "putang"
+      ],
+      "euphemisms": [
+        "pucha",
+        "putsa",
+        "putik",
+        "potek"
+      ],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'puta'",
+      "notes": "Severity rises to 4 when aimed at a person (esp. a woman) rather than used as an interjection.",
+      "false_friends": [
+        "'puto' (rice cake) and 'putahe' (dish, fr. Sp. potaje) are innocent",
+        "substring collisions: disputa, reputasyon, deputado, Putatan (place)"
+      ],
+      "also_used_in": [
+        "ceb",
+        "ilo",
+        "hil",
+        "war",
+        "bcl",
+        "pam",
+        "pag",
+        "cbk"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-putang-ina",
+      "term": "putang ina",
+      "lang": "tgl",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 4,
+      "categories": [
+        "expletive",
+        "family-honor"
+      ],
+      "gloss_en": "your mother is a whore; as interjection works like English 'fuck!'",
+      "literal_en": "whore (is your) mother",
+      "variants": [
+        "putangina",
+        "putang-ina",
+        "putang ina mo",
+        "putanginamo",
+        "tang ina",
+        "tangina",
+        "tang-ina",
+        "tangina mo",
+        "tanginamo",
+        "tangna",
+        "ptangina",
+        "pukinangina",
+        "kingina",
+        "kinangina",
+        "pi",
+        "p.i."
+      ],
+      "euphemisms": [
+        "pucha",
+        "putsa",
+        "putik",
+        "potek",
+        "putragis",
+        "taena"
+      ],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'puta' (whore) + Tagalog 'ina' (mother)",
+      "notes": "The strongest and most common Filipino curse; usually a non-literal intensifier (PH Supreme Court held it non-literal, 1969 & 2006). On broadcast auto-censor lists. Understood and used nationwide across all Philippine languages. Short forms 'pi'/'p.i.' need word-boundary matching to avoid false positives.",
+      "false_friends": [],
+      "also_used_in": [
+        "ceb",
+        "ilo",
+        "hil",
+        "war",
+        "bcl",
+        "pam",
+        "pag",
+        "cbk"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie",
+        "spotph"
+      ],
+      "severity_label": "severe"
+    },
+    {
+      "id": "tgl-putik",
+      "term": "putik",
+      "lang": "tgl",
+      "pos": "expr",
+      "register": "euphemism",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "minced 'puta'; literally 'mud'",
+      "literal_en": "mud",
+      "variants": [
+        "potek",
+        "putek"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Literal sense 'mud' is innocent; expletive only by intonation/context.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "lingopie",
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-putragis",
+      "term": "putragis",
+      "lang": "tgl",
+      "pos": "expr",
+      "register": "euphemism",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "minced 'putang ina' — dang it",
+      "literal_en": null,
+      "variants": [
+        "potragis"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie",
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-salbahe",
+      "term": "salbahe",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "cruel; brutish; naughty",
+      "literal_en": null,
+      "variants": [
+        "salbaheng"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'salvaje' (savage)",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-salot",
+      "term": "salot",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "plague; scourge (of a person)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-salsal",
+      "term": "salsal",
+      "lang": "tgl",
+      "pos": "v",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "sexual-act"
+      ],
+      "gloss_en": "to masturbate (vulgar)",
+      "literal_en": null,
+      "variants": [
+        "sinalsal",
+        "salsalero",
+        "nagsasalsal"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-sanamagan",
+      "term": "sanamagan",
+      "lang": "tgl",
+      "pos": "intj",
+      "register": "euphemism",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "Filipinized minced 'son of a gun/bitch'",
+      "literal_en": null,
+      "variants": [
+        "sonamagan"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-shet",
+      "term": "shet",
+      "lang": "tgl",
+      "pos": "intj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "expletive"
+      ],
+      "gloss_en": "Filipinized 'shit' (much softened)",
+      "literal_en": null,
+      "variants": [
+        "syet",
+        "shets",
+        "shocks",
+        "shux",
+        "sheeet"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "'shocks'/'shux' are further-minced forms.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-shonget",
+      "term": "shonget",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-appearance"
+      ],
+      "gloss_en": "ugly (swardspeak)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-shunga",
+      "term": "shunga",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "silly; dim (playful youth/swardspeak slang)",
+      "literal_en": null,
+      "variants": [
+        "shunga-shunga",
+        "shongaks"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-sipsip",
+      "term": "sipsip",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "bootlicker; suck-up",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Literal 'to sip/suck' is innocent.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-sira-ulo",
+      "term": "sira-ulo",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-mental"
+      ],
+      "gloss_en": "crazy; 'broken-headed'",
+      "literal_en": null,
+      "variants": [
+        "sira ulo",
+        "sira ang ulo",
+        "sira-ulo ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-supot",
+      "term": "supot",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 2,
+      "categories": [
+        "masculinity-taunt"
+      ],
+      "gloss_en": "uncircumcised — manhood/hygiene taunt",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Tied to the 'tuli' (circumcision) rite; taunt implies immaturity.",
+      "false_friends": [
+        "'supot' = paper/plastic bag — an extremely common innocent word"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-susmaryosep",
+      "term": "susmaryosep",
+      "lang": "tgl",
+      "pos": "intj",
+      "register": "euphemism",
+      "severity": 1,
+      "categories": [
+        "religious"
+      ],
+      "gloss_en": "Jesus-Mary-Joseph! (minced oath)",
+      "literal_en": null,
+      "variants": [
+        "sus",
+        "susmariosep",
+        "hesusmaryosep"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Mildly irreverent interjection, not an insult; 'sus' now also mimics English 'sus' (suspicious).",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-tabachoy",
+      "term": "tabachoy",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "slang",
+      "severity": 2,
+      "categories": [
+        "insult-appearance"
+      ],
+      "gloss_en": "fatty",
+      "literal_en": null,
+      "variants": [
+        "tabatsoy",
+        "tabachingching"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Bare 'taba' (fat) is innocent; the -choy forms are teasing-to-derogatory.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-tae",
+      "term": "tae",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "scatological"
+      ],
+      "gloss_en": "shit (milder than the English word)",
+      "literal_en": null,
+      "variants": [
+        "taeng",
+        "tae!"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": "dumi (formal); 'pagtae/pagtatae' are clinical and innocent",
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-taena",
+      "term": "taena",
+      "lang": "tgl",
+      "pos": "expr",
+      "register": "euphemism",
+      "severity": 2,
+      "categories": [
+        "expletive",
+        "scatological"
+      ],
+      "gloss_en": "minced 'putang ina' via 'tae' (shit)",
+      "literal_en": null,
+      "variants": [
+        "teyna",
+        "tae na"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-tanga",
+      "term": "tanga",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "stupid; dimwit",
+      "literal_en": null,
+      "variants": [
+        "katangahan",
+        "tangang",
+        "tanga ka ba",
+        "tangengot"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "'tangengot' is a jokey softened variant (severity 1).",
+      "false_friends": [
+        "Spanish/Portuguese 'tanga' = thong; Malay 'tangga' = ladder"
+      ],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie",
+        "wp"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-tarantado",
+      "term": "tarantado",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "jerk; scoundrel; out-of-line",
+      "literal_en": null,
+      "variants": [
+        "tarantada",
+        "tarantadong",
+        "taranta"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'atarantado' (dazed)",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [
+        "pam"
+      ],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-timang",
+      "term": "timang",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "insult-mental"
+      ],
+      "gloss_en": "crazy; scatterbrained (Batangas/Southern Tagalog regionalism)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-tinggil",
+      "term": "tinggil",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "clitoris (vulgar)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": "klitoris (clinical loan)",
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-titi",
+      "term": "titi",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "penis (vulgar)",
+      "literal_en": null,
+      "variants": [
+        "etits"
+      ],
+      "euphemisms": [
+        "saging",
+        "ahas",
+        "talong"
+      ],
+      "formal_equivalent": "ari ng lalaki (formal); 'penis' as clinical loan",
+      "etymology": null,
+      "notes": "'etits' is syllable-inverted street slang.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "model"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-tomboy",
+      "term": "tomboy",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "slur-homophobic"
+      ],
+      "gloss_en": "lesbian / masculine woman — usually neutral colloquial",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Differs from the English sense; generally not hostile by itself.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "homophobic",
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-tsupa",
+      "term": "tsupa",
+      "lang": "tgl",
+      "pos": "v",
+      "register": "slang",
+      "severity": 3,
+      "categories": [
+        "sexual-act"
+      ],
+      "gloss_en": "fellatio; to give oral sex (vulgar)",
+      "literal_en": null,
+      "variants": [
+        "chupa",
+        "tsupaan",
+        "tsinupa"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": "Spanish 'chupar' (to suck)",
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "tgl-ugok",
+      "term": "ugok",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "dolt; slow",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-ulol",
+      "term": "ulol",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-mental"
+      ],
+      "gloss_en": "crazy; rabid-mad",
+      "literal_en": null,
+      "variants": [
+        "ulul",
+        "naulol",
+        "ulol ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Implies madness rather than mere stupidity; on KBP broadcast censor lists. Stigmatizes mental illness.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-ulupong",
+      "term": "ulupong",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "animal-comparison"
+      ],
+      "gloss_en": "'pit viper' — treacherous person (literary flavor)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-ungas",
+      "term": "ungas",
+      "lang": "tgl",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-intelligence"
+      ],
+      "gloss_en": "dimwit; bonehead",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-unggoy",
+      "term": "unggoy",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "animal-comparison"
+      ],
+      "gloss_en": "'monkey' — mocking; racist when aimed at ethnicity or appearance",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-utot",
+      "term": "utot",
+      "lang": "tgl",
+      "pos": "n",
+      "register": "standard",
+      "severity": 1,
+      "categories": [
+        "scatological"
+      ],
+      "gloss_en": "fart",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Childish rather than offensive in most contexts; 'utot mo!' dismisses someone's claim.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": true,
+      "confidence": "high",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "tgl-walang-hiya",
+      "term": "walang hiya",
+      "lang": "tgl",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "shameless — a deep cultural rebuke",
+      "literal_en": null,
+      "variants": [
+        "walanghiya",
+        "walang-hiya",
+        "walang hiya ka",
+        "kawalanghiyaan"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "Tied to the core value of 'hiya' (social shame/face); described as an ultimate 'loob'-wounding remark that cuts across social classes.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "wp",
+        "lingopie"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "tgl-walang-kwenta",
+      "term": "walang kwenta",
+      "lang": "tgl",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-character"
+      ],
+      "gloss_en": "worthless",
+      "literal_en": null,
+      "variants": [
+        "walang kuwenta",
+        "walang kwentang tao"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "lingopie"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "war-badi",
+      "term": "badi",
+      "lang": "war",
+      "pos": "n",
+      "register": "slang",
+      "severity": 1,
+      "categories": [
+        "slur-homophobic"
+      ],
+      "gloss_en": "gay man (colloquial; usually neutral, hostile only in context)",
+      "literal_en": null,
+      "variants": [],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": true,
+      "slur_type": "homophobic",
+      "context_dependent": true,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "mild"
+    },
+    {
+      "id": "war-iroy-nga-yawa",
+      "term": "iroy nga yawa",
+      "lang": "war",
+      "pos": "phrase",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "family-honor",
+        "religious"
+      ],
+      "gloss_en": "devil's mother — strong Waray curse; 'iroy' (mother) is itself rude in casual speech",
+      "literal_en": null,
+      "variants": [
+        "iroy mo",
+        "iroy nga yawa!",
+        "ka iroy"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": "'iroy' is formal/literary for 'mother' (e.g. 'Iroy nga Tuna', motherland) but offensive in casual address — a register-flip unique to Waray.",
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "high",
+      "sources": [
+        "warayblogger"
+      ],
+      "severity_label": "strong"
+    },
+    {
+      "id": "war-lurong",
+      "term": "lurong",
+      "lang": "war",
+      "pos": "adj",
+      "register": "standard",
+      "severity": 2,
+      "categories": [
+        "insult-mental"
+      ],
+      "gloss_en": "crazy",
+      "literal_en": null,
+      "variants": [
+        "ka lurong",
+        "lurong ka"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "moderate"
+    },
+    {
+      "id": "war-puday",
+      "term": "puday",
+      "lang": "war",
+      "pos": "n",
+      "register": "standard",
+      "severity": 3,
+      "categories": [
+        "sexual-anatomy"
+      ],
+      "gloss_en": "vagina (vulgar)",
+      "literal_en": null,
+      "variants": [
+        "puday mo"
+      ],
+      "euphemisms": [],
+      "formal_equivalent": null,
+      "etymology": null,
+      "notes": null,
+      "false_friends": [],
+      "also_used_in": [],
+      "is_slur": false,
+      "slur_type": null,
+      "context_dependent": false,
+      "confidence": "medium",
+      "sources": [
+        "model"
+      ],
+      "severity_label": "strong"
+    }
+  ]
+}

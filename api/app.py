@@ -745,7 +745,10 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     # Scope gates only guard the LLM tier). See docs/moderation_plan.md.
     safety_result = _safety.classify(request.message)
     if safety_result.category in ("self_harm", "threat", "abuse"):
-        _safety.record(safety_result.category, request.message, request.session_id)
+        _safety.record(
+            safety_result.category, request.message, request.session_id,
+            safety_result.max_severity,
+        )
         safety_text = _safety.RESPONSES[safety_result.category]
         message_id = chat_logger.log_chat(
             user_id=request.user_id or "anonymous",
@@ -780,7 +783,10 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         # Profanity as seasoning around a real ask — answer the ask. The
         # sanitized text feeds routing/classification; the log keeps the
         # original via log_chat below.
-        _safety.record("intensifier", request.message, request.session_id)
+        _safety.record(
+            "intensifier", request.message, request.session_id,
+            safety_result.max_severity,
+        )
         request.message = safety_result.sanitized
 
     # AIS MCP short-circuit — if the query looks like a finance/accounting

@@ -49,6 +49,18 @@ CASES = [
     ("paano ako makakakuha ng good moral certificate?", None),
     ("I will pass the exam this time!", None),                    # 'I will' but no harm verb+object
     ("kill two birds with one stone — enroll and pay same day?", None),
+    # --- lexicon-powered coverage (data/profanities) ---
+    ("yawa ka", "abuse"),                                          # Cebuano
+    ("g4go ka", "abuse"),                                          # leet 4->a
+    ("gagooo ka", "abuse"),                                        # repeated letters collapse
+    ("punyeta, saan ang cashier office?", "intensifier"),
+    # --- lexicon allowlist / false-friend traps: must ALL pass ---
+    ("may puto ba sa canteen?", None),                             # rice cake != Sp. puto
+    ("magaganda ang mga building sa campus", None),                # contains 'gaga'
+    ("kailangan ko ng magandang reputasyon para sa scholarship?", None),
+    ("boto ko kay dela cruz sa SC elections", None),               # boto = vote (false friend)
+    ("masarap ba ang adobong atay sa canteen?", None),             # atay = liver (false friend)
+    ("bayot ako, ok lang ba mag-apply sa dorm?", None),            # identity term, no hostile frame
 ]
 
 failures = 0
