@@ -38,6 +38,7 @@ from .ais_mcp import close_pool as _ais_close_pool
 from .ais_mcp import call_tool as _ais_call_tool
 from .ais_mcp import ToolCallError as _AisToolCallError
 from .ais_mcp import _sanitize_tool_error as _ais_sanitize_tool_error
+from .connectors_mcp import try_handle as _try_connectors
 # Phase 2A Wave 2 — per-user AIS authentication for write actions.
 from . import auth_ais as _ais_auth
 
@@ -359,6 +360,7 @@ class ResponseSource(str, Enum):
     LLM_LOCAL       = "llm_local"
     LLM_CLAUDE      = "llm_claude"
     AIS_MCP         = "ais_mcp"
+    CONNECTORS_MCP  = "connectors_mcp"
     FALLBACK        = "fallback"
     REFUSAL         = "refusal"
 
@@ -593,6 +595,8 @@ def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optiona
         return ResponseSource.NEURAL_NETWORK, None
     if m == "ais_mcp":
         return ResponseSource.AIS_MCP, None
+    if m == "connectors_mcp":
+        return ResponseSource.CONNECTORS_MCP, None
     if m.startswith("NonsenseGate"):
         return ResponseSource.REFUSAL, RefusalReason.NONSENSE
     if m.startswith("ScopeGate") or "(out-of-scope)" in m:
@@ -757,13 +761,28 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     else:
         if ais_reply is not None:
             ais_failure_note = ais_reply.get("failure_note")
-        intent, response, confidence, model_used, nlu_data = chatbot.chat(
-            request.message,
-            user_id=request.user_id,
-            session_id=request.session_id
-        )
-        if ais_failure_note:
-            response = f"{ais_failure_note}\n\n{response}"
+        # Connectors MCP short-circuit — university-services lookups (helpdesk
+        # ticket tracking, course-catalog queries) served by the shared
+        # read-only diwa-connectors server. Runs only when AIS didn't handle
+        # the turn, so the two bridges are mutually exclusive and the table /
+        # suggestions slots below are owned by whichever one answered.
+        conn_reply = await _try_connectors(request.message, session_id=request.session_id)
+        if conn_reply is not None and conn_reply.get("text") is not None:
+            ais_table = conn_reply.get("table")
+            ais_suggestions = conn_reply.get("suggestions") or None
+            intent, response, confidence, model_used, nlu_data = (
+                "connectors_mcp", conn_reply["text"], 1.0, "connectors_mcp", {},
+            )
+        else:
+            if conn_reply is not None and not ais_failure_note:
+                ais_failure_note = conn_reply.get("failure_note")
+            intent, response, confidence, model_used, nlu_data = chatbot.chat(
+                request.message,
+                user_id=request.user_id,
+                session_id=request.session_id
+            )
+            if ais_failure_note:
+                response = f"{ais_failure_note}\n\n{response}"
 
     response_time_ms = (time.time() - start_time) * 1000
 
