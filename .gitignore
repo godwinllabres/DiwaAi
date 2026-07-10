@@ -17,3 +17,6 @@ cloudflared-*.log
 .DS_Store
 Thumbs.db
 .venv/
+# SQLite runtime artifacts — never commit
+data/*.db-shm
+data/*.db-wal
