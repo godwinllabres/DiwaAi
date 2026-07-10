@@ -737,6 +737,45 @@ class HybridChatbot:
         print(f"         LLM fallback = {llm_status} (provider={self.llm_provider})")
         print("=" * 60 + "\n")
 
+    def llm_status(self) -> dict:
+        """Current LLM tier state, for /health-style reporting and the admin toggle."""
+        return {
+            "provider": self.llm_provider,
+            "model": getattr(self.llm, "model", None),
+            "available": bool(self.llm and self.llm.available),
+        }
+
+    def set_llm(self, provider: str, model: Optional[str] = None) -> dict:
+        """Hot-swap the LLM fallback at runtime (admin toggle — no restart).
+
+        Also updates the process env (LLM_PROVIDER, OLLAMA_MODEL/CLAUDE_MODEL)
+        so the AIS and connectors LLM routers — which read the env per call —
+        follow the same switch.
+        """
+        provider = (provider or "none").strip().lower()
+        scope_locked_prompt = build_scope_locked_prompt(
+            base_persona=self._system_prompt_text(),
+            intent_list=list(self.responses_map.keys()),
+            campus_glossary=self._build_campus_glossary(),
+        )
+        if provider == "claude":
+            self.llm = ClaudeLLM(model=model, system_prompt=scope_locked_prompt)
+            if model:
+                os.environ["CLAUDE_MODEL"] = model
+        elif provider == "ollama":
+            self.llm = LocalLLM(model=model, system_prompt=scope_locked_prompt)
+            if model:
+                os.environ["OLLAMA_MODEL"] = model
+        else:
+            provider = "none"
+            self.llm = None
+        self.llm_provider = provider
+        os.environ["LLM_PROVIDER"] = provider
+        if provider == "ollama" and self.llm and self.llm.available:
+            # Pay the model cold-load now, not on the next user's question.
+            self._warm_up_llm_async()
+        return self.llm_status()
+
     def _build_campus_glossary(self) -> list:
         """
         Build a list of (acronym, full_name) tuples from the campus_places module.

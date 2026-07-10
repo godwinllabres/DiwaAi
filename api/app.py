@@ -855,6 +855,50 @@ async def connectors_mcp_stats():
     return _connectors_metrics_snapshot()
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin LLM toggle — switch which model answers, at runtime, no restart.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class LlmToggleRequest(BaseModel):
+    provider: Literal["ollama", "claude", "none"]
+    model: Optional[str] = None  # e.g. "llama3.2:3b", "qwen3:8b", "claude-haiku-4-5"
+
+
+async def _ollama_local_models() -> List[str]:
+    """Best-effort list of locally pulled Ollama models (for a UI dropdown)."""
+    import httpx
+
+    base = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as http:
+            resp = await http.get(f"{base}/api/tags")
+            resp.raise_for_status()
+            return sorted(m.get("name", "") for m in resp.json().get("models", []))
+    except Exception:
+        return []
+
+
+@app.get("/admin/llm", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def get_llm_config():
+    """Which LLM tier is live (provider, model, reachable) plus the locally
+    available Ollama models. Gated by `X-Admin-Pin`."""
+    return {**chatbot.llm_status(), "ollama_models": await _ollama_local_models()}
+
+
+@app.post("/admin/llm", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def set_llm_config(request: LlmToggleRequest):
+    """Hot-swap the responding LLM: provider ollama/claude/none, optional
+    model override. Also steers the AIS/connectors LLM routers (they follow
+    LLM_PROVIDER per call). Takes effect on the next chat turn — no restart."""
+    status = chatbot.set_llm(request.provider, request.model)
+    _logger.info(
+        "admin llm toggle: provider=%s model=%s available=%s",
+        status["provider"], status["model"], status["available"],
+    )
+    return status
+
+
 # ============================================================================
 # AIS Auth Endpoints (Phase 2A, Wave 2)
 # ============================================================================
