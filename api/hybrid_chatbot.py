@@ -295,12 +295,19 @@ class LocalLLM:
             messages.extend(conversation_context[-6:])  # last 3 turns
         messages.append({"role": "user", "content": user_message})
 
-        payload = json.dumps({
+        body = {
             "model": self.model,
             "messages": messages,
             "stream": False,
             "options": {"temperature": 0.3, "num_predict": 512},
-        }).encode("utf-8")
+        }
+        # Thinking models (qwen3, deepseek-r1, ...) reason before answering by
+        # default — on CPU that multiplies latency and can spend the whole
+        # num_predict budget on reasoning, returning empty content. Chat
+        # answers don't need it; turn it off.
+        if re.match(r"^(qwen3|deepseek-r1|magistral|gpt-oss)", self.model, re.IGNORECASE):
+            body["think"] = False
+        payload = json.dumps(body).encode("utf-8")
 
         try:
             req = urllib.request.Request(
@@ -311,7 +318,11 @@ class LocalLLM:
             )
             with urllib.request.urlopen(req, timeout=self.TIMEOUT_SECONDS) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
-                return data.get("message", {}).get("content", "").strip() or None
+                content = data.get("message", {}).get("content", "")
+                # Defensive: strip inlined reasoning if a thinking model
+                # ignored the think=false request.
+                content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL)
+                return content.strip() or None
         except urllib.error.URLError as e:
             print(f"[WARNING] Ollama request failed: {e}")
             return None
