@@ -56,11 +56,23 @@ _FAILURE_NOTE = (
 # ─────────────────────────────────────────────────────────────────────────────
 
 _TICKET_WORD_RE = re.compile(r"\b(tickets?|help ?desk|online request)\b", re.IGNORECASE)
+# Strict ORPS ticket format (verified against the Ticket Requests Tracker
+# naming series): HTKT/NTKT/STKT/ISTKT - month - counter. A token in this
+# exact shape routes even without the word "ticket".
+_ORPS_FORMAT_RE = re.compile(r"\b((?:H|N|S|IS)TKT-\d{2}-\d+)\b", re.IGNORECASE)
 # An id-ish token: contains a digit, at least 3 chars, allows TT-0001 / #12345.
 _TICKET_TOKEN_RE = re.compile(r"#?\b(?=[A-Za-z0-9-]*\d)[A-Za-z0-9][A-Za-z0-9-]{2,}\b")
 # Tokens that look like ids but are almost always part of the sentence, not a
 # ticket number (years, ordinals like 1st/2nd).
 _TICKET_TOKEN_SKIP_RE = re.compile(r"^(19|20)\d{2}$|^\d{1,2}(st|nd|rd|th)$", re.IGNORECASE)
+
+# Document tracking (DTS): needs a document word AND a dashed reference token
+# containing a digit — "where are my documents" alone stays with the NLU.
+_DOC_WORD_RE = re.compile(
+	r"\b(documents?|communication|purchase (?:request|order)|job order|voucher)\b",
+	re.IGNORECASE,
+)
+_DOC_REF_RE = re.compile(r"\b(?=[A-Za-z0-9-]*\d)(?=[A-Za-z0-9-]*-)[A-Za-z0-9][A-Za-z0-9-]{3,63}\b")
 
 _PROGRAMS_RE = re.compile(
 	r"(\b(programs?|degrees?|courses? offered)\b.*\b(offer\w*|available|list)\b)"
@@ -79,6 +91,11 @@ def route(text: str) -> Optional[tuple[str, dict[str, Any]]]:
 	if not text:
 		return None
 
+	# Exact ORPS ticket format wins outright, word "ticket" or not.
+	orps_match = _ORPS_FORMAT_RE.search(text)
+	if orps_match:
+		return "orps_track_ticket", {"ticket_number": orps_match.group(1).upper()}
+
 	if _TICKET_WORD_RE.search(text):
 		for match in _TICKET_TOKEN_RE.finditer(text):
 			token = match.group(0).lstrip("#")
@@ -87,6 +104,13 @@ def route(text: str) -> Optional[tuple[str, dict[str, Any]]]:
 			if token.lower() in {"ticket", "tickets"}:
 				continue
 			return "orps_track_ticket", {"ticket_number": token}
+
+	if _DOC_WORD_RE.search(text):
+		for match in _DOC_REF_RE.finditer(text):
+			token = match.group(0)
+			if _TICKET_TOKEN_SKIP_RE.match(token):
+				continue
+			return "dts_track_document", {"reference_number": token}
 
 	if _SUBJECT_WORD_RE.search(text):
 		code = _SUBJECT_CODE_RE.search(text)
@@ -232,10 +256,61 @@ def _subject_reply(args: dict[str, Any], envelope: dict[str, Any]) -> dict[str, 
 	}
 
 
+def _document_reply(args: dict[str, Any], envelope: dict[str, Any]) -> dict[str, Any]:
+	reference = args.get("reference_number", "")
+	if not envelope.get("ok"):
+		return {
+			"text": (
+				"I can't reach the Document Tracking System right now — "
+				"please try again in a few minutes."
+			),
+			"table": None,
+		}
+	data = envelope.get("data") or {}
+	if not data.get("found"):
+		note = data.get("note")
+		detail = f" ({note})" if note else ""
+		return {
+			"text": (
+				f"I couldn't find a document with reference number “{reference}”"
+				f"{detail}. Please double-check the number on your document."
+			),
+			"table": None,
+		}
+	doc_type = data.get("document_type") or "Document"
+	status = data.get("current_status") or "status unavailable"
+	when = data.get("last_update")
+	as_of = f" (as of {when})" if when else ""
+	movements = data.get("movements") or []
+	table = None
+	if movements:
+		table = {
+			"title": f"{reference} — movement history",
+			"columns": [
+				{"key": "status", "label": "Status"},
+				{"key": "when", "label": "When"},
+				{"key": "remarks", "label": "Remarks"},
+			],
+			"rows": movements,
+			"total_rows": data.get("total_movements"),
+			"footer": (
+				f"Showing the latest {len(movements)} of {data.get('total_movements')} movements."
+				if (data.get("total_movements") or 0) > len(movements)
+				else None
+			),
+		}
+	return {
+		"text": f"**{reference}** ({doc_type}): **{status}**{as_of}.",
+		"table": table,
+		"suggestions": ["Track another document"],
+	}
+
+
 _REPLY_BUILDERS = {
 	"orps_track_ticket": _ticket_reply,
 	"courses_list_programs": lambda args, env: _programs_reply(env),
 	"courses_find_subject": _subject_reply,
+	"dts_track_document": _document_reply,
 }
 
 

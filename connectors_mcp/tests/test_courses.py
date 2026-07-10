@@ -60,6 +60,36 @@ async def test_prerequisites_uses_prerequisite_subjects_route():
     assert out["ok"] and out["data"][0]["code"] == "COSC 100"
 
 
+CURRICULUM_SUBJECTS = [
+    {"id": 70, "subject_code": "COSC 101", "subject_title": "Introduction to Computing"},
+    {"id": 77, "subject_code": "DCIT 26", "subject_title": "Applications Development"},
+]
+
+
+@respx.mock
+async def test_get_prerequisites_two_hop_chain():
+    respx.get(f"{BASE}/api/curricula/5/curriculum-subjects").mock(
+        return_value=httpx.Response(200, json=CURRICULUM_SUBJECTS)
+    )
+    prereq_route = respx.get(f"{BASE}/api/curriculum-subjects/77/prerequisite-subjects").mock(
+        return_value=httpx.Response(200, json=[{"id": 70, "subject_code": "COSC 101"}])
+    )
+    out = await _handlers()["courses_get_prerequisites"](curriculum_id=5, subject_code="dcit26")
+    assert prereq_route.called
+    assert out["ok"] and out["data"]["found"] is True
+    assert out["data"]["curriculum_subject"]["id"] == 77
+    assert out["data"]["prerequisites"][0]["subject_code"] == "COSC 101"
+
+
+@respx.mock
+async def test_get_prerequisites_subject_not_in_curriculum():
+    respx.get(f"{BASE}/api/curricula/5/curriculum-subjects").mock(
+        return_value=httpx.Response(200, json=CURRICULUM_SUBJECTS)
+    )
+    out = await _handlers()["courses_get_prerequisites"](curriculum_id=5, subject_code="MATH 999")
+    assert out["ok"] and out["data"]["found"] is False
+
+
 @respx.mock
 async def test_result_cap_marks_truncated():
     many = [{"id": i, "name": f"Program {i}"} for i in range(40)]

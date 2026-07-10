@@ -26,7 +26,9 @@ A module graduates out of this service into its own only when it gains
 | courses | `courses_list_curriculum_subjects` | subjects in a curriculum |
 | courses | `courses_find_subject` | subjects by code/title |
 | courses | `courses_get_subject_prerequisites` | prerequisites of a curriculum subject |
-| orps | `orps_track_ticket` | ICT Helpdesk ticket status + history (public) |
+| courses | `courses_get_prerequisites` | two-hop: subject code within a curriculum → its prerequisites |
+| orps | `orps_track_ticket` | ICT Helpdesk ticket status + history (public; format `HTKT-07-00001`) |
+| dts | `dts_track_document` | "where is my document?" — status + movement history by reference number (public) |
 
 All tools return one envelope: `{"ok": true, "data": ...}` or
 `{"ok": false, "error": "..."}`. Upstream failures degrade to a polite error —

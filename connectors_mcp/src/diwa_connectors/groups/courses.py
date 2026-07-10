@@ -13,6 +13,7 @@ Route map (verified against the repo, 2026-07-10):
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from ..config import Config
@@ -66,6 +67,47 @@ def build_group(cfg: Config) -> ToolGroup:
             f"{base}/api/curriculum-subjects/{curriculum_subject_id}/prerequisite-subjects",
             timeout=timeout,
         )
+
+    def _norm_code(value: str) -> str:
+        return re.sub(r"[^a-z0-9]", "", value.lower())
+
+    async def get_prerequisites(curriculum_id: int, subject_code: str) -> dict[str, Any]:
+        """Two-hop chain: curriculum subjects → matching entry → its prerequisites."""
+        subjects = await get_json(
+            f"{base}/api/curricula/{curriculum_id}/curriculum-subjects", timeout=timeout
+        )
+        if not subjects.get("ok"):
+            return subjects
+        wanted = _norm_code(subject_code)
+        target = next(
+            (
+                it for it in unwrap_list(subjects["data"])
+                if isinstance(it, dict) and any(
+                    isinstance(v, str) and wanted and wanted in _norm_code(v)
+                    for v in it.values()
+                )
+            ),
+            None,
+        )
+        if target is None or "id" not in target:
+            return {
+                "ok": True,
+                "data": {"found": False, "curriculum_id": curriculum_id, "subject_code": subject_code},
+            }
+        prereqs = await get_json(
+            f"{base}/api/curriculum-subjects/{target['id']}/prerequisite-subjects",
+            timeout=timeout,
+        )
+        if not prereqs.get("ok"):
+            return prereqs
+        return {
+            "ok": True,
+            "data": {
+                "found": True,
+                "curriculum_subject": target,
+                "prerequisites": unwrap_list(prereqs["data"]),
+            },
+        }
 
     def _int_arg(name: str, description: str) -> dict[str, Any]:
         return {
@@ -123,6 +165,19 @@ def build_group(cfg: Config) -> ToolGroup:
             description="List the prerequisite subjects of a curriculum subject.",
             input_schema=_int_arg("curriculum_subject_id", "Curriculum-subject id from courses_list_curriculum_subjects"),
             handler=get_subject_prerequisites,
+        ),
+        ToolDef(
+            name="courses_get_prerequisites",
+            description="Find a subject inside a curriculum by its code and list its prerequisites (two-hop chain).",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "curriculum_id": {"type": "integer", "description": "Curriculum id from courses_list_program_curricula"},
+                    "subject_code": {"type": "string", "description": "Subject code, e.g. \"DCIT 26\" (spacing/dashes ignored)"},
+                },
+                "required": ["curriculum_id", "subject_code"],
+            },
+            handler=get_prerequisites,
         ),
     )
     return ToolGroup(name="courses", tools=tools)

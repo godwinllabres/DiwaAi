@@ -29,11 +29,13 @@ class ToolGroup:
 
 
 def collect_groups(cfg: Config) -> list[ToolGroup]:
-    from .groups import courses, orps
+    from .groups import courses, dts, orps
 
     groups: list[ToolGroup] = []
     if cfg.courses.active:
         groups.append(courses.build_group(cfg))
     if cfg.orps.active:
         groups.append(orps.build_group(cfg))
+    if cfg.dts.active:
+        groups.append(dts.build_group(cfg))
     return groups

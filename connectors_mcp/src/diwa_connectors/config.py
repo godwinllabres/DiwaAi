@@ -42,6 +42,7 @@ class GroupConfig:
 class Config:
     courses: GroupConfig
     orps: GroupConfig
+    dts: GroupConfig
     timeout_seconds: float
 
 
@@ -59,6 +60,10 @@ def load_config(env: Mapping[str, str] | None = None) -> Config:
         orps=GroupConfig(
             base_url=_base_url(env, "ORPS_BASE_URL"),
             enabled=_flag(env, "CONNECTORS_ORPS_ENABLED"),
+        ),
+        dts=GroupConfig(
+            base_url=_base_url(env, "DTS_BASE_URL"),
+            enabled=_flag(env, "CONNECTORS_DTS_ENABLED"),
         ),
         timeout_seconds=timeout,
     )
