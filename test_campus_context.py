@@ -52,5 +52,32 @@ r = resolve(s, "Silang")
 check("bare campus, no pending -> none", r.action, "none")
 check("bare campus stored", r.campus, "Silang Campus")
 
+# --- F7: pending is single-shot; a later short campus-mention question does
+#     NOT resume the stale parked question ---
+s = "flow-hijack"
+resolve(s, "Where is the campus located?")            # parks
+r = resolve(s, "Imus tuition fee?")                    # 3 words, mentions campus, but a NEW question
+check("short new question does not hijack pending", r.action != "answer_pending", True)
+r = resolve(s, "Naic")                                 # a later bare campus must NOT resume the long-gone question
+check("pending not resurrected turns later", r.action, "none")
+
+# --- F7: a genuine bare-campus reply on the immediately-next turn DOES resume ---
+s = "flow-resume"
+resolve(s, "Where is the campus located?")
+r = resolve(s, "sa Bacoor po")                          # filler + campus = bare answer
+check("bare campus reply (with filler) resumes", r.action, "answer_pending")
+
+# --- F5: two stateless (no session_key) callers must not share state ---
+r1 = resolve(None, "Where is the campus located?")      # user A, no session
+check("stateless caller still clarifies", r1.action, "clarify")
+r2 = resolve(None, "Naic")                              # user B, no session
+check("stateless caller B does NOT resume A's question", r2.action, "none")
+
+# --- specific-place questions stay with map intents ---
+s = "flow-place"
+resolve(s, "taga Imus ako")                             # campus known
+r = resolve(s, "where is the CvSU library?")
+check("specific-place question not intercepted", r.action, "none")
+
 print(f"\n{'ALL PASS' if not failures else str(failures) + ' FAILURES'} | campuses={len(CAMPUSES)}")
 raise SystemExit(1 if failures else 0)

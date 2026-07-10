@@ -24,7 +24,7 @@ CASES = [
     # --- intensifier (profanity + a real ask -> sanitized, still answered) ---
     ("tangina nawala na naman ang class schedule ko", "intensifier"),
     ("shit I forgot the enrollment deadline, when is it?", "intensifier"),
-    ("bwisit ang bagal ng enrollment portal, paano mag enroll online?", "intensifier"),
+    ("bwisit ang bagal ng enrollment portal, paano mag enroll online?", None),  # mild expletive passes through (F9 policy)
     # --- bare profanity, no content -> abuse-lite boundary ---
     ("putangina", "abuse"),
     # --- threats ---
@@ -61,6 +61,18 @@ CASES = [
     ("boto ko kay dela cruz sa SC elections", None),               # boto = vote (false friend)
     ("masarap ba ang adobong atay sa canteen?", None),             # atay = liver (false friend)
     ("bayot ako, ok lang ba mag-apply sa dorm?", None),            # identity term, no hostile frame
+    # --- regressions from the high-effort code review (must not reopen) ---
+    ("bilat mo", "abuse"),                                         # F2: 5-char severe, was slipping to None
+    ("jakol", "abuse"),                                            # F2: 5-char severe, bare
+    ("how many copies of the form do I need?", None),              # F3: 'pi' substring must not mangle
+    ("is the campus in the capital of cavite?", None),             # F3: 'capital' contains 'pi'
+    ("nasa taas ba ang typing test room?", None),                  # F3: 'typing' contains 'pi'
+    ("Damo nga salamat sa tulong", None),                          # F4: Hiligaynon 'thank you very much'
+    ("may demonyo ba sa kwento ng aswang?", None),                 # F4: ends in 'nyo', benign
+    ("damn traffic, anong oras magbukas ang registrar?", None),    # F9: mild expletive, not directed
+    ("gago ka! saan ang cashier?", "abuse"),                       # !-leet must not downgrade directedness
+    ("fuuuck how do i reset my portal password", "intensifier"),   # elongation must still sanitize
+    ("you are t a n g i n a", "abuse"),                            # obfuscated + directed marker
 ]
 
 failures = 0

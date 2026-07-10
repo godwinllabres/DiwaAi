@@ -54,6 +54,15 @@ _LOCATION_Q_RE = re.compile(
     re.IGNORECASE,
 )
 _CAMPUS_WORD_RE = re.compile(r"\b(campus(?:es)?|university|unibersidad|school|cvsu)\b", re.IGNORECASE)
+# A specific place inside a campus — these stay with the map intents, even when
+# the sentence also says "cvsu"/"campus" ("where is the CvSU library").
+_SPECIFIC_PLACE_RE = re.compile(
+    r"\b(library|aklatan|office|opisina|building|gusali|hall|gym|gymnasium|oval|"
+    r"canteen|cafeteria|clinic|registrar|cashier|dorm|dormitory|laboratory|lab|"
+    r"room|gate|parking|chapel|auditorium|covered court|grandstand|department|"
+    r"college|comfort room|cr|store|coop)\b",
+    re.IGNORECASE,
+)
 
 CLARIFY_TEXT = (
     "CvSU has a main campus in Indang and ten satellite campuses po — "
@@ -94,31 +103,64 @@ def extract_campus(text: str) -> Optional[str]:
 
 
 def _is_ambiguous_campus_question(text: str) -> bool:
+    # "where is the CvSU library" names a specific place → map intent, not a
+    # which-campus question.
+    if _SPECIFIC_PLACE_RE.search(text):
+        return False
     return bool(_LOCATION_Q_RE.search(text) and _CAMPUS_WORD_RE.search(text))
 
 
+# Filler tokens that don't count as "a real question" when deciding whether a
+# short reply is just the campus answer.
+_FILLER = {
+    "campus", "kampus", "po", "yung", "sa", "ang", "the", "please", "is", "in",
+    "at", "ba", "kay", "dito", "doon", "ito", "iyan", "na", "ni",
+}
+
+
+def _is_bare_campus_reply(text: str, mentioned: Optional[str]) -> bool:
+    """Is this message essentially JUST a campus name (i.e., an answer to the
+    clarification), rather than a new question that happens to name a campus?"""
+    if not mentioned:
+        return False
+    stripped = text
+    for _, pattern in _ALIAS_RES:
+        stripped = pattern.sub(" ", stripped)
+    content = [w for w in re.findall(r"[a-zñ]+", stripped.lower()) if w not in _FILLER]
+    return len(content) == 0
+
+
 def resolve(session_key: Optional[str], text: str) -> CampusRouting:
-    """Route one message through the campus-context state machine."""
-    state = _session(session_key or "anon")
+    """Route one message through the campus-context state machine.
+
+    session_key is the caller's session/user id. When it is falsy (a truly
+    stateless caller — no session_id AND no user_id), a throwaway state is used
+    so anonymous callers never share one global bucket (which would leak one
+    visitor's campus/parked question into another's turn).
+    """
+    state = _session(session_key) if session_key else {"campus": None, "pending": None, "at": 0.0}
     mentioned = extract_campus(text)
     if mentioned:
         state["campus"] = mentioned
 
-    # A parked question + a message that is (mostly) just a campus name:
-    # the user answered the clarification — resume the original question.
-    if state["pending"] and mentioned and len(text.split()) <= 4:
-        question = state["pending"]
-        state["pending"] = None
-        return CampusRouting(
-            "answer_pending", mentioned, f"{question} ({mentioned})"
-        )
+    # Pending is single-shot: consume or clear it on the very next turn, so a
+    # parked question can never hijack an unrelated short message minutes later.
+    pending = state.get("pending")
+    state["pending"] = None
+    if pending and _is_bare_campus_reply(text, mentioned):
+        # The reply is just the campus — resume the parked question.
+        return CampusRouting("answer_pending", mentioned, f"{pending} ({mentioned})")
 
     if _is_ambiguous_campus_question(text) and not mentioned:
         if state["campus"]:
             return CampusRouting(
                 "augment", state["campus"], f"{text} ({state['campus']})"
             )
-        state["pending"] = text
+        # Only park a pending question when we can actually resume it (there is
+        # a session to key it to). Stateless callers get the clarify prompt but
+        # nothing is stored.
+        if session_key:
+            state["pending"] = text
         return CampusRouting("clarify")
 
     return CampusRouting("none", state["campus"])
