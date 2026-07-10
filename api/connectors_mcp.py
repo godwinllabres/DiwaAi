@@ -28,7 +28,10 @@ import json
 import logging
 import os
 import re
+import time
 from typing import Any, Optional
+
+import httpx
 
 # mcp SDK is optional — if missing, all calls return None and Diwa falls
 # back to its normal pipeline. Install with: pip install "mcp[sse]"
@@ -39,11 +42,30 @@ try:
 except ImportError:
 	_MCP_AVAILABLE = False
 
+# anthropic SDK is optional — used only by the opt-in LLM router fallback.
+try:
+	import anthropic
+	_ANTHROPIC_AVAILABLE = True
+except ImportError:
+	_ANTHROPIC_AVAILABLE = False
+
 _logger = logging.getLogger("diwa.connectors_mcp")
 
 _MCP_URL = os.environ.get("CONNECTORS_MCP_URL", "http://127.0.0.1:8766/sse")
 _ENABLED = os.environ.get("CONNECTORS_MCP_ENABLED", "1") == "1"
 _CALL_TIMEOUT_SECONDS = float(os.environ.get("CONNECTORS_MCP_TIMEOUT_SECONDS", "8.0"))
+
+# Opt-in LLM router: when the regex router misses on a connectors-shaped
+# message (e.g. Filipino/Taglish phrasing), ask an LLM to extract
+# {tool, args}. Provider chosen like ais_mcp: LLM_PROVIDER env, else Ollama.
+_LLM_ROUTER_ENABLED = os.environ.get("CONNECTORS_MCP_LLM_ROUTER", "0") == "1"
+_OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+# Routing is JSON extraction, not prose — the small/fast model is the default.
+_ROUTER_OLLAMA_MODEL = (
+	os.environ.get("CONNECTORS_MCP_OLLAMA_MODEL")
+	or os.environ.get("OLLAMA_MODEL", "llama3.2:3b")
+)
+_ROUTER_ANTHROPIC_MODEL = os.environ.get("CONNECTORS_MCP_LLM_MODEL", "claude-haiku-4-5-20251001")
 
 _FAILURE_NOTE = (
 	"(The campus services lookup is temporarily unreachable — answering from "
@@ -121,6 +143,215 @@ def route(text: str) -> Optional[tuple[str, dict[str, Any]]]:
 		return "courses_list_programs", {}
 
 	return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LLM router (opt-in) — same OpenAI-style tool-calling approach as ais_mcp:
+# fires only when the regex router missed AND the message looks
+# connectors-shaped. Never raises; any failure returns None (NLU runs).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Gate before spending LLM latency: domain words in English or Filipino.
+_SHAPED_RE = re.compile(
+	r"\b(kurso\w*|program\w*|degree\w*|dokumento\w*|document\w*|course\w*|"
+	r"curricul\w*|prerequisit\w*|pre-?req\w*|subjects?|asignatura\w*|"
+	r"tickets?|help ?desk|nasaan)\b",
+	re.IGNORECASE,
+)
+
+_LLM_SYSTEM = (
+	"You route CvSU university-chatbot queries to live-data tools. Call a tool "
+	"ONLY when the query asks for data a tool provides AND every required "
+	"argument can be filled verbatim from the query. If no tool fits, or a "
+	"required argument is missing, do not call any tool. Queries may be in "
+	"English, Filipino, or Taglish."
+)
+
+_LLM_TOOLS_OPENAI = [
+	{
+		"type": "function",
+		"function": {
+			"name": "orps_track_ticket",
+			"description": "Track an ICT Helpdesk ticket by its ticket number (e.g. HTKT-07-00001).",
+			"parameters": {
+				"type": "object",
+				"properties": {"ticket_number": {"type": "string"}},
+				"required": ["ticket_number"],
+			},
+		},
+	},
+	{
+		"type": "function",
+		"function": {
+			"name": "dts_track_document",
+			"description": "Track a routed document (communication, purchase request/order, job order, voucher) by its reference number.",
+			"parameters": {
+				"type": "object",
+				"properties": {"reference_number": {"type": "string"}},
+				"required": ["reference_number"],
+			},
+		},
+	},
+	{
+		"type": "function",
+		"function": {
+			"name": "courses_list_programs",
+			"description": "List the degree programs / courses CvSU offers. Optional search filter.",
+			"parameters": {
+				"type": "object",
+				"properties": {"search": {"type": "string"}},
+				"required": [],
+			},
+		},
+	},
+	{
+		"type": "function",
+		"function": {
+			"name": "courses_find_subject",
+			"description": "Find a subject in the course catalog by its code or title.",
+			"parameters": {
+				"type": "object",
+				"properties": {"search": {"type": "string"}},
+				"required": ["search"],
+			},
+		},
+	},
+]
+_ROUTER_REQUIRED = {
+	t["function"]["name"]: list(t["function"]["parameters"].get("required", []))
+	for t in _LLM_TOOLS_OPENAI
+}
+
+
+def _valid_routed(tool_name: Any, args: Any) -> Optional[tuple[str, dict[str, Any]]]:
+	"""Validate an LLM-proposed (tool, args) against the advertised menu."""
+	if tool_name not in _ROUTER_REQUIRED or not isinstance(args, dict):
+		return None
+	if any(not str(args.get(req, "")).strip() for req in _ROUTER_REQUIRED[tool_name]):
+		return None
+	allowed = {
+		p
+		for t in _LLM_TOOLS_OPENAI
+		if t["function"]["name"] == tool_name
+		for p in t["function"]["parameters"]["properties"]
+	}
+	return tool_name, {k: v for k, v in args.items() if k in allowed}
+
+
+async def _llm_route(text: str) -> Optional[tuple[str, dict[str, Any]]]:
+	if not _LLM_ROUTER_ENABLED or not _SHAPED_RE.search(text):
+		return None
+	provider = (os.environ.get("LLM_PROVIDER") or "").lower()
+	if provider in ("claude", "anthropic"):
+		return await _llm_route_anthropic(text)
+	if provider == "ollama" or _OLLAMA_BASE_URL:
+		return await _llm_route_ollama(text)
+	return await _llm_route_anthropic(text)
+
+
+async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict[str, Any]]]:
+	t0 = time.monotonic()
+	try:
+		# 30s: the first call after idle pays the model cold-load (~10s+).
+		async with httpx.AsyncClient(timeout=30.0) as http:
+			resp = await http.post(
+				f"{_OLLAMA_BASE_URL}/v1/chat/completions",
+				json={
+					"model": _ROUTER_OLLAMA_MODEL,
+					"messages": [
+						{"role": "system", "content": _LLM_SYSTEM},
+						{"role": "user", "content": text},
+					],
+					"tools": _LLM_TOOLS_OPENAI,
+					"tool_choice": "auto",
+					"max_tokens": 192,
+				},
+			)
+			resp.raise_for_status()
+			data = resp.json()
+	except Exception:  # noqa: BLE001 — never block chat on LLM failure
+		_logger.exception("connectors_mcp llm_route provider=ollama failed text=%r", text[:120])
+		return None
+	elapsed_ms = int((time.monotonic() - t0) * 1000)
+	choices = data.get("choices") or []
+	msg = (choices[0].get("message") if choices else None) or {}
+	calls = msg.get("tool_calls") or []
+	if not calls:
+		_logger.info("connectors_mcp llm_route provider=ollama elapsed=%dms tool=None", elapsed_ms)
+		return None
+	fn = (calls[0].get("function") or {})
+	args_raw = fn.get("arguments")
+	if not isinstance(args_raw, dict):
+		try:
+			args_raw = json.loads(args_raw or "{}")
+		except json.JSONDecodeError:
+			return None
+	routed = _valid_routed(fn.get("name"), args_raw)
+	_logger.info(
+		"connectors_mcp llm_route provider=ollama elapsed=%dms tool=%s",
+		elapsed_ms, routed[0] if routed else f"rejected:{fn.get('name')}",
+	)
+	return routed
+
+
+async def _llm_route_anthropic(text: str) -> Optional[tuple[str, dict[str, Any]]]:
+	if not _ANTHROPIC_AVAILABLE or not os.environ.get("ANTHROPIC_API_KEY"):
+		return None
+	try:
+		client = anthropic.AsyncAnthropic()
+		resp = await client.messages.create(
+			model=_ROUTER_ANTHROPIC_MODEL,
+			max_tokens=192,
+			system=_LLM_SYSTEM,
+			tools=[
+				{
+					"name": t["function"]["name"],
+					"description": t["function"]["description"],
+					"input_schema": t["function"]["parameters"],
+				}
+				for t in _LLM_TOOLS_OPENAI
+			],
+			messages=[{"role": "user", "content": text}],
+		)
+	except Exception:  # noqa: BLE001
+		_logger.warning("connectors_mcp llm_route provider=anthropic failed text=%r", text[:120])
+		return None
+	for block in resp.content:
+		if getattr(block, "type", None) == "tool_use":
+			return _valid_routed(block.name, dict(block.input or {}))
+	return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Metrics — lightweight counters surfaced at /connectors_mcp_stats.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_METRICS: dict[str, Any] = {
+	"regex_routed": 0,
+	"llm_routed": 0,
+	"tool_ok": 0,
+	"tool_fail": 0,
+	"transport_fail": 0,
+	"per_tool": {},
+}
+
+
+def _metrics_bump(key: str, tool: Optional[str] = None) -> None:
+	_METRICS[key] = _METRICS.get(key, 0) + 1
+	if tool:
+		per = _METRICS["per_tool"].setdefault(tool, {"calls": 0, "ok": 0})
+		per["calls"] += 1
+		if key == "tool_ok":
+			per["ok"] += 1
+
+
+def metrics_snapshot() -> dict[str, Any]:
+	return {
+		**{k: v for k, v in _METRICS.items() if k != "per_tool"},
+		"per_tool": {k: dict(v) for k, v in _METRICS["per_tool"].items()},
+		"llm_router_enabled": _LLM_ROUTER_ENABLED,
+		"mcp_url": _MCP_URL,
+	}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -332,27 +563,36 @@ async def try_handle(message: str, session_id: Optional[str] = None) -> Optional
 	if not (_MCP_AVAILABLE and _ENABLED):
 		return None
 	routed = route(message)
+	routed_by = "regex"
+	if routed is None:
+		routed = await _llm_route(message)
+		routed_by = "llm"
 	if routed is None:
 		return None
 	tool_name, args = routed
+	_metrics_bump(f"{routed_by}_routed")
 
 	try:
 		envelope = await _call_tool(tool_name, args)
 	except asyncio.TimeoutError:
+		_metrics_bump("transport_fail", tool_name)
 		_logger.warning(
 			"connectors_mcp tool=%s ok=False reason=timeout limit=%.1fs",
 			tool_name, _CALL_TIMEOUT_SECONDS,
 		)
 		return {"text": None, "failure_note": _FAILURE_NOTE}
 	except Exception as exc:  # noqa: BLE001 — transport/SDK failure
+		_metrics_bump("transport_fail", tool_name)
 		_logger.warning(
 			"connectors_mcp tool=%s ok=False reason=transport err=%s",
 			tool_name, exc.__class__.__name__,
 		)
 		return {"text": None, "failure_note": _FAILURE_NOTE}
 
+	_metrics_bump("tool_ok" if envelope.get("ok") else "tool_fail", tool_name)
 	reply = _REPLY_BUILDERS[tool_name](args, envelope)
 	_logger.info(
-		"connectors_mcp tool=%s ok=%s", tool_name, bool(envelope.get("ok")),
+		"connectors_mcp tool=%s routed_by=%s ok=%s",
+		tool_name, routed_by, bool(envelope.get("ok")),
 	)
 	return reply

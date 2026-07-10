@@ -39,6 +39,7 @@ from .ais_mcp import call_tool as _ais_call_tool
 from .ais_mcp import ToolCallError as _AisToolCallError
 from .ais_mcp import _sanitize_tool_error as _ais_sanitize_tool_error
 from .connectors_mcp import try_handle as _try_connectors
+from .connectors_mcp import metrics_snapshot as _connectors_metrics_snapshot
 # Phase 2A Wave 2 — per-user AIS authentication for write actions.
 from . import auth_ais as _ais_auth
 
@@ -844,6 +845,14 @@ async def ais_mcp_stats():
     snapshot = _ais_metrics_snapshot()
     snapshot["sessions"] = {"active_ais_logins": _ais_auth.session_count()}
     return snapshot
+
+
+@app.get("/connectors_mcp_stats", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def connectors_mcp_stats():
+    """Routing counts (regex vs LLM), per-tool call/ok counts, and transport
+    failures for the connectors MCP bridge. In-memory aggregates only.
+    Gated by `X-Admin-Pin` (matches DASHBOARD_PIN)."""
+    return _connectors_metrics_snapshot()
 
 
 # ============================================================================
