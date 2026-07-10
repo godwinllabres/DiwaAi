@@ -1,6 +1,6 @@
 # Moderation Plan — Mixed Benign + Harmful Messages
 
-**Status:** planned (evidence verified live, 2026-07-10) · **Owner:** Diwa team
+**Status:** P1+P2 implemented and live-verified 2026-07-10 (`api/safety.py`, corpus in `test_safety_gate.py` — 34/34); P3 partial (`/admin/moderation`); P4–P5 open · **Owner:** Diwa team
 
 ## 1. The problem, with evidence
 

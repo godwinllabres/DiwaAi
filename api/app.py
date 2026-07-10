@@ -40,6 +40,7 @@ from .ais_mcp import ToolCallError as _AisToolCallError
 from .ais_mcp import _sanitize_tool_error as _ais_sanitize_tool_error
 from .connectors_mcp import try_handle as _try_connectors
 from .connectors_mcp import metrics_snapshot as _connectors_metrics_snapshot
+from . import safety as _safety
 # Phase 2A Wave 2 — per-user AIS authentication for write actions.
 from . import auth_ais as _ais_auth
 
@@ -372,6 +373,8 @@ class RefusalReason(str, Enum):
     NONSENSE      = "nonsense"
     OUT_OF_SCOPE  = "out_of_scope"
     PROHIBITED    = "prohibited"
+    ABUSIVE       = "abusive"   # profanity/insult directed at a person or the bot
+    SAFETY        = "safety"    # self-harm referral or threat boundary
 
 
 class DisplayHint(str, Enum):
@@ -737,6 +740,49 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     # Measure response time
     start_time = time.time()
 
+    # Safety screen — runs before the MCP bridges and the intent tiers so no
+    # path answers an abusive/threatening message cheerfully (the Nonsense/
+    # Scope gates only guard the LLM tier). See docs/moderation_plan.md.
+    safety_result = _safety.classify(request.message)
+    if safety_result.category in ("self_harm", "threat", "abuse"):
+        _safety.record(safety_result.category, request.message, request.session_id)
+        safety_text = _safety.RESPONSES[safety_result.category]
+        message_id = chat_logger.log_chat(
+            user_id=request.user_id or "anonymous",
+            user_message=request.message,
+            bot_response=safety_text,
+            intent=f"safety_{safety_result.category}",
+            confidence=1.0,
+            model_used=f"SafetyGate ({safety_result.category})",
+            session_id=request.session_id,
+            response_time_ms=(time.time() - start_time) * 1000,
+        )
+        return ChatResponse(
+            message_id=message_id,
+            user_id=request.user_id,
+            session_id=request.session_id,
+            text=safety_text,
+            summary=None,
+            intent=f"safety_{safety_result.category}",
+            confidence=1.0,
+            source=ResponseSource.REFUSAL,
+            refusal_reason=(
+                RefusalReason.ABUSIVE
+                if safety_result.category == "abuse"
+                else RefusalReason.SAFETY
+            ),
+            cards=[],
+            context=None,
+            suggestions=_safety.SUGGESTIONS[safety_result.category],
+            display_hint=DisplayHint.TEXT_ONLY,
+        )
+    if safety_result.category == "intensifier":
+        # Profanity as seasoning around a real ask — answer the ask. The
+        # sanitized text feeds routing/classification; the log keeps the
+        # original via log_chat below.
+        _safety.record("intensifier", request.message, request.session_id)
+        request.message = safety_result.sanitized
+
     # AIS MCP short-circuit — if the query looks like a finance/accounting
     # lookup (DV name, budget balance, RAPAL/RAOD report, UACS lookup),
     # answer it from the AIS MCP server instead of the student-facing NLU.
@@ -877,6 +923,13 @@ async def _ollama_local_models() -> List[str]:
             return sorted(m.get("name", "") for m in resp.json().get("models", []))
     except Exception:
         return []
+
+
+@app.get("/admin/moderation", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def moderation_stats():
+    """SafetyGate counters per category + the last 20 flagged messages
+    (truncated). Gated by `X-Admin-Pin`."""
+    return _safety.snapshot()
 
 
 @app.get("/admin/llm", tags=["Admin"], dependencies=[Depends(require_admin)])
