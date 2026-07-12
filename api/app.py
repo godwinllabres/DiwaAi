@@ -40,8 +40,10 @@ from .ais_mcp import ToolCallError as _AisToolCallError
 from .ais_mcp import _sanitize_tool_error as _ais_sanitize_tool_error
 from .connectors_mcp import try_handle as _try_connectors
 from .connectors_mcp import metrics_snapshot as _connectors_metrics_snapshot
+from .ais_mcp import circuit_status as _ais_circuit_status
 from . import safety as _safety
 from . import campus_context as _campus
+from . import charter_rag as _charter_rag
 # Phase 2A Wave 2 — per-user AIS authentication for write actions.
 from . import auth_ais as _ais_auth
 
@@ -1002,6 +1004,42 @@ async def moderation_stats():
     """SafetyGate counters per category + the last 20 flagged messages
     (truncated). Gated by `X-Admin-Pin`."""
     return _safety.snapshot()
+
+
+_START_TIME = time.time()
+
+
+@app.get("/admin/status", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def admin_status():
+    """Single-pane operational status across every subsystem — the brain tiers,
+    the LLM tier + model, the two MCP bridges, moderation, and campus context.
+    Gated by `X-Admin-Pin`. Each subsystem is best-effort: a failure in one
+    reports {error: ...} rather than sinking the whole call."""
+    def _safe(fn, default=None):
+        try:
+            return fn()
+        except Exception as exc:  # noqa: BLE001 — never let one subsystem 500 the status
+            return {"error": exc.__class__.__name__}
+
+    llm = _safe(chatbot.llm_status, {})
+    return {
+        "service": "DIWA API",
+        "uptime_seconds": int(time.time() - _START_TIME),
+        "brain": {
+            "classifier_ready": chatbot.nb_model is not None,
+            "neural_net_ready": getattr(chatbot, "nn_model", None) is not None,
+            "charter_rag": _safe(lambda: {
+                "available": (idx := _charter_rag.get_index()) is not None,
+                "chunks": len(idx._chunks) if idx else 0,
+            }, {}),
+            "usage": _safe(chatbot.get_usage_stats, {}),
+        },
+        "llm": {**llm, "second_opinion": os.getenv("SAFETY_LLM_SECOND_OPINION", "0") == "1"},
+        "moderation": _safe(lambda: _safety.snapshot()["counts"], {}),
+        "connectors_bridge": _safe(_connectors_metrics_snapshot, {}),
+        "ais_bridge": _safe(_ais_circuit_status, {}),
+        "campus_context": _safe(_campus.snapshot, {}),
+    }
 
 
 @app.get("/admin/llm", tags=["Admin"], dependencies=[Depends(require_admin)])
