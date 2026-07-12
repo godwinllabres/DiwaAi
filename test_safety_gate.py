@@ -84,4 +84,30 @@ for message, expected in CASES:
     print(f"{status}  expected={str(expected):<12} got={str(got):<12} | {message}")
 
 print(f"\n{len(CASES) - failures}/{len(CASES)} passed")
-raise SystemExit(1 if failures else 0)
+
+# --- P4 concern-prefilter (deterministic; gates whether the LLM is consulted) ---
+from api.safety import concern_prefilter
+
+PREFILTER = [
+    ("I don't want to be here anymore", True),
+    ("there's no reason to go on", True),
+    ("ayoko na, hindi ko na kaya", True),
+    ("wala nang saysay ang buhay ko", True),
+    ("something bad will happen to him tomorrow", True),
+    ("gaganti ako sa kanila", True),
+    ("teach them a lesson after class", True),
+    # benign — prefilter must NOT fire (saves the LLM call)
+    ("where is the registrar office?", False),
+    ("what programs are offered at CvSU?", False),
+    ("how do I enroll online?", False),
+    ("thank you po", False),
+]
+pf_fail = 0
+for message, expected in PREFILTER:
+    got = concern_prefilter(message)
+    if got != expected:
+        pf_fail += 1
+    print(f"{'PASS' if got == expected else 'FAIL'}  prefilter={got!s:<5} want={expected!s:<5} | {message}")
+print(f"\nprefilter {len(PREFILTER) - pf_fail}/{len(PREFILTER)} passed")
+
+raise SystemExit(1 if (failures or pf_fail) else 0)

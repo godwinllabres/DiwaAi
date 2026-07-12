@@ -390,6 +390,126 @@ SUGGESTIONS = {
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# LLM second opinion (moderation_plan.md P4) — catches PARAPHRASED self-harm
+# and threats the lexicon can't ("I don't want to be here anymore",
+# "something bad will happen to him"). Opt-in and cheap: an LLM is asked only
+# when a conservative prefilter of soft concern-cues matches, so the vast
+# majority of chats never pay the latency. Fail-safe: any error → no block.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_LLM_SECOND_OPINION = os.environ.get("SAFETY_LLM_SECOND_OPINION", "0") == "1"
+_OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+
+# Soft cues that the explicit gate does NOT already catch. Deliberately broad —
+# a match only TRIGGERS the LLM (which makes the real call), it never blocks on
+# its own, so an innocent "I want to disappear from this group chat" is safe.
+_CONCERN_PREFILTER_RE = re.compile(
+    r"\b("
+    # self-harm paraphrases
+    r"don'?t want to (be here|live|wake up|go on|exist|continue)"
+    r"|no (point|reason|sense)( in| to)? (living|life|go on|going on|trying)"
+    r"|better off without me|no one would (care|miss|notice)"
+    r"|can'?t (take|do|handle) (this|it|anymore|any more)|can'?t go on"
+    r"|want to (disappear|vanish|give up|end (it|everything))|end it all"
+    r"|tired of (living|everything|it all)|hurt myself|harm myself"
+    r"|ayoko na(ng)?( mabuhay| dito)?|gusto ko na?ng? (mawala|sumuko|tumigil)"
+    r"|wala na(ng)? (kwenta|silbi|saysay|pag-?asa)|pagod na ako sa (buhay|lahat)"
+    r"|sawa na ako sa buhay|hindi ko na kaya"
+    # threat paraphrases
+    r"|make (him|her|them|you|everyone) (pay|suffer|regret|sorry)"
+    r"|(he|she|they|you|theyre|they're)('?ll| will) (pay|regret|be sorry|suffer)"
+    r"|get (back at|even with|revenge)|teach (him|her|them|you) a lesson"
+    r"|something (bad|terrible)( will| is going to)? happen to"
+    r"|gaganti ako|maghihiganti|magbabayad (ka|siya|sila|kayo)|lagot (ka|sila|kayo)"
+    r"|pagsisisihan (mo|niya|nila)|paparusahan ko"
+    r")\b",
+    re.IGNORECASE,
+)
+
+_LLM_JUDGE_SYSTEM = (
+    "You are a safety classifier for a university chatbot. Read the user "
+    "message and decide if it expresses a genuine risk of SELF-HARM/suicide, "
+    "a THREAT of violence toward another person, or neither. Be conservative: "
+    "only flag genuine risk, not venting, jokes, song lyrics, academic "
+    "questions, or figures of speech. Messages may be English, Filipino, or "
+    "Taglish. Reply with ONLY one word: self_harm, threat, or safe."
+)
+
+
+def concern_prefilter(message: str) -> bool:
+    """Cheap test: might this message need the LLM second opinion? Runs on a
+    LIGHT normalization (lowercase + collapsed whitespace) that keeps
+    apostrophes, so contraction cues like "don't want to be here" survive."""
+    if not message:
+        return False
+    light = re.sub(r"\s+", " ", message.lower()).strip()
+    return bool(_CONCERN_PREFILTER_RE.search(light))
+
+
+async def llm_second_opinion(message: str) -> Optional[str]:
+    """Return 'self_harm' | 'threat' when the LLM judges genuine risk in a
+    prefilter-flagged message, else None. Off unless SAFETY_LLM_SECOND_OPINION=1.
+    Never raises — any failure returns None (the lexicon gate already ran)."""
+    if not (_LLM_SECOND_OPINION and concern_prefilter(message)):
+        return None
+    provider = (os.environ.get("LLM_PROVIDER") or "").lower()
+    try:
+        if provider in ("claude", "anthropic"):
+            verdict = await _judge_anthropic(message)
+        else:
+            verdict = await _judge_ollama(message)
+    except Exception:  # noqa: BLE001 — fail-safe, never block chat on judge error
+        _logger.warning("safety llm second-opinion failed", exc_info=False)
+        return None
+    verdict = (verdict or "").strip().lower()
+    for cat in ("self_harm", "threat"):
+        if cat in verdict:
+            _stats["llm_flagged"] = _stats.get("llm_flagged", 0) + 1
+            return cat
+    return None
+
+
+async def _judge_ollama(message: str) -> Optional[str]:
+    import httpx
+
+    model = os.environ.get("SAFETY_LLM_MODEL") or os.environ.get("OLLAMA_MODEL") or "llama3.2:3b"
+    body = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": _LLM_JUDGE_SYSTEM},
+            {"role": "user", "content": message},
+        ],
+        "stream": False,
+        "options": {"temperature": 0.0, "num_predict": 8},
+    }
+    if re.match(r"^(qwen3|deepseek-r1|magistral|gpt-oss)", model, re.IGNORECASE):
+        body["think"] = False
+    # Generous timeout: a safety verdict is worth waiting for the model's
+    # cold-load (~10-30s on CPU); warm calls return in a second or two.
+    async with httpx.AsyncClient(timeout=90.0) as http:
+        resp = await http.post(f"{_OLLAMA_BASE_URL}/api/chat", json=body)
+        resp.raise_for_status()
+        return (resp.json().get("message") or {}).get("content", "")
+
+
+async def _judge_anthropic(message: str) -> Optional[str]:
+    try:
+        import anthropic
+    except ImportError:
+        return None
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return None
+    client = anthropic.AsyncAnthropic()
+    resp = await client.messages.create(
+        model=os.environ.get("SAFETY_LLM_MODEL", "claude-haiku-4-5-20251001"),
+        max_tokens=8,
+        system=_LLM_JUDGE_SYSTEM,
+        messages=[{"role": "user", "content": message}],
+    )
+    return "".join(b.text for b in resp.content if getattr(b, "type", None) == "text")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Observability — counters + a small ring buffer for /admin/moderation.
 # ─────────────────────────────────────────────────────────────────────────────
 

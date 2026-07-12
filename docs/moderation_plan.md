@@ -69,10 +69,15 @@ messages.
   the directed test decides).
 - **P3 — Observability.** Stats counters, `/admin/moderation` summary
   (admin-PIN gated, like `/admin/llm`), log filtering; decide review cadence.
-- **P4 — Gray-zone LLM second opinion (optional, off by default).** Lexicons
-  miss paraphrased threats ("something bad will happen to him"); a flagged
-  local-LLM classification (qwen3, think off) can catch them at ~seconds of
-  latency, behind `SAFETY_LLM_SECOND_OPINION=1`.
+- **P4 — Gray-zone LLM second opinion.** IMPLEMENTED (`api/safety.py`
+  `llm_second_opinion`, off by default behind `SAFETY_LLM_SECOND_OPINION=1`).
+  A conservative concern-cue prefilter (`concern_prefilter`) gates the LLM so
+  it fires only on ~soft self-harm/threat paraphrases; the LLM returns
+  self_harm/threat/safe; fail-safe to the lexicon verdict on any error.
+  Live-verified: "I don't want to be here anymore" → safety referral (lexicon
+  misses it). Threat recall scales with `SAFETY_LLM_MODEL` (small models are
+  conservative; use qwen3:8b or Claude for better catch). Counter
+  `llm_flagged` in /admin/moderation.
 - **P5 — Copy & governance.** Guidance office reviews the S1 referral text;
   define who reads flagged logs and when a human is notified.
 

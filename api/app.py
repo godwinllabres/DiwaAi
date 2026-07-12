@@ -745,7 +745,21 @@ def _short_circuit_response(
     )
 
 
-def _safety_screen(message: str, session_id: Optional[str]):
+def _safety_block(category: str, model_used: str) -> dict:
+    """ChatResponse fields for a safety refusal (self_harm / threat / abuse)."""
+    return {
+        "text": _safety.RESPONSES[category],
+        "intent": f"safety_{category}",
+        "source": ResponseSource.REFUSAL,
+        "model_used": model_used,
+        "refusal_reason": (
+            RefusalReason.ABUSIVE if category == "abuse" else RefusalReason.SAFETY
+        ),
+        "suggestions": _safety.SUGGESTIONS[category],
+    }
+
+
+async def _safety_screen(message: str, session_id: Optional[str]):
     """Front-door SafetyGate, shared by /chat and /batch so neither is an
     unscreened path. Returns (block, effective_message):
       • block is a dict of ChatResponse fields when the message must be
@@ -755,19 +769,16 @@ def _safety_screen(message: str, session_id: Optional[str]):
     result = _safety.classify(message)
     if result.category in ("self_harm", "threat", "abuse"):
         _safety.record(result.category, message, session_id, result.max_severity)
-        return {
-            "text": _safety.RESPONSES[result.category],
-            "intent": f"safety_{result.category}",
-            "source": ResponseSource.REFUSAL,
-            "model_used": f"SafetyGate ({result.category})",
-            "refusal_reason": (
-                RefusalReason.ABUSIVE if result.category == "abuse" else RefusalReason.SAFETY
-            ),
-            "suggestions": _safety.SUGGESTIONS[result.category],
-        }, message
+        return _safety_block(result.category, f"SafetyGate ({result.category})"), message
     if result.category == "intensifier":
         _safety.record("intensifier", message, session_id, result.max_severity)
         return None, result.sanitized
+    # Lexicon said safe — the opt-in LLM second opinion catches paraphrased
+    # self-harm/threats the wordlists can't (no-op unless enabled + prefilter).
+    llm_cat = await _safety.llm_second_opinion(message)
+    if llm_cat:
+        _safety.record(llm_cat, message, session_id)
+        return _safety_block(llm_cat, f"SafetyGate (llm:{llm_cat})"), message
     return None, message
 
 
@@ -815,7 +826,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     # Safety screen — runs before the MCP bridges and the intent tiers so no
     # path answers an abusive/threatening message cheerfully (the Nonsense/
     # Scope gates only guard the LLM tier). See docs/moderation_plan.md.
-    block, request.message = _safety_screen(request.message, request.session_id)
+    block, request.message = await _safety_screen(request.message, request.session_id)
     if block:
         return _short_circuit_response(request, original_message, start_time, **block)
 
@@ -1347,7 +1358,7 @@ async def batch_chat(requests: List[ChatRequest]):
         # Same front-door SafetyGate as /chat — /batch must not be an
         # unscreened second entrance for abusive/self-harm messages.
         original_message = request.message
-        block, request.message = _safety_screen(request.message, request.session_id)
+        block, request.message = await _safety_screen(request.message, request.session_id)
         if block:
             results.append(_short_circuit_response(request, original_message, start_time, **block))
             continue
