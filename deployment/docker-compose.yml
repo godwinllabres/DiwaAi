@@ -21,6 +21,12 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    # Hardening: no privilege escalation, drop all Linux caps, cap memory.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 2g
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -46,6 +52,9 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sevi -d sevi"]
       interval: 10s

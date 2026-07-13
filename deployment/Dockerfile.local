@@ -24,6 +24,12 @@ RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); 
 # Copy application (see .dockerignore — excludes .env, logs/, backups, test artifacts)
 COPY . .
 
+# Run as a non-root user. The app writes to /app/data (SQLite intents cache)
+# and /app/logs at runtime, so hand ownership to the runtime user.
+RUN useradd --create-home --uid 10001 appuser \
+    && chown -R appuser:appuser /app
+USER appuser
+
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \

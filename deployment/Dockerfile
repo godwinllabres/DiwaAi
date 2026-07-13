@@ -21,6 +21,11 @@ RUN python -c "import nltk; nltk.download('punkt_tab'); nltk.download('wordnet')
 # Copy application
 COPY . .
 
+# Run as a non-root user (writes to /app/data and /app/logs at runtime)
+RUN useradd --create-home --uid 10001 appuser \
+    && chown -R appuser:appuser /app
+USER appuser
+
 # Expose port
 EXPOSE 8000
 

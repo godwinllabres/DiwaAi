@@ -9,6 +9,7 @@ import os
 import random
 import re
 import pickle
+import hashlib
 import threading
 from collections import OrderedDict
 import urllib.request
@@ -19,6 +20,48 @@ import joblib
 
 import nltk
 from nltk.stem import WordNetLemmatizer
+
+# --- Model artifact integrity gate ---------------------------------------
+# pickle/joblib/keras execute code on load, so an attacker who can replace a
+# models/*.pkl file gets code execution in the API process. We pin known-good
+# SHA-256 hashes in models/trusted_hashes.json and refuse to load anything
+# that doesn't match. Override for local experiments with
+# SEVI_ALLOW_UNVERIFIED_MODELS=1. Regenerate after a retrain:
+#   python scripts/update_trusted_hashes.py
+_TRUSTED_HASHES_PATH = os.path.join(os.path.dirname(__file__), "..", "models", "trusted_hashes.json")
+
+
+def _load_trusted_hashes() -> dict:
+    try:
+        with open(_TRUSTED_HASHES_PATH, "r", encoding="utf-8") as f:
+            return json.load(f).get("artifacts", {})
+    except (FileNotFoundError, ValueError):
+        return {}
+
+
+def verify_artifact(path: str) -> None:
+    """Raise if `path`'s SHA-256 isn't the pinned trusted value.
+
+    Unknown artifacts (not in the manifest) are allowed but warned about, so a
+    new file type doesn't hard-break startup; a *mismatch* on a known artifact
+    is fatal unless SEVI_ALLOW_UNVERIFIED_MODELS=1.
+    """
+    if os.getenv("SEVI_ALLOW_UNVERIFIED_MODELS") == "1":
+        return
+    trusted = _load_trusted_hashes()
+    name = os.path.basename(path)
+    expected = trusted.get(name)
+    if expected is None:
+        print(f"[WARN] {name} has no pinned hash in trusted_hashes.json — loading unverified.")
+        return
+    with open(path, "rb") as f:
+        actual = hashlib.sha256(f.read()).hexdigest()
+    if actual != expected:
+        raise ValueError(
+            f"Refusing to load {name}: SHA-256 {actual[:12]}… does not match the "
+            f"trusted value {expected[:12]}…. If this was a legitimate retrain, run "
+            f"scripts/update_trusted_hashes.py; otherwise the artifact may be tampered with."
+        )
 
 # Load .env (optional — graceful fallback if python-dotenv missing)
 try:
@@ -131,6 +174,7 @@ class NaiveBayesModel:
     """Fast Naive Bayes model"""
 
     def __init__(self, model_path: str):
+        verify_artifact(model_path)
         self.pipeline = joblib.load(model_path)
         self.name = "Naive Bayes"
 
@@ -168,10 +212,16 @@ class NeuralNetworkModel:
         if not TF_AVAILABLE:
             raise ImportError("TensorFlow required for Neural Network model")
 
-        self.model = tf.keras.models.load_model(os.path.join(model_dir, "nn_model.h5"))
-        with open(os.path.join(model_dir, "nn_tokenizer.pkl"), "rb") as f:
+        nn_path = os.path.join(model_dir, "nn_model.h5")
+        tok_path = os.path.join(model_dir, "nn_tokenizer.pkl")
+        enc_path = os.path.join(model_dir, "nn_label_encoder.pkl")
+        verify_artifact(nn_path)
+        verify_artifact(tok_path)
+        verify_artifact(enc_path)
+        self.model = tf.keras.models.load_model(nn_path)
+        with open(tok_path, "rb") as f:
             self.tokenizer = pickle.load(f)
-        with open(os.path.join(model_dir, "nn_label_encoder.pkl"), "rb") as f:
+        with open(enc_path, "rb") as f:
             self.label_encoder = pickle.load(f)
         self.name = "Neural Network"
 

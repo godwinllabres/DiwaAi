@@ -4,13 +4,14 @@ Orchestrates: API startup -> Test -> Analysis -> Expansion -> Retrain -> Verify
 """
 
 import json
+import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
 
 def run_command(cmd, description, check=True):
-    """Run shell command and return result"""
+    """Run a command (list of args, no shell) and return result"""
     print(f"\n{'-' * 70}")
     print(f"[RUN] {description}")
     print(f"{'-' * 70}")
@@ -18,7 +19,6 @@ def run_command(cmd, description, check=True):
     try:
         result = subprocess.run(
             cmd,
-            shell=True,
             capture_output=False,
             text=True,
             check=False
@@ -43,9 +43,12 @@ def start_api(port=8001):
 
     print(f"\n[Step 1/6] Starting API on port {port}...")
 
-    # Start API in background
-    cmd = f"cd . && python -m uvicorn app:app --host 127.0.0.1 --port {port} > api.log 2>&1 &"
-    subprocess.run(cmd, shell=True)
+    # Start API in background (Popen, no shell); redirect output to api.log
+    with open("api.log", "w", encoding="utf-8") as logf:
+        subprocess.Popen(
+            [sys.executable, "-m", "uvicorn", "app:app", "--host", "127.0.0.1", "--port", str(port)],
+            stdout=logf, stderr=subprocess.STDOUT,
+        )
 
     # Wait for API to start
     print(f"Waiting for API to initialize...", end="", flush=True)
@@ -69,7 +72,7 @@ def test_intents(port=8001):
     """Run intent tests"""
     print(f"\n[Step 2/6] Testing intents ({10} queries per intent)...")
 
-    cmd = f"python test_intents.py {port} 10"
+    cmd = [sys.executable, "test_intents.py", str(port), "10"]
     return run_command(cmd, "Intent Testing", check=False)
 
 def analyze_results():
@@ -109,20 +112,20 @@ def expand_and_retrain():
     print(f"\n[Step 4/6] Expanding training patterns...")
 
     # Backup original
-    subprocess.run("cp data/cavsu_intents.json data/cavsu_intents.backup.json", shell=True)
+    shutil.copy("data/cavsu_intents.json", "data/cavsu_intents.backup.json")
 
     # Expand
-    if not run_command("python expand_intents.py", "Pattern Expansion", check=False):
+    if not run_command([sys.executable, "expand_intents.py"], "Pattern Expansion", check=False):
         print("Warning: Pattern expansion had issues, continuing anyway...")
 
     # Use expanded if it exists, otherwise keep original
     if Path("data/cavsu_intents_expanded.json").exists():
-        subprocess.run("mv data/cavsu_intents_expanded.json data/cavsu_intents.json", shell=True)
+        shutil.move("data/cavsu_intents_expanded.json", "data/cavsu_intents.json")
         print("[SUCCESS] Using expanded intents")
 
     # Retrain
     print(f"\n[Step 5/6] Retraining model...")
-    return run_command("python train_naive_bayes.py", "Model Retraining")
+    return run_command([sys.executable, "train_naive_bayes.py"], "Model Retraining")
 
 def verify_improvement(port=8001):
     """Verify improvement after retraining"""
@@ -130,10 +133,14 @@ def verify_improvement(port=8001):
 
     # Restart API
     print("Restarting API with new model...")
-    subprocess.run(f"pkill -f 'uvicorn.*{port}'", shell=True)
+    subprocess.run(["pkill", "-f", f"uvicorn.*{port}"], check=False)
     time.sleep(2)
 
-    subprocess.run(f"cd . && python -m uvicorn app:app --host 127.0.0.1 --port {port} > api.log 2>&1 &", shell=True)
+    with open("api.log", "w", encoding="utf-8") as logf:
+        subprocess.Popen(
+            [sys.executable, "-m", "uvicorn", "app:app", "--host", "127.0.0.1", "--port", str(port)],
+            stdout=logf, stderr=subprocess.STDOUT,
+        )
 
     # Wait for API
     for i in range(15):
@@ -146,8 +153,8 @@ def verify_improvement(port=8001):
 
     # Quick test
     print("Running quick verification...")
-    cmd = f"python test_intents.py {port} 3"
-    subprocess.run(cmd, shell=True, capture_output=True)
+    cmd = [sys.executable, "test_intents.py", str(port), "3"]
+    subprocess.run(cmd, capture_output=True, check=False)
 
     # Load results
     try:
