@@ -135,7 +135,7 @@ SeviAI/
 │   ├── campus_places.py   #   campus map metadata & directory
 │   └── ais_mcp.py, connectors_mcp.py, auth_ais.py  # AIS / MCP bridges
 │
-├── data/                  # cavsu_intents.json (⭐ source of truth), SQLite cache,
+├── data/                  # cavsu_intents.json (source of truth), SQLite cache,
 │                          #   intent_sources.json (grounding), map overrides, fixtures
 ├── models/                # Trained artifacts: NB .pkl, NN .h5, tokenizer/encoder,
 │                          #   nn_thresholds.json, responses_map.json
@@ -143,7 +143,7 @@ SeviAI/
 ├── scripts/               # Utilities (seed_db.py, migrations, intent binding, …)
 ├── web/                   # Plain-HTML chat UI + logs dashboard
 ├── deployment/            # Dockerfiles, docker-compose, requirements variants
-├── docs/                  # Guides (start with KT_DOCS.md ⭐)
+├── docs/                  # Guides (start with KT_DOCS.md)
 ├── archive/               # Historical snapshots & model backups — ignore day-to-day
 └── logs/                  # Runtime chat logs (gitignored)
 ```
@@ -248,7 +248,7 @@ surface analytics and moderation review.
 
 | Document | Purpose |
 |----------|---------|
-| **[docs/KT_DOCS.md](docs/KT_DOCS.md)** | ⭐ Authoritative knowledge-transfer guide |
+| **[docs/KT_DOCS.md](docs/KT_DOCS.md)** | Authoritative knowledge-transfer guide |
 | [docs/POSTGRES_MIGRATION.md](docs/POSTGRES_MIGRATION.md) | Chat-history Postgres backend & migration |
 | [api/README.md](api/README.md) | API module notes |
 
@@ -258,4 +258,4 @@ surface analytics and moderation review.
 
 Built for **Cavite State University**.
 
-*"Iskolar para sa Bayan!"* 🎓
+*"Iskolar para sa Bayan!"*
