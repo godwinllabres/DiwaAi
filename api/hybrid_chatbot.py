@@ -332,6 +332,105 @@ class LocalLLM:
             return None
 
 
+class OpenAICompatLLM:
+    """
+    Fallback backed by any OpenAI-compatible chat-completions server —
+    LocalAI, vLLM, llama.cpp's server, LM Studio, text-generation-webui,
+    or Ollama's own /v1 endpoint.
+
+    Talks the OpenAI wire format (POST /chat/completions, GET /models) rather
+    than Ollama's native /api/chat, so OPENAI_BASE_URL must point at the API
+    base *including* the version prefix, e.g. http://localai:8080/v1.
+
+    Falls back gracefully to None if the server is unreachable so the rest of
+    the pipeline is unaffected.
+    """
+
+    # Override with env vars: OPENAI_BASE_URL, OPENAI_MODEL, OPENAI_API_KEY
+    DEFAULT_BASE_URL = "http://localhost:8080/v1"
+    DEFAULT_MODEL = "gpt-3.5-turbo"
+    # Local CPU inference has the same cold-start cost as Ollama — be generous.
+    TIMEOUT_SECONDS = 180
+
+    def __init__(
+        self,
+        base_url: str = None,
+        model: str = None,
+        api_key: str = None,
+        system_prompt: str = "",
+    ):
+        self.base_url = (base_url or os.getenv("OPENAI_BASE_URL", self.DEFAULT_BASE_URL)).rstrip("/")
+        self.model = model or os.getenv("OPENAI_MODEL", self.DEFAULT_MODEL)
+        # Optional — LocalAI usually needs no key; a hosted OpenAI-compatible
+        # endpoint (or a LocalAI configured with API_KEY) does.
+        self.api_key = (api_key or os.getenv("OPENAI_API_KEY", "")).strip()
+        self.system_prompt = system_prompt
+        self.available = self._probe()
+
+    def _headers(self) -> dict:
+        headers = {"Content-Type": "application/json", "User-Agent": "DIWA/1.0"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
+
+    def _probe(self) -> bool:
+        """Return True if the OpenAI-compatible server is reachable (GET /models)."""
+        try:
+            req = urllib.request.Request(f"{self.base_url}/models", method="GET",
+                                         headers=self._headers())
+            with urllib.request.urlopen(req, timeout=15):
+                return True
+        except Exception as e:
+            print(f"[WARNING] OpenAI-compat probe failed: {type(e).__name__}: {e}  url={self.base_url}")
+            return False
+
+    def generate(self, user_message: str, conversation_context: list = None) -> Optional[str]:
+        """Send a message and return the reply, or None on error. Re-probes if
+        previously unavailable so a transient outage doesn't permanently disable
+        the fallback."""
+        if not self.available:
+            self.available = self._probe()
+            if not self.available:
+                return None
+
+        messages = []
+        if self.system_prompt:
+            messages.append({"role": "system", "content": self.system_prompt})
+        if conversation_context:
+            messages.extend(conversation_context[-6:])  # last 3 turns
+        messages.append({"role": "user", "content": user_message})
+
+        body = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,
+            "temperature": 0.3,
+            "max_tokens": 512,
+        }
+        payload = json.dumps(body).encode("utf-8")
+
+        try:
+            req = urllib.request.Request(
+                f"{self.base_url}/chat/completions",
+                data=payload,
+                headers=self._headers(),
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=self.TIMEOUT_SECONDS) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                choices = data.get("choices") or []
+                content = choices[0].get("message", {}).get("content", "") if choices else ""
+                # Defensive: strip inlined reasoning if a thinking model emits it.
+                content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL)
+                return content.strip() or None
+        except urllib.error.URLError as e:
+            print(f"[WARNING] OpenAI-compat request failed: {e}")
+            return None
+        except Exception as e:
+            print(f"[WARNING] OpenAI-compat generate error: {type(e).__name__}: {e}")
+            return None
+
+
 class NonsenseGate:
     """
     Blocks gibberish, prompt-injection, and off-topic statements before
@@ -741,6 +840,15 @@ class HybridChatbot:
             else:
                 print("[WARNING] Local LLM not reachable — deep-fallback disabled")
                 print("          Start Ollama and run: ollama pull llama3.1")
+        elif provider in ("openai", "localai"):
+            print(f"\n[4/5] Initialising OpenAI-compatible LLM fallback ({provider})...")
+            self.llm = OpenAICompatLLM(system_prompt=scope_locked_prompt)
+            if self.llm.available:
+                print(f"[OK] OpenAI-compat LLM ready  model={self.llm.model}  url={self.llm.base_url}")
+                self._warm_up_llm_async()
+            else:
+                print("[WARNING] OpenAI-compat LLM not reachable — deep-fallback disabled")
+                print("          Check OPENAI_BASE_URL / OPENAI_MODEL and that the model is loaded")
         else:
             print(f"\n[4/5] LLM fallback disabled (LLM_PROVIDER={provider})")
 
@@ -784,12 +892,16 @@ class HybridChatbot:
             self.llm = LocalLLM(model=model, system_prompt=scope_locked_prompt)
             if model:
                 os.environ["OLLAMA_MODEL"] = model
+        elif provider in ("openai", "localai"):
+            self.llm = OpenAICompatLLM(model=model, system_prompt=scope_locked_prompt)
+            if model:
+                os.environ["OPENAI_MODEL"] = model
         else:
             provider = "none"
             self.llm = None
         self.llm_provider = provider
         os.environ["LLM_PROVIDER"] = provider
-        if provider == "ollama" and self.llm and self.llm.available:
+        if provider in ("ollama", "openai", "localai") and self.llm and self.llm.available:
             # Pay the model cold-load now, not on the next user's question.
             self._warm_up_llm_async()
         return self.llm_status()
