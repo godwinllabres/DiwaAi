@@ -29,3 +29,7 @@ models/nn_backup_*/
 # Generated site-RAG corpus (synced from the deployment-local portal)
 docs/site_corpus.txt
 kics-local/
+
+# Local security-scan artifacts
+bandit-local.json
+ba*.json
