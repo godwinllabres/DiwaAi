@@ -56,7 +56,9 @@ jobs:
             -H 'Content-Type: application/json' \
             -d '{"message":"Hello DIWA"}')
           echo "chat: $chat"
-          echo "$chat" | jq -e '.intent == "greeting" and (.source == "naive_bayes" or .source == "neural_network")'
+          # A deterministic tier (retrieval / NB / NN) must answer the greeting,
+          # not the LLM fallback or a refusal — CI runs with LLM_PROVIDER=none.
+          echo "$chat" | jq -e '.intent == "greeting" and (.source | test("intent_retrieval|naive_bayes|neural_network"))'
 
           chat=$(curl -fsS -X POST http://localhost:8000/chat \
             -H 'Content-Type: application/json' \
