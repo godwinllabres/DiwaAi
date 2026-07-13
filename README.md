@@ -1,453 +1,261 @@
-# CvSU Virtual Assistant - Intelligent Chatbot System
+# Sevi — CvSU Virtual Assistant
 
-A production-ready chatbot system for Cavite State University using Naive Bayes intent classification with optional Neural Network enhancement.
+Sevi is the intelligent assistant for **Cavite State University (CvSU)**. It answers
+student and visitor questions about admissions, programs, tuition, scholarships,
+campus navigation, and university services through a layered "hybrid brain" that
+favours fast, curated, source-grounded answers and only escalates to a language
+model when the cheaper tiers cannot answer confidently.
 
-```
-╔════════════════════════════════════════════════════════════════════════════╗
-║                    CvSU VIRTUAL ASSISTANT - READY 🚀                       ║
-║                                                                            ║
-║  Model Accuracy:     95.59% (Naive Bayes)                                 ║
-║  Response Time:      <75ms per query                                      ║
-║  Endpoints:          15+ REST API endpoints                               ║
-║  Chat Logging:       SQLite + JSON backups                                ║
-║  Deployment:         Docker-ready                                        ║
-║                                                                            ║
-╚════════════════════════════════════════════════════════════════════════════╝
-```
+This repository is the **backend** (Python / FastAPI + ML pipeline). The web
+frontend lives in the separate `SeviWeb` project, and the full containerised stack
+is orchestrated from `sevi-deploy`.
 
-## 📋 Project Structure
-
-```
-SeviAI/
-├── app.py                 # Root FastAPI entrypoint (run_server.bat → uvicorn app:app)
-├── hybrid_chatbot.py      # Hybrid NB + NN classifier (imported by api/app.py)
-├── intents_db.py          # JSON ↔ SQLite intents loader/auto-sync
-├── train_naive_bayes.py   # Retrain NB → models/cavsu_classifier.pkl
-├── train_hybrid.py        # Retrain NN → models/nn_model.h5 + thresholds
-├── test_chatbot.py        # Model validation
-├── run_server.bat         # Windows one-click server launcher
-├── render.yaml            # Render.com deployment config
-│
-├── api/                   # FastAPI app modules (app.py, nlu_engine.py, logger.py,
-│                          #   campus_places.py, intent_curation.py, …)
-├── data/                  # cavsu_intents.json (⭐ source of truth), SQLite cache,
-│                          #   map coordinate/waypoint overrides
-├── models/                # Trained artifacts: NB .pkl, NN .h5, tokenizer/encoder,
-│                          #   nn_thresholds.json, responses_map.json
-├── training/              # Training, evaluation & test scripts
-├── scripts/               # Utilities & one-shot tools (seed_db.py, patch_intents.py,
-│                          #   research_feed.py, stress-test .ps1, map_oneoff/)
-├── web/                   # Plain-HTML chat UI + logs dashboard
-├── deployment/            # Dockerfiles, docker-compose, requirements variants
-├── docs/                  # Guides (start with KT_DOCS.md ⭐) + presentations/
-├── notebooks/             # Jupyter notebooks
-├── archive/               # Historical: old test results, data/model backups,
-│                          #   audit snapshots — safe to ignore day-to-day
-└── logs/                  # Runtime chat logs (gitignored)
-```
-
-> **New to the project?** Read [docs/KT_DOCS.md](docs/KT_DOCS.md) first — it is the
-> knowledge-transfer guide and reflects the current architecture (SQLite intents DB,
-> NN thresholds, LLM fallback). Parts of this README predate those changes.
+> **New here?** Start with **[docs/KT_DOCS.md](docs/KT_DOCS.md)** — the
+> knowledge-transfer guide is the authoritative description of the current
+> architecture. This README is the operational overview.
 
 ---
 
-## 🚀 Quick Start
+## How Sevi answers a question
 
-### New Machine Setup
+Every `/chat` request flows through an ordered pipeline. The first tier that can
+answer confidently wins, so most replies are served in tens of milliseconds with
+no LLM cost:
+
+```
+User message
+   │
+   ▼
+1. Safety screen        api/safety.py        self-harm / threat / abuse / profanity
+   │                                         → graded, supportive or boundary reply
+   ▼
+2. Naive Bayes          hybrid_chatbot.py    fast, confident intent classification
+   ▼
+3. Neural Network       models/nn_model.h5   fallback for ambiguous phrasings
+   ▼
+4. Intent retrieval     api/intent_retrieval TF-IDF nearest-pattern match over intents
+   ▼
+5. Charter / Site RAG   api/charter_rag.py   grounded retrieval over the Citizens'
+   │                    api/site_rag.py       Charter + official CvSU website
+   ▼
+6. LLM fallback         (optional)           augmented with retrieved passages,
+                                             cited; disabled → verbatim RAG or
+                                             graceful fallback
+```
+
+Answers from the curated tiers are **source-grounded**: `api/intent_grounding.py`
+binds each intent to its official document, so replies can cite the Citizens'
+Charter page or official-site URL that backs them (`ChatResponse.sources`).
+
+---
+
+## Quick start
+
+### Requirements
+
+- **Python 3.11** (the training/serving environment is pinned to 3.11.9)
+- NLTK data (`punkt`, `punkt_tab`, `wordnet`)
+
+### Local setup
 
 ```powershell
-# 1. Create and activate virtual environment (Python 3.11 required)
+# 1. Create and activate a virtual environment
 py -3.11 -m venv .venv
 .venv\Scripts\activate
 
 # 2. Install dependencies
-pip install -r requirements.txt
+pip install -r deployment/requirements_local.txt
 
-# 3. Download NLTK data (required on first run)
+# 3. Download NLTK data (first run only)
 python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('wordnet')"
 
 # 4. Seed the database (campus places, waypoints, seasons, etc.)
 python scripts/seed_db.py
 
-# 5. Start the API (model files are already in repo — no retraining needed)
+# 5. Start the API — trained models ship in the repo, no retraining needed
 uvicorn api.app:app --host 0.0.0.0 --port 8009
 ```
 
-API Docs: http://localhost:8009/docs
+- API docs (Swagger UI): http://localhost:8009/docs
+- Health check: http://localhost:8009/health
 
-### Tunnel (expose to other devices)
+On Windows, `run_server.bat` is a one-click launcher for the same server.
 
-```powershell
-# Using ngrok — tunnels both API and SeviWeb in one URL
-ngrok http 5173
-```
+### Docker
 
-### Option: Docker (Production)
+Single API container:
 
 ```bash
 docker-compose -f deployment/docker-compose.yml up -d
 ```
 
----
-
-## 📊 Model Performance
-
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Accuracy** | 95.59% | ✅ Excellent |
-| **Response Time** | <75ms | ✅ Fast |
-| **Training Patterns** | 227 | ✅ Comprehensive |
-| **Intent Categories** | 23 | ✅ Detailed |
-| **Model Size** | 79KB | ✅ Lightweight |
+The full stack (API + web + reverse proxy, port **8090**) is built and run from the
+`sevi-deploy` repository — see its README.
 
 ---
 
-## 🎯 Key Features
+## Configuration
 
-- ✅ **Naive Bayes Classifier** - Fast, accurate intent classification
-- ✅ **REST API** - 15+ endpoints for web integration
-- ✅ **Chat Logging** - Automatic message logging to SQLite
-- ✅ **Analytics Dashboard** - Real-time performance metrics
-- ✅ **Web Interfaces** - Beautiful chat UI and analytics dashboard
-- ✅ **Docker Ready** - Production-ready containerization
-- ✅ **Hybrid Architecture** - Fallback to Neural Network when available
-- ✅ **Training Tools** - Automated scripts for continuous improvement
+Runtime is configured via environment variables (see `.env.example`). The most
+important:
+
+| Variable | Purpose |
+|----------|---------|
+| `LLM_PROVIDER` | LLM backend for tier 6 (`ollama`, `anthropic`, `none`). `none` disables the LLM tier — the curated + RAG tiers still answer. |
+| `ANTHROPIC_API_KEY` | API key when `LLM_PROVIDER=anthropic`. |
+| `OLLAMA_BASE_URL` | Ollama endpoint when `LLM_PROVIDER=ollama`. |
+| `DASHBOARD_PIN` / admin PIN | Guards the `/admin/*` and logging endpoints. |
+| Chat-history backend | SQLite by default; a Postgres backend is supported (dual-backend logger). See [docs/POSTGRES_MIGRATION.md](docs/POSTGRES_MIGRATION.md). |
 
 ---
 
-## 📁 Directory Guide
+## Project structure
 
-### `/api` - FastAPI Application
-**Purpose**: REST API server and ML models
-
-**Files**:
-- `app.py` - Main FastAPI application with 15+ endpoints
-- `hybrid_chatbot.py` - Hierarchical chatbot with NB + NN support
-- `logger.py` - Async chat logging to SQLite
-
-**Usage**:
-```bash
-python -m uvicorn api.app:app --port 8000
+```
+SeviAI/
+├── app.py                 # Root FastAPI entrypoint (delegates to api/app.py)
+├── run_server.bat         # Windows one-click launcher
+├── hybrid_chatbot.py      # Hybrid NB + NN classifier (compat shim)
+├── intents_db.py          # JSON ↔ SQLite intents loader / auto-sync
+├── train_naive_bayes.py   # Retrain NB → models/CvSU_classifier.pkl
+├── train_hybrid.py        # Retrain NN → models/nn_model.h5 + thresholds
+├── render.yaml            # Render.com deployment config
+│
+├── api/                   # FastAPI app and the hybrid-brain tiers
+│   ├── app.py             #   HTTP server, all endpoints
+│   ├── hybrid_chatbot.py  #   NB + NN classifier
+│   ├── safety.py          #   front-door safety screen
+│   ├── intent_retrieval.py#   TF-IDF nearest-pattern tier
+│   ├── intent_grounding.py#   per-intent source citations
+│   ├── charter_rag.py     #   Citizens' Charter retrieval tier
+│   ├── site_rag.py        #   official-website retrieval tier
+│   ├── model_registry.py  #   model version tracking for chat logs
+│   ├── nlu_engine.py      #   entity extraction & context tracking
+│   ├── logger.py          #   async chat logging (SQLite / Postgres)
+│   ├── campus_places.py   #   campus map metadata & directory
+│   └── ais_mcp.py, connectors_mcp.py, auth_ais.py  # AIS / MCP bridges
+│
+├── data/                  # cavsu_intents.json (⭐ source of truth), SQLite cache,
+│                          #   intent_sources.json (grounding), map overrides, fixtures
+├── models/                # Trained artifacts: NB .pkl, NN .h5, tokenizer/encoder,
+│                          #   nn_thresholds.json, responses_map.json
+├── training/              # Training, evaluation & test scripts
+├── scripts/               # Utilities (seed_db.py, migrations, intent binding, …)
+├── web/                   # Plain-HTML chat UI + logs dashboard
+├── deployment/            # Dockerfiles, docker-compose, requirements variants
+├── docs/                  # Guides (start with KT_DOCS.md ⭐)
+├── archive/               # Historical snapshots & model backups — ignore day-to-day
+└── logs/                  # Runtime chat logs (gitignored)
 ```
 
-**Endpoints**:
-- `POST /chat` - Send message, get response
-- `GET /health` - Health check
-- `GET /logs/today` - Today's statistics
-- `GET /docs` - Swagger UI
-
 ---
 
-### `/training` - Model Training & Testing
-**Purpose**: Train, test, and improve the ML model
+## Editing what Sevi knows
 
-**Scripts**:
+The intent definitions in **`data/cavsu_intents.json`** are the source of truth.
 
-| Script | Purpose | Time | Use Case |
-|--------|---------|------|----------|
-| `train_naive_bayes.py` | Train NB model | 8s | Retrain after pattern changes |
-| `test_intents.py` | Quick evaluation | 5-30s | Identify weak intents |
-| `expand_intents.py` | Auto pattern generation | 3s | Improve training data |
-| `api_stress_test.py` | Async stress testing | 2-5m | Advanced validation |
-| `automated_training.py` | Full pipeline | 2m | Complete training cycle |
-
-**Quick Start**:
-```bash
-# Test current model
-python training/test_intents.py 8000 5
-
-# Expand patterns & retrain
-python training/expand_intents.py
-mv data/CvSU_intents_expanded.json data/CvSU_intents.json
-python training/train_naive_bayes.py
+```
+data/cavsu_intents.json   ← edit here
+        ▼
+intents_db.py             ← auto-syncs SQLite when the JSON changes
+        ▼
+data/cavsu_intents.db     ← runtime cache
+        ▼
+train_naive_bayes.py      ← retrains NB, NN, responses_map, and rebuilds the
+train_hybrid.py              intent-retrieval index from the same corpus
+        ▼
+api/app.py                ← loads artifacts on startup (or POST /model/reload)
 ```
 
-See `docs/TRAINING_GUIDE.md` for details.
+Intent JSON format:
 
----
-
-### `/data` - Training Data
-**Purpose**: Intent definitions and training patterns
-
-**Files**:
-- `CvSU_intents.json` - 227 patterns across 23 intents
-
-**Format**:
 ```json
 {
   "intents": [
     {
       "tag": "admissions_requirements",
-      "patterns": ["What are admission requirements?", ...],
-      "responses": ["For freshman admission, you need..."]
+      "patterns": ["What are admission requirements?"],
+      "responses": ["For freshman admission, you need ..."]
     }
   ]
 }
 ```
 
-**To Modify**:
-1. Edit `data/CvSU_intents.json`
-2. Run `python training/train_naive_bayes.py`
-3. Restart API to load new model
+To change a response and keep every tier aligned: edit the JSON, retrain, and
+reload. Source citations for an intent are bound in `data/intent_sources.json`
+(`scripts/bind_intent_sources.py`).
 
 ---
 
-### `/models` - Trained ML Models
-**Purpose**: Serialized trained models ready for inference
+## API surface
 
-**Files**:
-- `CvSU_classifier.pkl` - Trained Naive Bayes pipeline (79KB)
-- `responses_map.json` - Intent-to-response mapping
+The server exposes a broad REST API (full reference at `/docs`). Grouped by tag:
 
-**Generated by**:
-- `python training/train_naive_bayes.py`
+| Area | Representative endpoints |
+|------|--------------------------|
+| **Chat** | `POST /chat`, `POST /batch` |
+| **Health** | `GET /`, `GET /health` |
+| **Intents** | `GET /intents`, `GET /intents/{tag}` |
+| **Model** | `GET /model/info`, `POST /model/reload` |
+| **Map / directory** | `GET /map`, `GET/PUT/DELETE /map/coords`, `/map/waypoints`, `/map/custom_markers` |
+| **Conversation** | `GET/DELETE /conversation/{user_id}` |
+| **Logging** *(admin)* | `/logs/recent`, `/logs/today`, `/logs/search`, `/logs/export/{user_id}`, … |
+| **Feedback** *(admin)* | `/feedback`, `/feedback/stats`, `/feedback/analyze` |
+| **Topics** | `GET /topics/recommended` |
+| **Admin** | `/admin/status`, `/admin/llm`, `/admin/moderation`, `/admin/intents` |
+| **AIS** | `/auth/login`, `/auth/whoami`, `/ais/write` |
 
-**Used by**:
-- `api/hybrid_chatbot.py` at startup
+Admin, logging, and feedback endpoints require the admin PIN.
 
----
+Example:
 
-### `/web` - Web Interfaces
-**Purpose**: Interactive chat UI and analytics dashboard
-
-**Files**:
-- `web_interface.html` - Real-time chat interface
-- `logs_dashboard.html` - Analytics and metrics dashboard
-
-**Usage**:
-1. Open in browser directly: `file:///path/to/web_interface.html`
-2. Or access via API: Host as static files on nginx/CDN
-
----
-
-### `/deployment` - Docker & Production
-**Purpose**: Containerization and production setup
-
-**Files**:
-- `Dockerfile` - Python 3.11 container with API
-- `docker-compose.yml` - Multi-container orchestration
-- `requirements.txt` - Full Python dependencies (with TensorFlow)
-- `requirements_minimal.txt` - Minimal dependencies (no TensorFlow)
-
-**Quick Deploy**:
 ```bash
-docker-compose -f deployment/docker-compose.yml up -d
+curl -X POST "http://localhost:8009/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What are the admission requirements?", "user_id": "user_1"}'
 ```
 
-See `docs/DOCKER_DEPLOYMENT.md` for details.
+---
+
+## Training & evaluation
+
+| Script | Purpose |
+|--------|---------|
+| `python train_naive_bayes.py` | Retrain the Naive Bayes intent classifier |
+| `python train_hybrid.py` | Retrain the neural-network tier + thresholds |
+| `python scripts/continuous_training.py` | Continuous-improvement pipeline |
+| `python training/test_intents.py <port> <n>` | Evaluate the live model, surface weak intents |
+
+Test suites (`test_*.py` at the repo root and under `training/`) cover the safety
+gate, intent grounding, retrieval tiers, and campus context. Run them after any
+change to the pipeline or intents.
 
 ---
 
-### `/docs` - Documentation
-**Purpose**: Comprehensive guides and references
+## Chat logging & observability
 
-**Key Documents**:
+Every message is logged asynchronously (`api/logger.py`) with the model version
+that produced the answer, via the model registry (`api/model_registry.py`) — a
+retrain or LLM swap is fully traceable in the history. Logs are written to SQLite
+by default, with a Postgres backend available (see
+[docs/POSTGRES_MIGRATION.md](docs/POSTGRES_MIGRATION.md)). The
+`web/logs_dashboard.html` dashboard and the `/logs/*` and `/feedback/*` endpoints
+surface analytics and moderation review.
+
+---
+
+## Documentation
 
 | Document | Purpose |
 |----------|---------|
-| `SETUP_GUIDE.md` | Quick setup (2 steps) |
-| `TRAINING_GUIDE.md` | Training scripts & workflows |
-| `API_README.md` | REST API reference |
-| `DOCKER_DEPLOYMENT.md` | Docker deployment guide |
-| `PROJECT_STATUS.md` | Complete project status & architecture |
-| `HYBRID_GUIDE.md` | Hybrid NB+NN architecture |
-| `LOGGING_GUIDE.md` | Chat logging system |
-| `INTEGRATION_GUIDE.md` | Web app integration |
+| **[docs/KT_DOCS.md](docs/KT_DOCS.md)** | ⭐ Authoritative knowledge-transfer guide |
+| [docs/POSTGRES_MIGRATION.md](docs/POSTGRES_MIGRATION.md) | Chat-history Postgres backend & migration |
+| [api/README.md](api/README.md) | API module notes |
 
 ---
 
-## 🔧 Common Tasks
+## License
 
-### Test Current Model
-```bash
-# Quick test (5 queries per intent)
-python training/test_intents.py 8000 5
+Built for **Cavite State University**.
 
-# Comprehensive test (10 queries per intent)
-python training/test_intents.py 8000 10
-```
-
-### Improve Model Accuracy
-```bash
-# Analyze weak intents
-python training/test_intents.py 8000 5
-
-# Auto-expand patterns
-python training/expand_intents.py
-mv data/CvSU_intents_expanded.json data/CvSU_intents.json
-
-# Retrain
-python training/train_naive_bayes.py
-```
-
-### Deploy to Production
-```bash
-# Option 1: Docker
-docker-compose -f deployment/docker-compose.yml up -d
-
-# Option 2: Local
-python -m uvicorn api.app:app --host 0.0.0.0 --port 8000
-```
-
-### View Analytics
-```bash
-# Real-time dashboard
-open web/logs_dashboard.html
-
-# Or via API
-curl http://localhost:8000/logs/today | python -m json.tool
-```
-
----
-
-## 🎓 Intents Covered (23 Total)
-
-| Intent | Example Query | Accuracy |
-|--------|---------------|----------|
-| admissions_requirements | "What are admission requirements?" | 100% |
-| tuition_fees | "How much is tuition?" | 100% |
-| courses_offered | "What courses are offered?" | 97% |
-| greeting | "Hello!" | 95% |
-| ... | ... | ... |
-
-See `docs/PROJECT_STATUS.md` for complete breakdown.
-
----
-
-## 📈 Current Status
-
-```
-[STATS] Model Performance:
-   Training Accuracy:  95.59%
-   Test Accuracy:      ~85-90% (varies by query diversity)
-   Intents:            23 categories
-   Training Patterns:  227 patterns
-   
-[STATUS] System:
-   API Server:         Ready (15+ endpoints)
-   Chat Logging:       Active (SQLite + JSON)
-   Analytics:          Live (real-time dashboard)
-   Docker:             Configured (Python 3.11)
-   Neural Network:     Pending (awaiting Python 3.11 TensorFlow)
-```
-
----
-
-## 🚀 Next Steps
-
-1. **Deploy Now**:
-   ```bash
-   docker-compose -f deployment/docker-compose.yml up -d
-   ```
-
-2. **Test API**:
-   ```bash
-   curl -X POST "http://localhost:8000/chat" \
-     -H "Content-Type: application/json" \
-     -d '{"message": "What are admission requirements?"}'
-   ```
-
-3. **Improve Model** (Optional):
-   ```bash
-   python training/test_intents.py 8000 5
-   python training/expand_intents.py
-   mv data/CvSU_intents_expanded.json data/CvSU_intents.json
-   python training/train_naive_bayes.py
-   ```
-
-4. **Enable Neural Network** (When Python 3.14 TensorFlow released):
-   ```bash
-   python training/train_hybrid.py
-   ```
-
----
-
-## 📞 Support
-
-**Issues?** Check the documentation:
-- Setup problems → `docs/SETUP_GUIDE.md`
-- API questions → `docs/API_README.md`
-- Training issues → `docs/TRAINING_GUIDE.md`
-- Deployment → `docs/DOCKER_DEPLOYMENT.md`
-- Architecture → `docs/PROJECT_STATUS.md`
-
----
-
-## 📊 File Organization Summary
-
-```
-Before:  30 files cluttering root directory
-After:   Organized into 7 purpose-specific directories
-         
-├── api/          - 3 files (REST server + ML)
-├── training/     - 8 files (training & testing)
-├── data/         - 1 file  (training patterns)
-├── models/       - 2 files (trained models)
-├── web/          - 2 files (UI interfaces)
-├── deployment/   - 4 files (Docker setup)
-├── docs/         - 10 files (documentation)
-└── notebooks/    - 1 file  (Jupyter)
-```
-
----
-
-## 🎯 Usage Examples
-
-### Start API & Test
-```bash
-# Terminal 1
-python -m uvicorn api.app:app --port 8000
-
-# Terminal 2
-python training/test_intents.py 8000 5
-```
-
-### Quick Chat
-```bash
-curl -X POST "http://localhost:8000/chat" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello", "user_id": "user_1"}'
-```
-
-### View Today's Stats
-```bash
-curl http://localhost:8000/logs/today | python -m json.tool
-```
-
-### Deploy with Docker
-```bash
-docker-compose -f deployment/docker-compose.yml up -d
-```
-
----
-
-## ✅ Project Status
-
-- ✅ Naive Bayes Model: Production-ready (95.59% accuracy)
-- ✅ REST API: 15+ endpoints, fully functional
-- ✅ Chat Logging: SQLite + JSON backups
-- ✅ Analytics: Real-time dashboard
-- ✅ Docker: Ready for deployment
-- ✅ Training Tools: Automated pipeline
-- ✅ Documentation: Comprehensive guides
-- ⏳ Neural Network: Awaiting Python 3.14 TensorFlow support
-
----
-
-## 📜 License
-
-This project is built for **Cavite State University**
-
-**Motto**: *"Iskolar para sa Bayan!"* 🎓
-
----
-
-**Last Updated**: May 5, 2026  
-**Status**: 🟢 PRODUCTION READY
-
-Start using the chatbot now with:
-```bash
-docker-compose -f deployment/docker-compose.yml up -d
-```
-
+*"Iskolar para sa Bayan!"* 🎓
