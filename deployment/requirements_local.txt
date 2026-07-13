@@ -1,0 +1,19 @@
+# Mirrors the local training/serving environment (Python 3.11.9, 2026-07-13).
+# The committed model artifacts require these generations:
+#   - models/CvSU_classifier.pkl  -> scikit-learn 1.8 / numpy 2 pickles
+#   - models/nn_model.h5          -> Keras 3 serialization format
+# The older pins in requirements.txt / requirements_render.txt (sklearn 1.3,
+# numpy 1.24, TF 2.14 / Keras 2) can no longer load them.
+fastapi==0.136.1
+uvicorn==0.46.0
+scikit-learn==1.8.0
+nltk==3.9.4
+numpy==2.4.4
+joblib==1.5.3
+pydantic==2.13.3
+python-dotenv==1.2.2
+tensorflow==2.21.0
+keras==3.14.0
+requests==2.33.1
+httpx==0.28.1
+anthropic>=0.40.0

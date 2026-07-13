@@ -1,0 +1,47 @@
+# Never bake secrets or local state into the image
+.env
+.git
+.claude
+.vscode
+.audit_backup_2026-05-09
+
+# Runtime output (mounted as a volume by compose)
+logs/
+
+# Python cruft
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# Large test artifacts and briefing documents (not needed at runtime)
+*.jsonl
+*.pptx
+*.docx
+*.pdf
+*.log
+*.tmp
+.~lock*
+bulk_test_results.json
+bulk_test_batch_summary.json
+edge_case_summary.json
+intent_test_results.json
+cavsu_chatbot.ipynb
+notebooks/
+training/
+ref/
+docs/
+
+# Static demo site (api.app does not serve it)
+web/
+
+# Backups and SQLite sidecars (DB is rebuilt from JSON if stale)
+data/*.bak_*
+data/*.backup_*
+data/*.backup*.json
+data/*.before_snap
+data/intents_cleanup/
+data/*.db-shm
+data/*.db-wal
+models/*.bak_*
+models/nn_backup_*/
+models/cavsu_classifier.pkl

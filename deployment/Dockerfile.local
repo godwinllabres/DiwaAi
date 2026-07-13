@@ -1,0 +1,35 @@
+# Local server image — full hybrid stack (Naive Bayes + TensorFlow NN + LLM fallback).
+# Built from the repo root: docker build -f deployment/Dockerfile.local .
+# Unlike Dockerfile.render (512MB tier, no TensorFlow), this image includes
+# tensorflow so the neural-network tier runs with the committed models/nn_*.
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# System deps (curl is used by the healthcheck)
+RUN apt-get update && apt-get install -y \
+    build-essential curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# requirements_local.txt mirrors the environment that trained the committed
+# models (sklearn 1.8 / numpy 2 / TF 2.21 + Keras 3) — the older pins in
+# requirements.txt cannot unpickle/deserialize them.
+COPY deployment/requirements_local.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Download NLTK data (both punkt and punkt_tab for compatibility across NLTK versions)
+RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('wordnet'); nltk.download('omw-1.4')"
+
+# Copy application (see .dockerignore — excludes .env, logs/, backups, test artifacts)
+COPY . .
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -fsS http://localhost:8000/health || exit 1
+
+# api.app:app is the server SeviWeb talks to (auth, map, logs, feedback, admin).
+# Keep --workers 1: rate limiting, PIN lockout, and conversation state are
+# in-memory per-process.
+CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
