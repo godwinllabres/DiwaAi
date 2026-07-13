@@ -9,9 +9,17 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - WORKERS=4
+      # Chat history / feedback store. Comment this line out to fall back to
+      # SQLite at logs/chat_history.db — but note the image runs 4 uvicorn
+      # workers (hardcoded in deployment/Dockerfile CMD; the WORKERS env above
+      # is not read by anything), and SQLite is only safe single-worker.
+      - DATABASE_URL=postgresql://sevi:${POSTGRES_PASSWORD:-sevi}@postgres:5432/sevi
     volumes:
       - ./models:/app/models
       - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -21,6 +29,33 @@ services:
       start_period: 5s
     networks:
       - CvSU-network
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: CvSU-chatbot-db
+    ports:
+      # Loopback-only publish so the one-time migration script can run from
+      # the host (scripts/migrate_chat_history_to_postgres.py --dsn ...).
+      - "127.0.0.1:5432:5432"
+    environment:
+      - POSTGRES_DB=sevi
+      - POSTGRES_USER=sevi
+      # Only reachable on the internal compose network; override in .env
+      # before exposing anything.
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-sevi}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sevi -d sevi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - CvSU-network
+
+volumes:
+  pgdata:
 
 networks:
   CvSU-network:

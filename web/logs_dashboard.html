@@ -293,6 +293,81 @@
             margin-top: 40px;
         }
 
+        .settings-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .settings-bar label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .settings-bar input {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .settings-bar input#apiBase {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .settings-bar button {
+            padding: 8px 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .settings-bar button:hover {
+            background: #764ba2;
+        }
+
+        .conn-status {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .conn-status.ok {
+            color: #4caf50;
+        }
+
+        .conn-status.bad {
+            color: #f44336;
+        }
+
+        .status-banner {
+            padding: 12px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status-banner.show {
+            display: block;
+        }
+
+        .status-banner.warn {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffcc80;
+        }
+
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: 1fr;
@@ -320,6 +395,18 @@
     </header>
 
     <div class="container">
+        <!-- Connection settings -->
+        <div class="settings-bar">
+            <label for="apiBase">API</label>
+            <input type="text" id="apiBase" placeholder="http://localhost:8000">
+            <label for="adminPin">PIN</label>
+            <input type="password" id="adminPin" placeholder="Admin PIN" style="width: 120px;">
+            <button onclick="saveSettings()">Connect</button>
+            <span class="conn-status" id="connStatus">—</span>
+        </div>
+
+        <div class="status-banner" id="statusBanner"></div>
+
         <!-- Tabs -->
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
@@ -438,7 +525,126 @@
     </footer>
 
     <script>
-        const API_URL = "http://localhost:8000";
+        // ── Connection config ────────────────────────────────────────────────
+        // API base + admin PIN are persisted in localStorage so you don't have
+        // to edit this file when the API moves ports. When the dashboard is
+        // served from the API itself (GET /admin/logs) the base defaults to the
+        // page origin — same-origin, so no CORS preflight on the PIN header.
+        const LS_BASE = "sevi_logs_api_base";
+        const LS_PIN = "sevi_logs_admin_pin";
+
+        function defaultBase() {
+            if (window.location.protocol.startsWith("http")) {
+                return window.location.origin;   // served by the API — use it
+            }
+            return "http://localhost:8000";       // opened as a file://
+        }
+
+        let API_URL = localStorage.getItem(LS_BASE) || defaultBase();
+        let ADMIN_PIN = localStorage.getItem(LS_PIN) || "";
+
+        // Escape user-controlled text before injecting via innerHTML (stored-XSS
+        // guard: chat messages are attacker-influenced content).
+        function esc(v) {
+            return String(v ?? "").replace(/[&<>"']/g, c => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[c]));
+        }
+
+        function confClass(fraction) {
+            return fraction > 0.7 ? "high" : fraction > 0.4 ? "medium" : "low";
+        }
+
+        function showBanner(message) {
+            const el = document.getElementById("statusBanner");
+            el.className = "status-banner warn show";
+            el.textContent = message;
+        }
+
+        function hideBanner() {
+            document.getElementById("statusBanner").className = "status-banner";
+        }
+
+        function setConnStatus(ok, text) {
+            const el = document.getElementById("connStatus");
+            el.className = "conn-status " + (ok ? "ok" : "bad");
+            el.textContent = text;
+        }
+
+        // Admin-gated fetch: attaches the PIN header and surfaces auth/connection
+        // failures as a clear banner instead of a silent "server error".
+        async function adminFetch(path) {
+            if (!ADMIN_PIN) {
+                showBanner("Enter the admin PIN above and click Connect to load data.");
+                throw new Error("no-pin");
+            }
+            let res;
+            try {
+                res = await fetch(`${API_URL}${path}`, {
+                    headers: { "X-Admin-Pin": ADMIN_PIN }
+                });
+            } catch (netErr) {
+                setConnStatus(false, "✖ unreachable");
+                // Opened as a file:// ? A cross-origin call with the custom PIN
+                // header triggers a CORS preflight the API rejects, which fetch
+                // surfaces as a generic network error — name the real cause.
+                showBanner(window.location.protocol.startsWith("http")
+                    ? `Cannot reach the API at ${API_URL}. Check the API address above and that the server is running.`
+                    : `Cannot reach ${API_URL}. If you opened this dashboard as a file, the browser blocks admin calls (CORS) — open it at ${API_URL}/admin/logs instead.`);
+                throw netErr;
+            }
+            if (res.status === 401 || res.status === 403) {
+                setConnStatus(false, "✖ bad PIN");
+                showBanner("Admin PIN rejected. Fix it above and click Connect.");
+                throw new Error("unauthorized");
+            }
+            if (res.status === 503) {
+                setConnStatus(false, "✖ no admin");
+                showBanner("Admin access is not configured on the server (DASHBOARD_PIN is unset).");
+                throw new Error("admin-not-configured");
+            }
+            if (!res.ok) {
+                showBanner(`Request failed (HTTP ${res.status}) for ${path}.`);
+                throw new Error(`http-${res.status}`);
+            }
+            hideBanner();
+            setConnStatus(true, "✔ connected");
+            return res.json();
+        }
+
+        function saveSettings() {
+            let base = document.getElementById("apiBase").value.trim();
+            while (base.endsWith("/")) base = base.slice(0, -1);
+            const pin = document.getElementById("adminPin").value;
+            API_URL = base || defaultBase();
+            ADMIN_PIN = pin;
+            localStorage.setItem(LS_BASE, API_URL);
+            localStorage.setItem(LS_PIN, ADMIN_PIN);
+            document.getElementById("apiBase").value = API_URL;
+            reloadActiveTab();
+        }
+
+        // Ping an admin endpoint just to refresh the connection status / banner
+        // when the active tab has nothing to auto-load (e.g. the Users tab).
+        async function verifyConnection() {
+            // adminFetch already sets the status + banner on both success and
+            // failure; we only need to trigger it, so the error is fully handled.
+            try {
+                await adminFetch(`/logs/today`);
+            } catch (err) {
+                console.debug("verifyConnection: handled by adminFetch", err);
+            }
+        }
+
+        function reloadActiveTab() {
+            const active = document.querySelector(".tab-content.active");
+            const id = active ? active.id : "overview";
+            if (id === "overview") loadTodayStats();
+            else if (id === "messages") loadRecentMessages();
+            else if (id === "intents") loadIntentStats();
+            else if (id === "sessions") loadSessions();
+            else verifyConnection();   // 'users' tab (and any future input-driven tab)
+        }
 
         function switchTab(tabName) {
             // Hide all tabs
@@ -467,8 +673,7 @@
 
         async function loadTodayStats() {
             try {
-                const res = await fetch(`${API_URL}/logs/today`);
-                const data = await res.json();
+                const data = await adminFetch(`/logs/today`);
 
                 const html = `
                     <div class="stat-card">
@@ -485,7 +690,7 @@
                     </div>
                     <div class="stat-card">
                         <h3>Top Intent</h3>
-                        <div class="value">${data.top_intent?.intent || 'N/A'}</div>
+                        <div class="value">${esc(data.top_intent?.intent || 'N/A')}</div>
                     </div>
                 `;
 
@@ -496,25 +701,24 @@
             } catch (error) {
                 console.error("Error loading today stats:", error);
                 document.getElementById("todayStats").innerHTML =
-                    '<div class="error">Failed to load statistics. Make sure the API is running.</div>';
+                    '<div class="error">Could not load statistics — see the message above.</div>';
             }
         }
 
         async function loadTopIntentsChart() {
             try {
-                const res = await fetch(`${API_URL}/logs/intents`);
-                const data = await res.json();
+                const data = await adminFetch(`/logs/intents`);
 
                 const topIntents = data.intents.slice(0, 8);
-                const maxCount = Math.max(...topIntents.map(i => i.count));
+                const maxCount = Math.max(...topIntents.map(i => i.count), 1);
 
                 let html = '';
                 topIntents.forEach(intent => {
                     const heightPercent = (intent.count / maxCount) * 100;
                     html += `
                         <div class="bar">
-                            <div class="bar-fill" style="height: ${heightPercent}%;" title="${intent.intent}"></div>
-                            <div class="bar-label">${intent.intent.substring(0, 10)}</div>
+                            <div class="bar-fill" style="height: ${heightPercent}%;" title="${esc(intent.intent)}"></div>
+                            <div class="bar-label">${esc(intent.intent.substring(0, 10))}</div>
                             <div class="bar-value">${intent.count}</div>
                         </div>
                     `;
@@ -526,39 +730,33 @@
             }
         }
 
+        function renderMessageRows(messages) {
+            if (!messages.length) {
+                return '<tr><td colspan="5" class="loading">No messages yet</td></tr>';
+            }
+            return messages.map(msg => {
+                const time = new Date(msg.timestamp).toLocaleTimeString();
+                const conf = (msg.confidence || 0) * 100;
+                return `
+                    <tr>
+                        <td>${time}</td>
+                        <td>${esc(msg.user_id || 'anonymous')}</td>
+                        <td><div class="message-preview">${esc(msg.user_message)}</div></td>
+                        <td><span class="intent-badge">${esc(msg.intent)}</span></td>
+                        <td><span class="confidence ${confClass(msg.confidence || 0)}">${conf.toFixed(1)}%</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         async function loadRecentMessages() {
             try {
-                const res = await fetch(`${API_URL}/logs/user/all?limit=20`);
-                const data = await res.json();
-
-                let html = '';
-                const messages = data.messages || [];
-
-                if (messages.length === 0) {
-                    html = '<tr><td colspan="5" class="loading">No messages yet</td></tr>';
-                } else {
-                    messages.forEach(msg => {
-                        const time = new Date(msg.timestamp).toLocaleTimeString();
-                        const conf = msg.confidence * 100;
-                        const confClass = conf > 0.7 ? 'high' : conf > 0.4 ? 'medium' : 'low';
-
-                        html += `
-                            <tr>
-                                <td>${time}</td>
-                                <td>${msg.user_id || 'anonymous'}</td>
-                                <td><div class="message-preview">${msg.user_message}</div></td>
-                                <td><span class="intent-badge">${msg.intent}</span></td>
-                                <td><span class="confidence ${confClass}">${conf.toFixed(1)}%</span></td>
-                            </tr>
-                        `;
-                    });
-                }
-
-                document.getElementById("messagesBody").innerHTML = html;
+                const data = await adminFetch(`/logs/recent?limit=20`);
+                document.getElementById("messagesBody").innerHTML = renderMessageRows(data.messages || []);
             } catch (error) {
                 console.error("Error loading messages:", error);
                 document.getElementById("messagesBody").innerHTML =
-                    '<tr><td colspan="5" class="error">Failed to load messages</td></tr>';
+                    '<tr><td colspan="5" class="error">Could not load messages — see the message above.</td></tr>';
             }
         }
 
@@ -570,31 +768,11 @@
             }
 
             try {
-                const res = await fetch(`${API_URL}/logs/search?query=${encodeURIComponent(query)}`);
-                const data = await res.json();
-
-                let html = '';
-                if (data.results_count === 0) {
-                    html = '<tr><td colspan="5" class="loading">No results found</td></tr>';
-                } else {
-                    data.results.forEach(msg => {
-                        const time = new Date(msg.timestamp).toLocaleTimeString();
-                        const conf = msg.confidence * 100;
-                        const confClass = conf > 0.7 ? 'high' : conf > 0.4 ? 'medium' : 'low';
-
-                        html += `
-                            <tr>
-                                <td>${time}</td>
-                                <td>${msg.user_id || 'anonymous'}</td>
-                                <td><div class="message-preview">${msg.user_message}</div></td>
-                                <td><span class="intent-badge">${msg.intent}</span></td>
-                                <td><span class="confidence ${confClass}">${conf.toFixed(1)}%</span></td>
-                            </tr>
-                        `;
-                    });
-                }
-
-                document.getElementById("messagesBody").innerHTML = html;
+                const data = await adminFetch(`/logs/search?query=${encodeURIComponent(query)}`);
+                const results = data.results || [];
+                document.getElementById("messagesBody").innerHTML = results.length
+                    ? renderMessageRows(results)
+                    : '<tr><td colspan="5" class="loading">No results found</td></tr>';
             } catch (error) {
                 console.error("Error searching:", error);
             }
@@ -602,8 +780,7 @@
 
         async function loadIntentStats() {
             try {
-                const res = await fetch(`${API_URL}/logs/intents`);
-                const data = await res.json();
+                const data = await adminFetch(`/logs/intents`);
 
                 let html = '';
                 data.intents.forEach(intent => {
@@ -612,7 +789,7 @@
 
                     html += `
                         <tr>
-                            <td><span class="intent-badge">${intent.intent}</span></td>
+                            <td><span class="intent-badge">${esc(intent.intent)}</span></td>
                             <td>${intent.count}</td>
                             <td>${avgConf}%</td>
                             <td>${lastUsed}</td>
@@ -628,8 +805,7 @@
 
         async function loadSessions() {
             try {
-                const res = await fetch(`${API_URL}/logs/sessions`);
-                const data = await res.json();
+                const data = await adminFetch(`/logs/sessions`);
 
                 let html = '';
                 data.sessions.forEach(session => {
@@ -638,8 +814,8 @@
 
                     html += `
                         <tr>
-                            <td><code style="font-size: 11px;">${session.session_id?.substring(0, 12)}...</code></td>
-                            <td>${session.user_id || 'N/A'}</td>
+                            <td><code style="font-size: 11px;">${esc(session.session_id?.substring(0, 12))}...</code></td>
+                            <td>${esc(session.user_id || 'N/A')}</td>
                             <td>${started}</td>
                             <td>${session.message_count || 0}</td>
                             <td>${avgConf}%</td>
@@ -661,10 +837,9 @@
             }
 
             try {
-                const res = await fetch(`${API_URL}/logs/user/${userId}?limit=50`);
-                const data = await res.json();
+                const data = await adminFetch(`/logs/user/${encodeURIComponent(userId)}?limit=50`);
 
-                let html = `<h3>Chat History for User: ${userId}</h3>`;
+                let html = `<h3>Chat History for User: ${esc(userId)}</h3>`;
                 html += `<p style="color: #666; margin-bottom: 15px;">${data.message_count} messages</p>`;
 
                 if (data.message_count === 0) {
@@ -686,14 +861,15 @@
 
                     data.messages.forEach(msg => {
                         const time = new Date(msg.timestamp).toLocaleString();
-                        const conf = (msg.confidence * 100).toFixed(1);
+                        const conf = ((msg.confidence || 0) * 100).toFixed(1);
+                        const response = (msg.bot_response || '').substring(0, 60);
 
                         html += `
                             <tr>
                                 <td>${time}</td>
-                                <td><div class="message-preview">${msg.user_message}</div></td>
-                                <td><div class="message-preview">${msg.bot_response.substring(0, 60)}...</div></td>
-                                <td><span class="intent-badge">${msg.intent}</span></td>
+                                <td><div class="message-preview">${esc(msg.user_message)}</div></td>
+                                <td><div class="message-preview">${esc(response)}...</div></td>
+                                <td><span class="intent-badge">${esc(msg.intent)}</span></td>
                                 <td>${conf}%</td>
                             </tr>
                         `;
@@ -709,13 +885,21 @@
             } catch (error) {
                 console.error("Error loading user history:", error);
                 document.getElementById("userHistoryContainer").innerHTML =
-                    '<div class="error">Failed to load user history. User may not exist.</div>';
+                    '<div class="error">Could not load user history — see the message at the top of the page.</div>';
             }
         }
 
-        // Load initial data
+        // Load initial data — hydrate the settings fields, then fetch if a PIN
+        // is already saved. Otherwise prompt the operator to connect.
         window.addEventListener("load", () => {
-            loadTodayStats();
+            document.getElementById("apiBase").value = API_URL;
+            document.getElementById("adminPin").value = ADMIN_PIN;
+            if (ADMIN_PIN) {
+                loadTodayStats();
+            } else {
+                setConnStatus(false, "not connected");
+                showBanner("Enter the admin PIN above and click Connect to load data.");
+            }
         });
     </script>
 </body>

@@ -1,0 +1,1862 @@
+{
+ "proposals": {
+  "about_cvsu": {
+   "charter": {
+    "kind": "charter",
+    "locator": "2",
+    "label": "",
+    "score": 0.1506,
+    "evidence": "ii \nAGENCY PROFILE \nI. MANDATE \nSection 2 of Republic Act No. 8468 or “An Act Converting the Don Severino Agricultural \nCollege in the Municipality of Indang, Province of Cavite into a State University, to be known \nas the Cavite State University” states that, \n“The University shall primarily provid"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/history/",
+    "label": "History",
+    "score": 2.1294,
+    "evidence": "History\nThe Cavite State University (CvSU) has its humble beginnings in 1906 as the Indang Intermediate School with the American Thomasites as the first teachers. Several transformations in the name of the school took place; Indang Farm School in 1918, Indang Rural High School in 1927, and Don Sever"
+   },
+   "description": "",
+   "sample_patterns": [
+    "CvSU",
+    "What is Cavite State University",
+    "About CvSU",
+    "History of CvSU",
+    "When was CvSU founded"
+   ],
+   "sample_response": "Cavite State University (CvSU) traces its roots to 1906 as the Indang Intermediate School, with the American Thomasites as the first teachers. It was renamed Indang Farm School in 1918, Indang Rural High School in 1927, and Don Severino National Agriculture School in 1958. In 1964, the school was co"
+  },
+  "academic_calendar": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1702",
+    "label": "",
+    "score": 0.1249,
+    "evidence": "5. Application/Renewal Procedure for Scholarship \nThis procedure shows how OSAS assists applicants in the availment/ renewal of scholarship/financial \nassistance. \nOffice or Division: Office of Student Affairs and Services \nClassification: Simple \nType of \nTransaction: G2C – Government to Citizen \nW"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1467,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\n“Sa loob ng mahigit isang siglo, napatunayan ng CvSU na ang tunay na edukasyon ay hindi lamang tungkol sa paglikha ng mga propesyonal, kundi sa paghubog ng mga liders at mamamayan na may malasakit sa ating bayan,” Mayor Revilla sai"
+   },
+   "description": "",
+   "sample_patterns": [
+    "Academic calendar",
+    "Schedule of classes",
+    "Semester dates",
+    "When is the semester",
+    "Holidays at CvSU"
+   ],
+   "sample_response": "CvSU ACADEMIC CALENDAR (general guide — dates change each year):\n\nCvSU follows the CHED academic calendar with a First Semester, Second Semester, and (where applicable) a Summer Term. Each semester typically includes midterm and final examination periods, plus the regular Philippine holidays. The un"
+  },
+  "academic_policies": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.2708,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nIn his keynote speech, Bacoor City Mayor Strike B. Revilla emphasized that CvSU's 120 years of truth, integrity, excellence, and service is no small feat. \n “Sa loob ng mahigit isang siglo, napatunayan ng CvSU na ang tunay na eduka"
+   },
+   "description": "",
+   "sample_patterns": [
+    "grading system CvSU",
+    "CvSU grades",
+    "CvSU grading scale",
+    "passing grade CvSU",
+    "what is passing grade"
+   ],
+   "sample_response": "CvSU ACADEMIC POLICIES & GRADING SYSTEM:\n\nGRADING SCALE (1.0–5.0):\n1.0 = Excellent | 1.25 = Superior | 1.5 = Very Good\n1.75 = Good | 2.0 = Satisfactory | 2.25 = Fairly Satisfactory\n2.5 = Passing | 2.75 = Conditional Pass | 3.0 = Passed (75%)\n5.0 = Failed | INC = Incomplete | W = Withdrawn\n\nMINIMUM P"
+  },
+  "add_drop_subjects": {
+   "charter": {
+    "kind": "charter",
+    "locator": "936",
+    "label": "",
+    "score": 0.1998,
+    "evidence": "5. Adding/Dropping/Changing of Subject \nThis procedure aims to facilitate the process of application for adding/dropping/changing of subjects of a \nstudent that ensures accurate and correct input of subject and schedule. \nOffice or Division: Office of the Campus Registrar \nClassification: Simple \nTy"
+   },
+   "description": "",
+   "sample_patterns": [
+    "add drop subjects",
+    "add subject CvSU",
+    "drop a subject CvSU",
+    "change schedule",
+    "change subject"
+   ],
+   "sample_response": "Adding or dropping a subject at CvSU is allowed only within the Add/Drop Period, which is typically the first 1–2 weeks of the semester (exact dates published per semester). To add: secure approval from your adviser and submit the add form. To officially drop: submit a drop form through your adviser"
+  },
+  "admissions_exam": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1694",
+    "label": "",
+    "score": 0.149,
+    "evidence": "Copy of Grade 12 report card Senior High School \nCopy of Good Moral certificate Senior High School \n1 Short Folder Applicant \nCLIENT STEPS AGENCY ACTION FEES TO BE \nPAID \nPROCESSING \nTIME \nPERSON \nRESPONSIBLE \n1. Log in and register \nat \nadmission.cvsu.edu\n.ph. \n None 15 Minutes Admission \nOfficer \n"
+   },
+   "description": "",
+   "sample_patterns": [
+    "When is the entrance exam",
+    "Entrance exam schedule",
+    "How to register for exam",
+    "What about entrance test",
+    "CvSU entrance examination"
+   ],
+   "sample_response": "The CvSU entrance examination is part of the admission process. After you complete the online application at https://admission.cvsu.edu.ph/ and submit your documents to OSAS, you will be scheduled for the entrance exam at your target campus. Bring your application form, valid ID, and exam permit/not"
+  },
+  "admissions_requirements": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1694",
+    "label": "",
+    "score": 0.2989,
+    "evidence": "1. Application Procedure for Admission of Incoming First Year \nThis procedure aims to define the system on how to assist all applicants who will submit requirements \nand ensure that they will be guided in seeking admission to the University in their desired program. \nOffice or Division: Office of St"
+   },
+   "description": "",
+   "sample_patterns": [
+    "What are admission requirements",
+    "How to apply to CvSU",
+    "Application requirements",
+    "Documents needed for admission",
+    "What do I need to apply"
+   ],
+   "sample_response": "ADMISSION TO CvSU (per the official Office of Student Affairs and Services and the admission portal):\n\n1. FILE THE ONLINE APPLICATION at https://admission.cvsu.edu.ph/ — encode your information in the registration/application form.\n2. PRINT the accomplished application form on A4-size bond paper.\n3."
+  },
+  "agriculture_programs": {
+   "charter": {
+    "kind": "charter",
+    "locator": "641",
+    "label": "",
+    "score": 0.2631,
+    "evidence": "CITIZEN'S CHARTER \nFY 2026 EDITION \nCOLLEGE OF AGRICULTURE, FOOD, ENVIRONMENT \nAND NATURAL RESOURCES"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/11/cvsu-academic-programs-receive-aaccup-accreditation/",
+    "label": "CvSU academic programs receive AACCUP accreditation",
+    "score": 0.395,
+    "evidence": "CvSU academic programs receive AACCUP accreditation\nSeveral academic programs being offered at Cavite State University's (CvSU) main and satellite campuses received accreditation from the Accrediting Agency of Chartered Colleges and Universities in the Philippines (AACCUP), Inc. \n Ten curricular pro"
+   },
+   "description": "",
+   "sample_patterns": [
+    "BS Agriculture CvSU",
+    "BSA CvSU",
+    "BS Agricultural Engineering",
+    "BS Animal Science",
+    "BS Crop Science"
+   ],
+   "sample_response": "CvSU offers a range of agriculture-related undergraduate programs through the College of Agriculture, Food, Environment and Natural Resources (CAFENR) — typically including BS Agriculture (with specializations), BS Agricultural and Biosystems Engineering, BS Animal Science, BS Food Technology, BS Fo"
+  },
+  "als_admission": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1694",
+    "label": "",
+    "score": 0.1409,
+    "evidence": "Copy of Grade 12 report card Senior High School \nCopy of Good Moral certificate Senior High School \n1 Short Folder Applicant \nCLIENT STEPS AGENCY ACTION FEES TO BE \nPAID \nPROCESSING \nTIME \nPERSON \nRESPONSIBLE \n1. Log in and register \nat \nadmission.cvsu.edu\n.ph. \n None 15 Minutes Admission \nOfficer \n"
+   },
+   "description": "",
+   "sample_patterns": [
+    "ALS to CvSU",
+    "ALS passer CvSU",
+    "alternative learning system CvSU",
+    "I passed the ALS exam",
+    "ALS A&E test"
+   ],
+   "sample_response": "Yes, CvSU accepts ALS (Alternative Learning System) Accreditation & Equivalency (A&E) passers. As an ALS applicant you generally submit your ALS Certificate of Rating / Diploma in lieu of Form 138, plus the other standard freshman documents (PSA birth certificate, Good Moral, 2x2 photos, application"
+  },
+  "alumni": {
+   "charter": {
+    "kind": "charter",
+    "locator": "638",
+    "label": "",
+    "score": 0.5535,
+    "evidence": "3. Application for Alumni Association Membership and Alumni ID \nThis procedure aims to ensure that alumni are provided with valid ID as proof of membership to CvSU \nAlumni Association. \nOffice or Division: Alumni Affairs Office and Office of CvSU-DSAC Alumni Association, Inc. \nClassification: Simple"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/16/cvsu-welcomes-ukrainian-ambassador-to-ph-yuliia-fediv/",
+    "label": "CvSU welcomes Ukrainian Ambassador to PH Yuliia Fediv",
+    "score": 0.1584,
+    "evidence": "CvSU welcomes Ukrainian Ambassador to PH Yuliia Fediv\nAlso joining the meeting were Assoc. Prof. Ma. Veronica P. Peñaflorida, Director of International and Local Collaborations and Linkages Office (ILCLO), and Ms. Janice E. Paiton, representative of College of Economics, Management, and Development "
+   },
+   "description": "Questions about CvSU alumni network, association, tracer studies, IDs, reunions.",
+   "sample_patterns": [
+    "alumni",
+    "CvSU alumni",
+    "alumni association",
+    "alumni network",
+    "alumni community"
+   ],
+   "sample_response": "CvSU has an active Alumni Relations Office that coordinates the Alumni Association, tracer studies, alumni IDs, and homecoming events. For the most current process and event schedule, please contact the Alumni Relations Office at the main campus in Indang or the Alumni Coordinator at your home campu"
+  },
+  "anti_bullying_safe_spaces": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/mandate-mission-vision-core-values-quality-policy/",
+    "label": "Mandate, Mission, Vision, Core Values & Quality Policy",
+    "score": 0.2011,
+    "evidence": "Mandate, Mission, Vision, Core Values & Quality Policy\nMandate\n Section 2 of Republic Act No. 8468 “An Act Converting the Don Severino Agricultural College in the Municipality of Indang, Province of Cavite into a State University, to be Known as the Cavite State University” states that,\n “ The Unive"
+   },
+   "description": "",
+   "sample_patterns": [
+    "anti-bullying policy CvSU",
+    "report bullying CvSU",
+    "safe spaces act CvSU",
+    "RA 11313",
+    "RA 10627"
+   ],
+   "sample_response": "CvSU is governed by Philippine laws that protect students from bullying, harassment, and gender-based violence — including the Anti-Bullying Act (RA 10627), the Safe Spaces Act (RA 11313), the Anti-Sexual Harassment Act (RA 7877), and the Anti-VAWC Act (RA 9262). The university has internal policies"
+  },
+  "audit_subject": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1367,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nMeanwhile, Mr. Joseph Luke Emmanuel M. Ongliongco, a fourth year Bachelor of Science in Psychology student from the Bacoor Campus and currently the Deputy Student Regent of the Federation of Central Student Government, received the"
+   },
+   "description": "",
+   "sample_patterns": [
+    "audit a subject CvSU",
+    "sit in class",
+    "listen only",
+    "auditor subject",
+    "I want to audit"
+   ],
+   "sample_response": "Auditing a subject (attending classes without earning credit) may be allowed at CvSU at the instructor's discretion and with the approval of the Dean. Audit students typically don't take exams or receive a grade, and the subject doesn't count toward graduation. Specific rules — including any fees an"
+  },
+  "authentication_apostille": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1187",
+    "label": "",
+    "score": 0.1084,
+    "evidence": "1. Collection of Fees \nThis procedure covers how the Cashier's Office process collection of fees, charges and other \nassessments from departments, bureaus, offices and other agencies in the exercise of their functions. \nOffice or Division: Cashier's Office \nClassification: Simple \nType of \nTransacti"
+   },
+   "description": "",
+   "sample_patterns": [
+    "DFA apostille CvSU",
+    "authentication CvSU documents",
+    "CHED CAV CvSU",
+    "red ribbon CvSU",
+    "apostille for embassy"
+   ],
+   "sample_response": "If you need CvSU documents authenticated for use abroad, the typical path is: (1) request the document (TOR / Diploma / Good Moral) from the CvSU Registrar; (2) obtain a Certification, Authentication, and Verification (CAV) from CHED for tertiary documents; (3) apostille the authenticated document a"
+  },
+  "board_exam_review": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/16/cvsu-is-top-performing-school-in-february-2026-licensure-exam-for-criminologists/",
+    "label": "CvSU is top performing school in February 2026 licensure exam for Criminologists",
+    "score": 0.278,
+    "evidence": "CvSU is top performing school in February 2026 licensure exam for Criminologists\nCavite State University (CvSU) strongly secures its position as the top performing school in the February 2026 Criminologist Licensure Examination. \n The CvSU Main Campus achieved an outstanding 99.25% passing rate (132"
+   },
+   "description": "",
+   "sample_patterns": [
+    "board exam review CvSU",
+    "CPA review CvSU",
+    "LET review CvSU",
+    "CE board review",
+    "ECE board exam"
+   ],
+   "sample_response": "CvSU graduates of board-program courses take their licensure examinations under the Professional Regulation Commission (PRC), and CvSU has a strong recent record — per the official site's 2026 results: top performing school in the February 2026 Criminologist Licensure Exam (Main 99.25%, Bacoor 100%)"
+  },
+  "bookstore_supplies": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1795",
+    "label": "",
+    "score": 0.1147,
+    "evidence": "2. Purchasing of School Uniform / PE Uniform \nThis process guides students in the proper selection, payment, and official acquisition of School Uniforms \nand PE Uniforms. \nOffice or Division: External and Business Affairs \nClassification: Simple \nType of \nTransaction: G2C – Government to Citizen \nWh"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1731,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nGaling ng Cvsu Award (Model Employee of the Year Award) \n Dr. Willie C. Buclatin \n Mananaliksik ng CvSU Award (Researcher of the Year Award) \n Engr. Al Eugene Torres \n Husay ng CvSU Award (Best Organizational Unit Award) \n Academic"
+   },
+   "description": "",
+   "sample_patterns": [
+    "bookstore CvSU",
+    "school supplies CvSU",
+    "textbook CvSU",
+    "saan bumili ng libro",
+    "saan bumili ng uniform"
+   ],
+   "sample_response": "Many CvSU campuses have a small student store or coop selling school supplies, and accredited tailors/uniform suppliers near campus for departmental uniforms (PE, NSTP, lab gowns, engineering aprons, etc.). For textbooks, the library is the first stop — books may be borrowed; some books are required"
+  },
+  "business_management": {
+   "charter": {
+    "kind": "charter",
+    "locator": "582",
+    "label": "",
+    "score": 0.2064,
+    "evidence": "5. For applicants \nseeking admission \nto the BS Nursing, \nBS Medical \nTechnology, BS \nand Midwifery, BS \nHospitality \nManagement, BS \nTourism \nManagement, BS \nAccountancy, and \nBS International \nStudies, the \napplicant is \nrequired to undergo \ninterview. \n5.a. Gets Notice for \nInterview or \nEvaluati"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/11/cvsu-academic-programs-receive-aaccup-accreditation/",
+    "label": "CvSU academic programs receive AACCUP accreditation",
+    "score": 0.4536,
+    "evidence": "CvSU academic programs receive AACCUP accreditation\nBS Industrial Technology (CCAT Campus)  \n Level III Re-accredited:  \n BS Medical Technology (CON)  \n BS Business Administration (Carmona Campus)  \n BS Computer Science (Carmona Campus)  \n BS Information Technology (Cavite City Campus)  \n BS Busines"
+   },
+   "description": "",
+   "sample_patterns": [
+    "BSBA CvSU",
+    "BS Business Administration",
+    "BS Accountancy",
+    "BSA accountancy",
+    "BS Entrepreneurship"
+   ],
+   "sample_response": "CvSU's hospitality and tourism programs sit under the College of Tourism and Hospitality Management (CTHM), which the Board of Regents approved as an independent college on September 26, 2024. CTHM offers BS Hospitality Management and BS Tourism Management (BS Hospitality Management at the General T"
+  },
+  "campus_location": {
+   "charter": {
+    "kind": "charter",
+    "locator": "2024",
+    "label": "",
+    "score": 0.1354,
+    "evidence": "local 1025 cvsuosasmain@cvsu.edu.ph \nUniversity \nHealth Service \nBrgy. Bancod, \nIndang, Cavite \n(046) 483 9250 \nlocal 1040 infirmary.cvsu@gmail.com \nSATELLITE CAMPUSES \nBacoor Campus Molino VI, Bacoor \nCity, Cavite (046) 476-50-29 cvsubacoor@cvsu.edu.ph \nCavite City \nCampus \nBrgy. VIII, Pulo II, \nDa"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/history/",
+    "label": "History",
+    "score": 0.8967,
+    "evidence": "History\nOn January 22, 1998, by virtue of Republic Act No.8468, DSAC was converted into Cavite State University. In 2001, Cavite College of Fisheries (CACOF) in Naic, Cavite and Cavite College of Arts and Trade (CCAT) in Rosario, Cavite, were integrated to the University by virtue of CHED Memo No. 2"
+   },
+   "description": "",
+   "sample_patterns": [
+    "Where is CvSU",
+    "Location of CvSU",
+    "CvSU address",
+    "Where is the main campus",
+    "How to get to CvSU"
+   ],
+   "sample_response": "The CvSU Main Campus — the Don Severino delas Alas Campus, approximately 70 hectares in land area — is located in Indang, Cavite, Philippines, approximately 60 km (about 37 miles) southwest of Manila. It is the oldest campus of the University and houses academic, administrative, and research and ext"
+  },
+  "campus_specific": {
+   "charter": {
+    "kind": "charter",
+    "locator": "2025",
+    "label": "",
+    "score": 0.1697,
+    "evidence": "Trece Martires \nCity Campus \nBrgy. Gregorio, \nTrece Martires \nCity, Cavite \n0977-803-3809 \ncvsutrecemartires@cvsu.edu.ph \nGeneral Trias \nCity Campus \nBrgy. Vibora, \nGeneral Trias \nCity, Cavite \n(046) 509-4148 \ncvsugeneraltrias@cvsu.edu.ph \nNAIC CAMPUS \nHuman \nResource \nDevelopment \nOffice \nNaic, Cav"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/history/",
+    "label": "History",
+    "score": 0.528,
+    "evidence": "History\nOn January 22, 1998, by virtue of Republic Act No.8468, DSAC was converted into Cavite State University. In 2001, Cavite College of Fisheries (CACOF) in Naic, Cavite and Cavite College of Arts and Trade (CCAT) in Rosario, Cavite, were integrated to the University by virtue of CHED Memo No. 2"
+   },
+   "description": "",
+   "sample_patterns": [
+    "CvSU Imus",
+    "CvSU Bacoor",
+    "CvSU Trece",
+    "CvSU Naic",
+    "CvSU Rosario"
+   ],
+   "sample_response": "CvSU operates 11 campuses in the province of Cavite: the Main Campus in Indang (the Don Severino delas Alas Campus) along with satellite campuses including Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario (the CCAT campus), Silang, Tanza, and Trece Martires City. Program offerings di"
+  },
+  "career_opportunity": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/16/cvsu-welcomes-ukrainian-ambassador-to-ph-yuliia-fediv/",
+    "label": "CvSU welcomes Ukrainian Ambassador to PH Yuliia Fediv",
+    "score": 0.1916,
+    "evidence": "CvSU welcomes Ukrainian Ambassador to PH Yuliia Fediv\nPresent during the courtesy call meeting were key University officials, including Mr. John Xavier B. Nepomuceno, Vice President for Administrative and Support Services; Dr. Cristina M. Signo, Vice President for Academic Affairs; Dr. Melbourne R. "
+   },
+   "description": "Questions about career services, internships (OJT), job openings, job fairs, employer partners, and graduate placement.",
+   "sample_patterns": [
+    "career",
+    "careers",
+    "career opportunity",
+    "career opportunities",
+    "job opportunity"
+   ],
+   "sample_response": "Career services at CvSU are coordinated through the Office of Student Affairs and Services (OSAS), specifically the Career and Placement unit, which assists students with career counseling, placement of students and graduates, and related programs. OJT/internship coordination is typically handled by"
+  },
+  "comprehensive_exam": {
+   "charter": {
+    "kind": "charter",
+    "locator": "787",
+    "label": "",
+    "score": 0.2461,
+    "evidence": "3. Comprehensive Examination\nThis process aims to provide student the mechanics for taking Comprehensive Examination. \nOffice or Division: Registrar's Office \nClassification: Complex \nType of \nTransaction: G2C - Government to Citizen \nWho may avail: Graduate Students completed all the Academic Requi"
+   },
+   "description": "",
+   "sample_patterns": [
+    "comprehensive exam CvSU",
+    "comprex CvSU",
+    "comp exam graduate",
+    "comp exam masters",
+    "comprehensive examination"
+   ],
+   "sample_response": "A comprehensive examination is commonly required for graduate students (Master's, Doctoral) and sometimes for certain undergraduate programs as a culminating evaluation. It typically covers major subjects in your program and is administered by a department panel. Schedule, coverage, passing mark, an"
+  },
+  "contact_info": {
+   "charter": {
+    "kind": "charter",
+    "locator": "2024",
+    "label": "",
+    "score": 0.2228,
+    "evidence": "CAVITE STATE UNIVERSITY'S CONTACT INFORMATION \nOFFICE ADDRESS CONTACT \nINFORMATION E-MAIL ADDRESS \nMAIN CAMPUS \nHuman \nResource \nDevelopment \nOffice \nBrgy. Bancod, \nIndang, Cavite \n(046) 483 9250 \nlocal 1017 \n(046) 419-4527 \ncvsuhrd@cvsu.edu.ph \nCashier's Office Brgy. Bancod, \nIndang, Cavite \n(046) "
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/history/",
+    "label": "History",
+    "score": 0.2568,
+    "evidence": "History\nThe Cavite State University (CvSU) has its humble beginnings in 1906 as the Indang Intermediate School with the American Thomasites as the first teachers. Several transformations in the name of the school took place; Indang Farm School in 1918, Indang Rural High School in 1927, and Don Sever"
+   },
+   "description": "",
+   "sample_patterns": [
+    "How to contact CvSU",
+    "What is the phone number",
+    "How to reach the office",
+    "Contact details",
+    "Phone number CvSU"
+   ],
+   "sample_response": "CvSU's Main Campus is the Don Severino delas Alas Campus in Indang, Cavite, Philippines, and the University website is https://cvsu.edu.ph. Verified contact points from the official site include the Office of the Vice President for Research and Extension at landline (046) 862-0850 or mobile +63 998 "
+  },
+  "counseling_procedure": {
+   "charter": {
+    "kind": "charter",
+    "locator": "603",
+    "label": "",
+    "score": 0.4838,
+    "evidence": "PERSON \nRESPONSIBLE \n1. Fill out Counseling \nForm (through hard \ncopy or online \ncopy). \n*online or on site \n1.1. Receive counseling form \n(hardcopy or online copy) \nfor walk-in and referred \nclients. \nNone 5 Minutes Guidance \nCounselor \n2. Undergo initial \ninterview. \nOnline: Attend to \nonline inte"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1982,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nIn his keynote speech, Bacoor City Mayor Strike B. Revilla emphasized that CvSU's 120 years of truth, integrity, excellence, and service is no small feat. \n “Sa loob ng mahigit isang siglo, napatunayan ng CvSU na ang tunay na eduka"
+   },
+   "description": "",
+   "sample_patterns": [
+    "How do I book a counseling session?",
+    "where to ask for counseling at CvSU",
+    "I need to talk to a guidance counselor",
+    "kailangan ko ng kausap, may counseling ba",
+    "paano humingi ng counseling sa OSAS?"
+   ],
+   "sample_response": "OSAS COUNSELING PROCEDURE:\n\n1. Fill out the Counseling Form (online or on-site at OSAS).\n2. Undergo initial interview with the Guidance Counselor.\n3. Fill out Appointment/Commitment Form.\n4. Attend counseling session (face-to-face or online) — 45 min to 1 hour 30 min per session.\n5. Fill out Counsel"
+  },
+  "courses_offered": {
+   "charter": {
+    "kind": "charter",
+    "locator": "582",
+    "label": "",
+    "score": 0.1699,
+    "evidence": "5. For applicants \nseeking admission \nto the BS Nursing, \nBS Medical \nTechnology, BS \nand Midwifery, BS \nHospitality \nManagement, BS \nTourism \nManagement, BS \nAccountancy, and \nBS International \nStudies, the \napplicant is \nrequired to undergo \ninterview. \n5.a. Gets Notice for \nInterview or \nEvaluati"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/11/cvsu-academic-programs-receive-aaccup-accreditation/",
+    "label": "CvSU academic programs receive AACCUP accreditation",
+    "score": 0.4642,
+    "evidence": "CvSU academic programs receive AACCUP accreditation\nSeveral academic programs being offered at Cavite State University's (CvSU) main and satellite campuses received accreditation from the Accrediting Agency of Chartered Colleges and Universities in the Philippines (AACCUP), Inc. \n Ten curricular pro"
+   },
+   "description": "",
+   "sample_patterns": [
+    "What courses are offered",
+    "What programs are available",
+    "degree programs",
+    "What can I study at CvSU",
+    "Available programs"
+   ],
+   "sample_response": "CvSU offers close to 100 curricular programs in the undergraduate and graduate levels (per the official site) across multiple colleges, and the Colleges page (https://cvsu.edu.ph/category/colleges/) lists the current offerings. Verified examples include the College of Arts and Sciences (BA Journalis"
+  },
+  "credit_transfer": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/history/",
+    "label": "History",
+    "score": 0.1696,
+    "evidence": "History\nThe Cavite State University (CvSU) has its humble beginnings in 1906 as the Indang Intermediate School with the American Thomasites as the first teachers. Several transformations in the name of the school took place; Indang Farm School in 1918, Indang Rural High School in 1927, and Don Sever"
+   },
+   "description": "",
+   "sample_patterns": [
+    "credit transfer CvSU",
+    "credit my subjects",
+    "accredit subjects",
+    "credit evaluation CvSU",
+    "subject equivalency"
+   ],
+   "sample_response": "Credit transfer / accreditation of subjects from a previous school or a cross-enrollment is processed by the receiving CvSU college after you are officially admitted/enrolled. The procedure typically: submit your previous TOR and the syllabi of the subjects you wish to credit, the college evaluates "
+  },
+  "criminology_program": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/16/cvsu-is-top-performing-school-in-february-2026-licensure-exam-for-criminologists/",
+    "label": "CvSU is top performing school in February 2026 licensure exam for Criminologists",
+    "score": 0.7402,
+    "evidence": "CvSU is top performing school in February 2026 licensure exam for Criminologists\nCavite State University (CvSU) strongly secures its position as the top performing school in the February 2026 Criminologist Licensure Examination. \n The CvSU Main Campus achieved an outstanding 99.25% passing rate (132"
+   },
+   "description": "",
+   "sample_patterns": [
+    "BS Criminology CvSU",
+    "criminology CvSU",
+    "criminologist",
+    "criminology board exam",
+    "CLE CvSU"
+   ],
+   "sample_response": "Yes — BS Criminology is offered at CvSU (including the Main and Bacoor campuses), and the University is a top performer in the field: per the official CvSU site, CvSU was the top performing school in the February 2026 Criminologist Licensure Examination — the Main Campus posted a 99.25% passing rate"
+  },
+  "cvsu_email_account": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1817",
+    "label": "",
+    "score": 0.1343,
+    "evidence": "1. CvSU Email (Problems) \nThis procedure aims to utilize, maintain and repair ICT equipment in the campus. \nOffice or Division: Management Information System Unit \nClassification: Simple \nType of \nTransaction: G2C - Government to Citizen \nWho may avail: Employees, Students \nCHECKLIST OF REQUIREMENTS"
+   },
+   "description": "",
+   "sample_patterns": [
+    "CvSU email",
+    "official CvSU email",
+    "my CvSU account",
+    "activate CvSU email",
+    "CvSU Gmail"
+   ],
+   "sample_response": "Your official CvSU email account (typically on the cvsu.edu.ph domain) is issued by the ICT/MIS Office, usually during your first enrollment. This account is your channel for official notifications, learning-management-system access, and other digital services CvSU subscribes to. To activate, reset "
+  },
+  "data_privacy": {
+   "charter": {
+    "kind": "charter",
+    "locator": "157",
+    "label": "",
+    "score": 0.2114,
+    "evidence": "5. Reproduction of Official Documents\nThis procedure aims to ensure the proper process in reproducing the official documents of the university. \nOffice or Division: Records Office \nClassification: Simple \nType of \nTransaction: \nG2G – Government to Government \nG2C – Government to Citizen \nWho may ava"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/25/%f0%9d%97%a6%f0%9d%97%b2%f0%9d%97%ae%f0%9d%97%bf%f0%9d%97%b0%f0%9d%97%b5-%f0%9d%97%b3%f0%9d%97%bc%f0%9d%97%bf-%f0%9d%97%a7%f0%9d%98%84%f0%9d%97%bc-%f0%9d%9f%ae-%f0%9d%97%a3%f0%9d%97%bf%f0%9d%97%b6/",
+    "label": "𝗦𝗲𝗮𝗿𝗰𝗵 𝗳𝗼𝗿 𝗧𝘄𝗼 (𝟮) 𝗣𝗿𝗶𝘃𝗮𝘁𝗲 𝗦𝗲𝗰𝘁𝗼𝗿 𝗥𝗲𝗽𝗿𝗲𝘀𝗲𝗻𝘁𝗮𝘁𝗶𝘃𝗲𝘀 (𝗣𝗦𝗥) 𝘁𝗼 𝘁𝗵𝗲 𝗚𝗼𝘃𝗲𝗿𝗻𝗶𝗻𝗴 𝗕𝗼𝗮𝗿𝗱 (Extended)",
+    "score": 0.1564,
+    "evidence": "𝗦𝗲𝗮𝗿𝗰𝗵 𝗳𝗼𝗿 𝗧𝘄𝗼 (𝟮) 𝗣𝗿𝗶𝘃𝗮𝘁𝗲 𝗦𝗲𝗰𝘁𝗼𝗿 𝗥𝗲𝗽𝗿𝗲𝘀𝗲𝗻𝘁𝗮𝘁𝗶𝘃𝗲𝘀 (𝗣𝗦𝗥) 𝘁𝗼 𝘁𝗵𝗲 𝗚𝗼𝘃𝗲𝗿𝗻𝗶𝗻𝗴 𝗕𝗼𝗮𝗿𝗱 (Extended)\nApplication/Nomination letter should be addressed to:\n ASSO. PROF. RONAN M. CAJIGAL\n Chairperson, CvSU Search Committee for Private Sector Representatives\n Thru:\n MS. CATHERINE J. QUIÑONES\n Secretary of the CvS"
+   },
+   "description": "",
+   "sample_patterns": [
+    "data privacy CvSU",
+    "Data Privacy Act CvSU",
+    "RA 10173",
+    "how does CvSU handle my personal data",
+    "is my information private at CvSU"
+   ],
+   "sample_response": "CvSU, as a Philippine state university, is governed by the Data Privacy Act of 2012 (RA 10173). Personal data collected from students and staff (e.g., during admission, enrollment, scholarship application, and document requests) is processed only for legitimate university purposes and protected per "
+  },
+  "deans_list_latin_honors": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1598,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nIn his keynote speech, Bacoor City Mayor Strike B. Revilla emphasized that CvSU's 120 years of truth, integrity, excellence, and service is no small feat. \n “Sa loob ng mahigit isang siglo, napatunayan ng CvSU na ang tunay na eduka"
+   },
+   "description": "",
+   "sample_patterns": [
+    "dean's list CvSU",
+    "GWA for dean's list",
+    "cum laude CvSU",
+    "magna cum laude",
+    "summa cum laude"
+   ],
+   "sample_response": "CvSU honors are governed by the University Student Handbook. The two main categories are:\n- DEAN'S LIST — semestral recognition for students who meet a high-GWA standard with no failing/INC/DRP grades and a minimum study load.\n- LATIN HONORS — at graduation: Cum Laude, Magna Cum Laude, and Summa Cum"
+  },
+  "diploma_request": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1972",
+    "label": "",
+    "score": 0.1132,
+    "evidence": "4. Replacement of Lost Library Cards \nProviding new library cards for students, faculty members and employees who lost their old library cards. \nOffice or Division: Library \nClassification: Simple \nType of \nTransaction: G2C – Government to Citizen \nWho may avail: Students, Faculty Members and Employ"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/25/%f0%9d%97%a6%f0%9d%97%b2%f0%9d%97%ae%f0%9d%97%bf%f0%9d%97%b0%f0%9d%97%b5-%f0%9d%97%b3%f0%9d%97%bc%f0%9d%97%bf-%f0%9d%97%a7%f0%9d%98%84%f0%9d%97%bc-%f0%9d%9f%ae-%f0%9d%97%a3%f0%9d%97%bf%f0%9d%97%b6/",
+    "label": "𝗦𝗲𝗮𝗿𝗰𝗵 𝗳𝗼𝗿 𝗧𝘄𝗼 (𝟮) 𝗣𝗿𝗶𝘃𝗮𝘁𝗲 𝗦𝗲𝗰𝘁𝗼𝗿 𝗥𝗲𝗽𝗿𝗲𝘀𝗲𝗻𝘁𝗮𝘁𝗶𝘃𝗲𝘀 (𝗣𝗦𝗥) 𝘁𝗼 𝘁𝗵𝗲 𝗚𝗼𝘃𝗲𝗿𝗻𝗶𝗻𝗴 𝗕𝗼𝗮𝗿𝗱 (Extended)",
+    "score": 0.1465,
+    "evidence": "𝗦𝗲𝗮𝗿𝗰𝗵 𝗳𝗼𝗿 𝗧𝘄𝗼 (𝟮) 𝗣𝗿𝗶𝘃𝗮𝘁𝗲 𝗦𝗲𝗰𝘁𝗼𝗿 𝗥𝗲𝗽𝗿𝗲𝘀𝗲𝗻𝘁𝗮𝘁𝗶𝘃𝗲𝘀 (𝗣𝗦𝗥) 𝘁𝗼 𝘁𝗵𝗲 𝗚𝗼𝘃𝗲𝗿𝗻𝗶𝗻𝗴 𝗕𝗼𝗮𝗿𝗱 (Extended)\nf. Not currently employed or appointed to any position in the government (local, national, including government-owned and controlled corporations), be it full time or part time, at the time of nomination for th"
+   },
+   "description": "",
+   "sample_patterns": [
+    "request diploma",
+    "diploma CvSU",
+    "diploma replacement",
+    "lost diploma",
+    "reprint diploma"
+   ],
+   "sample_response": "Your CvSU diploma is typically released after graduation, once the Registrar has finalized all records and the Special Order (SO) from CHED has been received (where applicable). To claim: present a valid ID and your graduation clearance. Lost diploma → request a replacement or Certified True Copy (C"
+  },
+  "directory": {
+   "charter": {
+    "kind": "charter",
+    "locator": "846",
+    "label": "",
+    "score": 0.1704,
+    "evidence": "report, and \naccomplished \nevaluation forms \nthru email at \nosasmain.studentd\nevelopment@cvsu.\nedu.ph \n4.1 Receive accomplishment \nreport, financial report, and \naccomplished evaluation \nforms \nOnline: Receive \naccomplishment report, \nfinancial report, and \naccomplished evaluation \nforms thru email "
+   },
+   "description": "Requests for contact details — offices, faculty, deans, campus phone numbers, emails, address book.",
+   "sample_patterns": [
+    "directory",
+    "CvSU directory",
+    "office directory",
+    "faculty directory",
+    "staff directory"
+   ],
+   "sample_response": "Official CvSU contact directories are maintained per campus on the university's site and campus subdomains. Verified entry points: the main site at https://cvsu.edu.ph, the campus directory at https://cvsu.edu.ph/category/campuses/, and campus-level Citizens Charters on https://cvsu.edu.ph. Verified"
+  },
+  "dormitory": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1953,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nIn his keynote speech, Bacoor City Mayor Strike B. Revilla emphasized that CvSU's 120 years of truth, integrity, excellence, and service is no small feat. \n “Sa loob ng mahigit isang siglo, napatunayan ng CvSU na ang tunay na eduka"
+   },
+   "description": "",
+   "sample_patterns": [
+    "dormitory CvSU",
+    "dorm CvSU",
+    "how to apply for dorm",
+    "CvSU dorm application",
+    "dorm requirements CvSU"
+   ],
+   "sample_response": "CvSU offers student dormitories at selected campuses, including the Main Campus in Indang, where a newly constructed Boys' Dormitory was inaugurated during the 120th founding anniversary in January 2026. Slots are limited and priority is given to students from distant areas, so apply early — they fi"
+  },
+  "education_programs": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/05/14/cvsu-congratulates-its-new-licensed-professional-teachers-2/",
+    "label": "CvSU congratulates its new Licensed Professional Teachers",
+    "score": 0.7228,
+    "evidence": "CvSU congratulates its new Licensed Professional Teachers\nCavite State University (CvSU) once again proved its excellence in teacher education after achieving remarkable results in the March 2026 Licensure Examination for Professional Teachers (LEPT) for both the Elementary and Secondary Levels. \n S"
+   },
+   "description": "",
+   "sample_patterns": [
+    "BSE CvSU",
+    "BS Education",
+    "BSEd CvSU",
+    "BEEd CvSU",
+    "BS Elementary Education"
+   ],
+   "sample_response": "CvSU offers teacher-education programs commonly including: Bachelor of Elementary Education (BEEd) and Bachelor of Secondary Education (BSEd) with majors in English, Mathematics, Science, Filipino, Social Studies, TLE, and similar fields. Bachelor of Special Needs Education (BSNEd), Bachelor of Earl"
+  },
+  "emergency_oncampus": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.2525,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nIn his keynote speech, Bacoor City Mayor Strike B. Revilla emphasized that CvSU's 120 years of truth, integrity, excellence, and service is no small feat. \n “Sa loob ng mahigit isang siglo, napatunayan ng CvSU na ang tunay na eduka"
+   },
+   "description": "",
+   "sample_patterns": [
+    "fire on campus CvSU",
+    "earthquake CvSU drill",
+    "accident CvSU",
+    "first aid CvSU",
+    "emergency on campus"
+   ],
+   "sample_response": "For on-campus emergencies at CvSU:\n- Life-threatening emergencies (medical, fire, crime): call 911 (national emergency number) immediately, then notify campus Security and the Health Service Unit.\n- Minor medical concerns: go to the Health Service Unit (clinic) at your campus.\n- Fire: activate the n"
+  },
+  "employment_certification": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1132",
+    "label": "",
+    "score": 0.1443,
+    "evidence": "1. Signing of OJT Documents (Recommendation Letter, Memorandum of Agreement, and OJT \nWaiver) \nThis procedure provides timely and efficient processing and signing of OJT documents required by \nstudents for their internship, ensuring compliance with institutional and legal requirements. \nOffice or Di"
+   },
+   "description": "",
+   "sample_patterns": [
+    "certificate of employment CvSU",
+    "employment cert from CvSU",
+    "working student certification",
+    "character reference",
+    "reference letter CvSU"
+   ],
+   "sample_response": "For verification of your CvSU studies or graduation for an employer, you'll typically request a Certification of Enrollment or Graduation from the Registrar. For a personal recommendation letter, approach a professor or adviser who knows your work — give them at least 1–2 weeks' notice, an updated C"
+  },
+  "engineering_programs": {
+   "charter": {
+    "kind": "charter",
+    "locator": "695",
+    "label": "",
+    "score": 0.1373,
+    "evidence": "CITIZEN'S CHARTER \nFY 2026 EDITION \nCOLLEGE OF ENGINEERING AND INFORMATION \nTECHNOLOGY"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/04/30/cvsu-congratulates-its-new-registered-electrical-engineers-master-electricians/",
+    "label": "CvSU congratulates its new Registered Electrical Engineers, Master Electricians",
+    "score": 0.429,
+    "evidence": "CvSU congratulates its new Registered Electrical Engineers, Master Electricians\nCavite State University (CvSU) congratulates its new Registered Electrical Engineers and Master Electricians who successfully passed the April 2026 examinations.  \n The CvSU Main Campus registered an overall performance "
+   },
+   "description": "",
+   "sample_patterns": [
+    "engineering at CvSU",
+    "BS Civil Engineering",
+    "BS Electrical Engineering",
+    "BS Mechanical Engineering",
+    "BS Industrial Engineering"
+   ],
+   "sample_response": "Engineering at CvSU is housed in the College of Engineering and Information Technology (CEIT). Disciplines evidenced on the official site include civil engineering, electrical engineering, and electronics engineering, alongside architecture, BS Computer Science, and BS Information Technology. CvSU's"
+  },
+  "enrollment_problems": {
+   "charter": {
+    "kind": "charter",
+    "locator": "997",
+    "label": "",
+    "score": 0.1449,
+    "evidence": "3. Registration of Continuing Students (via Portal) \nThis procedure aims to facilitate the registration of the continuing students via Student Portal. \nOffice or Division: Office of the Campus Registrar \nClassification: Simple \nType of \nTransaction: G2C – Government to Citizen \nWho may avail: All co"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1726,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\n“With the theme 'ASCEND with Truth, Integrity, Excellence, and Service: The Heart of CvSU's 120-Year Legacy,' we are reminded that our University's story is not measured by time alone, but by the values we uphold, the lives we tran"
+   },
+   "description": "",
+   "sample_patterns": [
+    "I can't enroll",
+    "enrollment error",
+    "portal error during enrollment",
+    "stuck in enrollment",
+    "missing subjects in portal"
+   ],
+   "sample_response": "Common enrollment problems and where to go:\n- Account or portal login issue → ICT/MIS Office at your campus\n- Subjects not appearing or unable to select → your adviser, then the Registrar\n- Section full / no slots → coordinate with your Dean's Office; petition for a class may be allowed if enough st"
+  },
+  "enrollment_procedure": {
+   "charter": {
+    "kind": "charter",
+    "locator": "997",
+    "label": "",
+    "score": 0.1335,
+    "evidence": "3. Registration of Continuing Students (via Portal) \nThis procedure aims to facilitate the registration of the continuing students via Student Portal. \nOffice or Division: Office of the Campus Registrar \nClassification: Simple \nType of \nTransaction: G2C – Government to Citizen \nWho may avail: All co"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1767,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nIn his keynote speech, Bacoor City Mayor Strike B. Revilla emphasized that CvSU's 120 years of truth, integrity, excellence, and service is no small feat. \n “Sa loob ng mahigit isang siglo, napatunayan ng CvSU na ang tunay na eduka"
+   },
+   "description": "",
+   "sample_patterns": [
+    "How to enroll at CvSU",
+    "Enrollment process",
+    "Enrollment procedure",
+    "How do I enroll",
+    "Steps to enroll"
+   ],
+   "sample_response": "CvSU ENROLLMENT PROCEDURE:\n\nAFTER ADMISSION (NOA received):\n\n1. PRE-ENROLLMENT:\n   - Receive Notice of Admission (NOA)\n   - Attend department interview/orientation\n   - Complete medical examination\n   - Get medical clearance\n\n2. ACADEMIC ADVISING:\n   - Meet with department adviser\n   - Discuss curri"
+  },
+  "enrollment_schedule": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1989,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nIn his keynote speech, Bacoor City Mayor Strike B. Revilla emphasized that CvSU's 120 years of truth, integrity, excellence, and service is no small feat. \n “Sa loob ng mahigit isang siglo, napatunayan ng CvSU na ang tunay na eduka"
+   },
+   "description": "",
+   "sample_patterns": [
+    "When is enrollment",
+    "Enrollment dates",
+    "Enrollment schedule",
+    "When do classes start",
+    "Academic calendar enrollment"
+   ],
+   "sample_response": "CvSU ENROLLMENT SCHEDULE:\n\nCvSU follows an academic calendar with First Semester, Second Semester, and (where offered) a Summer Term. Application periods, entrance-exam schedules, Notice of Admission release, and enrollment windows are announced each academic year by the university. Specific dates v"
+  },
+  "events": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/02/cvsu-marks-120th-founding-anniversary/",
+    "label": "CvSU marks 120th founding anniversary",
+    "score": 0.1885,
+    "evidence": "CvSU marks 120th founding anniversary\nThe 120th Founding Anniversary celebration also honored the notable contributions and unwavering commitment to academic excellence and public service of CvSU employees, students, retirees, and partner agencies during the annual Gawad Laya at Diwa and Partners' R"
+   },
+   "description": "",
+   "sample_patterns": [
+    "What events",
+    "Activities at CvSU",
+    "Upcoming events",
+    "Sportsfest",
+    "Foundation week"
+   ],
+   "sample_response": "CvSU holds events and activities throughout the academic year, though exact dates change annually. Major annual events include the Founding Anniversary held in late January — CvSU celebrated its 120th on January 28-29, 2026, including the annual Gawad Laya at Diwa and Partners' Recognition Day — alo"
+  },
+  "food_canteen": {
+   "charter": {
+    "kind": "charter",
+    "locator": "88",
+    "label": "",
+    "score": 0.1426,
+    "evidence": "bringing in food.\n5.1. Validates and logs entry \nof the food items. None 3 Minutes Gate Security \nPersonnel \n6. After use, surrender\nthe Food Gate Pass\nto the Security\nPersonnel.\n6.1. Records and files the \nsurrendered Gate Pass \nand ensure food \ncontainers and wastes \nare brought outside the \nunive"
+   },
+   "description": "",
+   "sample_patterns": [
+    "canteen CvSU",
+    "cafeteria CvSU",
+    "food at CvSU",
+    "mura ba sa canteen",
+    "baon CvSU"
+   ],
+   "sample_response": "Most CvSU campuses have a canteen / cafeteria and student-accessible food stalls offering affordable meals. Outside the gates, additional carinderias and small eateries usually serve students. Operating hours typically align with class hours. Specific options (vegetarian, halal, food-allergy-safe me"
+  },
+  "foreign_student_admission": {
+   "charter": {
+    "kind": "charter",
+    "locator": "581",
+    "label": "",
+    "score": 0.5251,
+    "evidence": "Photocopy Report Card or transcript of records \nPhotocopy of transfer credentials \nApplicant's previous school \nApplicant's previous school \nPhotocopy of student visa (passport) Applicant's country \nPhotocopy of Police Clearance from their country of \norigin Applicant's country \nPhotocopy of authent"
+   },
+   "description": "",
+   "sample_patterns": [
+    "How can a foreign student apply at CvSU?",
+    "foreign student admission process",
+    "I am from another country can I apply",
+    "international student requirements CvSU",
+    "do you accept foreign students"
+   ],
+   "sample_response": "FOREIGN STUDENT ADMISSION (OSAS):\n\nREQUIREMENTS:\n- Accomplished Application Form for Admission (download at www.cvsu.edu.ph)\n- Photocopy of Report Card / Transcript of Records\n- Photocopy of transfer credentials\n- Photocopy of student visa (passport)\n- Police Clearance from country of origin\n- Authe"
+  },
+  "free_tuition_law_details": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.2214,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nIn his keynote speech, Bacoor City Mayor Strike B. Revilla emphasized that CvSU's 120 years of truth, integrity, excellence, and service is no small feat. \n “Sa loob ng mahigit isang siglo, napatunayan ng CvSU na ang tunay na eduka"
+   },
+   "description": "",
+   "sample_patterns": [
+    "RA 10931 details",
+    "what does RA 10931 cover",
+    "free tuition law eligibility",
+    "Universal Access to Quality Tertiary Education Act",
+    "free higher education law"
+   ],
+   "sample_response": "RA 10931 — Universal Access to Quality Tertiary Education Act of 2017 — provides free tuition and other school fees (per the law's implementing rules) for qualified Filipino students in undergraduate programs at state universities and colleges, including CvSU.\n\nGENERAL ELIGIBILITY (verify current ru"
+  },
+  "good_moral_certificate": {
+   "charter": {
+    "kind": "charter",
+    "locator": "592",
+    "label": "",
+    "score": 0.1816,
+    "evidence": "7. Issuance of Certificate of Good Moral Character \nThis procedure shows how to assist bonafide students and graduates who would want to secure \nCertificate of Good Moral Character. \nOffice or Division: Office of Student Affairs and Services \nClassification: Simple \nType of \nTransaction: G2C – Gover"
+   },
+   "description": "",
+   "sample_patterns": [
+    "good moral CvSU",
+    "certificate of good moral",
+    "good moral character",
+    "GMC CvSU",
+    "good moral fee"
+   ],
+   "sample_response": "A Certificate of Good Moral Character from CvSU is issued by the Office of Student Affairs and Services (OSAS), or in some campuses by the Guidance Office or Registrar, depending on internal procedure. To request: fill out the form, pay any applicable fee at the Cashier, and claim per the published "
+  },
+  "graduate_programs": {
+   "charter": {
+    "kind": "charter",
+    "locator": "784",
+    "label": "",
+    "score": 0.1856,
+    "evidence": "1. Procedure on Admission of New Students\nThis procedure shows how the Graduate School and Open Learning College facilitate the receiving of \napplications/requirements from the applicant. \nOffice or Division: Office of the Graduate School and Open Learning College \nClassification: Simple \nType of \nT"
+   },
+   "description": "",
+   "sample_patterns": [
+    "Masters programs at CvSU",
+    "Graduate programs",
+    "PhD at CvSU",
+    "Postgraduate studies",
+    "Masters degree"
+   ],
+   "sample_response": "CvSU operates a Graduate School offering master's and doctoral programs, along with the Open Learning College for non-traditional learners (see the OGS/OLC offerings at https://cvsu.edu.ph/2018/01/13/ogs-olc-program-offerings/). Programs span education, agriculture, sciences, management, and other f"
+  },
+  "graduation_requirements": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1803",
+    "label": "",
+    "score": 0.1376,
+    "evidence": "4. Signing of Graduation Clearance \nThis process guides graduating students in securing the required clearance from the Office of External \nand Business Affairs after verification that all obligations related to uniforms and other office transactions \nhave been fully settled. \nOffice or Division: Ex"
+   },
+   "description": "",
+   "sample_patterns": [
+    "graduation requirements",
+    "how do I graduate",
+    "requirements to graduate at CvSU",
+    "clearance for graduation",
+    "graduation clearance CvSU"
+   ],
+   "sample_response": "Graduation at CvSU typically requires: (1) completing all academic units in your curriculum (including any minor/major electives and the NSTP requirement for undergraduate programs), (2) passing the comprehensive exam, thesis/capstone, or practicum required by your program, (3) filing your applicati"
+  },
+  "guidance_counseling": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1537",
+    "label": "",
+    "score": 0.1195,
+    "evidence": "7. Counseling Procedure for Students \nThis procedure shows how to facilitate positive change in the behavior, feelings, and attitudes of the \nstudents to promote academic, personal, social, and career development. \nOffice or Division: Office of Student Affairs and Services \nClassification: Simple \nT"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/01/27/esc-orients-student-leaders-on-cvsus-volunteerism-service-program/",
+    "label": "ESC orients student leaders on CvSU's volunteerism, service program",
+    "score": 0.1649,
+    "evidence": "ESC orients student leaders on CvSU's volunteerism, service program\nAttended by representatives from various academic and non-academic student organizations at the Main Campus, the activity, held in two batches, provided the participants with an overview of LINGAP CvSU as the University's centralize"
+   },
+   "description": "",
+   "sample_patterns": [
+    "guidance office",
+    "guidance counselor",
+    "counseling services",
+    "mental health services CvSU",
+    "I need someone to talk to"
+   ],
+   "sample_response": "The Guidance and Counseling Unit, under the Office of Student Affairs and Services (OSAS), provides counseling and student-welfare support across CvSU campuses. At each campus, the Guidance Services Unit is headed by the Campus Guidance Coordinator. Services typically include academic, career, and p"
+  },
+  "homeschool_admission": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1525",
+    "label": "",
+    "score": 0.1112,
+    "evidence": "1. Admission Procedure for First Year Students \nThis procedure aims to define the system on how to assist all applicants who will submit requirements \nand ensure that they will be guided in seeking admission to the University in their desired program. \nOffice or Division: Office of Student Affairs a"
+   },
+   "description": "",
+   "sample_patterns": [
+    "homeschool to CvSU",
+    "homeschooled student CvSU",
+    "does CvSU accept homeschool",
+    "homeschool graduate",
+    "DepEd homeschool"
+   ],
+   "sample_response": "Homeschooled applicants are generally admitted to CvSU if they hold a recognized DepEd Senior High School completion certificate or its equivalent (e.g., through a DepEd-accredited homeschool provider, or through the ALS A&E pathway). You'll typically submit the equivalent of Form 138 (issued by you"
+  },
+  "international_students": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1696",
+    "label": "",
+    "score": 0.2456,
+    "evidence": "2. Application Procedure for Admission of Transferees from Other School \nThis procedure aims to define the system on how to assist all transferees from other schools who will \nsubmit requirements and ensure that they will be guided in seeking admission to the University in their \ndesired program. \nO"
+   },
+   "description": "",
+   "sample_patterns": [
+    "foreign students CvSU",
+    "international students CvSU",
+    "can international students apply to CvSU",
+    "can foreign nationals apply to CvSU",
+    "foreign student admission CvSU"
+   ],
+   "sample_response": "CvSU INTERNATIONAL / FOREIGN STUDENT ADMISSIONS:\n\nCvSU accepts foreign nationals subject to CHED and university regulations.\n\nTYPICAL REQUIREMENTS:\n- Accomplished application form\n- Authenticated/apostilled academic credentials (HS diploma, transcripts)\n- Passport copy (biodata page)\n- Student Visa "
+  },
+  "it_cs_courses": {
+   "charter": {
+    "kind": "charter",
+    "locator": "695",
+    "label": "",
+    "score": 0.1891,
+    "evidence": "CITIZEN'S CHARTER \nFY 2026 EDITION \nCOLLEGE OF ENGINEERING AND INFORMATION \nTECHNOLOGY"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/11/cvsu-academic-programs-receive-aaccup-accreditation/",
+    "label": "CvSU academic programs receive AACCUP accreditation",
+    "score": 0.5027,
+    "evidence": "CvSU academic programs receive AACCUP accreditation\nBS Industrial Technology (CCAT Campus)  \n Level III Re-accredited:  \n BS Medical Technology (CON)  \n BS Business Administration (Carmona Campus)  \n BS Computer Science (Carmona Campus)  \n BS Information Technology (Cavite City Campus)  \n BS Busines"
+   },
+   "description": "",
+   "sample_patterns": [
+    "IT courses at CvSU",
+    "Computer Science program",
+    "BSCS at CvSU",
+    "BSIT at CvSU",
+    "Information Technology programs"
+   ],
+   "sample_response": "CvSU's College of Engineering and Information Technology (CEIT) offers computing programs at the Main Campus, including BS Computer Science and BS Information Technology, alongside the College's engineering programs. Computing programs are also offered at satellite campuses — per the official site, "
+  },
+  "ladderized_education": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1060",
+    "label": "",
+    "score": 0.1031,
+    "evidence": "2. Procedure for Admission to Teacher Certificate Program \nThis procedure shows how the OSAS assists applicants with the submission of requirements for the \nTeacher Certificate Program. \nOffice or Division: Office of Student Affairs and Services \nClassification: Simple \nType of \nTransaction: G2C – G"
+   },
+   "description": "",
+   "sample_patterns": [
+    "ladderized program CvSU",
+    "stepped degree",
+    "ladderized education law",
+    "RA 10647",
+    "I want a certificate first"
+   ],
+   "sample_response": "Ladderized education in the Philippines is governed by RA 10647 (Ladderized Education Act of 2014), which allows TESDA-issued National Certificates (NC I, II, III) and CHED-recognized undergraduate units to ladder into each other under qualified programs. Some CvSU programs participate in ladderized"
+  },
+  "library": {
+   "charter": {
+    "kind": "charter",
+    "locator": "617",
+    "label": "",
+    "score": 0.1015,
+    "evidence": "LIBRARY SERVICES OFFICE \nInternal Services \nCAVITE STATE UNIVERSITY – MAIN CAMPUS \n568"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/",
+    "label": "Home",
+    "score": 0.1444,
+    "evidence": "Home\nEmpowering Futures,\n Transforming Communities\n CvSU adheres to its commitment to Truth, Integrity, Excellence and Service as it aims to be the “premier University in historic Cavite recognized for excellence in the development of globally competitive and morally upright individuals”.\n Know More"
+   },
+   "description": "",
+   "sample_patterns": [
+    "the library",
+    "Library at CvSU",
+    "Library hours",
+    "Library resources",
+    "Books at CvSU"
+   ],
+   "sample_response": "The Main Campus library is the LADISLAO N. DIWA MEMORIAL LIBRARY. Its mission, as stated officially, is to provide excellent, equitable and relevant library services and resources in support of the University's mission, and to support the University in its main thrust of fields of expertise by provi"
+  },
+  "library_card_replacement": {
+   "charter": {
+    "kind": "charter",
+    "locator": "622",
+    "label": "",
+    "score": 0.5763,
+    "evidence": "3. Replacement of Lost Library Account Sticker \nThis procedure provides replacement library account stickers for students, faculty, and employees who \nhave lost theirs. \nOffice or Division: Library \nClassification: Simple \nType of \nTransaction: G2C – Government to Citizen \nWho may avail: Students, F"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.2541,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nIn his keynote speech, Bacoor City Mayor Strike B. Revilla emphasized that CvSU's 120 years of truth, integrity, excellence, and service is no small feat. \n “Sa loob ng mahigit isang siglo, napatunayan ng CvSU na ang tunay na eduka"
+   },
+   "description": "",
+   "sample_patterns": [
+    "I lost my library card",
+    "how to replace lost library card",
+    "lost library account sticker",
+    "library ID replacement",
+    "may fees ba sa pag-replace ng library card"
+   ],
+   "sample_response": "LIBRARY ACCOUNT STICKER REPLACEMENT:\n\nFOR STUDENTS:\n- Latest Registration Form\n- Valid CvSU ID\n(Both from the University Registrar)\n\nFOR FACULTY / EMPLOYEES:\n- CvSU identification card (from HRDO)\n\nPROCESS:\n1. Present the documents at the Library.\n2. Library staff checks/updates the database.\n3. Log"
+  },
+  "lost_and_found": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1791",
+    "label": "",
+    "score": 0.2898,
+    "evidence": "4. Procedure on the management of lost and found items \nThis procedure outlines the steps for receiving, recording, securing, and releasing lost and found items \nwithin the university premises. \nOffice or Division: Civil Security Service \nClassification: Simple \nType of \nTransaction: G2C – Governmen"
+   },
+   "description": "",
+   "sample_patterns": [
+    "lost and found CvSU",
+    "nawalan ako CvSU",
+    "I lost my phone CvSU",
+    "I lost my wallet CvSU",
+    "I lost my book CvSU"
+   ],
+   "sample_response": "If you lost an item on campus, check with Campus Security first — most CvSU campuses maintain a Lost & Found at the Security Office or OSAS. Describe the item, where and approximately when you lost it, and leave your contact details so they can reach you if it turns up. For stolen items, file a repo"
+  },
+  "lost_id_replacement": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1821",
+    "label": "",
+    "score": 0.1565,
+    "evidence": "3. Issuance of School Identification Card (Lost) \nThis procedure aims to facilitate the issuance of identification card for officially enrolled students. \nOffice or Division: Management Information System Unit \nClassification: Simple \nType of \nTransaction: G2C - Government to Citizen \nWho may avail:"
+   },
+   "description": "",
+   "sample_patterns": [
+    "lost ID",
+    "I lost my student ID",
+    "lost CvSU ID",
+    "replace student ID",
+    "ID replacement CvSU"
+   ],
+   "sample_response": "To replace a lost CvSU student ID, you'll typically need to: (1) execute a notarized Affidavit of Loss describing how the ID was lost, (2) secure the ID replacement form from the Office of Student Affairs and Services (OSAS) or the Registrar (process varies per campus), (3) submit the affidavit, you"
+  },
+  "mental_health_immediate": {
+   "charter": {
+    "kind": "charter",
+    "locator": "838",
+    "label": "",
+    "score": 0.1297,
+    "evidence": "PERSON \nRESPONSIBLE \n1. Fill out Counseling \nForm (through \nhard copy or online \ncopy) \n*online or on site \n1.1 Receive counseling form \n(hardcopy or online copy) \nfor walk-in and referred \nclients \nNone 5 Minutes \nMental \nHealth \nCounselor \n2. Undergo initial \ninterview \nOnline: Attend to \nonline i"
+   },
+   "description": "",
+   "sample_patterns": [
+    "I want to hurt myself",
+    "I'm thinking of ending it",
+    "suicide hotline",
+    "ayoko na mabuhay",
+    "mental health emergency"
+   ],
+   "sample_response": "Please know you are not alone, and what you're feeling matters. If you are in immediate danger or thinking of hurting yourself, please reach out right now:\n\n- NCMH Crisis Line (24/7, toll-free landline in the Philippines): 1553\n- Hopeline Philippines: (02) 8804-4673 / 0917 558-4673 / 0918 873-4673\n-"
+  },
+  "name_correction_records": {
+   "charter": {
+    "kind": "charter",
+    "locator": "883",
+    "label": "",
+    "score": 0.1018,
+    "evidence": "CHECKLIST OF REQUIREMENTS WHERE TO SECURE \nPersonal Data Sheet (CS Form No. 212) www.csc.gov.ph or CSC website \nPersonal Description Form (DBM-CSC Form No. 10) www.csc.gov.ph or CSC website \nMedical Certificate (CS Form No. 211) University Infirmary \nTOR, Diploma, eligibility, PSA Birth Certificate "
+   },
+   "description": "",
+   "sample_patterns": [
+    "change name in CvSU records",
+    "correct name CvSU",
+    "misspelled name diploma",
+    "name discrepancy CvSU",
+    "corrected name PSA"
+   ],
+   "sample_response": "To correct a name or other personal data in your CvSU records: file a written request at the Registrar's Office, attach supporting documents (e.g., PSA Birth Certificate, Marriage Certificate, court order for change of name, valid IDs), and pay any applicable fees. Corrections to issued documents (T"
+  },
+  "nstp": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1153",
+    "label": "",
+    "score": 0.1342,
+    "evidence": "1. Issuance of NSTP Serial Number\nThis process shows how to issue the NSTP serial number request of the previous student. \nOffice or Division: NSTP Office \nClassification: Simple \nType of \nTransaction: G2C – Government to Citizen \nWho may avail: Students requesting for serial number \nCHECKLIST OF RE"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.2972,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\n“With the theme 'ASCEND with Truth, Integrity, Excellence, and Service: The Heart of CvSU's 120-Year Legacy,' we are reminded that our University's story is not measured by time alone, but by the values we uphold, the lives we tran"
+   },
+   "description": "",
+   "sample_patterns": [
+    "NSTP",
+    "national service training program",
+    "NSTP sa CvSU",
+    "NSTP component",
+    "ROTC vs CWTS"
+   ],
+   "sample_response": "NATIONAL SERVICE TRAINING PROGRAM (NSTP) AT CvSU:\n\nNSTP is MANDATORY for all first-year college students — 2 semesters (NSTP 1 & NSTP 2).\n\nTHREE COMPONENTS (choose one):\n- ROTC: Reserve Officers' Training Corps — military/AFP training\n- CWTS: Civic Welfare Training Service — community development pr"
+  },
+  "nursing_health_programs": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1202",
+    "label": "",
+    "score": 0.1951,
+    "evidence": "seeking admission \nto the \n• BS Nursing \n• BS Midwifery \nBS Medical \nTechnology \n• Diploma in \nMidwifery \n• BS Criminology \n• Education \nCourses \n• Engineering \nCourses \n• BS Psychology \n• BS Hospitality \nManagement \n• BS Tourism \nManagement \n4.1 Release interview form \n None 2 Minutes Admission \nOf"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/11/cvsu-academic-programs-receive-aaccup-accreditation/",
+    "label": "CvSU academic programs receive AACCUP accreditation",
+    "score": 0.3048,
+    "evidence": "CvSU academic programs receive AACCUP accreditation\nSeveral academic programs being offered at Cavite State University's (CvSU) main and satellite campuses received accreditation from the Accrediting Agency of Chartered Colleges and Universities in the Philippines (AACCUP), Inc. \n Ten curricular pro"
+   },
+   "description": "",
+   "sample_patterns": [
+    "BS Nursing CvSU",
+    "nursing program CvSU",
+    "BSN CvSU",
+    "CHED accreditation nursing",
+    "BS Midwifery"
+   ],
+   "sample_response": "CvSU's College of Nursing offers BS Nursing, BS Medical Technology, and Diploma in Midwifery (per the official Colleges listing). BS Medical Technology holds AACCUP Level III re-accredited status (2026), and CvSU posted a 97.33% overall performance rating (73 of 75 examinees) in the March 2026 Medic"
+  },
+  "off_campus_activities": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1216",
+    "label": "",
+    "score": 0.2535,
+    "evidence": "organization Applicant \nActivity proposal Applicant \nInvitation letter from the organizer of the activity Applicant \nCHED Memorandum SDS Personnel \n(downloadable from the CHED website) \nList of requirements from CHED SDS Personnel \n(downloadable from the CHED website) \n**Before the off- campus activ"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/01/27/esc-orients-student-leaders-on-cvsus-volunteerism-service-program/",
+    "label": "ESC orients student leaders on CvSU's volunteerism, service program",
+    "score": 0.1322,
+    "evidence": "ESC orients student leaders on CvSU's volunteerism, service program\nAttended by representatives from various academic and non-academic student organizations at the Main Campus, the activity, held in two batches, provided the participants with an overview of LINGAP CvSU as the University's centralize"
+   },
+   "description": "",
+   "sample_patterns": [
+    "How do I get approval for off-campus activity?",
+    "off-campus activity procedure for student orgs",
+    "field trip approval process",
+    "out-of-town activity for student organization",
+    "paano mag-pa-approve ng off-campus activity?"
+   ],
+   "sample_response": "OFF-CAMPUS ACTIVITIES — Student Organizations (OSAS):\n\nWHO MAY AVAIL: Recognized student organizations.\n\nREQUIREMENTS (before activity):\n- Request letter from the org president\n- Activity proposal\n- Invitation letter from the organizer\n- CHED Memorandum + list of CHED requirements (from SDS Personne"
+  },
+  "ojt_internship": {
+   "charter": {
+    "kind": "charter",
+    "locator": "649",
+    "label": "",
+    "score": 0.2012,
+    "evidence": "Certificate of Attendance in the OJT Orientation OJT Coordinator \nMemorandum of Agreement OJT Coordinator \nWritten Consent Parents/ Legal Guardian \nCLIENT STEPS AGENCY ACTION FEES TO BE \nPAID \nPROCESSING \nTIME \nPERSON \nRESPONSIBLE \n1. Attend mandatory \nPre-OJT \nOrientation. \n1.1. Explain the concept"
+   },
+   "description": "",
+   "sample_patterns": [
+    "OJT",
+    "on the job training",
+    "internship",
+    "internship program CvSU",
+    "how to apply for OJT"
+   ],
+   "sample_response": "OJT / Internship at CvSU is coordinated by your college's OJT coordinator in partnership with the Career and Placement Office under OSAS. Required hours, eligible partner companies, and documentation (MOA, endorsement letter, daily time record, internship report) depend on your specific program and "
+  },
+  "printing_photocopy": {
+   "charter": {
+    "kind": "charter",
+    "locator": "501",
+    "label": "",
+    "score": 0.2273,
+    "evidence": "2. Submit the \nassessment form \nfor verification. \n2.1. Assess and verify the \nform. None 3 Minutes PSU Staff \n3. Pay the photocopy \nand binding fee at \nUniversity Cashier. \n3.1. Provide the unit with the \nreceipt as proof of \npayment. \nNone 10 Minutes PSU Staff \n4. Present thesis with \ncomplete and"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/05/14/cvsu-congratulates-its-new-licensed-professional-teachers-2/",
+    "label": "CvSU congratulates its new Licensed Professional Teachers",
+    "score": 0.1566,
+    "evidence": "CvSU congratulates its new Licensed Professional Teachers\nSeveral CvSU campuses recorded passing rates significantly higher than the national average, earning recognition among the country's top-performing schools. \n For the Elementary Level, CvSU Main Campus proudly secured a place among the Top 10"
+   },
+   "description": "",
+   "sample_patterns": [
+    "where to print at CvSU",
+    "printing service CvSU",
+    "photocopy CvSU",
+    "xerox CvSU",
+    "print thesis CvSU"
+   ],
+   "sample_response": "Printing, photocopying, scanning, and binding services are typically available at the campus library and at private shops just outside campus gates — these are operated by third parties, so rates and turnaround vary. For thesis printing and binding, allow extra time around graduation rush. There is "
+  },
+  "registrar": {
+   "charter": {
+    "kind": "charter",
+    "locator": "896",
+    "label": "",
+    "score": 0.1143,
+    "evidence": "Accomplished Application form for Admission OSAS and CvSU website (downloadable at \nwww.cvsu.edu.ph) \nTranscript of Records / Certificate of Grades for \nEvaluation Applicant's previous school \nHonorable Dismissal / Certificate to Transfer Applicant's previous school \nGood Moral Certificate Applicant"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/25/%f0%9d%97%a6%f0%9d%97%b2%f0%9d%97%ae%f0%9d%97%bf%f0%9d%97%b0%f0%9d%97%b5-%f0%9d%97%b3%f0%9d%97%bc%f0%9d%97%bf-%f0%9d%97%a7%f0%9d%98%84%f0%9d%97%bc-%f0%9d%9f%ae-%f0%9d%97%a3%f0%9d%97%bf%f0%9d%97%b6/",
+    "label": "𝗦𝗲𝗮𝗿𝗰𝗵 𝗳𝗼𝗿 𝗧𝘄𝗼 (𝟮) 𝗣𝗿𝗶𝘃𝗮𝘁𝗲 𝗦𝗲𝗰𝘁𝗼𝗿 𝗥𝗲𝗽𝗿𝗲𝘀𝗲𝗻𝘁𝗮𝘁𝗶𝘃𝗲𝘀 (𝗣𝗦𝗥) 𝘁𝗼 𝘁𝗵𝗲 𝗚𝗼𝘃𝗲𝗿𝗻𝗶𝗻𝗴 𝗕𝗼𝗮𝗿𝗱 (Extended)",
+    "score": 0.1479,
+    "evidence": "𝗦𝗲𝗮𝗿𝗰𝗵 𝗳𝗼𝗿 𝗧𝘄𝗼 (𝟮) 𝗣𝗿𝗶𝘃𝗮𝘁𝗲 𝗦𝗲𝗰𝘁𝗼𝗿 𝗥𝗲𝗽𝗿𝗲𝘀𝗲𝗻𝘁𝗮𝘁𝗶𝘃𝗲𝘀 (𝗣𝗦𝗥) 𝘁𝗼 𝘁𝗵𝗲 𝗚𝗼𝘃𝗲𝗿𝗻𝗶𝗻𝗴 𝗕𝗼𝗮𝗿𝗱 (Extended)\nApplication/Nomination letter should be addressed to:\n ASSO. PROF. RONAN M. CAJIGAL\n Chairperson, CvSU Search Committee for Private Sector Representatives\n Thru:\n MS. CATHERINE J. QUIÑONES\n Secretary of the CvS"
+   },
+   "description": "",
+   "sample_patterns": [
+    "How to get TOR",
+    "Transcript of records",
+    "Request transcript",
+    "Registrar office",
+    "Get my records"
+   ],
+   "sample_response": "The Office of the University Registrar (OUR) at CvSU handles your academic records, including Transcript of Records (TOR), Certificate of Enrollment, Certificate of Registration (COR), Diploma, Good Moral, Honorable Dismissal, and authentication of records. Each campus has its own Registrar office. "
+  },
+  "religious_orgs": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/01/27/esc-orients-student-leaders-on-cvsus-volunteerism-service-program/",
+    "label": "ESC orients student leaders on CvSU's volunteerism, service program",
+    "score": 0.1347,
+    "evidence": "ESC orients student leaders on CvSU's volunteerism, service program\nAttended by representatives from various academic and non-academic student organizations at the Main Campus, the activity, held in two batches, provided the participants with an overview of LINGAP CvSU as the University's centralize"
+   },
+   "description": "",
+   "sample_patterns": [
+    "catholic group CvSU",
+    "christian fellowship CvSU",
+    "muslim group CvSU",
+    "bible study CvSU",
+    "mass schedule CvSU"
+   ],
+   "sample_response": "CvSU has student organizations across various faith traditions — typically including Catholic groups, evangelical/Christian fellowships, and others, depending on campus. The Main Campus and some others have a chapel; prayer rooms may be available at other campuses. Mass and worship schedules are set"
+  },
+  "research_ethics": {
+   "charter": {
+    "kind": "charter",
+    "locator": "157",
+    "label": "",
+    "score": 0.1644,
+    "evidence": "5. Reproduction of Official Documents\nThis procedure aims to ensure the proper process in reproducing the official documents of the university. \nOffice or Division: Records Office \nClassification: Simple \nType of \nTransaction: \nG2G – Government to Government \nG2C – Government to Citizen \nWho may ava"
+   },
+   "description": "",
+   "sample_patterns": [
+    "research ethics CvSU",
+    "IRB CvSU",
+    "ethics review",
+    "ethics board CvSU",
+    "human subjects research"
+   ],
+   "sample_response": "Research involving human or animal subjects at CvSU is reviewed by the appropriate research ethics committee (IRB or its equivalent) to ensure compliance with national rules (PHREB / DOST-PCHRD guidelines, the Data Privacy Act of 2012, the Animal Welfare Act, etc.). Typical requirements include: res"
+  },
+  "retention_policy": {
+   "charter": {
+    "kind": "charter",
+    "locator": "778",
+    "label": "",
+    "score": 0.1684,
+    "evidence": "4. Procedures on Implementation of Retention Policy for the degree in Doctor of Veterinary \nMedicine \nThis procedure shows how the college implements retention policy to its students. \nOffice or Division: College of Veterinary Medicine and Biomedical Sciences \nClassification: Simple \nType of \nTransa"
+   },
+   "description": "Questions about CvSU's academic retention standards, minimum GPA requirements, academic probation, dismissal rules, and how students stay enrolled.",
+   "sample_patterns": [
+    "retention policy",
+    "CvSU retention policy",
+    "academic retention",
+    "what is the retention policy",
+    "minimum grade to stay enrolled"
+   ],
+   "sample_response": "CvSU's academic retention standards are governed by the University Student Handbook and the applicable CHED Memorandum Orders for each program. In general, students must maintain a satisfactory General Weighted Average (GWA) and must not accumulate more than the allowed number of failing grades per "
+  },
+  "retention_policy_grades": {
+   "charter": {
+    "kind": "charter",
+    "locator": "778",
+    "label": "",
+    "score": 0.1173,
+    "evidence": "evaluate the submitted \nCOG if the student has \nno failing mark in any \nacademic subject and a \ngeneral weighted \naverage (GWA) of 2.50 \nor better with no grade \nlower than 3.0. \nNone 1 Hour Registration \nAdviser \n2. Communicate with \nthe registration \nadviser about the \nresult of the \nevaluation. \n"
+   },
+   "description": "Specific questions about the CvSU grading scale, what grades mean, GWA computation, and how grades affect retention.",
+   "sample_patterns": [
+    "CvSU grading scale",
+    "what does 1.0 mean",
+    "what does 1.25 mean",
+    "what does 1.5 mean",
+    "what does 1.75 mean"
+   ],
+   "sample_response": "CvSU uses a numerical grading scale where 1.0 is the highest (Excellent/Outstanding) and 5.0 is Failing. The common equivalents are: 1.0 = 97–100%, 1.25 = 94–96%, 1.50 = 91–93%, 1.75 = 88–90%, 2.0 = 85–87%, 2.25 = 82–84%, 2.50 = 79–81%, 2.75 = 76–78%, 3.0 = 75% (Passing, minimum), 4.0 = Conditional/"
+  },
+  "returning_student": {
+   "charter": {
+    "kind": "charter",
+    "locator": "938",
+    "label": "",
+    "score": 0.1772,
+    "evidence": "7. Filing for Leave of Absence \nThis procedure aims to facilitate the process on application of leave of absence. \nOffice or Division: Office of the Campus Registrar \nClassification: Simple \nType of \nTransaction: G2C – Government to Citizen \nWho may avail: All students \nCHECKLIST OF REQUIREMENTS WHE"
+   },
+   "description": "",
+   "sample_patterns": [
+    "returning student CvSU",
+    "I want to come back to CvSU",
+    "re-admission CvSU",
+    "re-enrollment after LOA",
+    "balik CvSU"
+   ],
+   "sample_response": "Returning students (those who took a Leave of Absence, dropped out for a semester, or were AWOL) typically need to apply for re-admission through the Registrar and their college Dean's Office. Required documents usually include: written letter/application for re-admission, your most recent COR or gr"
+  },
+  "scholarship": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1200",
+    "label": "",
+    "score": 0.1482,
+    "evidence": "1. Application/Renewal Procedure for Scholarship \nThis procedure shows how OSAS assists applicants in the availment/renewal of scholarship/financial \nassistance. \nOffice or Division: Office of Student Affairs and Services \nClassification: Simple \nType of \nTransaction: G2C – Government to Citizen \nWh"
+   },
+   "description": "",
+   "sample_patterns": [
+    "What scholarships are available",
+    "How to get financial aid",
+    "Scholarship application",
+    "Are there grants available",
+    "Financial assistance"
+   ],
+   "sample_response": "CvSU offers several scholarship and financial-assistance programs, including (per the official Office of Student Affairs and Services and Citizens Charter):\n- CvSU State Scholarship\n- Job Experience Program\n- RA 7160 scholarship\n- Entrance Scholarships for Valedictorian, Salutatorian, and 1st/2nd/3r"
+  },
+  "second_courser": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1704",
+    "label": "",
+    "score": 0.1592,
+    "evidence": "6. Application Procedure for Admission of Second Courser \nThis procedure aims to define the system on how to assist all second coursers who will submit \nrequirements and ensure that they will be guided in seeking admission to the University in their desired \nprogram. \nOffice or Division: Office of S"
+   },
+   "description": "",
+   "sample_patterns": [
+    "second course CvSU",
+    "second degree CvSU",
+    "I already have a degree",
+    "another degree at CvSU",
+    "second course requirements"
+   ],
+   "sample_response": "Yes, CvSU generally accepts second-coursers (applicants who already hold an undergraduate degree). You'll typically submit your previous TOR, diploma copy, Honorable Dismissal, and the standard application documents. Note: RA 10931 (free tuition) usually does NOT cover students who already earned an"
+  },
+  "senior_high_to_college": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1525",
+    "label": "",
+    "score": 0.195,
+    "evidence": "1. Admission Procedure for First Year Students \nThis procedure aims to define the system on how to assist all applicants who will submit requirements \nand ensure that they will be guided in seeking admission to the University in their desired program. \nOffice or Division: Office of Student Affairs a"
+   },
+   "description": "",
+   "sample_patterns": [
+    "from senior high to CvSU",
+    "SHS to CvSU",
+    "what strand for engineering at CvSU",
+    "what strand for IT at CvSU",
+    "what strand for nursing"
+   ],
+   "sample_response": "CvSU generally welcomes graduates of any Senior High School (SHS) strand for admission, but the strand you finished can influence how well-prepared you are for a specific program and, in some cases, whether you need bridging subjects. For example, STEM aligns naturally with engineering, IT, computer"
+  },
+  "shifting_program": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1754",
+    "label": "",
+    "score": 0.1414,
+    "evidence": "5. Interview with Shiftee Students \nThis procedure shows how the Department of Management handles interviews of students shifting from \nanother program into DOM. \nOffice or Division: Department of Management \nClassification: Simple \nType of \nTransaction: G2C – Government to Citizen \nWho may avail: S"
+   },
+   "description": "",
+   "sample_patterns": [
+    "how to shift course",
+    "shifting procedure CvSU",
+    "change my program",
+    "I want to shift",
+    "mag-shift sa CvSU"
+   ],
+   "sample_response": "To shift programs within CvSU: (1) secure the shifting form from the Registrar / your current Dean, (2) get endorsement from your current Dean, (3) apply to the receiving college (your target program may require interview, minimum GWA, or available slots), (4) once approved, the Registrar processes "
+  },
+  "special_class": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1770",
+    "label": "",
+    "score": 0.101,
+    "evidence": "2. Signing of Faculty Clearance \nThis procedure guides faculty members on how to process their semester-end faculty clearance. \nOffice or Division: Teacher Education Department (TED) \nClassification: Simple \nType of \nTransaction: G2G – Government to Government \nWho may avail: Teacher Education Depar"
+   },
+   "description": "",
+   "sample_patterns": [
+    "special class CvSU",
+    "petition for class",
+    "tutorial class",
+    "pasok ng walang section",
+    "sariling section ng subject"
+   ],
+   "sample_response": "A special class (sometimes called a 'tutorial', 'petition class', or 'independent study') may be allowed at CvSU when a subject is not offered in the current semester but a small number of students need it (often graduating students or those affected by curriculum changes). The procedure typically r"
+  },
+  "sports_athletics": {
+   "charter": {
+    "kind": "charter",
+    "locator": "14",
+    "label": "",
+    "score": 0.1411,
+    "evidence": "xiv \nPage Number \nd. Events Management Office 486 \n External and Internal Services \n 1. Processing of Incoming Communication Related to Events 488 \n External Services \n 1. Request for Event Management Assistance 491 \n Internal Services \n 1. Request for Event Management Assistance 495 \nVI. OFFICE OF "
+   },
+   "description": "",
+   "sample_patterns": [
+    "CvSU sports",
+    "varsity team CvSU",
+    "athletics CvSU",
+    "SCUAA",
+    "SCUAA CvSU"
+   ],
+   "sample_response": "CvSU has varsity teams that compete in inter-collegiate and inter-university tournaments, including the State Colleges and Universities Athletic Association (SCUAA) Region IV-A and national qualifiers. Common varsity sports include basketball, volleyball, football, athletics (track & field), and oth"
+  },
+  "student_clearance_signing": {
+   "charter": {
+    "kind": "charter",
+    "locator": "196",
+    "label": "",
+    "score": 0.3914,
+    "evidence": "2. Signing of Student Clearance\nThis procedure aims to ensure that all students' accounts are periodically settled and assures the \nstudents that they are cleared of their account liability. \nOffice or Division: Accounting Office \nClassification: Simple \nType of \nTransaction: G2C-Government to Citiz"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1252,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\n“With the theme 'ASCEND with Truth, Integrity, Excellence, and Service: The Heart of CvSU's 120-Year Legacy,' we are reminded that our University's story is not measured by time alone, but by the values we uphold, the lives we tran"
+   },
+   "description": "",
+   "sample_patterns": [
+    "How do I get my clearance signed?",
+    "where to sign student clearance",
+    "Student Clearance Form how to process",
+    "how to process clearance at CvSU",
+    "paano mag-pa-clear sa Accounting?"
+   ],
+   "sample_response": "STUDENT CLEARANCE — Accounting Office signing:\n\n1. Get the Student Clearance Form from the College Registrar.\n2. Present it at the Accounting Office.\n3. Staff checks Student Account Assessment System for any balance.\n4. If clear, the form is signed and returned to you.\n\nFEES: None.\nPROCESSING TIME: "
+  },
+  "student_organizations": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1079",
+    "label": "",
+    "score": 0.1675,
+    "evidence": "3. Off-Campus Activities Procedure of Student Organizations \nThis procedure aims to provide avenues to mold students' talents and interests to ensure social and \ncultural growth and offer leadership training to enhance the leadership effectiveness of students both at \npersonal and organizational lev"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/01/27/esc-orients-student-leaders-on-cvsus-volunteerism-service-program/",
+    "label": "ESC orients student leaders on CvSU's volunteerism, service program",
+    "score": 0.1371,
+    "evidence": "ESC orients student leaders on CvSU's volunteerism, service program\nAttended by representatives from various academic and non-academic student organizations at the Main Campus, the activity, held in two batches, provided the participants with an overview of LINGAP CvSU as the University's centralize"
+   },
+   "description": "",
+   "sample_patterns": [
+    "Student organizations",
+    "Clubs at CvSU",
+    "Student groups",
+    "How to join clubs",
+    "Greek life"
+   ],
+   "sample_response": "Student organizations at CvSU are recognized and coordinated by the Office of Student Affairs and Services (OSAS). OSAS handles student development services, including student organization and socio-cultural affairs, student publication, and placement of students and graduates. To join, watch for th"
+  },
+  "student_portal": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1882",
+    "label": "",
+    "score": 0.2011,
+    "evidence": "Certificate of Admission Office of the Campus Registrar \nPersonal Information Sheet Answered & to be filled up in Student Portal \nRegistration Form Uploaded in Student Portal online \nCLIENT STEPS AGENCY ACTION FEES TO BE \nPAID \nPROCESSING \nTIME \nPERSON \nRESPONSIBLE \n1. Request for \nUniversity \nClear"
+   },
+   "description": "",
+   "sample_patterns": [
+    "student portal CvSU",
+    "CvSU student portal",
+    "portal login CvSU",
+    "how to access student portal",
+    "CvSU portal login"
+   ],
+   "sample_response": "CvSU has an official Student Portal at https://myportal.cvsu.edu.ph/. Your account credentials are issued by the campus ICT/MIS Office during enrollment. Through the portal you can typically view grades, manage online enrollment, and check your Certificate of Registration. For login issues or passwo"
+  },
+  "student_publication": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/02/cvsu-marks-120th-founding-anniversary/",
+    "label": "CvSU marks 120th founding anniversary",
+    "score": 0.134,
+    "evidence": "CvSU marks 120th founding anniversary\nThe 120th Founding Anniversary celebration also honored the notable contributions and unwavering commitment to academic excellence and public service of CvSU employees, students, retirees, and partner agencies during the annual Gawad Laya at Diwa and Partners' R"
+   },
+   "description": "",
+   "sample_patterns": [
+    "student publication CvSU",
+    "campus paper CvSU",
+    "The Gazette",
+    "CvSU paper",
+    "write for the paper"
+   ],
+   "sample_response": "CvSU campuses operate official student publications (the Main Campus's paper is The Gazette, with other campuses having their own publications). They typically recruit through writing tryouts/screening tests each academic year for staff writers, photojournalists, cartoonists, layout artists, and cop"
+  },
+  "student_refund": {
+   "charter": {
+    "kind": "charter",
+    "locator": "197",
+    "label": "",
+    "score": 0.4417,
+    "evidence": "3. Release of Student Refund\nThis procedure aims to ensure that allowable refunds are provided to students within the specified refund \nperiod. \nOffice or Division: Accounting Office \nClassification: Simple \nType of \nTransaction: G2C-Government to Citizen \nWho may avail: All Students \nCHECKLIST OF R"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1805,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nIn his keynote speech, Bacoor City Mayor Strike B. Revilla emphasized that CvSU's 120 years of truth, integrity, excellence, and service is no small feat. \n “Sa loob ng mahigit isang siglo, napatunayan ng CvSU na ang tunay na eduka"
+   },
+   "description": "",
+   "sample_patterns": [
+    "How do I get a tuition refund?",
+    "How to apply for refund at CvSU?",
+    "I want to claim my refund",
+    "where do I file student refund",
+    "Student Refund Form how to get"
+   ],
+   "sample_response": "STUDENT REFUND (Accounting Office):\n\n1. Get the Application for Refund Form from the Accounting Office.\n2. Fill out and submit with required supporting documents (varies by nature of refund).\n3. Accounting verifies completeness and stamps received.\n4. Refund payroll is prepared after the cut-off dat"
+  },
+  "subject_load_limits": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1479,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nMeanwhile, Mr. Joseph Luke Emmanuel M. Ongliongco, a fourth year Bachelor of Science in Psychology student from the Bacoor Campus and currently the Deputy Student Regent of the Federation of Central Student Government, received the"
+   },
+   "description": "",
+   "sample_patterns": [
+    "how many subjects can I take",
+    "maximum load CvSU",
+    "minimum load CvSU",
+    "overload CvSU",
+    "underload CvSU"
+   ],
+   "sample_response": "The normal study load at CvSU is the load prescribed in your curriculum for the semester (typically 18–24 units depending on program and year level). Overload (carrying more units than prescribed) usually requires Dean's approval and is most commonly granted to graduating students or those with very"
+  },
+  "supreme_student_government": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1086",
+    "label": "",
+    "score": 0.1901,
+    "evidence": "6. Approval of Student Activities Procedure for Student Organizations \nThis procedure aims to provide avenues to mold students' talents and interests to ensure social and \ncultural growth and offer leadership training to enhance the leadership effectiveness of students both at \npersonal and organiza"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.3517,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nThe top performing colleges and campuses recognized by the Professional Regulation Commission as well as CvSU's board topnotchers also took the spotlight – affirming the University's excellence in agriculture, social work, medical "
+   },
+   "description": "",
+   "sample_patterns": [
+    "SSG CvSU",
+    "Supreme Student Government",
+    "student government CvSU",
+    "SSG elections",
+    "run for SSG"
+   ],
+   "sample_response": "Student government at CvSU is organized through Central Student Governments (CSG) at the campuses, federated university-wide as the Federation of Central Student Government. Students are also represented in the CvSU Board of Regents through the Student Regent (assisted by a Deputy Student Regent). E"
+  },
+  "tcp_admission": {
+   "charter": {
+    "kind": "charter",
+    "locator": "899",
+    "label": "",
+    "score": 0.6202,
+    "evidence": "4. Application Procedure for Teacher Certificate Program \nThis procedure shows how the OSAS assists applicant on the submission of requirements for Teacher \nCertificate Program. \nOffice or Division: Office of Student Affairs and Services \nClassification: Simple \nType of \nTransaction: G2C – Governmen"
+   },
+   "description": "",
+   "sample_patterns": [
+    "how to apply for Teacher Certificate Program",
+    "TCP admission CvSU",
+    "I'm a non-education graduate can I teach",
+    "earn education units CvSU",
+    "Teacher Certificate Program requirements"
+   ],
+   "sample_response": "TEACHER CERTIFICATE PROGRAM (TCP) ADMISSION:\n\nWHO MAY AVAIL: Bachelor's degree graduates who want to earn units in Education (e.g. to qualify for the LET).\n\nREQUIREMENTS:\n- Accomplished Application Form for Admission (download at www.cvsu.edu.ph)\n- Evaluation sheet signed by the Dean, College of Edu"
+  },
+  "thesis_capstone": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1142",
+    "label": "",
+    "score": 0.2004,
+    "evidence": "research data to \nthe department. \n1.1. Review the submitted \ndata and form for \ncompleteness and \nsuitability for analysis. \nThesis \nAdviser – \nPhp 1,500 \nTechnical \nCritic – \nPhp 800.00 \n10 Minutes Department \nStatistician \n1.2. Assign a Thesis Adviser \nand Technical Critic for \nCapstone and Thesi"
+   },
+   "description": "",
+   "sample_patterns": [
+    "thesis CvSU",
+    "capstone CvSU",
+    "thesis defense",
+    "capstone defense",
+    "thesis format CvSU"
+   ],
+   "sample_response": "Most CvSU undergraduate programs require a thesis, capstone project, or culminating activity (the form varies by program — e.g., research thesis in science programs, capstone software project for IT/CS, business plan for entrepreneurship). The general flow: form a group (if required), choose a topic"
+  },
+  "transcript_request_details": {
+   "charter": {
+    "kind": "charter",
+    "locator": "1481",
+    "label": "",
+    "score": 0.1221,
+    "evidence": "PAID \nPROCESSING \nTIME \nPERSON \nRESPONSIBLE \n1. Request and\naccomplish the\napplication for\nrecords with\nclearance.\n1.1 Receive the \naccomplished Application \nfor Records form and \nadvise the client to pay \nthe necessary fee. \nNone 2 Minutes \nClerk/ \nCampus \nRegistrar \n2. Pay the necessary\nfee for th"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/25/%f0%9d%97%a6%f0%9d%97%b2%f0%9d%97%ae%f0%9d%97%bf%f0%9d%97%b0%f0%9d%97%b5-%f0%9d%97%b3%f0%9d%97%bc%f0%9d%97%bf-%f0%9d%97%a7%f0%9d%98%84%f0%9d%97%bc-%f0%9d%9f%ae-%f0%9d%97%a3%f0%9d%97%bf%f0%9d%97%b6/",
+    "label": "𝗦𝗲𝗮𝗿𝗰𝗵 𝗳𝗼𝗿 𝗧𝘄𝗼 (𝟮) 𝗣𝗿𝗶𝘃𝗮𝘁𝗲 𝗦𝗲𝗰𝘁𝗼𝗿 𝗥𝗲𝗽𝗿𝗲𝘀𝗲𝗻𝘁𝗮𝘁𝗶𝘃𝗲𝘀 (𝗣𝗦𝗥) 𝘁𝗼 𝘁𝗵𝗲 𝗚𝗼𝘃𝗲𝗿𝗻𝗶𝗻𝗴 𝗕𝗼𝗮𝗿𝗱 (Extended)",
+    "score": 0.1231,
+    "evidence": "𝗦𝗲𝗮𝗿𝗰𝗵 𝗳𝗼𝗿 𝗧𝘄𝗼 (𝟮) 𝗣𝗿𝗶𝘃𝗮𝘁𝗲 𝗦𝗲𝗰𝘁𝗼𝗿 𝗥𝗲𝗽𝗿𝗲𝘀𝗲𝗻𝘁𝗮𝘁𝗶𝘃𝗲𝘀 (𝗣𝗦𝗥) 𝘁𝗼 𝘁𝗵𝗲 𝗚𝗼𝘃𝗲𝗿𝗻𝗶𝗻𝗴 𝗕𝗼𝗮𝗿𝗱 (Extended)\nb. From an industry, business, or profession preferably related to the SUC's charter or mandate;\n c. Have at least five (5) years of employment, business, or practice of profession in the private sector;\n d. Be"
+   },
+   "description": "",
+   "sample_patterns": [
+    "how to get TOR",
+    "request transcript CvSU",
+    "TOR processing time",
+    "TOR fee",
+    "TOR online"
+   ],
+   "sample_response": "To request a Transcript of Records (TOR) from CvSU: (1) file the request at the Office of the University Registrar (online or in person, depending on what your campus supports), (2) pay the applicable fee at the Cashier, (3) attach any clearance required, (4) claim the document or have it mailed if "
+  },
+  "transferee_admission": {
+   "charter": {
+    "kind": "charter",
+    "locator": "896",
+    "label": "",
+    "score": 0.1438,
+    "evidence": "Accomplished Application form for Admission OSAS and CvSU website (downloadable at \nwww.cvsu.edu.ph) \nTranscript of Records / Certificate of Grades for \nEvaluation Applicant's previous school \nHonorable Dismissal / Certificate to Transfer Applicant's previous school \nGood Moral Certificate Applicant"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/25/%f0%9d%97%a6%f0%9d%97%b2%f0%9d%97%ae%f0%9d%97%bf%f0%9d%97%b0%f0%9d%97%b5-%f0%9d%97%b3%f0%9d%97%bc%f0%9d%97%bf-%f0%9d%97%a7%f0%9d%98%84%f0%9d%97%bc-%f0%9d%9f%ae-%f0%9d%97%a3%f0%9d%97%bf%f0%9d%97%b6/",
+    "label": "𝗦𝗲𝗮𝗿𝗰𝗵 𝗳𝗼𝗿 𝗧𝘄𝗼 (𝟮) 𝗣𝗿𝗶𝘃𝗮𝘁𝗲 𝗦𝗲𝗰𝘁𝗼𝗿 𝗥𝗲𝗽𝗿𝗲𝘀𝗲𝗻𝘁𝗮𝘁𝗶𝘃𝗲𝘀 (𝗣𝗦𝗥) 𝘁𝗼 𝘁𝗵𝗲 𝗚𝗼𝘃𝗲𝗿𝗻𝗶𝗻𝗴 𝗕𝗼𝗮𝗿𝗱 (Extended)",
+    "score": 0.1915,
+    "evidence": "𝗦𝗲𝗮𝗿𝗰𝗵 𝗳𝗼𝗿 𝗧𝘄𝗼 (𝟮) 𝗣𝗿𝗶𝘃𝗮𝘁𝗲 𝗦𝗲𝗰𝘁𝗼𝗿 𝗥𝗲𝗽𝗿𝗲𝘀𝗲𝗻𝘁𝗮𝘁𝗶𝘃𝗲𝘀 (𝗣𝗦𝗥) 𝘁𝗼 𝘁𝗵𝗲 𝗚𝗼𝘃𝗲𝗿𝗻𝗶𝗻𝗴 𝗕𝗼𝗮𝗿𝗱 (Extended)\nApplication/Nomination letter should be addressed to:\n ASSO. PROF. RONAN M. CAJIGAL\n Chairperson, CvSU Search Committee for Private Sector Representatives\n Thru:\n MS. CATHERINE J. QUIÑONES\n Secretary of the CvS"
+   },
+   "description": "",
+   "sample_patterns": [
+    "transferee CvSU",
+    "I want to transfer to CvSU",
+    "how to transfer to CvSU",
+    "transferee requirements",
+    "credit evaluation transferee"
+   ],
+   "sample_response": "Transferee applicants to CvSU typically need a Transcript of Records (TOR) and Certificate of Honorable Dismissal from the previous school, plus the same documents required of freshmen (PSA birth certificate, Good Moral, 2x2 photos, application form). After admission, your previous subjects undergo "
+  },
+  "transport_to_campus": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/history/",
+    "label": "History",
+    "score": 0.2881,
+    "evidence": "History\nThe Cavite State University (CvSU) has its humble beginnings in 1906 as the Indang Intermediate School with the American Thomasites as the first teachers. Several transformations in the name of the school took place; Indang Farm School in 1918, Indang Rural High School in 1927, and Don Sever"
+   },
+   "description": "",
+   "sample_patterns": [
+    "how to get to CvSU",
+    "jeepney to CvSU",
+    "bus to CvSU",
+    "tricycle CvSU",
+    "commute to CvSU"
+   ],
+   "sample_response": "Public transport routes to CvSU vary by destination campus. For the Main Campus in Indang, common options include jeepneys/UV vans from nearby town terminals (e.g., from Dasmariñas, Trece Martires, or Tagaytay) into Indang town proper, then a tricycle to the campus gate. Other CvSU campuses have loc"
+  },
+  "tuition_fees": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1765,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nIn his keynote speech, Bacoor City Mayor Strike B. Revilla emphasized that CvSU's 120 years of truth, integrity, excellence, and service is no small feat. \n “Sa loob ng mahigit isang siglo, napatunayan ng CvSU na ang tunay na eduka"
+   },
+   "description": "",
+   "sample_patterns": [
+    "What is the tuition fee",
+    "How much is tuition",
+    "Cost of studying at CvSU",
+    "Tuition cost",
+    "School fees"
+   ],
+   "sample_response": "CvSU TUITION FEES & FREE EDUCATION:\n\nCvSU is covered by RA 10931 (Universal Access to Quality Tertiary Education Act of 2017).\n\nFREE TUITION COVERAGE (For qualified Filipino undergraduate students at SUCs):\n- No tuition fee\n- Other school fees covered as defined by the law and implementing rules\n\nGE"
+  },
+  "university_officials": {
+   "charter": {
+    "kind": "charter",
+    "locator": "312",
+    "label": "",
+    "score": 0.1263,
+    "evidence": "OFFICE OF THE VICE PRESIDENT FOR RESEARCH, \nINNOVATION, AND EXTENSION \nInternal Services \nCAVITE STATE UNIVERSITY – MAIN CAMPUS \n263"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/16/cvsu-welcomes-ukrainian-ambassador-to-ph-yuliia-fediv/",
+    "label": "CvSU welcomes Ukrainian Ambassador to PH Yuliia Fediv",
+    "score": 1.1401,
+    "evidence": "CvSU welcomes Ukrainian Ambassador to PH Yuliia Fediv\nPresent during the courtesy call meeting were key University officials, including Mr. John Xavier B. Nepomuceno, Vice President for Administrative and Support Services; Dr. Cristina M. Signo, Vice President for Academic Affairs; Dr. Melbourne R. "
+   },
+   "description": "Who leads CvSU — president, vice presidents, board of regents, key officials.",
+   "sample_patterns": [
+    "who is the president of CvSU",
+    "who is the CvSU president",
+    "CvSU president 2026",
+    "who leads CvSU",
+    "CvSU administration"
+   ],
+   "sample_response": "The University President of Cavite State University is Dr. Ma. Agnes P. Nuestro. Per the official CvSU site, the Vice Presidents include Dr. Cristina M. Signo (Vice President for Academic Affairs), Dr. Melbourne R. Talactac (Vice President for Research, Innovation and Extension), Mr. John Xavier B. "
+  },
+  "veterinary_medicine": {
+   "charter": {
+    "kind": "charter",
+    "locator": "761",
+    "label": "",
+    "score": 0.2634,
+    "evidence": "CITIZEN'S CHARTER \nFY 2026 EDITION \nCOLLEGE OF VETERINARY MEDICINE AND \nBIOMEDICAL SCIENCES"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1547,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\nThe top performing colleges and campuses recognized by the Professional Regulation Commission as well as CvSU's board topnotchers also took the spotlight – affirming the University's excellence in agriculture, social work, medical "
+   },
+   "description": "",
+   "sample_patterns": [
+    "BS Veterinary Medicine",
+    "DVM CvSU",
+    "veterinary medicine CvSU",
+    "vet med CvSU",
+    "pre-vet CvSU"
+   ],
+   "sample_response": "Veterinary education at CvSU is offered through the College of Veterinary Medicine and Biomedical Sciences. Admission to the Doctor of Veterinary Medicine (DVM) program typically requires completion of pre-veterinary undergraduate prerequisites and is competitive. Graduates take the Veterinary Medic"
+  },
+  "vision_mission": {
+   "charter": {
+    "kind": "charter",
+    "locator": "2",
+    "label": "",
+    "score": 1.0743,
+    "evidence": "II. VISION \nThe premier university in historic Cavite globally recognized for excellence in character \ndevelopment, academics, research, innovation and sustainable community engagement.. \nIII. MISSION \nCavite State University shall provide excellent, equitable and relevant educational \nopportunities"
+   },
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/mandate-mission-vision-core-values-quality-policy/",
+    "label": "Mandate, Mission, Vision, Core Values & Quality Policy",
+    "score": 1.1483,
+    "evidence": "Mandate, Mission, Vision, Core Values & Quality Policy\nMandate\n Section 2 of Republic Act No. 8468 “An Act Converting the Don Severino Agricultural College in the Municipality of Indang, Province of Cavite into a State University, to be Known as the Cavite State University” states that,\n “ The Unive"
+   },
+   "description": "",
+   "sample_patterns": [
+    "What is CvSU vision",
+    "CvSU mission",
+    "Vision and mission",
+    "What is the motto of CvSU",
+    "CvSU values"
+   ],
+   "sample_response": "Per the official University page, CvSU is mandated under Section 2 of Republic Act No. 8468 to \"primarily provide advance instruction and professional training in agriculture, science and technology, education and other related fields, undertake research and extension services, and provide progressi"
+  },
+  "visitor_accommodation": {
+   "charter": {
+    "kind": "charter",
+    "locator": "100",
+    "label": "",
+    "score": 0.7165,
+    "evidence": "1. Submit a letter of\nrequest to the Office\nof the University\nPresident (OUP).\n1.1. Review and receive the \nletter of request, including \nany additional details \nregarding the visit. \nNone 5 Minutes PACO Staff \n1.2. Send an acknowledgment \nreceipt of the letter. None 1 Minute PACO Staff \n1.3. Provid"
+   },
+   "description": "",
+   "sample_patterns": [
+    "How do I visit CvSU as an outside agency?",
+    "we want to tour the CvSU campus",
+    "request a campus visit",
+    "school visit to CvSU",
+    "agency visit to CvSU"
+   ],
+   "sample_response": "VISITOR ACCOMMODATIONS (Public Affairs and Communications Office / PACO):\n\nWHO MAY AVAIL: Any external agency or group (G2B, G2C, G2G).\n\nREQUIREMENTS:\n- Request letter addressed to the University President\n- Accomplished Pre-visit Form (PACO-QF-05)\n\nPROCESS:\n1. Submit the letter of request to the Of"
+  },
+  "wifi_internet_access": {
+   "site": {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/",
+    "label": "Employees, students, partners recognized during CvSU@120 celebration",
+    "score": 0.1402,
+    "evidence": "Employees, students, partners recognized during CvSU@120 celebration\n“With the theme 'ASCEND with Truth, Integrity, Excellence, and Service: The Heart of CvSU's 120-Year Legacy,' we are reminded that our University's story is not measured by time alone, but by the values we uphold, the lives we tran"
+   },
+   "description": "",
+   "sample_patterns": [
+    "wifi CvSU",
+    "internet CvSU",
+    "wifi password CvSU",
+    "CvSU wifi sa loob",
+    "free wifi CvSU"
+   ],
+   "sample_response": "Wi-Fi is typically available at CvSU campuses in libraries, computer laboratories, and certain common areas. Access usually requires a student account or campus-issued credentials; the ICT/MIS Office at your campus issues these. Coverage, speed, and the specific SSIDs available vary per campus and p"
+  }
+ }
+}

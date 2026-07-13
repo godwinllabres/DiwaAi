@@ -66,7 +66,7 @@
         "good day DIWA"
       ],
       "responses": [
-        "Hello! Welcome to DIWA, the CvSU Digital Intelligent Web Assistant. How can I help you today?",
+        "Hello! Welcome to Sevi, the CvSU virtual assistant. How can I help you today?",
         "Hi there! I'm the CvSU chatbot. What would you like to know about Cavite State University?",
         "Greetings! I'm here to assist you with information about CvSU - admissions, programs, fees, and more. How may I help?"
       ]
@@ -136,7 +136,7 @@
       "responses": [
         "Goodbye! Feel free to come back anytime. Iskolar para sa Bayan!",
         "Take care! Don't hesitate to ask if you need more help with CvSU.",
-        "Goodbye! Best of luck with your CvSU journey! Truth, Excellence, Service."
+        "Goodbye! Best of luck with your CvSU journey! Truth, Integrity, Excellence, Service."
       ]
     },
     {
@@ -157,57 +157,6 @@
         "Helpful, thanks",
         "Great, thanks",
         "Thanks please",
-        "library?",
-        "May shifting ba sa CvSU? Gusto ko pong magpalit ng course.",
-        "Does CvSU accept foreign students?",
-        "cvsu facilities list",
-        "exam?",
-        "Can I take elective subjects outside my course at CvSU?",
-        "How do I remove an incomplete grade at CvSU?",
-        "enrollment?",
-        "Saan ang pinaka-malapit na CvSU campus sa Tagaytay?",
-        "What grade is needed to pass a subject at CvSU?",
-        "campus?",
-        "Is there an online degree program at CvSU?",
-        "What events does CvSU host?",
-        "What happens if I fail a subject at CvSU?",
-        "Pwede ba akong mag-apply sa CvSU kahit Grade 11 pa lang ako?",
-        "Paano mag-transfer sa CvSU?",
-        "Is there a CvSU campus in Silang?",
-        "Can a PWD student apply for accommodation at CvSU?",
-        "Is 3.0 a passing grade at CvSU?",
-        "Which CvSU campus is nearest to Tagaytay?",
-        "What is the CvSU retention policy?",
-        "What is the CvSU grading system?",
-        "Does CvSU offer distance learning?",
-        "cvsu accreditation status",
-        "Can international students apply to CvSU?",
-        "TOR?",
-        "Is there cross-enrollment allowed at CvSU?",
-        "can you help me?",
-        "Does CvSU have a library?",
-        "I don't understand",
-        "Can I enroll in CvSU without going to campus?",
-        "cvsu free tution",
-        "cvsu president 2026",
-        "Is there academic probation at CvSU?",
-        "Can I take a leave of absence at CvSU?",
-        "apply?",
-        "help",
-        "May klinikal ba sa CvSU?",
-        "Online ba ang enrollment sa CvSU?",
-        "cvsu indang address",
-        "May NSTP ba sa CvSU? Paano pumili ng component?",
-        "I need help",
-        "tell me everything about CvSU",
-        "contact?",
-        "what can you do?",
-        "What is the CvSU leave of absence policy?",
-        "Is there a CvSU campus in Tanza?",
-        "cvsu online application",
-        "are you a robot?",
-        "Ano ang misyon ng CvSU?",
-        "Does CvSU have a linkage with foreign universities?",
         "salamat po",
         "thank you DIWA",
         "thanks DIWA",
@@ -247,16 +196,6 @@
         "About CvSU this year",
         "Cavite State University for new students",
         "Who is CvSU this year",
-        "who is the president of CvSU",
-        "who is the CvSU president",
-        "CvSU president 2026",
-        "who leads CvSU",
-        "CvSU administration",
-        "pangulo ng CvSU",
-        "sino ang presidente ng CvSU",
-        "head of CvSU",
-        "CvSU university officials",
-        "who is the chancellor of CvSU",
         "is CvSU accredited",
         "CvSU accreditation status",
         "AACCUP rating of CvSU",
@@ -349,12 +288,14 @@
         "cvsu history founding",
         "What is CvSU known for?",
         "What is CvSU's AACCUP rating?",
-        "What is the history of CvSU?"
+        "What is the history of CvSU?",
+        "tell me everything about CvSU",
+        "Does CvSU have a research extension program?"
       ],
       "responses": [
-        "Cavite State University (CvSU) traces its roots to 1906 as the Indang Intermediate School, with the American Thomasites as the first teachers. It was renamed Indang Farm School in 1918, Indang Rural High School in 1927, and Don Severino National Agriculture School in 1958. In 1964, the school was converted into a State College via Republic Act 3917 and became known as Don Severino Agricultural College (DSAC). On January 22, 1998, by virtue of Republic Act No. 8468, DSAC was converted into Cavite State University. In 2001, the Cavite College of Fisheries (CACOF) in Naic and the Cavite College of Arts and Trade (CCAT) in Rosario were integrated into the University via CHED Memo No. 27 s. 2000. Additional campuses across the province have since been established through memoranda of agreement with local government units. CvSU celebrated its 118th founding anniversary in 2024. Source: https://cvsu.edu.ph/history/",
-        "CvSU started in 1906 as the Indang Intermediate School (under the American Thomasites). It went through several name changes — Indang Farm School (1918), Indang Rural High School (1927), Don Severino National Agriculture School (1958) — before becoming a State College in 1964 via RA 3917 (Don Severino Agricultural College, DSAC). On January 22, 1998, RA 8468 converted DSAC into Cavite State University. CACOF (Naic) and CCAT (Rosario) joined CvSU in 2001 via CHED Memo No. 27 s. 2000. Source: https://cvsu.edu.ph/history/",
-        "Ang CvSU ay nagsimula noong 1906 bilang Indang Intermediate School, sa panahon ng mga Thomasites. Naging Indang Farm School ito noong 1918, Indang Rural High School noong 1927, Don Severino National Agriculture School noong 1958, at naging State College noong 1964 sa bisa ng RA 3917. Noong Enero 22, 1998, sa bisa ng RA 8468, ito ay naging Cavite State University. Noong 2001, ang CACOF (Naic) at CCAT (Rosario) ay isinama sa CvSU sa pamamagitan ng CHED Memo No. 27 s. 2000. Pinagmulan: https://cvsu.edu.ph/history/"
+        "Cavite State University (CvSU) traces its roots to 1906 as the Indang Intermediate School, with the American Thomasites as the first teachers. It was renamed Indang Farm School in 1918, Indang Rural High School in 1927, and Don Severino National Agriculture School in 1958. In 1964, the school was converted into a State College via Republic Act 3917 and became known as Don Severino Agricultural College (DSAC). On January 22, 1998, by virtue of Republic Act No. 8468, DSAC was converted into Cavite State University. In 2001, the Cavite College of Fisheries (CACOF) in Naic and the Cavite College of Arts and Trade (CCAT) in Rosario were integrated into the University via CHED Memo No. 27 s. 2000. At present, CvSU has 11 campuses in the province; the main campus — the Don Severino delas Alas Campus in Indang, Cavite — is approximately 70 hectares in land area. The University offers close to 100 curricular programs in the undergraduate and graduate levels, with more than 25,000 students and 1,200 faculty and staff from all campuses. CvSU celebrated its 120th founding anniversary in January 2026. Source: https://cvsu.edu.ph/history/ The main campus is named after Don Severino de las Alas — an educator, public servant, and philanthropist who donated a portion of his land for the establishment of the intermediate school that became CvSU. The University is led by President Dr. Ma. Agnes P. Nuestro. It is accredited by TESDA as a Trade and Testing Venue, designated by the Department of Agriculture as the National Center for Research and Development for Coffee and Urban Agriculture, and hosts the Southern Tagalog Agriculture Research and Development Consortium (STARDEC), the Affiliated Renewable Energy Center for Region IV-A, and the Regional ICT Center for Region IV-A. CvSU holds AACCUP Institutional Accreditation Level III (recognized as the second top performing state university with the highest number of Level III accredited programs), is ISO 9001:2015 certified, ranked 217th in the WURI 2026 Top 500 Global Innovative Universities, and recently received its 5th IPOPHL Platinum Award and first Palladium Award — the first higher education institution in the Southern Tagalog Region to do so — plus top eco-friendly school honors from the DENR-EMB.",
+        "CvSU started in 1906 as the Indang Intermediate School (under the American Thomasites). It went through several name changes — Indang Farm School (1918), Indang Rural High School (1927), Don Severino National Agriculture School (1958) — before becoming a State College in 1964 via RA 3917 (Don Severino Agricultural College, DSAC). On January 22, 1998, RA 8468 converted DSAC into Cavite State University. CACOF (Naic) and CCAT (Rosario) joined CvSU in 2001 via CHED Memo No. 27 s. 2000. Today CvSU has 11 campuses in Cavite, close to 100 curricular programs, and more than 25,000 students — and it celebrated its 120th founding anniversary in January 2026. Source: https://cvsu.edu.ph/history/ CvSU is led by President Dr. Ma. Agnes P. Nuestro, holds AACCUP Institutional Accreditation Level III, is ISO 9001:2015 certified, ranked 217th in WURI 2026, is the DA-designated National Center for Research and Development for Coffee and Urban Agriculture, and received its 5th IPOPHL Platinum and first Palladium Award in 2026. The main campus honors Don Severino de las Alas, the educator and philanthropist who donated the land where the school began.",
+        "Ang CvSU ay nagsimula noong 1906 bilang Indang Intermediate School, sa panahon ng mga Thomasites. Naging Indang Farm School ito noong 1918, Indang Rural High School noong 1927, Don Severino National Agriculture School noong 1958, at naging State College noong 1964 sa bisa ng RA 3917. Noong Enero 22, 1998, sa bisa ng RA 8468, ito ay naging Cavite State University. Noong 2001, ang CACOF (Naic) at CCAT (Rosario) ay isinama sa CvSU sa pamamagitan ng CHED Memo No. 27 s. 2000. Sa kasalukuyan, may 11 campus ang CvSU sa lalawigan; ang Main Campus (Don Severino delas Alas Campus, humigit-kumulang 70 ektarya) ay nasa Indang, Cavite. May halos 100 curricular programs at mahigit 25,000 estudyante ang Pamantasan, at ipinagdiwang nito ang ika-120 anibersaryo ng pagkakatatag noong Enero 2026. Pinagmulan: https://cvsu.edu.ph/history/ Ang pangulo ng CvSU ay si Dr. Ma. Agnes P. Nuestro. Ang Pamantasan ay may AACCUP Institutional Accreditation Level III, ISO 9001:2015 certified, ika-217 sa WURI 2026, itinalagang National Center for Research and Development for Coffee and Urban Agriculture ng Department of Agriculture, at tumanggap ng ika-5 IPOPHL Platinum Award at kauna-unahang Palladium Award. Ang Main Campus ay ipinangalan kay Don Severino de las Alas — isang guro, lingkod-bayan, at pilantropo na nagkaloob ng bahagi ng kanyang lupain para sa paaralang naging CvSU."
       ]
     },
     {
@@ -407,12 +348,13 @@
         "CvSU beliefs",
         "CvSU guiding principles",
         "why truth excellence service",
-        "CvSU motto explained"
+        "CvSU motto explained",
+        "Ano ang misyon ng CvSU?"
       ],
       "responses": [
-        "CvSU's tenets are TRUTH, EXCELLENCE, and SERVICE. Per the official Mission, Vision, and Objectives, the University commits to the highest standards of education, values its stakeholders, strives for continual improvement of products and services, and upholds these tenets to produce globally competitive and morally upright individuals. The University's objectives include providing a general education that promotes national identity, cultural consciousness, moral integrity, and spiritual vigor; training the nation's manpower in the skills required by national development; developing professions that will provide leadership for the nation; and advancing knowledge through research work to improve the quality of human life. Source: https://cvsu.edu.ph/mission-vision-objectives/",
-        "The CvSU motto is Truth, Excellence, Service. The official mission emphasizes the highest standards of education, valuing stakeholders, and continual improvement to produce globally competitive and morally upright individuals. University objectives include general education that builds national identity and moral integrity, training manpower for national development, developing professions that provide leadership, and advancing knowledge through research. Source: https://cvsu.edu.ph/mission-vision-objectives/",
-        "Ang CvSU ay nakaugat sa Truth, Excellence, Service. Ayon sa opisyal na Mission, Vision, and Objectives, ang Pamantasan ay nakatuon sa pinakamataas na pamantayan ng edukasyon, pagpapahalaga sa stakeholders, at patuloy na pagpapabuti ng mga programa at serbisyo upang makapagsanay ng mga indibidwal na globally competitive at morally upright. Pinagmulan: https://cvsu.edu.ph/mission-vision-objectives/"
+        "Per the official University page, CvSU is mandated under Section 2 of Republic Act No. 8468 to \"primarily provide advance instruction and professional training in agriculture, science and technology, education and other related fields, undertake research and extension services, and provide progressive leadership in these areas.\" Its vision is \"The premier university in historic Cavite globally recognized for excellence in character development, academics, research, innovation and sustainable community engagement,\" and its mission states that \"Cavite State University shall provide excellent, equitable and relevant educational opportunities in the arts, sciences and technology through quality instruction and responsive research and development activities. It shall produce professional, skilled and morally upright individuals for global competitiveness.\" The University's core values are Truth, Integrity, Excellence, and Service, and its quality policy commits to the highest standards of education, values its stakeholders, strives for continual improvement of its products and services, and upholds the University's tenets of Truth, Excellence, and Service to produce globally competitive and morally upright individuals. Source: https://cvsu.edu.ph/mandate-mission-vision-core-values-quality-policy/ The University's current strategy is CvSU ASCEND — Advancing Sustained Change and Excellence for National Development — its 2025-2028 Strategic Framework, implemented through the four-year IDEAL Plan: Inclusive and Accessible Education; Dynamic and Competitive Research and Innovation; Empowered Communities and Stronger Partnership; Accountable and Client-Centered Governance; and Long-Lasting Sustainable Resource Generation — as CvSU continues its journey toward becoming a Premier Global University.",
+        "CvSU's core values are Truth, Integrity, Excellence, and Service. Its vision: \"The premier university in historic Cavite globally recognized for excellence in character development, academics, research, innovation and sustainable community engagement.\" Its mission: to provide excellent, equitable and relevant educational opportunities in the arts, sciences and technology through quality instruction and responsive research and development activities, producing professional, skilled and morally upright individuals for global competitiveness. CvSU is mandated under RA 8468 to primarily provide advance instruction and professional training in agriculture, science and technology, education and other related fields. Source: https://cvsu.edu.ph/mandate-mission-vision-core-values-quality-policy/ The University's current strategy is CvSU ASCEND — Advancing Sustained Change and Excellence for National Development — its 2025-2028 Strategic Framework, implemented through the four-year IDEAL Plan: Inclusive and Accessible Education; Dynamic and Competitive Research and Innovation; Empowered Communities and Stronger Partnership; Accountable and Client-Centered Governance; and Long-Lasting Sustainable Resource Generation — as CvSU continues its journey toward becoming a Premier Global University.",
+        "Ayon sa opisyal na pahina ng Pamantasan, ang mithiin (vision) ng CvSU ay \"Ang nangungunang pamantasan sa makasaysayang Kabite na kinikilala sa kahusayan sa paghubog ng mga indibidwal na may pandaigdigang kakayahan at kagandahang asal,\" at ang hangarin (mission) nito ay \"Ang Cavite State University ay makapagbigay ng mahusay, pantay at makabuluhang edukasyon sa sining, agham at teknolohiya sa pamamagitan ng may kalidad na pagtuturo at tumutugon sa pangangailangang pananaliksik at mga gawaing pangkaunlaran.\" Ang mga core values ng Pamantasan ay Truth (Katotohanan), Integrity (Integridad), Excellence (Kahusayan), at Service (Paglilingkod). Pinagmulan: https://cvsu.edu.ph/mandate-mission-vision-core-values-quality-policy/ Ang kasalukuyang estratehiya ng Pamantasan ay ang CvSU ASCEND (Advancing Sustained Change and Excellence for National Development), ang 2025-2028 Strategic Framework nito, na ipinatutupad sa pamamagitan ng apat-na-taong IDEAL Plan, habang tinatahak ng CvSU ang landas tungo sa pagiging Premier Global University."
       ]
     },
     {
@@ -447,12 +389,14 @@
         "Where is the CvSU main campus?",
         "Nasaan ang CvSU main campus?",
         "address of CvSU",
-        "saan ang CvSU Indang"
+        "saan ang CvSU Indang",
+        "cvsu indang address",
+        "campus?"
       ],
       "responses": [
-        "The CvSU Main Campus — the Don Severino delas Alas Campus — is located in Indang, Cavite, Philippines, approximately 60 km (about 37 miles) southwest of Manila. It is the oldest campus of the University and houses academic, administrative, and research and extension facilities. CvSU operates additional campuses across the province of Cavite, with locations including Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario (CCAT), Silang, Tanza, and Trece Martires City, among others. For the complete and current campus directory with addresses and contact details, please visit https://cvsu.edu.ph/category/campuses/. Source: https://cvsu.edu.ph/history/",
-        "The Main Campus (Don Severino delas Alas Campus) is in Indang, Cavite — roughly 60 km southwest of Manila. CvSU has multiple satellite campuses across the province (Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario/CCAT, Silang, Tanza, Trece Martires City, and others). See https://cvsu.edu.ph/category/campuses/ for the directory with addresses.",
-        "Ang Main Campus ng CvSU — Don Severino delas Alas Campus — ay matatagpuan sa Indang, Cavite, mga 60 km timog-kanluran ng Maynila. Mayroon ding ibang campus ang CvSU sa buong lalawigan ng Cavite (Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario/CCAT, Silang, Tanza, Trece Martires City, atbp.). Para sa kumpletong directory at address, tingnan ang https://cvsu.edu.ph/category/campuses/."
+        "The CvSU Main Campus — the Don Severino delas Alas Campus, approximately 70 hectares in land area — is located in Indang, Cavite, Philippines, approximately 60 km (about 37 miles) southwest of Manila. It is the oldest campus of the University and houses academic, administrative, and research and extension facilities. At present, CvSU has 11 campuses in the province, with satellite campuses including Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario (CCAT), Silang, Tanza, and Trece Martires City. For the complete and current campus directory with addresses and contact details, please visit https://cvsu.edu.ph/category/campuses/. Source: https://cvsu.edu.ph/history/",
+        "The Main Campus (Don Severino delas Alas Campus, ~70 hectares) is in Indang, Cavite — roughly 60 km southwest of Manila. CvSU has 11 campuses in the province in all, including satellite campuses in Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario (CCAT), Silang, Tanza, and Trece Martires City. See https://cvsu.edu.ph/category/campuses/ for the directory with addresses.",
+        "Ang Main Campus ng CvSU — ang Don Severino delas Alas Campus, humigit-kumulang 70 ektarya — ay matatagpuan sa Indang, Cavite, mga 60 km timog-kanluran ng Maynila. Sa kasalukuyan, may 11 campus ang CvSU sa lalawigan, kabilang ang mga satellite campus sa Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario (CCAT), Silang, Tanza, at Trece Martires City. Para sa kumpletong directory at address, tingnan ang https://cvsu.edu.ph/category/campuses/."
       ]
     },
     {
@@ -497,7 +441,8 @@
         "CvSU sports facilities",
         "Is there WiFi on the CvSU campus?",
         "CvSU canteen",
-        "gym at CvSU"
+        "gym at CvSU",
+        "cvsu facilities list"
       ],
       "responses": [
         "CvSU campuses typically offer academic facilities (libraries, computer and science laboratories), student services (Office of Student Affairs and Services / OSAS with Guidance and Counseling, Career and Placement, Student Welfare, etc.), and student-life areas (cafeteria, chapel where present, sports facilities). The Main Campus library is the Ladislao N. Diwa Memorial Library. The list of recognized facilities and offices at each campus is published per campus on the official site (https://cvsu.edu.ph/category/campuses/) and in the campus-level Citizens Charter (see https://cvsu.edu.ph).",
@@ -560,7 +505,8 @@
         "thesis section CvSU library",
         "CvSU theses collection",
         "Does CvSU have a library?",
-        "CvSU library hours"
+        "CvSU library hours",
+        "library?"
       ],
       "responses": [
         "The Main Campus library is the LADISLAO N. DIWA MEMORIAL LIBRARY. Its mission, as stated officially, is to provide excellent, equitable and relevant library services and resources in support of the University's mission, and to support the University in its main thrust of fields of expertise by providing adequate, updated, and relevant collection of research and reference materials. Each CvSU campus also operates its own library. For the union catalog and campus library information across the CvSU library system, visit https://library.cvsu.edu.ph/.",
@@ -611,18 +557,29 @@
         "Is there an Agricultural Engineering program at CvSU?",
         "cvsu engineering programs",
         "cvsu courses list 2026",
-        "Meron bang BSIT sa CvSU?",
         "May BS Nursing ba sa CvSU Bacoor?",
         "Anong courses ang meron sa CvSU?",
         "What are the available strands in CvSU senior high?",
         "Does CvSU have agriculture programs?",
         "Does CvSU have nursing?",
         "ano mga kurso sa CvSU",
-        "available courses CvSU"
+        "available courses CvSU",
+        "complete list of courses",
+        "complete list of courses offered by CvSU",
+        "full list of courses",
+        "list of all courses",
+        "all courses offered by CvSU",
+        "complete course list",
+        "full course list",
+        "show me all courses",
+        "kumpletong listahan ng mga kurso",
+        "listahan ng lahat ng kurso sa CvSU",
+        "complete list of programs",
+        "all programs offered by CvSU"
       ],
       "responses": [
-        "CvSU offers programs across multiple colleges. The Colleges page (https://cvsu.edu.ph/category/colleges/) and individual college pages list current offerings. Verified examples include:\n- College of Arts and Sciences (CAS): BA Journalism, BA English Language Studies, BS Applied Mathematics, BS Biology, among others (see https://cvsu.edu.ph/college-of-arts-and-sciences-programs-offered/)\n- College of Engineering and Information Technology (CEIT): engineering programs plus BS Computer Science and BS Information Technology (see https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/)\n- College of Tourism and Hospitality Management (CTHM): BS Hospitality Management and BS Tourism Management (CTHM was approved as an independent college by the Board of Regents on September 26, 2024 — see https://cvsu.edu.ph/college-of-tourism-and-hospitality-management/)\n- College of Nursing: BS Nursing, BS Medical Technology, Diploma in Midwifery\n- College of Sports, Physical Education and Recreation\n- College of Veterinary Medicine and Biomedical Sciences\n- College of Medicine\n- Graduate School and Open Learning College\n\nAvailability differs per campus. For the complete current list, see https://cvsu.edu.ph/category/colleges/.",
-        "May iba't ibang college ang CvSU: CAS (BA Journalism, BA English Language Studies, BS Applied Math, BS Biology), CEIT (engineering + BSCS + BSIT), CTHM (BSHM, BSTM — naging independent college noong Sept 26, 2024), College of Nursing (BSN, BS Med Tech, Diploma in Midwifery), College of Sports/PE/Recreation, College of Veterinary Medicine and Biomedical Sciences, College of Medicine, at Graduate School / Open Learning College. Tingnan ang https://cvsu.edu.ph/category/colleges/."
+        "CvSU offers close to 100 curricular programs in the undergraduate and graduate levels (per the official site) across multiple colleges, and the Colleges page (https://cvsu.edu.ph/category/colleges/) lists the current offerings. Verified examples include the College of Arts and Sciences (BA Journalism, BA English Language Studies, BS Applied Mathematics, and BS Biology, among others); the College of Engineering and Information Technology (engineering programs plus BS Computer Science and BS Information Technology); the College of Agriculture, Food, Environment and Natural Resources (agriculture, food technology, and natural-resources programs, with BS Food Technology holding AACCUP Level IV re-accredited status as of 2026); the College of Tourism and Hospitality Management (BS Hospitality Management and BS Tourism Management); and the College of Nursing (BS Nursing, BS Medical Technology — AACCUP Level III re-accredited in 2026 — and Diploma in Midwifery), alongside the College of Economics, Management, and Development Studies, the College of Sports, Physical Education and Recreation, the College of Veterinary Medicine and Biomedical Sciences, the College of Medicine, the College of Advanced and Professional Studies, and the Graduate School / Open Learning College. Availability differs per campus — for example, BS Computer Science at Carmona and BS Information Technology at Cavite City are AACCUP Level III re-accredited (2026). For the complete current list, see https://cvsu.edu.ph/category/colleges/.",
+        "May halos 100 curricular programs ang CvSU sa undergraduate at graduate levels, sa iba't ibang college: CAS (BA Journalism, BA English Language Studies, BS Applied Math, BS Biology), CEIT (engineering + BSCS + BSIT), CAFENR (agrikultura at food technology — Level IV re-accredited ang BS Food Technology, 2026), CTHM (BSHM, BSTM), College of Nursing (BSN, BS Med Tech, Diploma in Midwifery), CEMDS, College of Sports/PE/Recreation, College of Veterinary Medicine and Biomedical Sciences, College of Medicine, CAPS, at Graduate School / Open Learning College. Tingnan ang https://cvsu.edu.ph/category/colleges/."
       ]
     },
     {
@@ -655,9 +612,9 @@
         "Meron bang BSIT sa CvSU?"
       ],
       "responses": [
-        "CvSU's College of Engineering and Information Technology (CEIT) offers computing programs at the Main Campus. Per the CEIT Academic Programs page, undergraduate offerings include BS Computer Science and BS Information Technology, alongside the College's engineering programs. The official CEIT page is at https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/. Specific program availability at satellite campuses may vary — verify with the target campus via https://cvsu.edu.ph/category/campuses/.",
-        "CvSU's CEIT (College of Engineering and Information Technology) at the Main Campus offers computing programs including BS Computer Science and BS Information Technology, along with engineering programs. Source: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/",
-        "Ang CEIT (College of Engineering and Information Technology) sa Main Campus ng CvSU ay nag-aalok ng BS Computer Science, BS Information Technology, at mga engineering programs. Para sa availability sa ibang campus, kumpirmahin sa https://cvsu.edu.ph/category/campuses/. Pinagmulan: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/"
+        "CvSU's College of Engineering and Information Technology (CEIT) offers computing programs at the Main Campus, including BS Computer Science and BS Information Technology, alongside the College's engineering programs. Computing programs are also offered at satellite campuses — per the official site, BS Computer Science at the Carmona Campus and BS Information Technology at the Cavite City Campus both earned AACCUP Level III re-accredited status in 2026. The official CEIT page is at https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/. For availability at other campuses, verify via https://cvsu.edu.ph/category/campuses/.",
+        "CvSU's CEIT (College of Engineering and Information Technology) at the Main Campus offers BS Computer Science and BS Information Technology, along with engineering programs. Satellite campuses also offer computing: BS Computer Science at Carmona and BS Information Technology at Cavite City (both AACCUP Level III re-accredited, 2026). Source: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/",
+        "Ang CEIT (College of Engineering and Information Technology) sa Main Campus ng CvSU ay nag-aalok ng BS Computer Science, BS Information Technology, at mga engineering programs. May computing programs din sa satellite campuses: BSCS sa Carmona at BSIT sa Cavite City (parehong AACCUP Level III re-accredited, 2026). Pinagmulan: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/"
       ]
     },
     {
@@ -790,7 +747,9 @@
         "How do I apply for CvSU online through the admission portal?",
         "Can I transfer from another university to CvSU?",
         "online application CvSU",
-        "transferee application CvSU"
+        "transferee application CvSU",
+        "apply?",
+        "cvsu online application"
       ],
       "responses": [
         "ADMISSION TO CvSU (per the official Office of Student Affairs and Services and the admission portal):\n\n1. FILE THE ONLINE APPLICATION at https://admission.cvsu.edu.ph/ — encode your information in the registration/application form.\n2. PRINT the accomplished application form on A4-size bond paper.\n3. PREPARE THESE DOCUMENTS (typical for SHS-graduate applicants):\n   - Certified true copy of Grade 12 Report Card (Form 138)\n   - Certificate of Good Moral Character\n   - 2 copies of 1x1 ID picture with name tag\n   - Short ordinary folder\n4. SUBMIT TO OSAS at your target campus for exam scheduling (typically Mondays–Thursdays, 7 AM–6 PM).\n5. TAKE THE CvSU ENTRANCE EXAMINATION.\n6. APPLICANTS FOR ARCHITECTURE, COMPUTER SCIENCE, AND ENGINEERING must additionally bring their Grade 11 Report Card for evaluation. Engineering programs accept STEM-strand graduates.\n7. BS PSYCHOLOGY applicants require a GPA of 85 or higher.\n8. TRANSFEREE applicants must have a GPA of 2.00 (equivalent of 85%) or better with NO failed grade.\n\nFor the current cycle's exact requirements and deadlines, see https://admission.cvsu.edu.ph/ and https://cvsu.edu.ph. Sources: https://admission.cvsu.edu.ph/ · https://cvsu.edu.ph/office-of-student-affairs-and-services/",
@@ -829,7 +788,8 @@
         "Kailan ang exam sa CvSU?",
         "When is the CvSU admission exam?",
         "CvSUAT schedule",
-        "exam schedule CvSU"
+        "exam schedule CvSU",
+        "exam?"
       ],
       "responses": [
         "The CvSU entrance examination is part of the admission process. After you complete the online application at https://admission.cvsu.edu.ph/ and submit your documents to OSAS, you will be scheduled for the entrance exam at your target campus. Bring your application form, valid ID, and exam permit/notice as instructed. Successful applicants are issued a Notice of Admission. For the current entrance-exam schedule and admission cycle, please monitor https://cvsu.edu.ph and the admission portal. Source: https://admission.cvsu.edu.ph/",
@@ -883,7 +843,8 @@
         "What is the re-enrollment procedure at CvSU?",
         "How do I enroll at CvSU for the next semester?",
         "online enrollment CvSU",
-        "how to re-enroll CvSU"
+        "how to re-enroll CvSU",
+        "enrollment?"
       ],
       "responses": [
         "CvSU ENROLLMENT PROCEDURE:\n\nAFTER ADMISSION (NOA received):\n\n1. PRE-ENROLLMENT:\n   - Receive Notice of Admission (NOA)\n   - Attend department interview/orientation\n   - Complete medical examination\n   - Get medical clearance\n\n2. ACADEMIC ADVISING:\n   - Meet with department adviser\n   - Discuss curriculum and course load\n   - Get program of study\n\n3. REGISTRATION:\n   - Online enrollment via student portal\n   - Select courses for the semester\n   - Print Certificate of Registration (COR)\n\n4. PAYMENT (Misc fees only - tuition is FREE under RA 10931):\n   - Pay miscellaneous fees at Cashier's Office\n   - Get official receipt\n\n5. FINALIZATION:\n   - Submit COR to Registrar\n   - Get student ID\n   - Receive class schedule\n\nFOR CONTINUING STUDENTS:\n- Online registration through student portal\n- Selection of subjects with adviser approval\n- Payment of fees if applicable\n- COR submission\n\nCONTACT: For the verified Office of the University Registrar contacts (email and phone) for your campus, please check www.cvsu.edu.ph.",
@@ -975,7 +936,8 @@
         "How much are the miscellaneous fees in CvSU?",
         "Where do I pay my fees at CvSU?",
         "Do I still pay anything if tuition is free?",
-        "cvsu tuition fee 2026"
+        "cvsu tuition fee 2026",
+        "cvsu free tution"
       ],
       "responses": [
         "CvSU TUITION FEES & FREE EDUCATION:\n\nCvSU is covered by RA 10931 (Universal Access to Quality Tertiary Education Act of 2017).\n\nFREE TUITION COVERAGE (For qualified Filipino undergraduate students at SUCs):\n- No tuition fee\n- Other school fees covered as defined by the law and implementing rules\n\nGENERAL ELIGIBILITY FOR FREE TUITION:\n- Filipino citizen\n- Passes admission requirements\n- Maintains the required academic standing\n- Enrolled in an undergraduate degree program\n- Has not yet earned a bachelor's degree\n\nWHAT YOU MAY STILL PAY (varies):\n- Replacement of school ID or handbook\n- Certain optional items (uniform, books)\n- Personal expenses (transportation, meals)\n- Graduate-school tuition (RA 10931 may not apply to graduate programs)\n\nSCHOLARSHIPS & FINANCIAL AID may include:\n- Tertiary Education Subsidy (TES) for living-cost stipends\n- Government scholarships\n- Private scholarships\n- Academic merit scholarships\n\nFor the current fee schedule, the precise list of fees covered/not covered, graduate-program tuition rates, and verified Cashier's Office contact details, please check www.cvsu.edu.ph or contact your campus Cashier's Office directly.",
@@ -1117,8 +1079,8 @@
         "When is the CvSU foundation day?"
       ],
       "responses": [
-        "CvSU EVENTS & ACTIVITIES (typical — exact dates change each academic year):\n\nMAJOR ANNUAL EVENTS may include:\n- Founding/Charter Anniversary\n- Foundation Week\n- University Sportsfest\n- Cultural Festival\n- Research Forum / Symposium\n- Graduation Ceremony\n- Freshman Orientation\n\nSTUDENT ACTIVITIES:\n- Academic, cultural, religious, sports, and honor-society student organizations\n\nACADEMIC EVENTS:\n- Research Symposia\n- College-specific weeks (e.g., Engineering Week, Education Week)\n- Inter-college competitions\n- Conferences and industry seminars\n\nATHLETIC COMPETITIONS:\n- SCUAA (State Colleges and Universities Athletic Association)\n- Inter-campus games and regional/national tournaments\n\nCOMMUNITY OUTREACH:\n- Extension programs and community service\n\nFor current event schedules, the official Founding Anniversary date, and verified social-media handles, please visit https://cvsu.edu.ph and follow the official CvSU pages linked from the website.",
-        "Maraming events ang CvSU sa buong taon: Foundation/Charter Day, Intramurals, Research Symposium, Career/Job Fair, Cultural Festival, Lantern Parade, at Graduation. Para sa tiyak na petsa at opisyal na schedule, mangyaring sundan ang opisyal na Facebook page at www.cvsu.edu.ph. Salamat sa inyong tanong!"
+        "CvSU holds events and activities throughout the academic year, though exact dates change annually. Major annual events include the Founding Anniversary held in late January — CvSU celebrated its 120th on January 28-29, 2026, including the annual Gawad Laya at Diwa and Partners' Recognition Day — along with Foundation Week, the University Sportsfest, cultural festivals, research forums and symposia, the graduation ceremony, and freshman orientation. Academic events include research symposia, college-specific weeks, inter-college competitions, and international conferences hosted at the CvSU International Convention Center, such as the 4th International Conference on Women Empowerment and Leadership in Agriculture, Aquatic and Natural Resources (WELA 2026) on March 17-19, 2026. Athletic competitions include the SCUAA (State Colleges and Universities Athletic Association) meets plus inter-campus games and regional/national tournaments, while community outreach and volunteerism/service initiatives are coordinated under the LINGAP CvSU program of the Extension Services Center. Students can also join academic, cultural, religious, sports, and honor-society student organizations. For current event schedules and verified announcements, please visit https://cvsu.edu.ph and follow the official CvSU pages linked from the website.",
+        "Maraming events ang CvSU sa buong taon: Founding Anniversary tuwing huling bahagi ng Enero (ika-120 noong Enero 28-29, 2026, kasama ang Gawad Laya at Diwa), Intramurals, Research Symposium, Career/Job Fair, Cultural Festival, at Graduation. Nagho-host din ang CvSU ng mga international conference sa CvSU International Convention Center (hal. WELA 2026, Marso 17-19, 2026). Para sa tiyak na petsa at opisyal na schedule, sundan ang opisyal na Facebook page at www.cvsu.edu.ph."
       ]
     },
     {
@@ -1158,11 +1120,12 @@
         "what is your contact",
         "where can I call CvSU",
         "give me CvSU contact info",
-        "paano ko macocontact ang CvSU"
+        "paano ko macocontact ang CvSU",
+        "contact?"
       ],
       "responses": [
-        "CvSU CONTACT INFORMATION\n\nMAIN CAMPUS — Don Severino delas Alas Campus, Indang, Cavite, Philippines\nUniversity website: https://cvsu.edu.ph\n\nVERIFIED CONTACT POINTS FROM THE OFFICIAL SITE:\n- Office of the Vice President for Research and Extension: landline (046) 862-0850; mobile +63 998 937 2020 / +63 995 971 5511 (per https://cvsu.edu.ph/ovpre-contact-us/)\n- Admission inquiries: admission@cvsu.edu.ph\n- OSAS Main / Guidance: osasmain.guidance@cvsu.edu.ph\n\nOTHER CAMPUSES have their own contact directories — please use the campus-specific subdomain (e.g., trece.cvsu.edu.ph, naic.cvsu.edu.ph, bacoor.cvsu.edu.ph, etc.) or the campus directory at https://cvsu.edu.ph/category/campuses/.",
-        "Main Campus: Don Severino delas Alas Campus, Indang, Cavite. Website: cvsu.edu.ph. Mga verified contact mula sa opisyal na site: OVPRE landline (046) 862-0850; mobile +63 998 937 2020 / +63 995 971 5511; admission@cvsu.edu.ph para sa admission; osasmain.guidance@cvsu.edu.ph para sa OSAS Main / Guidance. May sariling directory ang ibang campus sa kanilang subdomain."
+        "CvSU's Main Campus is the Don Severino delas Alas Campus in Indang, Cavite, Philippines, and the University website is https://cvsu.edu.ph. Verified contact points from the official site include the Office of the Vice President for Research and Extension at landline (046) 862-0850 or mobile +63 998 937 2020 / +63 995 971 5511 (per https://cvsu.edu.ph/ovpre-contact-us/), admission inquiries at admission@cvsu.edu.ph, OSAS Main / Guidance at osasmain.guidance@cvsu.edu.ph, and the Office of the Board Secretary at obs@cvsu.edu.ph (2nd Floor, Administration Building, Indang). Other campuses have their own contact directories — please use the campus-specific subdomain (e.g., trece.cvsu.edu.ph, naic.cvsu.edu.ph, bacoor.cvsu.edu.ph) or the campus directory at https://cvsu.edu.ph/category/campuses/.",
+        "Main Campus: Don Severino delas Alas Campus, Indang, Cavite. Website: cvsu.edu.ph. Mga verified contact mula sa opisyal na site: OVPRE landline (046) 862-0850; mobile +63 998 937 2020 / +63 995 971 5511; admission@cvsu.edu.ph para sa admission; osasmain.guidance@cvsu.edu.ph para sa OSAS Main / Guidance; obs@cvsu.edu.ph para sa Office of the Board Secretary (2nd Floor, Administration Building). May sariling directory ang ibang campus sa kanilang subdomain."
       ]
     },
     {
@@ -1219,7 +1182,8 @@
         "CvSU ID replacement procedure",
         "CvSU ID replacement",
         "how to replace lost ID CvSU",
-        "student ID application CvSU"
+        "student ID application CvSU",
+        "TOR?"
       ],
       "responses": [
         "The Office of the University Registrar (OUR) at CvSU handles your academic records, including Transcript of Records (TOR), Certificate of Enrollment, Certificate of Registration (COR), Diploma, Good Moral, Honorable Dismissal, and authentication of records. Each campus has its own Registrar office. For the verified Registrar contact details at your campus, please refer to the Citizens Charter and campus directory at https://cvsu.edu.ph. Document processes (forms, fees, timelines) are documented in the CvSU Citizens Charter. See https://cvsu.edu.ph (search 'Citizens Charter') for the latest edition.",
@@ -1276,7 +1240,6 @@
       "patterns": [
         "CvSU Imus",
         "CvSU Bacoor",
-        "CvSU Indang",
         "CvSU Trece",
         "CvSU Naic",
         "CvSU Rosario",
@@ -1301,93 +1264,43 @@
         "What programs does CvSU Bacoor offer?",
         "What is the address of CvSU Naic?",
         "Anong courses ang available sa CvSU Imus?",
-        "tell me everything about CvSU",
         "Can international students apply to CvSU?",
         "Can I take elective subjects outside my course at CvSU?",
         "Does CvSU have a research extension program?",
-        "Can a PWD student apply for accommodation at CvSU?",
         "Can I enroll in CvSU without going to campus?",
         "Pwede ba akong mag-apply sa CvSU kahit Grade 11 pa lang ako?",
-        "Is Mass Communication offered at CvSU?",
-        "Where is the CvSU main campus?",
-        "Is there academic probation at CvSU?",
         "cvsu trece campus",
-        "Saan naroon ang CvSU main campus?",
         "Paano mag-transfer sa CvSU?",
         "exam?",
         "TOR?",
-        "Is there a Tourism and Hospitality Management course at CvSU?",
-        "courses?",
-        "Is there an online degree program at CvSU?",
-        "May criminology ba sa CvSU?",
-        "How does CvSU compute the GWA?",
         "What events does CvSU host?",
-        "cvsu courses list 2026",
         "cvsu carmona campus courses",
         "Where is CvSU Carmona campus?",
-        "Is Architecture offered at CvSU?",
         "contact?",
         "Does CvSU have a linkage with foreign universities?",
-        "Does CvSU have a Law school?",
-        "Is there an Agricultural Engineering program at CvSU?",
         "apply?",
-        "Does CvSU have a Business Administration program?",
-        "What STEM courses does CvSU offer?",
         "cvsu cultural events",
-        "I don't understand",
         "Online ba ang enrollment sa CvSU?",
-        "cvsu accreditation status",
-        "May nursing ba sa CvSU?",
         "Where is CvSU Imus campus?",
-        "I need help",
-        "Is there an Education course at CvSU?",
         "cvsu rosario campus",
-        "Is BS Psychology available at CvSU?",
-        "cvsu president 2026",
         "What grade is needed to pass a subject at CvSU?",
-        "Does CvSU have a nursing program?",
-        "What courses does CvSU offer?",
-        "How do I get to CvSU main campus by public transport?",
         "library?",
         "May klinikal ba sa CvSU?",
-        "May NSTP ba sa CvSU? Paano pumili ng component?",
-        "Does CvSU have a library?",
-        "cvsu engineering programs",
-        "What is the CvSU leave of absence policy?",
-        "Where is CvSU located?",
         "Can I still apply to CvSU after the deadline?",
-        "Does CvSU have Accountancy?",
         "cvsu facilities list",
-        "How many campuses does CvSU have?",
         "cvsu free tution",
-        "are you a robot?",
         "enrollment?",
-        "can you help me?",
-        "how does this work?",
-        "How do I get to CvSU Indang?",
         "cvsu online application",
         "What happens if I fail a subject at CvSU?",
-        "cvsu accountancy",
-        "Paano pumunta sa CvSU Indang?",
         "Where is CvSU Bacoor campus?",
         "cvsu silang campus",
         "cvsu bacoor campus",
         "Is there cross-enrollment allowed at CvSU?",
         "Which CvSU campus is nearest to Tagaytay?",
-        "What is the CvSU retention policy?",
-        "What is the incomplete grade policy at CvSU?",
-        "what can you do?",
-        "Does CvSU offer distance learning?",
-        "Is 3.0 a passing grade at CvSU?",
-        "How many times can I re-take a failed subject at CvSU?",
-        "How do I remove an incomplete grade at CvSU?",
-        "Can I take a leave of absence at CvSU?",
         "Saan ang pinaka-malapit na CvSU campus sa Tagaytay?",
-        "What is the CvSU grading system?",
         "May shifting ba sa CvSU? Gusto ko pong magpalit ng course.",
         "Ano ang misyon ng CvSU?",
         "campus?",
-        "help",
         "cvsu naic campus",
         "What courses are offered at CvSU Bacoor?",
         "What programs are available at CvSU Imus?",
@@ -1395,12 +1308,14 @@
         "What is the difference between CvSU Main and CvSU Bacoor?",
         "CvSU campus list",
         "CvSU Imus programs",
-        "CvSU Bacoor programs"
+        "CvSU Bacoor programs",
+        "Is there a CvSU campus in Silang?",
+        "Is there a CvSU campus in Tanza?"
       ],
       "responses": [
-        "CvSU operates a Main Campus in Indang (Don Severino delas Alas Campus) along with satellite campuses across the province of Cavite, including campuses in Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario (the CCAT campus), Silang, Tanza, and Trece Martires City, among others. Program offerings differ per campus. For the verified, current list of campuses with their addresses, program offerings, and contact details, please visit https://cvsu.edu.ph/category/campuses/.",
-        "CvSU's campus system has the Main Campus in Indang plus satellite campuses across Cavite (e.g., Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario/CCAT, Silang, Tanza, Trece Martires City). Programs vary per campus — see https://cvsu.edu.ph/category/campuses/ for the official directory.",
-        "May Main Campus ang CvSU sa Indang at mga satellite campus sa Cavite (Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario/CCAT, Silang, Tanza, Trece Martires City, atbp.). Iba-iba ang programa bawat campus. Tingnan ang https://cvsu.edu.ph/category/campuses/ para sa opisyal na directory."
+        "CvSU operates 11 campuses in the province of Cavite: the Main Campus in Indang (the Don Severino delas Alas Campus) along with satellite campuses including Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario (the CCAT campus), Silang, Tanza, and Trece Martires City. Program offerings differ per campus. For the verified, current list of campuses with their addresses, program offerings, and contact details, please visit https://cvsu.edu.ph/category/campuses/. Source: https://cvsu.edu.ph/history/",
+        "CvSU's campus system has 11 campuses: the Main Campus in Indang plus satellite campuses across Cavite (Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario/CCAT, Silang, Tanza, Trece Martires City). Programs vary per campus — see https://cvsu.edu.ph/category/campuses/ for the official directory.",
+        "May 11 campus ang CvSU: ang Main Campus sa Indang at mga satellite campus sa Cavite (Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario/CCAT, Silang, Tanza, Trece Martires City). Iba-iba ang programa bawat campus. Tingnan ang https://cvsu.edu.ph/category/campuses/ para sa opisyal na directory."
       ]
     },
     {
@@ -1519,55 +1434,15 @@
         "diwa help",
         "diwa what can you do",
         "diwa are you a robot",
-        "May shifting ba sa CvSU? Gusto ko pong magpalit ng course.",
-        "enrollment?",
-        "What is the incomplete grade policy at CvSU?",
-        "cvsu facilities list",
-        "Online ba ang enrollment sa CvSU?",
-        "Ano ang misyon ng CvSU?",
-        "Is 3.0 a passing grade at CvSU?",
-        "Does CvSU offer distance learning?",
-        "exam?",
-        "Can international students apply to CvSU?",
-        "cvsu online application",
-        "tell me everything about CvSU",
-        "campus?",
-        "cvsu indang address",
-        "apply?",
-        "cvsu accreditation status",
-        "Is there a CvSU campus in Tanza?",
-        "Can I take elective subjects outside my course at CvSU?",
-        "Saan ang pinaka-malapit na CvSU campus sa Tagaytay?",
-        "TOR?",
-        "library?",
-        "Does CvSU have a research extension program?",
-        "Can I enroll in CvSU without going to campus?",
-        "cvsu free tution",
-        "cvsu president 2026",
-        "What is the CvSU grading system?",
-        "What grade is needed to pass a subject at CvSU?",
-        "Is there cross-enrollment allowed at CvSU?",
-        "May NSTP ba sa CvSU? Paano pumili ng component?",
-        "What events does CvSU host?",
-        "Is there a Medical Technology course at CvSU?",
-        "May klinikal ba sa CvSU?",
-        "contact?",
-        "What is the CvSU leave of absence policy?",
-        "Is there academic probation at CvSU?",
-        "What is the CvSU retention policy?",
-        "Paano mag-transfer sa CvSU?",
-        "Can a PWD student apply for accommodation at CvSU?",
-        "What happens if I fail a subject at CvSU?",
-        "Does CvSU have a linkage with foreign universities?",
-        "Can I take a leave of absence at CvSU?",
-        "Does CvSU have a library?",
-        "Which CvSU campus is nearest to Tagaytay?",
-        "ok"
+        "ok",
+        "what can you do?",
+        "are you a robot?",
+        "can you help me?"
       ],
       "responses": [
-        "Hi! I'm DIWA, your CvSU Digital Intelligent Web Assistant. I can help you with admissions, courses, tuition fees, scholarships, enrollment, campus info, and more. What would you like to know?",
+        "Hi! I'm Sevi, your CvSU virtual assistant. I can help you with admissions, courses, tuition fees, scholarships, enrollment, campus info, and more. What would you like to know?",
         "Hello! I'm here to answer your CvSU questions. Try asking about admissions requirements, tuition fees, scholarship programs, enrollment schedules, or campus facilities!",
-        "I'm DIWA, the CvSU chatbot! I specialize in Cavite State University information. Ask me anything about admissions, programs, fees, scholarships, or campus life."
+        "I'm Sevi, the CvSU chatbot! I specialize in Cavite State University information. Ask me anything about admissions, programs, fees, scholarships, or campus life."
       ]
     },
     {
@@ -1767,8 +1642,8 @@
         "CvSU dorm fee"
       ],
       "responses": [
-        "CvSU STUDENT DORMITORY:\n\nAVAILABILITY:\n- Dormitories available at selected campuses (including Main Campus, Indang)\n- Limited slots — priority given to students from distant areas\n- Apply early — slots fill quickly during enrollment\n\nAPPLICATION REQUIREMENTS:\n- Certificate of Registration (proof of enrollment)\n- Medical / health clearance\n- Barangay clearance\n- 2x2 ID photos\n- Parent/guardian consent letter\n- Accomplished application form (from OSAS)\n\nRATES:\n- Fees vary per campus and room type\n- Basic utilities usually included; electricity may be charged separately\n\nRULES:\n- Curfew strictly enforced\n- No outside visitors after curfew\n- Governed by dormitory policies\n\nCONTACT: Office of Student Affairs & Services (OSAS)\nEmail: osas@cvsu.edu.ph | Visit your campus Student Affairs office.",
-        "May dormitoryo ang CvSU sa ilang campus, kasama na ang Main Campus sa Indang. Limitado ang slots, kaya mag-apply nang maaga. Kailangan ng COR, medical clearance, barangay clearance, at pahintulot ng magulang. Para sa detalye ng bayad at patakaran, makipag-ugnayan sa OSAS office ng inyong campus. Salamat sa inyong tanong!"
+        "CvSU offers student dormitories at selected campuses, including the Main Campus in Indang, where a newly constructed Boys' Dormitory was inaugurated during the 120th founding anniversary in January 2026. Slots are limited and priority is given to students from distant areas, so apply early — they fill quickly during enrollment. To apply, secure an application form from OSAS and prepare your Certificate of Registration (proof of enrollment), medical/health clearance, barangay clearance, 2x2 ID photos, and a parent/guardian consent letter. Fees vary per campus and room type; basic utilities are usually included, though electricity may be charged separately. Dormitories enforce a strict curfew, do not allow outside visitors after curfew, and are governed by dormitory policies. For details, contact the Office of Student Affairs & Services (OSAS) at osas@cvsu.edu.ph or visit your campus Student Affairs office.",
+        "May dormitoryo ang CvSU sa ilang campus, kasama na ang Main Campus sa Indang — kung saan may bagong Boys' Dormitory na binuksan noong ika-120 founding anniversary (Enero 2026). Limitado ang slots, kaya mag-apply nang maaga. Kailangan ng COR, medical clearance, barangay clearance, at pahintulot ng magulang. Para sa detalye ng bayad at patakaran, makipag-ugnayan sa OSAS office ng inyong campus. Salamat sa inyong tanong!"
       ]
     },
     {
@@ -1855,7 +1730,10 @@
         "Chinese students CvSU",
         "Japanese students CvSU",
         "foreign exchange student CvSU",
-        "study in CvSU as a foreigner"
+        "study in CvSU as a foreigner",
+        "Does CvSU have a linkage with foreign universities?",
+        "Can international students apply to CvSU?",
+        "Does CvSU accept foreign students?"
       ],
       "responses": [
         "CvSU INTERNATIONAL / FOREIGN STUDENT ADMISSIONS:\n\nCvSU accepts foreign nationals subject to CHED and university regulations.\n\nTYPICAL REQUIREMENTS:\n- Accomplished application form\n- Authenticated/apostilled academic credentials (HS diploma, transcripts)\n- Passport copy (biodata page)\n- Student Visa (9F) — typically processed AFTER admission\n- English-proficiency proof (if from a non-English-speaking country)\n- Medical/health clearance\n- Police clearance (NBI or equivalent from home country)\n\nTYPICAL PROCESS:\n1. Submit application to the Office of Admissions (Main Campus, Indang)\n2. Await credential evaluation and Notice of Admission (NOA)\n3. Process the 9F Student Visa with the Bureau of Immigration\n4. Complete enrollment procedures\n\nTUITION NOTE:\nFree tuition under RA 10931 may NOT apply to foreign students. Contact the Cashier's Office for the applicable fees.\n\nFOR VERIFIED CONTACT DETAILS:\nOffice of Admissions — email: admissions@cvsu.edu.ph\nWebsite: www.cvsu.edu.ph (use the official directory for current phone numbers)."
@@ -2544,9 +2422,9 @@
         "sino ang gumawa sayo"
       ],
       "responses": [
-        "I'm DIWA — a digital interface assistant providing general guidance about CvSU based on training data. I am NOT an official spokesperson of CvSU and I do NOT have real-time access to your records, your grades, current enrollment data, or live announcements. I always recommend verifying anything time-sensitive (deadlines, fees, official policies, contact details) with https://cvsu.edu.ph or the relevant CvSU office directly. If you need authoritative information, please contact CvSU through official channels.",
-        "I'm DIWA, a digital assistant providing general guidance about CvSU. I do not have access to your personal student records or real-time university announcements, and my answers are not a substitute for official information. For anything binding — deadlines, fees, your records, or formal policies — please verify directly with CvSU through https://cvsu.edu.ph.",
-        "Ako po si DIWA, isang digital assistant para sa pangkalahatang impormasyon tungkol sa CvSU. Hindi po ako opisyal na tagapagsalita ng CvSU at wala akong real-time access sa inyong personal na records, grades, o live na anunsiyo. Para sa opisyal na impormasyon, mangyaring tingnan ang https://cvsu.edu.ph o makipag-ugnayan sa CvSU."
+        "I'm Sevi — a digital interface assistant providing general guidance about CvSU based on training data. I am NOT an official spokesperson of CvSU and I do NOT have real-time access to your records, your grades, current enrollment data, or live announcements. I always recommend verifying anything time-sensitive (deadlines, fees, official policies, contact details) with https://cvsu.edu.ph or the relevant CvSU office directly. If you need authoritative information, please contact CvSU through official channels.",
+        "I'm Sevi, a digital assistant providing general guidance about CvSU. I do not have access to your personal student records or real-time university announcements, and my answers are not a substitute for official information. For anything binding — deadlines, fees, your records, or formal policies — please verify directly with CvSU through https://cvsu.edu.ph.",
+        "Ako po si Sevi, isang digital assistant para sa pangkalahatang impormasyon tungkol sa CvSU. Hindi po ako opisyal na tagapagsalita ng CvSU at wala akong real-time access sa inyong personal na records, grades, o live na anunsiyo. Para sa opisyal na impormasyon, mangyaring tingnan ang https://cvsu.edu.ph o makipag-ugnayan sa CvSU."
       ]
     },
     {
@@ -3134,9 +3012,9 @@
         "CvSU College of Agriculture"
       ],
       "responses": [
-        "CvSU offers a range of agriculture-related undergraduate programs through the College of Agriculture, Food, Environment and Natural Resources (or its current equivalent name) — typically including BS Agriculture (with specializations), BS Agricultural and Biosystems Engineering, BS Animal Science, BS Food Technology, BS Forestry/Agroforestry, BS Agribusiness Management, and related programs. Availability varies per campus. For the current program list and the campuses that offer each, please check https://cvsu.edu.ph.",
-        "CvSU's agriculture cluster typically offers BS Agriculture (with specializations), BS Agricultural Engineering, BS Animal Science, BS Food Technology, BS Agroforestry, and BS Agribusiness. Availability varies per campus.",
-        "Ang CvSU ay nag-aalok ng mga agriculture-related programs: BS Agriculture, BS Agricultural Engineering, BS Animal Science, BS Food Technology, atbp. Ang availability ay nag-iiba bawat campus."
+        "CvSU offers a range of agriculture-related undergraduate programs through the College of Agriculture, Food, Environment and Natural Resources (CAFENR) — typically including BS Agriculture (with specializations), BS Agricultural and Biosystems Engineering, BS Animal Science, BS Food Technology, BS Forestry/Agroforestry, BS Agribusiness Management, and related programs. Notably, BS Food Technology (CAFENR) holds AACCUP Level IV re-accredited status (2026), and CvSU is designated by the Department of Agriculture as the National Center for Research and Development for Coffee and Urban Agriculture. Availability varies per campus. For the current program list and the campuses that offer each, please check https://cvsu.edu.ph.",
+        "CvSU's agriculture cluster, under CAFENR (College of Agriculture, Food, Environment and Natural Resources), typically offers BS Agriculture (with specializations), BS Agricultural Engineering, BS Animal Science, BS Food Technology (AACCUP Level IV re-accredited, 2026), BS Agroforestry, and BS Agribusiness. CvSU is also the DA-designated National Center for Research and Development for Coffee and Urban Agriculture. Availability varies per campus.",
+        "Ang CvSU ay nag-aalok ng mga agriculture-related programs sa ilalim ng CAFENR (College of Agriculture, Food, Environment and Natural Resources): BS Agriculture, BS Agricultural Engineering, BS Animal Science, BS Food Technology (AACCUP Level IV re-accredited, 2026), atbp. Ang CvSU rin ang itinalagang National Center for Research and Development for Coffee and Urban Agriculture ng Department of Agriculture. Ang availability ay nag-iiba bawat campus."
       ]
     },
     {
@@ -3159,9 +3037,9 @@
         "engineering accreditation"
       ],
       "responses": [
-        "Engineering at CvSU is housed in the College of Engineering and Information Technology (CEIT). Per the official CEIT Academic Programs page, the college's offerings include engineering programs alongside BS Computer Science and BS Information Technology. Engineering programs at CvSU accept STEM-strand SHS graduates and require submission of the Grade 11 Report Card for program evaluation during admission. For the complete and current list of engineering programs (by degree and campus), please refer to https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/ and https://cvsu.edu.ph/category/colleges/.",
-        "Engineering programs at CvSU sit within CEIT (College of Engineering and Information Technology). They accept STEM-strand SHS graduates, and Grade 11 Report Card is required at admission for program evaluation. For the current list of engineering programs and campuses, see https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/",
-        "Ang mga engineering programs ng CvSU ay nasa CEIT (College of Engineering and Information Technology). Tumatanggap ito ng STEM-strand SHS graduates at kailangan ng Grade 11 Report Card sa admission. Para sa kasalukuyang listahan ng programa, tingnan ang https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/."
+        "Engineering at CvSU is housed in the College of Engineering and Information Technology (CEIT). Disciplines evidenced on the official site include civil engineering, electrical engineering, and electronics engineering, alongside architecture, BS Computer Science, and BS Information Technology. CvSU's recent 2026 licensure results per the official site: 42 new licensed Civil Engineers (46.15% overall performance, March 2026); Registered Electrical Engineers at 57.58% (Main Campus) and 75.93% (CCAT Campus) in April 2026, with Jan Joseph Belen Lopez placing in the top eight nationwide; and an 82.14% passing rate in the March 2026 Electronics Engineers Licensure Examination, ranking CvSU 7th among top performing schools. Engineering programs accept STEM-strand SHS graduates and require the Grade 11 Report Card for evaluation during admission. For the complete current list of engineering programs by campus, see https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/.",
+        "CvSU's engineering programs sit within CEIT — including civil, electrical, and electronics engineering plus architecture. 2026 results: 42 new Civil Engineers (46.15%), REELE 57.58% (Main) / 75.93% (CCAT) with a top-eight placer, and 82.14% in Electronics Engineering (7th top performing school). STEM-strand SHS graduates are accepted; the Grade 11 Report Card is required at admission. Source: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/",
+        "Ang mga engineering programs ng CvSU ay nasa CEIT — kabilang ang civil, electrical, at electronics engineering pati architecture. Mga resulta sa 2026: 42 bagong Civil Engineers (46.15%), REELE 57.58% (Main) / 75.93% (CCAT) na may top-eight placer, at 82.14% sa Electronics Engineering (ika-7 top performing school). Tumatanggap ng STEM-strand graduates at kailangan ng Grade 11 Report Card sa admission. Pinagmulan: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/"
       ]
     },
     {
@@ -3183,9 +3061,9 @@
         "teaching license"
       ],
       "responses": [
-        "CvSU offers teacher-education programs commonly including: Bachelor of Elementary Education (BEEd) and Bachelor of Secondary Education (BSEd) with majors in English, Mathematics, Science, Filipino, Social Studies, TLE, and similar fields. Bachelor of Special Needs Education (BSNEd) and Bachelor of Early Childhood Education (BECEd) may also be offered at certain campuses. Graduates take the Licensure Examination for Teachers (LET) administered by the PRC. Program availability and majors vary per campus.",
-        "CvSU offers BEEd and BSEd (with majors) and may offer BSNEd and BECEd at certain campuses. Graduates take the PRC LET to become licensed teachers.",
-        "Ang CvSU ay nag-aalok ng BEEd at BSEd (na may iba't ibang mejor) at maaaring BSNEd at BECEd sa ilang campus. Ang mga graduates ay kumukuha ng LET."
+        "CvSU offers teacher-education programs commonly including: Bachelor of Elementary Education (BEEd) and Bachelor of Secondary Education (BSEd) with majors in English, Mathematics, Science, Filipino, Social Studies, TLE, and similar fields. Bachelor of Special Needs Education (BSNEd), Bachelor of Early Childhood Education (BECEd), and Bachelor of Technical Vocational Teacher Education (BTVTE, at the CCAT Campus) may also be offered at certain campuses. Graduates take the Licensure Examination for Professional Teachers (LEPT) administered by the PRC — and CvSU performs strongly: in the March 2026 LEPT, the Main Campus was a Top 10 performing school for the Elementary Level (95.06%), the Imus Campus ranked Top 3 for the Secondary Level (98.36%), the Silang Campus Top 7 (96.97%), and six CvSU graduates were topnotchers. Program availability and majors vary per campus. Source: https://cvsu.edu.ph",
+        "CvSU offers BEEd and BSEd (with majors), plus BSNEd/BECEd/BTVTE at certain campuses. Graduates take the PRC LEPT — where CvSU excels: in March 2026, Main Campus was Top 10 (Elementary, 95.06%), Imus Top 3 (Secondary, 98.36%), Silang Top 7 (96.97%), with six topnotchers.",
+        "Ang CvSU ay nag-aalok ng BEEd at BSEd (na may iba't ibang major), at BSNEd/BECEd/BTVTE sa ilang campus. Ang mga graduates ay kumukuha ng LEPT — kung saan mahusay ang CvSU: noong Marso 2026, Top 10 ang Main Campus (Elementary, 95.06%), Top 3 ang Imus (Secondary, 98.36%), Top 7 ang Silang (96.97%), at may anim na topnotchers."
       ]
     },
     {
@@ -3201,12 +3079,13 @@
         "caregiving CvSU",
         "health-related programs",
         "kursong nursing",
-        "is BSN available"
+        "is BSN available",
+        "Is there a Medical Technology course at CvSU?"
       ],
       "responses": [
-        "CvSU's College of Nursing offers BS Nursing, BS Medical Technology, and Diploma in Midwifery (per the official Colleges listing). Availability and slots may vary per campus and academic year. For the current admission and program details, see https://cvsu.edu.ph/category/colleges/ and the College of Nursing's official page.",
-        "The College of Nursing at CvSU offers BS Nursing, BS Medical Technology, and Diploma in Midwifery. See https://cvsu.edu.ph/category/colleges/ for the latest details.",
-        "Ang College of Nursing ng CvSU ay nag-aalok ng BS Nursing, BS Medical Technology, at Diploma in Midwifery. Para sa kasalukuyang detalye, tingnan ang https://cvsu.edu.ph/category/colleges/."
+        "CvSU's College of Nursing offers BS Nursing, BS Medical Technology, and Diploma in Midwifery (per the official Colleges listing). BS Medical Technology holds AACCUP Level III re-accredited status (2026), and CvSU posted a 97.33% overall performance rating (73 of 75 examinees) in the March 2026 Medical Technologists Licensure Examination — well above the 84.17% national passing rate. Availability and slots may vary per campus and academic year. For the current admission and program details, see https://cvsu.edu.ph/category/colleges/ and the College of Nursing's official page.",
+        "The College of Nursing at CvSU offers BS Nursing, BS Medical Technology (AACCUP Level III re-accredited, 2026), and Diploma in Midwifery. CvSU scored 97.33% in the March 2026 Medical Technologists Licensure Exam (national: 84.17%). See https://cvsu.edu.ph/category/colleges/ for the latest details.",
+        "Ang College of Nursing ng CvSU ay nag-aalok ng BS Nursing, BS Medical Technology (AACCUP Level III re-accredited, 2026), at Diploma in Midwifery. Nakakuha ang CvSU ng 97.33% sa March 2026 Medical Technologists Licensure Exam (pambansa: 84.17%). Para sa kasalukuyang detalye, tingnan ang https://cvsu.edu.ph/category/colleges/."
       ]
     },
     {
@@ -3245,12 +3124,24 @@
         "BS Tourism",
         "BSTM CvSU",
         "accountancy CvSU",
-        "CPA review CvSU"
+        "CPA review CvSU",
+        "BSBM",
+        "BS Business Management",
+        "BSBM CvSU",
+        "business management course CvSU",
+        "College of Business Management and Operations",
+        "is there a College of Business Management and Operations at CvSU",
+        "Department of Management CvSU",
+        "CEMDS",
+        "CEMDS CvSU",
+        "College of Economics Management and Development Studies",
+        "may BSBM ba sa CvSU",
+        "ano ang CEMDS"
       ],
       "responses": [
-        "CvSU's hospitality and tourism programs sit under the College of Tourism and Hospitality Management (CTHM), which the Board of Regents approved as an independent college on September 26, 2024. CTHM offers BS Hospitality Management and BS Tourism Management. Business and accountancy programs (e.g., BSBA, BS Accountancy, BS Entrepreneurship) are offered at the Main Campus and selected satellite campuses through their respective colleges/departments. For the current list of business/management programs and the campuses that offer each, see https://cvsu.edu.ph/category/colleges/.",
-        "CTHM (College of Tourism and Hospitality Management) — approved as an independent college on 26 Sept 2024 — offers BS Hospitality Management and BS Tourism Management. Business/accountancy programs are offered at the Main Campus and selected satellite campuses. See https://cvsu.edu.ph/category/colleges/ for the current list. Source: https://cvsu.edu.ph/college-of-tourism-and-hospitality-management/",
-        "Ang CTHM (College of Tourism and Hospitality Management) — inaprubahan bilang independent college noong Sept 26, 2024 — ay nag-aalok ng BS Hospitality Management at BS Tourism Management. Ang business/accountancy programs ay sa Main Campus at sa ilang satellite campus. Tingnan ang https://cvsu.edu.ph/category/colleges/. Pinagmulan: https://cvsu.edu.ph/college-of-tourism-and-hospitality-management/"
+        "CvSU does not have a college named exactly “College of Business Management and Operations.” Business and management programs — including the Bachelor of Science in Business Management (BSBM) and the Bachelor of Science in Business Administration (BSBA) — are offered through the Department of Management under the College of Economics, Management and Development Studies (CEMDS). Per the official site, BS Business Administration at the Carmona and CCAT (Rosario) campuses holds AACCUP Level III re-accredited status (2026). Hospitality and tourism programs (BS Hospitality Management and BS Tourism Management) sit separately under the College of Tourism and Hospitality Management (CTHM), approved as an independent college on September 26, 2024. For the current list of business/management programs and the campuses that offer each, see https://cvsu.edu.ph/category/colleges/.",
+        "Business and management programs at CvSU — BSBM (Bachelor of Science in Business Management) and BSBA (Bachelor of Science in Business Administration) — are offered via the Department of Management under CEMDS (College of Economics, Management and Development Studies); there is no college named “College of Business Management and Operations.” BSBA at the Carmona and CCAT campuses is AACCUP Level III re-accredited (2026). Hospitality/tourism programs are under CTHM. See https://cvsu.edu.ph/category/colleges/ for the current list.",
+        "Walang college sa CvSU na eksaktong tinatawag na “College of Business Management and Operations.” Ang mga business at management programs — kabilang ang BS Business Management (BSBM) at BS Business Administration (BSBA) — ay inaalok sa pamamagitan ng Department of Management sa ilalim ng CEMDS (College of Economics, Management and Development Studies). Ang BSBA sa Carmona at CCAT ay AACCUP Level III re-accredited (2026). Ang hospitality at tourism programs ay nasa ilalim ng CTHM. Tingnan ang https://cvsu.edu.ph/category/colleges/."
       ]
     },
     {
@@ -3267,9 +3158,9 @@
         "criminology requirements"
       ],
       "responses": [
-        "Bachelor of Science in Criminology may be offered at select CvSU campuses subject to CHED program permits and accreditation. The program prepares graduates for the Criminologist Licensure Examination administered by the PRC. Availability and admission requirements vary per campus and per year. For the current list of campuses offering BS Criminology and the verified requirements, please check https://cvsu.edu.ph.",
-        "BS Criminology may be offered at select CvSU campuses. Graduates take the PRC Criminologist Licensure Examination. Availability varies — verify via https://cvsu.edu.ph.",
-        "Maaaring inaalok ang BS Criminology sa ilang CvSU campus. Ang mga graduates ay kumukuha ng PRC Criminologist Licensure Exam. Kumpirmahin sa https://cvsu.edu.ph."
+        "Yes — BS Criminology is offered at CvSU (including the Main and Bacoor campuses), and the University is a top performer in the field: per the official CvSU site, CvSU was the top performing school in the February 2026 Criminologist Licensure Examination — the Main Campus posted a 99.25% passing rate (132 of 133 examinees) in its category, while the Bacoor Campus ranked Top 1 with a 100% passing rate (63 of 63 examinees) in its category. Graduates take the Criminologist Licensure Examination administered by the PRC. Availability and admission requirements vary per campus and per year — verify via https://cvsu.edu.ph.",
+        "BS Criminology is offered at CvSU (Main and Bacoor campuses among others). CvSU was the top performing school in the February 2026 Criminologist Licensure Exam — Main Campus 99.25% (132/133) and Bacoor Campus Top 1 at 100% (63/63) in their categories. Graduates take the PRC Criminologist Licensure Examination. Verify current availability via https://cvsu.edu.ph.",
+        "Inaalok ang BS Criminology sa CvSU (kabilang ang Main at Bacoor campus). Ayon sa opisyal na site, ang CvSU ang top performing school sa February 2026 Criminologist Licensure Examination — Main Campus 99.25% (132/133) at Bacoor Campus Top 1 na may 100% (63/63) sa kani-kanilang kategorya. Ang mga graduates ay kumukuha ng PRC Criminologist Licensure Exam. Kumpirmahin sa https://cvsu.edu.ph."
       ]
     },
     {
@@ -3438,9 +3329,9 @@
         "college student council"
       ],
       "responses": [
-        "The Supreme Student Government (SSG) is the umbrella student government of CvSU, with a university-wide body and college/department-level councils. SSG elections are typically held once each academic year, with COMELEC-equivalent oversight by Student Affairs. To run, you generally need to be a bona fide enrolled student, meet academic and conduct requirements set by the election code, and follow the filing/campaign rules announced during election season. For this year's election dates and the SSG constitution/by-laws, check with OSAS at your campus.",
-        "The SSG is CvSU's umbrella student government, with annual elections overseen by Student Affairs. Eligibility and filing rules are set by the SSG election code. Check OSAS for this year's election dates.",
-        "Ang Supreme Student Government (SSG) ang student government ng CvSU. May taunang halalan na pinangangasiwaan ng Student Affairs. Sumangguni sa OSAS para sa eligibility, deadlines, at petsa ng halalan."
+        "Student government at CvSU is organized through Central Student Governments (CSG) at the campuses, federated university-wide as the Federation of Central Student Government. Students are also represented in the CvSU Board of Regents through the Student Regent (assisted by a Deputy Student Regent). Elections are typically held once each academic year with oversight by the Office of Student Affairs and Services (OSAS). To run, you generally need to be a bona fide enrolled student and meet the academic and conduct requirements set by the election code. For this year's election dates and the constitution/by-laws, check with OSAS at your campus. Source: https://cvsu.edu.ph",
+        "CvSU's student government is the Central Student Government (CSG) at each campus, federated as the Federation of Central Student Government, with a Student Regent (and Deputy Student Regent) representing students in the Board of Regents. Annual elections are overseen by OSAS — check OSAS for this year's election dates and eligibility rules.",
+        "Ang student government ng CvSU ay ang Central Student Government (CSG) sa bawat campus, na pinagsasama-sama bilang Federation of Central Student Government. May Student Regent (at Deputy Student Regent) na kumakatawan sa mga estudyante sa Board of Regents. May taunang halalan na pinangangasiwaan ng OSAS. Sumangguni sa OSAS para sa eligibility, deadlines, at petsa ng halalan."
       ]
     },
     {
@@ -3796,9 +3687,9 @@
         "first take CvSU"
       ],
       "responses": [
-        "CvSU graduates of board-program courses (Education, Engineering, Accountancy, Criminology, Nursing, Veterinary Medicine, etc.) take their licensure examinations under the Professional Regulation Commission (PRC). Some colleges offer in-house review classes or partner with accredited review centers; others let graduates choose external review centers. Board pass rates and review schedules vary per program and per academic year. For your college's review program (if offered) and tips for the relevant board exam, contact your Department Chair and check your alumni network.",
-        "Board exam reviews at CvSU vary by program — some colleges offer in-house review; others partner with external review centers. Verify with your Department Chair after graduation.",
-        "Ang board exam review sa CvSU ay nag-iiba bawat programa — may in-house, may external partner. Magtanong sa inyong Department Chair pagkatapos ng graduation."
+        "CvSU graduates of board-program courses take their licensure examinations under the Professional Regulation Commission (PRC), and CvSU has a strong recent record — per the official site's 2026 results: top performing school in the February 2026 Criminologist Licensure Exam (Main 99.25%, Bacoor 100%); Top 10 (Elementary, Main Campus, 95.06%) and Top 3 (Secondary, Imus Campus, 98.36%) performing schools in the March 2026 LEPT with six topnotchers; 7th top performing school in the March 2026 Electronics Engineers Licensure Exam (82.14%); 97.33% in the March 2026 Medical Technologists exam; 95.56% in the June 2026 Architects exam (vs 85.08% national) and 100% in the January 2026 run; and top 10 performing school in the February 2026 Master Plumbers exam (83.33%). Some colleges offer in-house review classes or partner with accredited review centers; others let graduates choose external review centers. For your college's review program, contact your Department Chair. Source: https://cvsu.edu.ph",
+        "Board exam reviews at CvSU vary by program — some colleges offer in-house review; others partner with external review centers. CvSU's recent 2026 results (per the official site) include: top performing school for Criminologists (Feb 2026), Top 3/Top 10 LEPT performances with six topnotchers (Mar 2026), 7th top performing school for Electronics Engineers (Mar 2026), 97.33% for Medical Technologists (Mar 2026), and 95.56–100% for Architects (2026). Verify review options with your Department Chair after graduation.",
+        "Ang board exam review sa CvSU ay nag-iiba bawat programa — may in-house, may external partner. Malakas ang resulta ng CvSU sa 2026 (ayon sa opisyal na site): top performing school sa Criminologist LE (Peb 2026), Top 3/Top 10 sa LEPT na may anim na topnotchers (Mar 2026), ika-7 top performing school sa Electronics Engineers LE (Mar 2026), 97.33% sa Medical Technologists (Mar 2026), at 95.56–100% sa Architects (2026). Magtanong sa inyong Department Chair pagkatapos ng graduation."
       ]
     },
     {
@@ -3919,9 +3810,9 @@
         "CvSU vs CSU"
       ],
       "responses": [
-        "I won't make a 'better than' comparison between schools — every university has its strengths, and the right fit depends on your program, finances, distance, learning style, and goals. What I can say about CvSU: it is a Philippine state university covered by RA 10931 (free tuition for qualified Filipino undergraduate students), located in Cavite with a Main Campus in Indang and additional campuses across the province, with a wide range of programs in agriculture, engineering and IT, education, business, arts and sciences, and others. For verified specifics — accreditations, board pass rates, employment outcomes — please check https://cvsu.edu.ph and CHED's published data.",
-        "I won't rank CvSU against other schools — fit depends on your program, finances, distance, and goals. CvSU is a Philippine SUC, covered by RA 10931, with a main campus in Indang and additional campuses, offering a wide range of programs. Check https://cvsu.edu.ph for verified specifics.",
-        "Hindi ko ikinukumpara ang CvSU sa ibang paaralan — depende sa programa, pinansyal, distansya, at layunin ang tamang piliin. Ang CvSU ay isang state university (SUC) na sakop ng RA 10931, nasa Cavite, at may iba't ibang programa. Tingnan ang https://cvsu.edu.ph para sa detalye."
+        "I won't make a 'better than' comparison between schools — every university has its strengths, and the right fit depends on your program, finances, distance, learning style, and goals. What I can say about CvSU (verified from its official site): it is a Philippine state university covered by RA 10931 (free tuition for qualified Filipino undergraduate students), with 11 campuses across Cavite and close to 100 curricular programs. It holds AACCUP Institutional Accreditation Level III (and was recognized as the second top performing state university with the highest number of Level III accredited programs), is ISO 9001:2015 certified, earned a 3-star QS rating, and ranked 217th in the WURI 2026 Top 500 Global Innovative Universities, 197th in the 2026 HE Higher Education Ranking, and 1001-1500th in the Times Higher Education (THE) Sustainability Impact Ratings 2026 (improved from 1501+ in 2024-2025). For further specifics — program accreditations, board pass rates — check https://cvsu.edu.ph and CHED's published data.",
+        "I won't rank CvSU against other schools — fit depends on your program, finances, distance, and goals. Verified facts about CvSU: a Philippine SUC covered by RA 10931, 11 campuses across Cavite, close to 100 programs, AACCUP Institutional Accreditation Level III, ISO 9001:2015 certified, QS 3 Stars, 217th in WURI 2026, 197th in the 2026 HE Higher Education Ranking, and 1001-1500th in the THE Sustainability Impact Ratings 2026 (up from 1501+). Check https://cvsu.edu.ph for specifics.",
+        "Hindi ko ikinukumpara ang CvSU sa ibang paaralan — depende sa programa, pinansyal, distansya, at layunin ang tamang piliin. Mga beripikadong detalye tungkol sa CvSU: isang state university (SUC) na sakop ng RA 10931, may 11 campus sa Cavite at halos 100 programa, may AACCUP Institutional Accreditation Level III, ISO 9001:2015 certified, QS 3 Stars, ika-217 sa WURI 2026, ika-197 sa 2026 HE Higher Education Ranking, at 1001-1500th sa THE Sustainability Impact Ratings 2026 (mula sa 1501+). Tingnan ang https://cvsu.edu.ph para sa detalye."
       ]
     },
     {
@@ -4176,6 +4067,53 @@
       "responses": [
         "VISITOR ACCOMMODATIONS (Public Affairs and Communications Office / PACO):\n\nWHO MAY AVAIL: Any external agency or group (G2B, G2C, G2G).\n\nREQUIREMENTS:\n- Request letter addressed to the University President\n- Accomplished Pre-visit Form (PACO-QF-05)\n\nPROCESS:\n1. Submit the letter of request to the Office of the University President (OUP).\n2. PACO sends an acknowledgment receipt and provides the Pre-Visit Form.\n3. Complete the Pre-Visit Form and submit it to PACO.\n4. PACO coordinates with relevant offices (~4 days).\n5. PACO confirms the final schedule.\n6. Visit the university on the scheduled date — PACO and other offices accommodate the guests.\n\nFEES: None.\nPROCESSING TIME: ~5 days, 8 minutes (depends on length of visit).\nSource: CvSU Citizen's Charter 2026 — PACO, p.51.",
         "Para makapunta sa CvSU bilang visiting agency: magpadala ng request letter sa Office of the University President at sagutan ang Pre-Visit Form ng PACO. Mag-coordinate ang PACO sa mga office (around 4 days), kumpirmahin ang schedule, at puntahan sa nakatakdang araw. Libre. (Citizen's Charter 2026, p.51)"
+      ]
+    },
+    {
+      "tag": "university_officials",
+      "description": "Who leads CvSU — president, vice presidents, board of regents, key officials.",
+      "active": true,
+      "patterns": [
+        "who is the president of CvSU",
+        "who is the CvSU president",
+        "CvSU president 2026",
+        "who leads CvSU",
+        "CvSU administration",
+        "pangulo ng CvSU",
+        "sino ang presidente ng CvSU",
+        "head of CvSU",
+        "CvSU university officials",
+        "who is the chancellor of CvSU",
+        "CvSU president",
+        "university president of CvSU",
+        "president of Cavite State University",
+        "who is the university president",
+        "sino ang pangulo ng CvSU",
+        "CvSU vice presidents",
+        "who are the vice presidents of CvSU",
+        "CvSU officials",
+        "officials of CvSU",
+        "who runs CvSU",
+        "CvSU board of regents",
+        "board of regents CvSU",
+        "CvSU board secretary",
+        "secretary of the board of regents CvSU",
+        "VP for academic affairs CvSU",
+        "vice president for research CvSU",
+        "CvSU leadership",
+        "university administration CvSU",
+        "sino ang mga opisyal ng CvSU",
+        "mga opisyal ng CvSU",
+        "who is in charge of CvSU",
+        "current president of CvSU",
+        "CvSU key officials",
+        "Dr. Nuestro CvSU",
+        "president Nuestro"
+      ],
+      "responses": [
+        "The University President of Cavite State University is Dr. Ma. Agnes P. Nuestro. Per the official CvSU site, the Vice Presidents include Dr. Cristina M. Signo (Vice President for Academic Affairs), Dr. Melbourne R. Talactac (Vice President for Research, Innovation and Extension), Mr. John Xavier B. Nepomuceno (Vice President for Administrative and Support Services), and Dr. Almira G. Magcawas (Vice President for Business and Resource Generation). CvSU is governed by a Board of Regents, whose Secretary is Ms. Catherine J. Quiñones (Office of the Board Secretary, 2nd Floor, Administration Building, Indang — obs@cvsu.edu.ph). The full CvSU Key Officials list is published under the Transparency Seal on https://cvsu.edu.ph; designations change over time, so please verify the current roster there.",
+        "CvSU's University President is Dr. Ma. Agnes P. Nuestro, supported by Vice Presidents Dr. Cristina M. Signo (Academic Affairs), Dr. Melbourne R. Talactac (Research, Innovation and Extension), Mr. John Xavier B. Nepomuceno (Administrative and Support Services), and Dr. Almira G. Magcawas (Business and Resource Generation), under the governance of the Board of Regents (Board Secretary: Ms. Catherine J. Quiñones, obs@cvsu.edu.ph). See the CvSU Key Officials list under the Transparency Seal at https://cvsu.edu.ph for the current roster.",
+        "Ang Pangulo ng Cavite State University ay si Dr. Ma. Agnes P. Nuestro. Ang mga Vice President ay sina Dr. Cristina M. Signo (Academic Affairs), Dr. Melbourne R. Talactac (Research, Innovation and Extension), G. John Xavier B. Nepomuceno (Administrative and Support Services), at Dr. Almira G. Magcawas (Business and Resource Generation). Pinamamahalaan ang CvSU ng Board of Regents (Board Secretary: Bb. Catherine J. Quiñones, obs@cvsu.edu.ph). Tingnan ang CvSU Key Officials sa Transparency Seal sa https://cvsu.edu.ph para sa kasalukuyang listahan."
       ]
     }
   ]

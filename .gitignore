@@ -20,3 +20,11 @@ Thumbs.db
 # SQLite runtime artifacts — never commit
 data/*.db-shm
 data/*.db-wal
+
+# Timestamped backups written by patch/retrain scripts
+*.bak_*
+*.backup_*
+models/nn_backup_*/
+
+# Generated site-RAG corpus (synced from the deployment-local portal)
+docs/site_corpus.txt

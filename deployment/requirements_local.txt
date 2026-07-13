@@ -17,3 +17,6 @@ keras==3.14.0
 requests==2.33.1
 httpx==0.28.1
 anthropic>=0.40.0
+
+# PostgreSQL driver (used when DATABASE_URL is set; SQLite needs no extra dep)
+psycopg[binary]==3.3.4

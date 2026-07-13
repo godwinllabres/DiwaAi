@@ -44,7 +44,7 @@ except ImportError:
     NLU_AVAILABLE = False
 
 # Citizens' Charter retrieval tier (document tier of the hybrid brain)
-from . import charter_rag
+from . import charter_rag, intent_retrieval, site_rag
 
 # TensorFlow imports (optional - graceful fallback if not available)
 try:
@@ -507,7 +507,7 @@ class ScopeGate:
 
     REFUSAL_MESSAGES = [
         "I can only help with questions about Cavite State University — programs, admissions, fees, scholarships, campus services, and policies. Is there something CvSU-related I can help with?",
-        "That's outside my scope. I'm DIWA, the CvSU Digital Intelligent Web Assistant — I focus on Cavite State University topics like enrollment, courses, scholarships, and campus information. What would you like to know about CvSU?",
+        "That's outside my scope. I'm Sevi, the CvSU virtual assistant — I focus on Cavite State University topics like enrollment, courses, scholarships, and campus information. What would you like to know about CvSU?",
         "I'm not able to answer that — I'm built to help with CvSU-related questions only (admissions, programs, fees, campus services). Please ask me something about Cavite State University.",
     ]
 
@@ -837,7 +837,7 @@ class HybridChatbot:
     def _system_prompt_text() -> str:
         """Compact system prompt passed to the local LLM for deep-fallback answers."""
         return (
-            "You are DIWA, the Digital Intelligent Web Assistant for Cavite State University. "
+            "You are Sevi, the virtual assistant for Cavite State University. "
             "Answer questions about academic programs, admissions, fees, scholarships, "
             "campus services, and university policies concisely and accurately. "
             "If you are unsure, say so and direct the user to the relevant CvSU office. "
@@ -875,9 +875,176 @@ class HybridChatbot:
             context.append({"role": "assistant", "content": turn["bot_response"]})
         return context
 
+    @staticmethod
+    def _grounded_prompt(user_input: str, grounding: list, suggestion: Optional[str] = None) -> str:
+        """Evidence-gated prompt for the LLM tier.
+
+        grounding: [(score, citation, text, corpus_label), ...] best-first.
+        With evidence, the LLM must answer from the excerpts and cite them;
+        without, it must say it doesn't have the information instead of
+        improvising — optionally pointing at the nearest intent topic.
+        """
+        hint = f' If helpful, invite the user to ask about "{suggestion}".' if suggestion else ""
+        if not grounding:
+            return (
+                "No official CvSU excerpt matched this question. Answer only from the "
+                "conversation context and your CvSU scope; if you do not know the answer, "
+                "say you don't have that information and point the user to "
+                f"https://cvsu.edu.ph — do not guess.{hint}\n\nQuestion: {user_input}"
+            )
+        excerpts = "\n\n".join(f"[{cite}]\n{text[:700]}" for _, cite, text, _ in grounding)
+        return (
+            "Excerpts from official CvSU sources are provided below. Base your answer ONLY "
+            "on these excerpts and the conversation context, and mention the bracketed "
+            "source you used. If the excerpts do not contain the answer, say you don't have "
+            "that information and point the user to https://cvsu.edu.ph — do not guess."
+            f"{hint}\n\n{excerpts}\n\nQuestion: {user_input}"
+        )
+
+    def _intent_retrieval_result(
+        self, user_input: str, nb_intent: Optional[str]
+    ) -> Optional[Tuple[str, str, float]]:
+        """Step 2.5 body — (intent, response, score) when a pattern match is
+        strong enough to serve, else None.
+
+        Guards: char-gram cosine rewards lexical look-alikes, so a sub-0.80
+        match must agree with NB's top (sub-threshold) guess, and questions
+        about other schools never short-circuit here. Also gated by the same
+        Nonsense/Scope checks Step 3/3.5 use: char n-grams are robust to
+        injected profanity/instruction text wrapped around a real question
+        ("gago ka ba, candidate for graduation" still lexically resembles the
+        graduation_requirements patterns even though NB/NN both correctly
+        decline it below their thresholds), so without this gate a query the
+        NonsenseGate is designed to always block could still get a normal
+        curated answer through the pattern-similarity path.
+        """
+        ir_index = intent_retrieval.get_index()
+        if ir_index is None or intent_retrieval.mentions_other_school(user_input):
+            return None
+        if not (self.nonsense_gate.allows(user_input)[0] and self.scope_gate.allows(user_input)[0]):
+            return None
+        match = ir_index.retrieve(user_input)
+        if match is None or match.intent not in self.responses_map:
+            return None
+        agrees = match.score >= intent_retrieval.MATCH_MIN_SCORE and match.intent == nb_intent
+        if match.score < intent_retrieval.HIGH_MATCH_SCORE and not agrees:
+            return None
+        self.model_usage_stats["intent_retrieval_used"] = (
+            self.model_usage_stats.get("intent_retrieval_used", 0) + 1
+        )
+        return match.intent, random.choice(self.responses_map[match.intent]), match.score
+
+    @staticmethod
+    def _cross_corpus_rank_key(bigram_hits: int, score: float, floor: float) -> Tuple[int, float]:
+        """Ranking key comparable across charter/site's independently-fit
+        TF-IDF spaces.
+
+        Raw cosine scores from two separately-fit TfidfVectorizers are NOT on
+        the same scale — a topically irrelevant passage from one corpus can
+        numerically outscore a genuinely relevant passage from the other
+        (observed: a Citizens' Charter passage on the Main Campus at 0.208
+        lost to an unrelated site news article at 0.217). Rank on bigram
+        phrase-match count first (both corpora compute it identically — the
+        more direct relevance signal), then on score normalized to "multiples
+        of that corpus's own calibration floor" as a tiebreak, instead of raw
+        magnitude.
+        """
+        return bigram_hits, (score / floor if floor else score)
+
+    def _gather_grounding(self, user_input: str) -> Tuple[list, str, Optional[str]]:
+        """Collect LLM grounding passages from the charter and site corpora.
+
+        Returns (grounding, model_label_suffix, nearest_intent_suggestion)
+        where grounding is [(score, citation, text, corpus), ...] ranked
+        best-first via _cross_corpus_rank_key, capped at 3.
+        """
+        ranked = []  # (rank_key, score, citation, text, corpus)
+        charter_index = charter_rag.get_index()
+        if charter_index is not None:
+            for p in charter_index.retrieve(user_input, k=3)[:2]:
+                if p.score >= charter_rag.AUGMENT_MIN_SCORE:
+                    key = self._cross_corpus_rank_key(p.bigram_hits, p.score, charter_rag.AUGMENT_MIN_SCORE)
+                    ranked.append((key, p.score, p.citation(), p.text, "charter"))
+        site_index = site_rag.get_index()
+        if site_index is not None:
+            for p in site_index.retrieve(user_input, k=3)[:2]:
+                if p.score >= site_rag.AUGMENT_MIN_SCORE:
+                    key = self._cross_corpus_rank_key(p.bigram_hits, p.score, site_rag.AUGMENT_MIN_SCORE)
+                    ranked.append((key, p.score, p.citation(), p.text, "site"))
+        ranked.sort(key=lambda r: r[0], reverse=True)
+        grounding = [(score, cite, text, corpus) for _, score, cite, text, corpus in ranked[:3]]
+        corpora = {g[3] for g in grounding}
+        if corpora == {"charter", "site"}:
+            suffix = " (charter+site-grounded)"
+        elif corpora == {"charter"}:
+            suffix = " (charter-grounded)"
+        elif corpora == {"site"}:
+            suffix = " (site-grounded)"
+        else:
+            suffix = ""
+        suggestion = None
+        ir_index = intent_retrieval.get_index()
+        if ir_index is not None:
+            near = ir_index.retrieve(user_input)
+            if near:
+                suggestion = near.intent.replace("_", " ")
+        return grounding, suffix, suggestion
+
+    def _verbatim_document_reply(
+        self, user_input: str
+    ) -> Optional[Tuple[str, str, float, str]]:
+        """Step 3.5 body — best verbatim charter/site passage, or None.
+
+        Gated by BOTH gates (nonsense + scope) so gibberish or off-topic
+        queries can't dredge up an arbitrary quote, by stricter score
+        thresholds than the augmentation path, and by >= 1 bigram hit.
+        """
+        if not (self.nonsense_gate.allows(user_input)[0] and self.scope_gate.allows(user_input)[0]):
+            return None
+        best = None  # (rank_key, score, intent_tag, reply, model_label, stat_key)
+        charter_index = charter_rag.get_index()
+        if charter_index is not None:
+            passages = charter_index.retrieve(user_input, k=1)
+            if (
+                passages
+                and passages[0].score >= charter_rag.QUOTE_MIN_SCORE
+                and passages[0].bigram_hits >= 1
+            ):
+                key = self._cross_corpus_rank_key(
+                    passages[0].bigram_hits, passages[0].score, charter_rag.QUOTE_MIN_SCORE
+                )
+                best = (
+                    key, passages[0].score, "charter_info",
+                    charter_rag.verbatim_reply(passages[0]),
+                    "Charter RAG", "charter_rag_used",
+                )
+        site_index = site_rag.get_index()
+        if site_index is not None:
+            passages = site_index.retrieve(user_input, k=1)
+            if (
+                passages
+                and passages[0].score >= site_rag.QUOTE_MIN_SCORE
+                and passages[0].bigram_hits >= 1
+            ):
+                key = self._cross_corpus_rank_key(
+                    passages[0].bigram_hits, passages[0].score, site_rag.QUOTE_MIN_SCORE
+                )
+                if best is None or key > best[0]:
+                    best = (
+                        key, passages[0].score, "site_info",
+                        site_rag.verbatim_reply(passages[0]),
+                        "Site RAG", "site_rag_used",
+                    )
+        if best is None:
+            return None
+        _, score, tag, reply, label, stat = best
+        self.model_usage_stats[stat] = self.model_usage_stats.get(stat, 0) + 1
+        return tag, reply, score, label
+
     def predict(self, user_input: str, user_id: str = None, skip_intents: bool = False) -> Tuple[str, str, float, str, dict]:
         """
-        Hierarchical prediction: NB → NN → Local LLM → static fallback.
+        Hierarchical prediction: NB → NN → intent retrieval → LLM
+        (charter+site grounded) → verbatim documents → static fallback.
 
         skip_intents: bypass the NB/NN tiers and go straight to the deep
         tiers (charter RAG + LLM). Used for context-rewritten queries (e.g.
@@ -906,6 +1073,15 @@ class HybridChatbot:
                 self.model_usage_stats["neural_network_used"] += 1
                 return nn_intent, response, nn_confidence, "Neural Network", nlu_data
 
+            # Step 2.5: Intent retrieval — soft lexical match over the intent
+            # patterns corpus. Catches phrasings the classifiers under-score
+            # ("complete list of courses": NB 0.28 / NN 0.37) and serves the
+            # curated response with no LLM latency.
+            served = self._intent_retrieval_result(user_input, nb_intent)
+            if served is not None:
+                intent, response, score = served
+                return intent, response, score, "Intent Retrieval", nlu_data
+
         # Step 3: LLM fallback — fires only when NB+NN are both below threshold
         if self.llm and self.llm.available:
             # NonsenseGate first: catches gibberish, profanity, and
@@ -922,18 +1098,13 @@ class HybridChatbot:
                 self.model_usage_stats["scope_gate_blocked"] += 1
                 return self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, f"ScopeGate ({reason})", nlu_data
 
-            # Charter RAG augmentation — when the Citizens' Charter has a
-            # passage relevant to the question, hand it to the LLM so the
-            # answer is grounded in the official document (with a page cite)
-            # instead of general knowledge.
-            charter_suffix = ""
-            llm_input = user_input
-            charter_index = charter_rag.get_index()
-            if charter_index is not None:
-                passages = charter_index.retrieve(user_input, k=3)
-                if passages and passages[0].score >= charter_rag.AUGMENT_MIN_SCORE:
-                    llm_input = charter_rag.augment_prompt(user_input, passages[:2])
-                    charter_suffix = " (charter-grounded)"
+            # Official-source grounding — gather the best passages from BOTH
+            # corpora (Citizens' Charter + official website) and hand them to
+            # the LLM with an evidence-gated instruction: answer only from
+            # the excerpts, cite the bracketed source, and say so when they
+            # don't contain the answer instead of improvising.
+            grounding, charter_suffix, suggestion = self._gather_grounding(user_input)
+            llm_input = self._grounded_prompt(user_input, grounding, suggestion)
 
             llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id))
             # LLM emitted the refusal token → out of scope per the model's own judgment
@@ -947,34 +1118,14 @@ class HybridChatbot:
                 provider_label = "Claude LLM" if isinstance(self.llm, ClaudeLLM) else "Local LLM"
                 return self.FALLBACK_INTENT, llm_reply, 0.0, f"{provider_label}{charter_suffix}", nlu_data
 
-        # Step 3.5: Charter RAG verbatim tier — no LLM (or it returned
-        # nothing), but the Citizens' Charter has a strongly-matching passage.
-        # Quote it with a page citation instead of shrugging. Gated by BOTH
-        # gates (nonsense + scope) so gibberish or off-topic queries can't
-        # dredge up an arbitrary quote, and by a stricter score threshold
-        # than the augmentation path.
-        charter_index = charter_rag.get_index()
-        if (
-            charter_index is not None
-            and self.nonsense_gate.allows(user_input)[0]
-            and self.scope_gate.allows(user_input)[0]
-        ):
-            passages = charter_index.retrieve(user_input, k=1)
-            if (
-                passages
-                and passages[0].score >= charter_rag.QUOTE_MIN_SCORE
-                and passages[0].bigram_hits >= 1
-            ):
-                self.model_usage_stats["charter_rag_used"] = (
-                    self.model_usage_stats.get("charter_rag_used", 0) + 1
-                )
-                return (
-                    "charter_info",
-                    charter_rag.verbatim_reply(passages[0]),
-                    passages[0].score,
-                    "Charter RAG",
-                    nlu_data,
-                )
+        # Step 3.5: Verbatim document tier — no LLM (or it returned nothing),
+        # but the Citizens' Charter or the official website has a strongly-
+        # matching passage. Quote the best one with a citation instead of
+        # shrugging.
+        served = self._verbatim_document_reply(user_input)
+        if served is not None:
+            tag, reply, score, label = served
+            return tag, reply, score, label, nlu_data
 
         # Step 4: Static fallback
         self.model_usage_stats["fallback_used"] += 1
@@ -1102,7 +1253,7 @@ class HybridChatbot:
     @property
     def system_instructions(self) -> str:
         """System instructions for the chatbot"""
-        return """You are DIWA, the Digital Intelligent Web Assistant for Cavite State University - a helpful, friendly guide.
+        return """You are Sevi, the virtual assistant for Cavite State University - a helpful, friendly guide.
 
 1. IDENTITY AND SCOPE
 - You serve prospective students, current students, parents, faculty, and the general public.

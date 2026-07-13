@@ -5,7 +5,7 @@ FastAPI-based endpoint for integration with web applications
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from enum import Enum
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Annotated, Optional, List, Dict, Any, Literal, Union
@@ -28,6 +28,8 @@ from nltk.stem import WordNetLemmatizer
 from .logger import ChatLogger
 # Import hybrid chatbot
 from .hybrid_chatbot import HybridChatbot
+from . import intent_retrieval as _intent_retrieval
+from . import site_rag as _site_rag
 # Seasonal topic recommender + intent-onboarding sanitation checks
 from .topic_recommender import recommend as _recommend_topics
 from .intent_curation import sanitize_candidate_intent as _sanitize_candidate_intent
@@ -44,6 +46,7 @@ from .ais_mcp import circuit_status as _ais_circuit_status
 from . import safety as _safety
 from . import campus_context as _campus
 from . import charter_rag as _charter_rag
+from . import intent_grounding as _intent_grounding
 # Phase 2A Wave 2 — per-user AIS authentication for write actions.
 from . import auth_ais as _ais_auth
 
@@ -63,7 +66,7 @@ lemmatizer = WordNetLemmatizer()
 # SYSTEM INSTRUCTIONS / AGENT PERSONALITY
 # ============================================================================
 SYSTEM_INSTRUCTIONS = """
-You are DIWA, the Digital Intelligent Web Assistant for Cavite State University - a helpful, friendly guide.
+You are Sevi, the virtual assistant for Cavite State University - a helpful, friendly guide.
 
 1. IDENTITY AND SCOPE
 - You serve prospective students, current students, parents, faculty, and the general public.
@@ -330,6 +333,89 @@ def _trim_to_sentence(head: str, max_chars: int) -> str:
     return head[:max_chars].rstrip() + "…"
 
 
+# Office phone numbers are withheld from chat output (data-privacy: numbers
+# rot and the official directory stays authoritative). Crisis-line responses
+# (mental_health_immediate) are exempt — stripping NCMH/Hopeline numbers from
+# them would be harmful. Short emergency codes (911, 1553) never match these
+# patterns. SafetyGate refusals short-circuit before redaction ever runs.
+_PHONE_REDACT_EXEMPT_INTENTS = {"mental_health_immediate"}
+_PHONE_RE = re.compile(
+    r"(?:\+63[\s.-]?\d{2,3}[\s.-]?\d{3}[\s.-]?\d{4}"  # +63 998 937 2020
+    r"|\(0\d{1,2}\)\s?\d{3,4}[\s.-]?\d{4}"            # (046) 862-0850 / (02) 8804-4673
+    r"|\b09\d{2}[\s.-]?\d{3}[\s.-]?\d{4}\b)"          # 0917 558-4673 / 09171234567
+)
+_PHONE_PLACEHOLDER = "[see the official directory at cvsu.edu.ph]"
+# Collapses "[see …] / [see …]" chains left by multi-number listings.
+_PHONE_COLLAPSE_RE = re.compile(
+    re.escape(_PHONE_PLACEHOLDER)
+    + r"(?:\s*[/,;]?\s*(?:or\s+)?"
+    + re.escape(_PHONE_PLACEHOLDER)
+    + r")+"
+)
+
+
+def _redact_office_phones(text: str, intent: Optional[str] = None) -> str:
+    if not text or intent in _PHONE_REDACT_EXEMPT_INTENTS:
+        return text
+    redacted, hits = _PHONE_RE.subn(_PHONE_PLACEHOLDER, text)
+    if hits < 2:  # 0 or 1 replacement — no placeholder chain to collapse
+        return redacted
+    return _PHONE_COLLAPSE_RE.sub(_PHONE_PLACEHOLDER, redacted)
+
+
+# Display formatting — many corpus responses (esp. the Tagalog variants) are a
+# single dense paragraph. The web renderer already handles headings, bullets
+# and paragraphs, so give it structure: sentence-per-block, and colon
+# enumerations ("events: A, B, at C") become bullet lists. Splitting is
+# parenthesis-aware so "(Enero 28–29, 2026, kasama …)" stays intact.
+_ABBREV_TAIL_RE = re.compile(
+    r"\b(?:hal|e\.g|i\.e|etc|No|Blg|Mr|Mrs|Ms|Dr|Engr|Atty|Sta|Sto|s)\.$", re.IGNORECASE
+)
+
+
+def _split_outside_parens(text: str, boundary: str) -> List[str]:
+    """Split on `boundary` ('. ' sentence ends or ', ' list commas) at paren
+    depth 0. Sentence mode skips known abbreviations ("hal.", "No.")."""
+    parts, depth, start, i = [], 0, 0, 0
+    while i < len(text) - 1:
+        ch = text[i]
+        if ch in "([":
+            depth += 1
+        elif ch in ")]":
+            depth = max(0, depth - 1)
+        elif depth == 0 and text[i : i + 2] == boundary:
+            head = text[start : i + (1 if boundary == ". " else 0)]
+            if boundary != ". " or not _ABBREV_TAIL_RE.search(head.rstrip()):
+                parts.append(head.strip())
+                start = i + 2
+        i += 1
+    parts.append(text[start:].strip())
+    return [p for p in parts if p]
+
+
+def _bulletize(sentence: str) -> Optional[str]:
+    """Turn 'intro: A, B, C, at D.' into an intro line + bullet list."""
+    m = re.search(r": (?!\d)", sentence)
+    if not m:
+        return None
+    intro, rest = sentence[: m.start()], sentence[m.end() :]
+    items = _split_outside_parens(rest, ", ")
+    # Only bulletize real enumerations: 3+ items, at least half of them
+    # substantial — keeps "Indang, Cavite"-style addresses as prose.
+    if len(items) < 3 or sum(len(i) >= 12 for i in items) * 2 < len(items):
+        return None
+    # "at Graduation." / "and Graduation" — drop the conjunction on the last item.
+    items[-1] = re.sub(r"^(?:at|and)\s+", "", items[-1], flags=re.IGNORECASE)
+    return intro + ":\n" + "\n".join(f"- {item.rstrip('.')}" for item in items)
+
+
+def _format_display_text(text: str) -> str:
+    if not text or "\n" in text or len(text) < 240:
+        return text  # already structured, or short enough to read as-is
+    sentences = _split_outside_parens(text, ". ")
+    return "\n\n".join(_bulletize(s) or s for s in sentences)
+
+
 def _extract_summary(text: str, max_chars: int = 240) -> str:
     """Pull the first meaningful paragraph or sentence from a response.
 
@@ -367,6 +453,8 @@ class ResponseSource(str, Enum):
     AIS_MCP         = "ais_mcp"
     CONNECTORS_MCP  = "connectors_mcp"
     CHARTER_RAG     = "charter_rag"
+    SITE_RAG        = "site_rag"
+    INTENT_RETRIEVAL = "intent_retrieval"
     FALLBACK        = "fallback"
     REFUSAL         = "refusal"
 
@@ -462,6 +550,17 @@ class ChatContext(BaseModel):
     report: Optional[str] = None
 
 
+class SourceCitation(BaseModel):
+    """Provenance for a curated intent reply — the official document (Citizens'
+    Charter page or official-site URL) the intent's answer is grounded in.
+    Populated from data/intent_sources.json for intent-tier replies; the RAG
+    and LLM tiers already carry citations inside their prose."""
+    kind: Literal["charter", "site"]
+    locator: str                 # charter page number, or site URL
+    label: Optional[str] = None  # doc title for site refs
+    citation: str                # rendered one-line citation
+
+
 class ChatResponse(BaseModel):
     model_config = ConfigDict(protected_namespaces=())
 
@@ -484,6 +583,9 @@ class ChatResponse(BaseModel):
     cards: List[ChatCard] = Field(default_factory=list)
     context: Optional[ChatContext] = None
     suggestions: List[str] = Field(default_factory=list)
+    # Official source(s) backing a curated intent reply — empty for RAG/LLM
+    # tiers (which cite inline) and for refusals/fallback.
+    sources: List[SourceCitation] = Field(default_factory=list)
 
     # Layout hint for the renderer
     display_hint: DisplayHint = DisplayHint.DEFAULT
@@ -607,6 +709,10 @@ def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optiona
         return ResponseSource.CONNECTORS_MCP, None
     if m.startswith("Charter RAG"):
         return ResponseSource.CHARTER_RAG, None
+    if m.startswith("Site RAG"):
+        return ResponseSource.SITE_RAG, None
+    if m.startswith("Intent Retrieval"):
+        return ResponseSource.INTENT_RETRIEVAL, None
     if m.startswith("NonsenseGate"):
         return ResponseSource.REFUSAL, RefusalReason.NONSENSE
     if m.startswith("ScopeGate") or "(out-of-scope)" in m:
@@ -616,6 +722,41 @@ def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optiona
     if m.startswith("Local LLM") or m.startswith("Ollama"):
         return ResponseSource.LLM_LOCAL, None
     return ResponseSource.FALLBACK, None
+
+
+# Tiers that serve a *curated* response with no inline citation — these get an
+# appended "Source:" block + structured `sources` from the per-intent bindings.
+# The RAG/LLM tiers already cite their passages in-prose, so they are excluded.
+_INTENT_TIER_SOURCES = frozenset({
+    ResponseSource.NAIVE_BAYES,
+    ResponseSource.NEURAL_NETWORK,
+    ResponseSource.INTENT_RETRIEVAL,
+})
+
+
+def _intent_grounding_for(
+    intent: Optional[str], source: ResponseSource
+) -> tuple[str, List[SourceCitation]]:
+    """(citation_block_text, sources) for a curated intent reply, else ("", []).
+
+    Only intent-tier replies with a verified binding are cited; everything else
+    (RAG, LLM, refusal, fallback, unbound intents) returns no citation."""
+    if source not in _INTENT_TIER_SOURCES:
+        return "", []
+    index = _intent_grounding.get_index()
+    if index is None:
+        return "", []
+    refs = index.refs_for(intent)
+    if not refs:
+        return "", []
+    cards = [
+        SourceCitation(
+            kind=r.kind, locator=r.locator,
+            label=r.label or None, citation=r.citation(),
+        )
+        for r in refs
+    ]
+    return _intent_grounding.citation_block(refs), cards
 
 
 def _context_from_ais(ctx: Optional[Dict[str, Any]]) -> Optional[ChatContext]:
@@ -922,6 +1063,10 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         response_time_ms=response_time_ms
     )
 
+    # Logged verbatim above (audit trail); redacted for display. The summary
+    # is drawn from the redacted prose; only `text` gets display structuring.
+    response = _redact_office_phones(response, intent)
+
     cards, context, hint = _build_attachments(
         message=request.message,
         intent=intent,
@@ -931,11 +1076,18 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     )
     source, refusal_reason = _classify_source(model_used)
 
+    # Per-intent grounding — append the official source line to the display
+    # text and surface it structurally. Summary/log stay citation-free.
+    cite_block, sources = _intent_grounding_for(intent, source)
+    display_text = _format_display_text(response)
+    if cite_block:
+        display_text += cite_block
+
     return ChatResponse(
         message_id=message_id,
         user_id=request.user_id,
         session_id=request.session_id,
-        text=response,
+        text=display_text,
         summary=_extract_summary(response),
         intent=intent,
         confidence=confidence,
@@ -945,6 +1097,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         context=context,
         suggestions=ais_suggestions or [],
         display_hint=hint,
+        sources=sources,
     )
 
 @app.get("/intents", tags=["Intents"])
@@ -999,6 +1152,23 @@ async def _ollama_local_models() -> List[str]:
         return []
 
 
+_LOGS_DASHBOARD_HTML = Path(__file__).resolve().parent.parent / "web" / "logs_dashboard.html"
+
+
+@app.get("/admin/logs", tags=["Admin"], include_in_schema=False)
+async def logs_dashboard():
+    """Serve the logs dashboard HTML from the API origin.
+
+    Not PIN-gated: the page is a static shell with no secrets, and browsers
+    can't attach the `X-Admin-Pin` header on a plain navigation. Serving it
+    same-origin means the data endpoints (all still PIN-gated) need no CORS
+    exception — open http://<api-host>/admin/logs and enter the PIN in-page.
+    """
+    if not _LOGS_DASHBOARD_HTML.exists():
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+    return FileResponse(_LOGS_DASHBOARD_HTML, media_type="text/html")
+
+
 @app.get("/admin/moderation", tags=["Admin"], dependencies=[Depends(require_admin)])
 async def moderation_stats():
     """SafetyGate counters per category + the last 20 flagged messages
@@ -1032,6 +1202,9 @@ async def admin_status():
                 "available": (idx := _charter_rag.get_index()) is not None,
                 "chunks": len(idx._chunks) if idx else 0,
             }, {}),
+            "intent_grounding": _safe(lambda: (
+                gi.snapshot() if (gi := _intent_grounding.get_index()) else {"available": False}
+            ), {}),
             "usage": _safe(chatbot.get_usage_stats, {}),
         },
         "llm": {**llm, "second_opinion": os.getenv("SAFETY_LLM_SECOND_OPINION", "0") == "1"},
@@ -1358,7 +1531,28 @@ async def reload_model():
         model_dir=MODEL_DIR,
         responses_path=os.path.join(MODEL_DIR, "responses_map.json")
     )
+    # Retrieval tiers read the same artifacts (intents DB, site corpus) —
+    # rebuild them so a retrain/resync is picked up in the same call.
+    _intent_retrieval.reload_index()
+    _site_rag.reload_index()
+    _intent_grounding.reload_index()
     return {"status": "reloaded"}
+
+
+@app.post("/admin/site_corpus/sync", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def sync_site_corpus():
+    """Re-pull the official website into the site-RAG corpus and reindex.
+
+    Fetches posts + pages (with metadata) from the portal named by
+    SITE_CORPUS_URL via the WordPress REST API, rewrites docs/site_corpus.txt,
+    and rebuilds the retrieval index. Gated by `X-Admin-Pin`."""
+    try:
+        stats = await asyncio.to_thread(_site_rag.sync_corpus)
+    except Exception as exc:
+        raise HTTPException(502, f"Site corpus sync failed: {exc}")
+    index = _site_rag.reload_index()
+    stats["index_available"] = index is not None
+    return stats
 
 @app.get("/conversation/{user_id}", tags=["Conversation"])
 async def get_conversation_history(user_id: str):
@@ -1419,6 +1613,10 @@ async def batch_chat(requests: List[ChatRequest]):
             response_time_ms=response_time_ms
         )
 
+        # Logged verbatim above (audit trail); redacted for display. The summary
+        # is drawn from the redacted prose; only `text` gets display structuring.
+        response = _redact_office_phones(response, intent)
+
         cards, context, hint = _build_attachments(
             message=request.message,
             intent=intent,
@@ -1428,11 +1626,16 @@ async def batch_chat(requests: List[ChatRequest]):
         )
         source, refusal_reason = _classify_source(model_used)
 
+        cite_block, sources = _intent_grounding_for(intent, source)
+        display_text = _format_display_text(response)
+        if cite_block:
+            display_text += cite_block
+
         results.append(ChatResponse(
             message_id=message_id,
             user_id=request.user_id,
             session_id=request.session_id,
-            text=response,
+            text=display_text,
             summary=_extract_summary(response),
             intent=intent,
             confidence=confidence,
@@ -1441,6 +1644,7 @@ async def batch_chat(requests: List[ChatRequest]):
             cards=cards,
             context=context,
             display_hint=hint,
+            sources=sources,
         ))
     return {"count": len(results), "results": results}
 
@@ -1466,6 +1670,16 @@ async def get_session_logs(session_id: str):
         "session_id": session_id,
         "message_count": len(history),
         "messages": history
+    }
+
+@app.get("/logs/recent", tags=["Logging"], dependencies=[Depends(require_admin)])
+async def get_recent_logs(limit: int = 20):
+    """Get the most recent messages across all users (dashboard 'Messages' tab)."""
+    limit = max(1, min(limit, 200))
+    messages = chat_logger.get_recent_messages(limit)
+    return {
+        "count": len(messages),
+        "messages": messages
     }
 
 @app.get("/logs/intents", tags=["Logging"], dependencies=[Depends(require_admin)])

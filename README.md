@@ -19,55 +19,36 @@ A production-ready chatbot system for Cavite State University using Naive Bayes 
 
 ```
 SeviAI/
-├── api/                    # FastAPI application & ML models
-│   ├── app.py             # REST API server
-│   ├── hybrid_chatbot.py   # Hybrid intent classifier
-│   └── logger.py          # Chat logging system
+├── app.py                 # Root FastAPI entrypoint (run_server.bat → uvicorn app:app)
+├── hybrid_chatbot.py      # Hybrid NB + NN classifier (imported by api/app.py)
+├── intents_db.py          # JSON ↔ SQLite intents loader/auto-sync
+├── train_naive_bayes.py   # Retrain NB → models/cavsu_classifier.pkl
+├── train_hybrid.py        # Retrain NN → models/nn_model.h5 + thresholds
+├── test_chatbot.py        # Model validation
+├── run_server.bat         # Windows one-click server launcher
+├── render.yaml            # Render.com deployment config
 │
-├── training/              # Model training & testing scripts
-│   ├── train_naive_bayes.py        # NB model training
-│   ├── train_hybrid.py             # Neural Network training
-│   ├── test_intents.py             # Quick intent testing
-│   ├── expand_intents.py           # Auto pattern expansion
-│   ├── api_stress_test.py          # Advanced stress testing
-│   ├── automated_training.py       # Full training pipeline
-│   └── test_chatbot.py             # Model validation
-│
-├── data/                  # Training data
-│   └── CvSU_intents.json # 227 patterns, 23 intents
-│
-├── models/                # Trained ML models
-│   ├── CvSU_classifier.pkl # Naive Bayes pipeline
-│   └── responses_map.json    # Intent-to-response mapping
-│
-├── web/                   # Web interfaces
-│   ├── web_interface.html     # Interactive chat UI
-│   └── logs_dashboard.html    # Real-time analytics
-│
-├── deployment/            # Docker & production setup
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── requirements.txt         # Full dependencies
-│   └── requirements_minimal.txt # Minimal dependencies
-│
-├── docs/                  # Comprehensive documentation
-│   ├── README.md              # This file
-│   ├── SETUP_GUIDE.md         # Quick setup
-│   ├── TRAINING_GUIDE.md      # Training scripts guide
-│   ├── API_README.md          # API endpoints
-│   ├── DOCKER_DEPLOYMENT.md   # Docker deployment
-│   ├── PROJECT_STATUS.md      # Complete project status
-│   └── *.md                   # Other guides
-│
+├── api/                   # FastAPI app modules (app.py, nlu_engine.py, logger.py,
+│                          #   campus_places.py, intent_curation.py, …)
+├── data/                  # cavsu_intents.json (⭐ source of truth), SQLite cache,
+│                          #   map coordinate/waypoint overrides
+├── models/                # Trained artifacts: NB .pkl, NN .h5, tokenizer/encoder,
+│                          #   nn_thresholds.json, responses_map.json
+├── training/              # Training, evaluation & test scripts
+├── scripts/               # Utilities & one-shot tools (seed_db.py, patch_intents.py,
+│                          #   research_feed.py, stress-test .ps1, map_oneoff/)
+├── web/                   # Plain-HTML chat UI + logs dashboard
+├── deployment/            # Dockerfiles, docker-compose, requirements variants
+├── docs/                  # Guides (start with KT_DOCS.md ⭐) + presentations/
 ├── notebooks/             # Jupyter notebooks
-│   └── CvSU_chatbot.ipynb # Full implementation notebook
-│
-├── logs/                  # Runtime logs & analytics
-│   ├── chat_history.db    # SQLite chat database
-│   └── daily_backups/     # JSON backups
-│
-└── README.md              # This file
+├── archive/               # Historical: old test results, data/model backups,
+│                          #   audit snapshots — safe to ignore day-to-day
+└── logs/                  # Runtime chat logs (gitignored)
 ```
+
+> **New to the project?** Read [docs/KT_DOCS.md](docs/KT_DOCS.md) first — it is the
+> knowledge-transfer guide and reflects the current architecture (SQLite intents DB,
+> NN thresholds, LLM fallback). Parts of this README predate those changes.
 
 ---
 

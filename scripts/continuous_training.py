@@ -23,16 +23,27 @@ def log(message: str, log_file: Path = DEFAULT_LOG):
 
 
 def get_intent_statistics(db_path: Path):
-    if not db_path.exists():
-        raise FileNotFoundError(f"Intent log database not found: {db_path}")
+    database_url = os.getenv("DATABASE_URL")
+    if database_url and database_url.startswith(("postgres://", "postgresql://")):
+        # Same env seam as api/logger.py — read intent_stats from Postgres.
+        import psycopg
+        from psycopg.rows import dict_row
 
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+        with psycopg.connect(database_url) as conn:
+            with conn.cursor(row_factory=dict_row) as cursor:
+                cursor.execute("SELECT intent, count, avg_confidence FROM intent_stats")
+                rows = cursor.fetchall()
+    else:
+        if not db_path.exists():
+            raise FileNotFoundError(f"Intent log database not found: {db_path}")
 
-    cursor.execute("SELECT intent, count, avg_confidence FROM intent_stats")
-    rows = cursor.fetchall()
-    conn.close()
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT intent, count, avg_confidence FROM intent_stats")
+        rows = cursor.fetchall()
+        conn.close()
 
     stats = []
     total_count = 0

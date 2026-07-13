@@ -1,0 +1,86 @@
+[
+  {
+    "name": "naive_bayes",
+    "display_name": "Naive Bayes (NLU Enhanced)",
+    "kind": "classifier",
+    "artifacts": ["models/CvSU_classifier.pkl"]
+  },
+  {
+    "name": "neural_network",
+    "display_name": "Neural Network (LSTM)",
+    "kind": "classifier",
+    "artifacts": [
+      "models/nn_model.h5",
+      "models/nn_thresholds.json",
+      "models/nn_temperature.json",
+      "models/nn_label_encoder.pkl",
+      "models/nn_tokenizer.pkl"
+    ]
+  },
+  {
+    "name": "llm_local",
+    "display_name": "Local LLM (Ollama)",
+    "kind": "llm",
+    "version_env": "OLLAMA_MODEL",
+    "version_default": "qwen3:8b"
+  },
+  {
+    "name": "llm_claude",
+    "display_name": "Claude LLM",
+    "kind": "llm",
+    "version_env": "CLAUDE_MODEL"
+  },
+  {
+    "name": "charter_rag",
+    "display_name": "Citizens' Charter RAG",
+    "kind": "retrieval",
+    "artifacts": ["docs/citizens_charter_text.txt"]
+  },
+  {
+    "name": "site_rag",
+    "display_name": "Official Website RAG",
+    "kind": "retrieval",
+    "artifacts": ["docs/site_corpus.txt"]
+  },
+  {
+    "name": "intent_retrieval",
+    "display_name": "Intent Pattern Retrieval",
+    "kind": "retrieval",
+    "artifacts": ["data/cavsu_intents.db"]
+  },
+  {
+    "name": "ais_mcp",
+    "display_name": "AIS MCP Bridge",
+    "kind": "bridge"
+  },
+  {
+    "name": "connectors_mcp",
+    "display_name": "Connectors MCP Bridge",
+    "kind": "bridge"
+  },
+  {
+    "name": "safety_gate",
+    "display_name": "SafetyGate",
+    "kind": "gate"
+  },
+  {
+    "name": "nonsense_gate",
+    "display_name": "NonsenseGate",
+    "kind": "gate"
+  },
+  {
+    "name": "scope_gate",
+    "display_name": "ScopeGate",
+    "kind": "gate"
+  },
+  {
+    "name": "campus_context",
+    "display_name": "CampusContext Router",
+    "kind": "gate"
+  },
+  {
+    "name": "unknown",
+    "display_name": "Unknown / Legacy",
+    "kind": "other"
+  }
+]

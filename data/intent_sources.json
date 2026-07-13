@@ -1,0 +1,106 @@
+{
+ "bindings": {
+  "about_cvsu": [
+   {
+    "kind": "charter",
+    "locator": "2",
+    "label": "",
+    "score": 0.1506
+   },
+   {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/history/",
+    "label": "History",
+    "score": 2.1294
+   }
+  ],
+  "add_drop_subjects": [
+   {
+    "kind": "charter",
+    "locator": "936",
+    "label": "",
+    "score": 0.1998
+   }
+  ],
+  "admissions_exam": [
+   {
+    "kind": "charter",
+    "locator": "1694",
+    "label": "",
+    "score": 0.149
+   }
+  ],
+  "admissions_requirements": [
+   {
+    "kind": "charter",
+    "locator": "1694",
+    "label": "",
+    "score": 0.2989
+   }
+  ],
+  "alumni": [
+   {
+    "kind": "charter",
+    "locator": "638",
+    "label": "",
+    "score": 0.5535
+   }
+  ],
+  "counseling_procedure": [
+   {
+    "kind": "charter",
+    "locator": "603",
+    "label": "",
+    "score": 0.4838
+   }
+  ],
+  "criminology_program": [
+   {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/03/16/cvsu-is-top-performing-school-in-february-2026-licensure-exam-for-criminologists/",
+    "label": "CvSU is top performing school in February 2026 licensure exam for Criminologists",
+    "score": 0.7402
+   }
+  ],
+  "cvsu_email_account": [
+   {
+    "kind": "charter",
+    "locator": "1817",
+    "label": "",
+    "score": 0.1343
+   }
+  ],
+  "enrollment_problems": [
+   {
+    "kind": "charter",
+    "locator": "997",
+    "label": "",
+    "score": 0.1449
+   }
+  ],
+  "enrollment_procedure": [
+   {
+    "kind": "charter",
+    "locator": "997",
+    "label": "",
+    "score": 0.1335
+   }
+  ],
+  "events": [
+   {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/blog/2026/02/02/cvsu-marks-120th-founding-anniversary/",
+    "label": "CvSU marks 120th founding anniversary",
+    "score": 0.1885
+   }
+  ],
+  "foreign_student_admission": [
+   {
+    "kind": "charter",
+    "locator": "581",
+    "label": "",
+    "score": 0.5251
+   }
+  ]
+ }
+}
