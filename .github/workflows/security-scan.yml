@@ -1,0 +1,157 @@
+name: Security Scan
+
+# Proof-of-concept DevSecOps pipeline: three complementary scanners.
+#
+#   sonarqube   code quality + SAST   (SonarCloud, or self-hosted SonarQube)
+#   checkmarx   SAST + IaC            (KICS runs free; Checkmarx One gated on secrets)
+#   snyk        dependency SCA        (needs SNYK_TOKEN — free tier works)
+#
+# Jobs that need an account/token skip cleanly when the secret is absent, so
+# this workflow is green out of the box and lights up as credentials are added.
+#
+# Secrets used (add under repo Settings → Secrets and variables → Actions):
+#   SONAR_TOKEN    SonarCloud token (or self-hosted SonarQube token)
+#   SONAR_HOST_URL only for self-hosted SonarQube (omit for SonarCloud)
+#   CX_TENANT / CX_BASE_URI / CX_CLIENT_ID / CX_CLIENT_SECRET  Checkmarx One
+#   SNYK_TOKEN     Snyk API token
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write   # for SARIF upload to the GitHub Security tab
+
+jobs:
+  # ------------------------------------------------------------------ Sonar
+  sonarqube:
+    name: SonarQube (quality + SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # blame data for accurate new-code detection
+
+      - name: Check for token
+        id: gate
+        run: |
+          if [ -n "${{ secrets.SONAR_TOKEN }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::SONAR_TOKEN not set — SonarQube scan skipped (PoC gate)."
+          fi
+
+      - name: SonarQube scan
+        if: steps.gate.outputs.enabled == 'true'
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          # For self-hosted SonarQube set SONAR_HOST_URL secret; SonarCloud
+          # needs only the token plus sonar.organization in the properties file.
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  # -------------------------------------------------------------- Checkmarx
+  # KICS is Checkmarx's open-source engine (IaC + secrets detection): runs
+  # with no account, so the PoC always produces real findings. The full
+  # Checkmarx One SAST job activates when tenant credentials exist.
+  checkmarx-kics:
+    name: Checkmarx KICS (IaC + secrets)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: KICS scan (Dockerfiles, compose, workflows)
+        uses: checkmarx/kics-github-action@v2.1.13
+        with:
+          path: deployment,.github/workflows
+          output_path: kics-results
+          output_formats: json,sarif
+          # PoC: report, don't break the build. Tighten to high once triaged.
+          fail_on: none
+
+      - name: Upload SARIF to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: kics-results/results.sarif
+          category: kics
+
+      - name: Attach raw results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kics-results
+          path: kics-results
+
+  checkmarx-one:
+    name: Checkmarx One (SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for credentials
+        id: gate
+        run: |
+          if [ -n "${{ secrets.CX_CLIENT_SECRET }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Checkmarx One credentials not set — SAST scan skipped (PoC gate)."
+          fi
+
+      - name: Checkmarx One scan
+        if: steps.gate.outputs.enabled == 'true'
+        uses: checkmarx/ast-github-action@v.2.3.19
+        with:
+          base_uri: ${{ secrets.CX_BASE_URI }}
+          cx_tenant: ${{ secrets.CX_TENANT }}
+          cx_client_id: ${{ secrets.CX_CLIENT_ID }}
+          cx_client_secret: ${{ secrets.CX_CLIENT_SECRET }}
+          additional_params: --scan-types sast,sca --report-format sarif
+
+  # ------------------------------------------------------------------- Snyk
+  snyk:
+    name: Snyk (dependency SCA)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for token
+        id: gate
+        run: |
+          if [ -n "${{ secrets.SNYK_TOKEN }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::SNYK_TOKEN not set — Snyk scan skipped (PoC gate)."
+          fi
+
+      - name: Set up Python
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps for manifest resolution
+        if: steps.gate.outputs.enabled == 'true'
+        run: pip install -r deployment/requirements_local.txt
+
+      - name: Snyk test (report, don't fail — PoC)
+        if: steps.gate.outputs.enabled == 'true'
+        uses: snyk/actions/python-3.10@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --file=deployment/requirements_local.txt --sarif-file-output=snyk.sarif
+
+      - name: Upload SARIF to GitHub Security tab
+        if: steps.gate.outputs.enabled == 'true'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk.sarif
+          category: snyk
