@@ -18,15 +18,31 @@ RUN apt-get update && apt-get install -y \
 COPY deployment/requirements_local.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download NLTK data (both punkt and punkt_tab for compatibility across NLTK versions)
-RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('wordnet'); nltk.download('omw-1.4')"
+# Download NLTK data (both punkt and punkt_tab for compatibility across NLTK versions).
+# NLTK_DATA points at a world-readable shared dir — without it the download
+# (running as root at build time) lands in /root/nltk_data, unreadable by the
+# runtime user, forcing a network re-download at every container creation.
+# The mkdir must come first: nltk.download() only targets $NLTK_DATA when the
+# directory already exists. wordnet/omw ship zipped and their index never
+# unzips them, but nltk.data.find('corpora/wordnet') — which
+# api/hybrid_chatbot.py calls at import — only resolves the unzipped
+# directory, so extract them here.
+ENV NLTK_DATA=/usr/local/share/nltk_data
+RUN mkdir -p "$NLTK_DATA" \
+    && python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('wordnet'); nltk.download('omw-1.4')" \
+    && python -m zipfile -e "$NLTK_DATA/corpora/wordnet.zip" "$NLTK_DATA/corpora/" \
+    && python -m zipfile -e "$NLTK_DATA/corpora/omw-1.4.zip" "$NLTK_DATA/corpora/"
 
 # Copy application (see .dockerignore — excludes .env, logs/, backups, test artifacts)
 COPY . .
 
 # Run as a non-root user. The app writes to /app/data (SQLite intents cache)
-# and /app/logs at runtime, so hand ownership to the runtime user.
-RUN useradd --create-home --uid 10001 appuser \
+# and /app/logs at runtime, so hand ownership to the runtime user. logs/ is
+# .dockerignore'd so COPY never creates it — mkdir it here, otherwise the
+# compose named volume mounted at /app/logs is seeded root-owned and appuser
+# can't write to it.
+RUN mkdir -p /app/data /app/logs \
+    && useradd --create-home --uid 10001 appuser \
     && chown -R appuser:appuser /app
 USER appuser
 
