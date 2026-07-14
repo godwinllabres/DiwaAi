@@ -564,8 +564,10 @@ class SourceCitation(BaseModel):
 class ChatResponse(BaseModel):
     model_config = ConfigDict(protected_namespaces=())
 
-    # Identity
-    message_id: int
+    # Identity — message_id is None when logging is best-effort and didn't yield
+    # an id (log_chat swallows errors and returns None); a chat reply must never
+    # 500 just because the audit write failed.
+    message_id: Optional[int] = None
     user_id: Optional[str] = None
     session_id: Optional[str] = None
 
