@@ -1,0 +1,61 @@
+Instantiating HybridChatbot (new models)...
+
+============================================================
+  HIERARCHICAL HYBRID CHATBOT INITIALIZATION
+============================================================
+
+[1/4] Loading Naive Bayes (Fast)...
+[OK] Naive Bayes loaded
+
+[2/4] Loading Neural Network (Accurate)...
+[OK] Loaded adaptive thresholds for 125 intents
+[OK] Temperature scaling T=2.9972
+[OK] Neural Network loaded
+
+[3/4] Loading responses...
+[OK] Loaded 125 intent responses
+[OK] Advanced NLU Engine loaded
+[OK] Campus glossary built — 41 entries injected into LLM prompt
+
+[4/5] Initialising local LLM fallback (Ollama)...
+[OK] Local LLM ready  model=llama3.2:3b  url=http://localhost:11434
+[INFO] Warming up local LLM in background (first load can take 60-120s)...
+
+[5/5] Initialization complete
+============================================================
+Strategy: NB threshold = 65%
+         NN threshold = adaptive per-intent
+         LLM fallback = enabled (provider=ollama)
+============================================================
+
+Loaded 125 intents. Running 268 questions...
+
+[OK] Local LLM warm-up complete — ready for user queries
+  10/268
+  20/268
+  30/268
+  40/268
+  50/268
+  60/268
+  70/268
+  80/268
+  90/268
+  100/268
+  110/268
+  120/268
+  130/268
+  140/268
+  150/268
+  160/268
+  170/268
+  180/268
+  190/268
+  200/268
+  210/268
+  220/268
+  230/268
+  240/268
+  250/268
+  260/268
+
+done: 268 responses (0 errors) -> data/eval/responses_prompt.json

@@ -177,14 +177,12 @@
     {
       "tag": "about_cvsu",
       "patterns": [
-        "CvSU",
         "What is Cavite State University",
         "About CvSU",
         "History of CvSU",
         "When was CvSU founded",
         "CvSU background",
         "What is CvSU",
-        "Who is CvSU",
         "Information about CvSU",
         "Cavite State University history",
         "When did CvSU become a university",
@@ -293,9 +291,9 @@
         "Does CvSU have a research extension program?"
       ],
       "responses": [
-        "Cavite State University (CvSU) traces its roots to 1906 as the Indang Intermediate School, with the American Thomasites as the first teachers. It was renamed Indang Farm School in 1918, Indang Rural High School in 1927, and Don Severino National Agriculture School in 1958. In 1964, the school was converted into a State College via Republic Act 3917 and became known as Don Severino Agricultural College (DSAC). On January 22, 1998, by virtue of Republic Act No. 8468, DSAC was converted into Cavite State University. In 2001, the Cavite College of Fisheries (CACOF) in Naic and the Cavite College of Arts and Trade (CCAT) in Rosario were integrated into the University via CHED Memo No. 27 s. 2000. At present, CvSU has 11 campuses in the province; the main campus — the Don Severino delas Alas Campus in Indang, Cavite — is approximately 70 hectares in land area. The University offers close to 100 curricular programs in the undergraduate and graduate levels, with more than 25,000 students and 1,200 faculty and staff from all campuses. CvSU celebrated its 120th founding anniversary in January 2026. Source: https://cvsu.edu.ph/history/ The main campus is named after Don Severino de las Alas — an educator, public servant, and philanthropist who donated a portion of his land for the establishment of the intermediate school that became CvSU. The University is led by President Dr. Ma. Agnes P. Nuestro. It is accredited by TESDA as a Trade and Testing Venue, designated by the Department of Agriculture as the National Center for Research and Development for Coffee and Urban Agriculture, and hosts the Southern Tagalog Agriculture Research and Development Consortium (STARDEC), the Affiliated Renewable Energy Center for Region IV-A, and the Regional ICT Center for Region IV-A. CvSU holds AACCUP Institutional Accreditation Level III (recognized as the second top performing state university with the highest number of Level III accredited programs), is ISO 9001:2015 certified, ranked 217th in the WURI 2026 Top 500 Global Innovative Universities, and recently received its 5th IPOPHL Platinum Award and first Palladium Award — the first higher education institution in the Southern Tagalog Region to do so — plus top eco-friendly school honors from the DENR-EMB.",
-        "CvSU started in 1906 as the Indang Intermediate School (under the American Thomasites). It went through several name changes — Indang Farm School (1918), Indang Rural High School (1927), Don Severino National Agriculture School (1958) — before becoming a State College in 1964 via RA 3917 (Don Severino Agricultural College, DSAC). On January 22, 1998, RA 8468 converted DSAC into Cavite State University. CACOF (Naic) and CCAT (Rosario) joined CvSU in 2001 via CHED Memo No. 27 s. 2000. Today CvSU has 11 campuses in Cavite, close to 100 curricular programs, and more than 25,000 students — and it celebrated its 120th founding anniversary in January 2026. Source: https://cvsu.edu.ph/history/ CvSU is led by President Dr. Ma. Agnes P. Nuestro, holds AACCUP Institutional Accreditation Level III, is ISO 9001:2015 certified, ranked 217th in WURI 2026, is the DA-designated National Center for Research and Development for Coffee and Urban Agriculture, and received its 5th IPOPHL Platinum and first Palladium Award in 2026. The main campus honors Don Severino de las Alas, the educator and philanthropist who donated the land where the school began.",
-        "Ang CvSU ay nagsimula noong 1906 bilang Indang Intermediate School, sa panahon ng mga Thomasites. Naging Indang Farm School ito noong 1918, Indang Rural High School noong 1927, Don Severino National Agriculture School noong 1958, at naging State College noong 1964 sa bisa ng RA 3917. Noong Enero 22, 1998, sa bisa ng RA 8468, ito ay naging Cavite State University. Noong 2001, ang CACOF (Naic) at CCAT (Rosario) ay isinama sa CvSU sa pamamagitan ng CHED Memo No. 27 s. 2000. Sa kasalukuyan, may 11 campus ang CvSU sa lalawigan; ang Main Campus (Don Severino delas Alas Campus, humigit-kumulang 70 ektarya) ay nasa Indang, Cavite. May halos 100 curricular programs at mahigit 25,000 estudyante ang Pamantasan, at ipinagdiwang nito ang ika-120 anibersaryo ng pagkakatatag noong Enero 2026. Pinagmulan: https://cvsu.edu.ph/history/ Ang pangulo ng CvSU ay si Dr. Ma. Agnes P. Nuestro. Ang Pamantasan ay may AACCUP Institutional Accreditation Level III, ISO 9001:2015 certified, ika-217 sa WURI 2026, itinalagang National Center for Research and Development for Coffee and Urban Agriculture ng Department of Agriculture, at tumanggap ng ika-5 IPOPHL Platinum Award at kauna-unahang Palladium Award. Ang Main Campus ay ipinangalan kay Don Severino de las Alas — isang guro, lingkod-bayan, at pilantropo na nagkaloob ng bahagi ng kanyang lupain para sa paaralang naging CvSU."
+        "Cavite State University (CvSU) traces its roots to 1906 as the Indang Intermediate School, with the American Thomasites as the first teachers. It was renamed Indang Farm School in 1918, Indang Rural High School in 1927, and Don Severino National Agriculture School in 1958. In 1964, the school was converted into a State College via Republic Act 3917 and became known as Don Severino Agricultural College (DSAC). On January 22, 1998, by virtue of Republic Act No. 8468, DSAC was converted into Cavite State University. In 2001, the Cavite College of Fisheries (CACOF) in Naic and the Cavite College of Arts and Trade (CCAT) in Rosario were integrated into the University via CHED Memo No. 27 s. 2000. At present, CvSU has 11 campuses in the province; the main campus — the Don Severino delas Alas Campus in Indang, Cavite — is approximately 70 hectares in land area. The University offers close to 100 curricular programs in the undergraduate and graduate levels, with more than 25,000 students and 1,200 faculty and staff from all campuses. CvSU celebrated its 120th founding anniversary in January 2026. Source: https://cvsu.edu.ph/history/ The main campus is named after Don Severino de las Alas — an educator, public servant, and philanthropist who donated a portion of his land for the establishment of the intermediate school that became CvSU. The University is led by President Dr. Ma. Agnes P. Nuestro. It is accredited by TESDA as a Trade and Testing Venue, designated by the Department of Agriculture as the National Center for Research and Development for Coffee and Urban Agriculture, and hosts the Southern Tagalog Agriculture Research and Development Consortium (STARDEC), the Affiliated Renewable Energy Center for Region IV-A, and the Regional ICT Center for Region IV-A. CvSU holds AACCUP Institutional Accreditation Level III (recognized as the second top performing state university with the highest number of Level III accredited programs), is ISO 9001:2015 certified, ranked 217th in the WURI 2026 Top 500 Global Innovative Universities, and recently received its 5th IPOPHL Platinum Award and first Palladium Award — the first higher education institution in the Southern Tagalog Region to do so — plus top eco-friendly school honors from the DENR-EMB. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "CvSU started in 1906 as the Indang Intermediate School (under the American Thomasites). It went through several name changes — Indang Farm School (1918), Indang Rural High School (1927), Don Severino National Agriculture School (1958) — before becoming a State College in 1964 via RA 3917 (Don Severino Agricultural College, DSAC). On January 22, 1998, RA 8468 converted DSAC into Cavite State University. CACOF (Naic) and CCAT (Rosario) joined CvSU in 2001 via CHED Memo No. 27 s. 2000. Today CvSU has 11 campuses in Cavite, close to 100 curricular programs, and more than 25,000 students — and it celebrated its 120th founding anniversary in January 2026. Source: https://cvsu.edu.ph/history/ CvSU is led by President Dr. Ma. Agnes P. Nuestro, holds AACCUP Institutional Accreditation Level III, is ISO 9001:2015 certified, ranked 217th in WURI 2026, is the DA-designated National Center for Research and Development for Coffee and Urban Agriculture, and received its 5th IPOPHL Platinum and first Palladium Award in 2026. The main campus honors Don Severino de las Alas, the educator and philanthropist who donated the land where the school began. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "Ang CvSU ay nagsimula noong 1906 bilang Indang Intermediate School, sa panahon ng mga Thomasites. Naging Indang Farm School ito noong 1918, Indang Rural High School noong 1927, Don Severino National Agriculture School noong 1958, at naging State College noong 1964 sa bisa ng RA 3917. Noong Enero 22, 1998, sa bisa ng RA 8468, ito ay naging Cavite State University. Noong 2001, ang CACOF (Naic) at CCAT (Rosario) ay isinama sa CvSU sa pamamagitan ng CHED Memo No. 27 s. 2000. Sa kasalukuyan, may 11 campus ang CvSU sa lalawigan; ang Main Campus (Don Severino delas Alas Campus, humigit-kumulang 70 ektarya) ay nasa Indang, Cavite. May halos 100 curricular programs at mahigit 25,000 estudyante ang Pamantasan, at ipinagdiwang nito ang ika-120 anibersaryo ng pagkakatatag noong Enero 2026. Pinagmulan: https://cvsu.edu.ph/history/ Ang pangulo ng CvSU ay si Dr. Ma. Agnes P. Nuestro. Ang Pamantasan ay may AACCUP Institutional Accreditation Level III, ISO 9001:2015 certified, ika-217 sa WURI 2026, itinalagang National Center for Research and Development for Coffee and Urban Agriculture ng Department of Agriculture, at tumanggap ng ika-5 IPOPHL Platinum Award at kauna-unahang Palladium Award. Ang Main Campus ay ipinangalan kay Don Severino de las Alas — isang guro, lingkod-bayan, at pilantropo na nagkaloob ng bahagi ng kanyang lupain para sa paaralang naging CvSU. (Ang mga ranking, resulta ng board exam, at accreditation level na nabanggit dito ay hanggang 2026 — tingnan ang pinakabago sa https://cvsu.edu.ph.)"
       ]
     },
     {
@@ -349,7 +347,16 @@
         "CvSU guiding principles",
         "why truth excellence service",
         "CvSU motto explained",
-        "Ano ang misyon ng CvSU?"
+        "Ano ang misyon ng CvSU?",
+        "vision of Cavite State University",
+        "what is the vision of CvSU",
+        "CvSU's vision statement",
+        "mission of Cavite State University",
+        "mission and vision of CvSU",
+        "goals of CvSU",
+        "vision mission and goals of CvSU",
+        "misyon ng CvSU",
+        "pananaw ng CvSU"
       ],
       "responses": [
         "Per the official University page, CvSU is mandated under Section 2 of Republic Act No. 8468 to \"primarily provide advance instruction and professional training in agriculture, science and technology, education and other related fields, undertake research and extension services, and provide progressive leadership in these areas.\" Its vision is \"The premier university in historic Cavite globally recognized for excellence in character development, academics, research, innovation and sustainable community engagement,\" and its mission states that \"Cavite State University shall provide excellent, equitable and relevant educational opportunities in the arts, sciences and technology through quality instruction and responsive research and development activities. It shall produce professional, skilled and morally upright individuals for global competitiveness.\" The University's core values are Truth, Integrity, Excellence, and Service, and its quality policy commits to the highest standards of education, values its stakeholders, strives for continual improvement of its products and services, and upholds the University's tenets of Truth, Excellence, and Service to produce globally competitive and morally upright individuals. Source: https://cvsu.edu.ph/mandate-mission-vision-core-values-quality-policy/ The University's current strategy is CvSU ASCEND — Advancing Sustained Change and Excellence for National Development — its 2025-2028 Strategic Framework, implemented through the four-year IDEAL Plan: Inclusive and Accessible Education; Dynamic and Competitive Research and Innovation; Empowered Communities and Stronger Partnership; Accountable and Client-Centered Governance; and Long-Lasting Sustainable Resource Generation — as CvSU continues its journey toward becoming a Premier Global University.",
@@ -578,8 +585,8 @@
         "all programs offered by CvSU"
       ],
       "responses": [
-        "CvSU offers close to 100 curricular programs in the undergraduate and graduate levels (per the official site) across multiple colleges, and the Colleges page (https://cvsu.edu.ph/category/colleges/) lists the current offerings. Verified examples include the College of Arts and Sciences (BA Journalism, BA English Language Studies, BS Applied Mathematics, and BS Biology, among others); the College of Engineering and Information Technology (engineering programs plus BS Computer Science and BS Information Technology); the College of Agriculture, Food, Environment and Natural Resources (agriculture, food technology, and natural-resources programs, with BS Food Technology holding AACCUP Level IV re-accredited status as of 2026); the College of Tourism and Hospitality Management (BS Hospitality Management and BS Tourism Management); and the College of Nursing (BS Nursing, BS Medical Technology — AACCUP Level III re-accredited in 2026 — and Diploma in Midwifery), alongside the College of Economics, Management, and Development Studies, the College of Sports, Physical Education and Recreation, the College of Veterinary Medicine and Biomedical Sciences, the College of Medicine, the College of Advanced and Professional Studies, and the Graduate School / Open Learning College. Availability differs per campus — for example, BS Computer Science at Carmona and BS Information Technology at Cavite City are AACCUP Level III re-accredited (2026). For the complete current list, see https://cvsu.edu.ph/category/colleges/.",
-        "May halos 100 curricular programs ang CvSU sa undergraduate at graduate levels, sa iba't ibang college: CAS (BA Journalism, BA English Language Studies, BS Applied Math, BS Biology), CEIT (engineering + BSCS + BSIT), CAFENR (agrikultura at food technology — Level IV re-accredited ang BS Food Technology, 2026), CTHM (BSHM, BSTM), College of Nursing (BSN, BS Med Tech, Diploma in Midwifery), CEMDS, College of Sports/PE/Recreation, College of Veterinary Medicine and Biomedical Sciences, College of Medicine, CAPS, at Graduate School / Open Learning College. Tingnan ang https://cvsu.edu.ph/category/colleges/."
+        "CvSU offers close to 100 curricular programs in the undergraduate and graduate levels (per the official site) across multiple colleges, and the Colleges page (https://cvsu.edu.ph/category/colleges/) lists the current offerings. Verified examples include the College of Arts and Sciences (BA Journalism, BA English Language Studies, BS Applied Mathematics, and BS Biology, among others); the College of Engineering and Information Technology (engineering programs plus BS Computer Science and BS Information Technology); the College of Agriculture, Food, Environment and Natural Resources (agriculture, food technology, and natural-resources programs, with BS Food Technology holding AACCUP Level IV re-accredited status as of 2026); the College of Tourism and Hospitality Management (BS Hospitality Management and BS Tourism Management); and the College of Nursing (BS Nursing, BS Medical Technology — AACCUP Level III re-accredited in 2026 — and Diploma in Midwifery), alongside the College of Economics, Management, and Development Studies, the College of Sports, Physical Education and Recreation, the College of Veterinary Medicine and Biomedical Sciences, the College of Medicine, the College of Advanced and Professional Studies, and the Graduate School / Open Learning College. Availability differs per campus — for example, BS Computer Science at Carmona and BS Information Technology at Cavite City are AACCUP Level III re-accredited (2026). For the complete current list, see https://cvsu.edu.ph/category/colleges/. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "May halos 100 curricular programs ang CvSU sa undergraduate at graduate levels, sa iba't ibang college: CAS (BA Journalism, BA English Language Studies, BS Applied Math, BS Biology), CEIT (engineering + BSCS + BSIT), CAFENR (agrikultura at food technology — Level IV re-accredited ang BS Food Technology, 2026), CTHM (BSHM, BSTM), College of Nursing (BSN, BS Med Tech, Diploma in Midwifery), CEMDS, College of Sports/PE/Recreation, College of Veterinary Medicine and Biomedical Sciences, College of Medicine, CAPS, at Graduate School / Open Learning College. Tingnan ang https://cvsu.edu.ph/category/colleges/. (Ang mga ranking, resulta ng board exam, at accreditation level na nabanggit dito ay hanggang 2026 — tingnan ang pinakabago sa https://cvsu.edu.ph.)"
       ]
     },
     {
@@ -612,9 +619,9 @@
         "Meron bang BSIT sa CvSU?"
       ],
       "responses": [
-        "CvSU's College of Engineering and Information Technology (CEIT) offers computing programs at the Main Campus, including BS Computer Science and BS Information Technology, alongside the College's engineering programs. Computing programs are also offered at satellite campuses — per the official site, BS Computer Science at the Carmona Campus and BS Information Technology at the Cavite City Campus both earned AACCUP Level III re-accredited status in 2026. The official CEIT page is at https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/. For availability at other campuses, verify via https://cvsu.edu.ph/category/campuses/.",
-        "CvSU's CEIT (College of Engineering and Information Technology) at the Main Campus offers BS Computer Science and BS Information Technology, along with engineering programs. Satellite campuses also offer computing: BS Computer Science at Carmona and BS Information Technology at Cavite City (both AACCUP Level III re-accredited, 2026). Source: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/",
-        "Ang CEIT (College of Engineering and Information Technology) sa Main Campus ng CvSU ay nag-aalok ng BS Computer Science, BS Information Technology, at mga engineering programs. May computing programs din sa satellite campuses: BSCS sa Carmona at BSIT sa Cavite City (parehong AACCUP Level III re-accredited, 2026). Pinagmulan: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/"
+        "CvSU's College of Engineering and Information Technology (CEIT) offers computing programs at the Main Campus, including BS Computer Science and BS Information Technology, alongside the College's engineering programs. Computing programs are also offered at satellite campuses — per the official site, BS Computer Science at the Carmona Campus and BS Information Technology at the Cavite City Campus both earned AACCUP Level III re-accredited status in 2026. The official CEIT page is at https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/. For availability at other campuses, verify via https://cvsu.edu.ph/category/campuses/. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "CvSU's CEIT (College of Engineering and Information Technology) at the Main Campus offers BS Computer Science and BS Information Technology, along with engineering programs. Satellite campuses also offer computing: BS Computer Science at Carmona and BS Information Technology at Cavite City (both AACCUP Level III re-accredited, 2026). Source: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/ (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "Ang CEIT (College of Engineering and Information Technology) sa Main Campus ng CvSU ay nag-aalok ng BS Computer Science, BS Information Technology, at mga engineering programs. May computing programs din sa satellite campuses: BSCS sa Carmona at BSIT sa Cavite City (parehong AACCUP Level III re-accredited, 2026). Pinagmulan: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/ (Ang mga ranking, resulta ng board exam, at accreditation level na nabanggit dito ay hanggang 2026 — tingnan ang pinakabago sa https://cvsu.edu.ph.)"
       ]
     },
     {
@@ -1076,7 +1083,17 @@
         "Is there a career fair at CvSU?",
         "Kailan ang foundation day ng CvSU?",
         "cvsu foundation day 2026",
-        "When is the CvSU foundation day?"
+        "When is the CvSU foundation day?",
+        "when is the WELA conference",
+        "WELA 2026 schedule",
+        "when and where is the conference",
+        "AACCUP conference at CvSU",
+        "conference date and venue",
+        "when did CvSU hold the conference",
+        "kailan ang kumperensya sa CvSU",
+        "saan gaganapin ang kumperensya",
+        "upcoming conference at CvSU",
+        "anibersaryo ng pagkakatatag ng CvSU"
       ],
       "responses": [
         "CvSU holds events and activities throughout the academic year, though exact dates change annually. Major annual events include the Founding Anniversary held in late January — CvSU celebrated its 120th on January 28-29, 2026, including the annual Gawad Laya at Diwa and Partners' Recognition Day — along with Foundation Week, the University Sportsfest, cultural festivals, research forums and symposia, the graduation ceremony, and freshman orientation. Academic events include research symposia, college-specific weeks, inter-college competitions, and international conferences hosted at the CvSU International Convention Center, such as the 4th International Conference on Women Empowerment and Leadership in Agriculture, Aquatic and Natural Resources (WELA 2026) on March 17-19, 2026. Athletic competitions include the SCUAA (State Colleges and Universities Athletic Association) meets plus inter-campus games and regional/national tournaments, while community outreach and volunteerism/service initiatives are coordinated under the LINGAP CvSU program of the Extension Services Center. Students can also join academic, cultural, religious, sports, and honor-society student organizations. For current event schedules and verified announcements, please visit https://cvsu.edu.ph and follow the official CvSU pages linked from the website.",
@@ -3012,9 +3029,9 @@
         "CvSU College of Agriculture"
       ],
       "responses": [
-        "CvSU offers a range of agriculture-related undergraduate programs through the College of Agriculture, Food, Environment and Natural Resources (CAFENR) — typically including BS Agriculture (with specializations), BS Agricultural and Biosystems Engineering, BS Animal Science, BS Food Technology, BS Forestry/Agroforestry, BS Agribusiness Management, and related programs. Notably, BS Food Technology (CAFENR) holds AACCUP Level IV re-accredited status (2026), and CvSU is designated by the Department of Agriculture as the National Center for Research and Development for Coffee and Urban Agriculture. Availability varies per campus. For the current program list and the campuses that offer each, please check https://cvsu.edu.ph.",
-        "CvSU's agriculture cluster, under CAFENR (College of Agriculture, Food, Environment and Natural Resources), typically offers BS Agriculture (with specializations), BS Agricultural Engineering, BS Animal Science, BS Food Technology (AACCUP Level IV re-accredited, 2026), BS Agroforestry, and BS Agribusiness. CvSU is also the DA-designated National Center for Research and Development for Coffee and Urban Agriculture. Availability varies per campus.",
-        "Ang CvSU ay nag-aalok ng mga agriculture-related programs sa ilalim ng CAFENR (College of Agriculture, Food, Environment and Natural Resources): BS Agriculture, BS Agricultural Engineering, BS Animal Science, BS Food Technology (AACCUP Level IV re-accredited, 2026), atbp. Ang CvSU rin ang itinalagang National Center for Research and Development for Coffee and Urban Agriculture ng Department of Agriculture. Ang availability ay nag-iiba bawat campus."
+        "CvSU offers a range of agriculture-related undergraduate programs through the College of Agriculture, Food, Environment and Natural Resources (CAFENR) — typically including BS Agriculture (with specializations), BS Agricultural and Biosystems Engineering, BS Animal Science, BS Food Technology, BS Forestry/Agroforestry, BS Agribusiness Management, and related programs. Notably, BS Food Technology (CAFENR) holds AACCUP Level IV re-accredited status (2026), and CvSU is designated by the Department of Agriculture as the National Center for Research and Development for Coffee and Urban Agriculture. Availability varies per campus. For the current program list and the campuses that offer each, please check https://cvsu.edu.ph. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "CvSU's agriculture cluster, under CAFENR (College of Agriculture, Food, Environment and Natural Resources), typically offers BS Agriculture (with specializations), BS Agricultural Engineering, BS Animal Science, BS Food Technology (AACCUP Level IV re-accredited, 2026), BS Agroforestry, and BS Agribusiness. CvSU is also the DA-designated National Center for Research and Development for Coffee and Urban Agriculture. Availability varies per campus. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "Ang CvSU ay nag-aalok ng mga agriculture-related programs sa ilalim ng CAFENR (College of Agriculture, Food, Environment and Natural Resources): BS Agriculture, BS Agricultural Engineering, BS Animal Science, BS Food Technology (AACCUP Level IV re-accredited, 2026), atbp. Ang CvSU rin ang itinalagang National Center for Research and Development for Coffee and Urban Agriculture ng Department of Agriculture. Ang availability ay nag-iiba bawat campus. (Ang mga ranking, resulta ng board exam, at accreditation level na nabanggit dito ay hanggang 2026 — tingnan ang pinakabago sa https://cvsu.edu.ph.)"
       ]
     },
     {
@@ -3037,9 +3054,9 @@
         "engineering accreditation"
       ],
       "responses": [
-        "Engineering at CvSU is housed in the College of Engineering and Information Technology (CEIT). Disciplines evidenced on the official site include civil engineering, electrical engineering, and electronics engineering, alongside architecture, BS Computer Science, and BS Information Technology. CvSU's recent 2026 licensure results per the official site: 42 new licensed Civil Engineers (46.15% overall performance, March 2026); Registered Electrical Engineers at 57.58% (Main Campus) and 75.93% (CCAT Campus) in April 2026, with Jan Joseph Belen Lopez placing in the top eight nationwide; and an 82.14% passing rate in the March 2026 Electronics Engineers Licensure Examination, ranking CvSU 7th among top performing schools. Engineering programs accept STEM-strand SHS graduates and require the Grade 11 Report Card for evaluation during admission. For the complete current list of engineering programs by campus, see https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/.",
-        "CvSU's engineering programs sit within CEIT — including civil, electrical, and electronics engineering plus architecture. 2026 results: 42 new Civil Engineers (46.15%), REELE 57.58% (Main) / 75.93% (CCAT) with a top-eight placer, and 82.14% in Electronics Engineering (7th top performing school). STEM-strand SHS graduates are accepted; the Grade 11 Report Card is required at admission. Source: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/",
-        "Ang mga engineering programs ng CvSU ay nasa CEIT — kabilang ang civil, electrical, at electronics engineering pati architecture. Mga resulta sa 2026: 42 bagong Civil Engineers (46.15%), REELE 57.58% (Main) / 75.93% (CCAT) na may top-eight placer, at 82.14% sa Electronics Engineering (ika-7 top performing school). Tumatanggap ng STEM-strand graduates at kailangan ng Grade 11 Report Card sa admission. Pinagmulan: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/"
+        "Engineering at CvSU is housed in the College of Engineering and Information Technology (CEIT). Disciplines evidenced on the official site include civil engineering, electrical engineering, and electronics engineering, alongside architecture, BS Computer Science, and BS Information Technology. CvSU's recent 2026 licensure results per the official site: 42 new licensed Civil Engineers (46.15% overall performance, March 2026); Registered Electrical Engineers at 57.58% (Main Campus) and 75.93% (CCAT Campus) in April 2026, with Jan Joseph Belen Lopez placing in the top eight nationwide; and an 82.14% passing rate in the March 2026 Electronics Engineers Licensure Examination, ranking CvSU 7th among top performing schools. Engineering programs accept STEM-strand SHS graduates and require the Grade 11 Report Card for evaluation during admission. For the complete current list of engineering programs by campus, see https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "CvSU's engineering programs sit within CEIT — including civil, electrical, and electronics engineering plus architecture. 2026 results: 42 new Civil Engineers (46.15%), REELE 57.58% (Main) / 75.93% (CCAT) with a top-eight placer, and 82.14% in Electronics Engineering (7th top performing school). STEM-strand SHS graduates are accepted; the Grade 11 Report Card is required at admission. Source: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/ (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "Ang mga engineering programs ng CvSU ay nasa CEIT — kabilang ang civil, electrical, at electronics engineering pati architecture. Mga resulta sa 2026: 42 bagong Civil Engineers (46.15%), REELE 57.58% (Main) / 75.93% (CCAT) na may top-eight placer, at 82.14% sa Electronics Engineering (ika-7 top performing school). Tumatanggap ng STEM-strand graduates at kailangan ng Grade 11 Report Card sa admission. Pinagmulan: https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/ (Ang mga ranking, resulta ng board exam, at accreditation level na nabanggit dito ay hanggang 2026 — tingnan ang pinakabago sa https://cvsu.edu.ph.)"
       ]
     },
     {
@@ -3061,9 +3078,9 @@
         "teaching license"
       ],
       "responses": [
-        "CvSU offers teacher-education programs commonly including: Bachelor of Elementary Education (BEEd) and Bachelor of Secondary Education (BSEd) with majors in English, Mathematics, Science, Filipino, Social Studies, TLE, and similar fields. Bachelor of Special Needs Education (BSNEd), Bachelor of Early Childhood Education (BECEd), and Bachelor of Technical Vocational Teacher Education (BTVTE, at the CCAT Campus) may also be offered at certain campuses. Graduates take the Licensure Examination for Professional Teachers (LEPT) administered by the PRC — and CvSU performs strongly: in the March 2026 LEPT, the Main Campus was a Top 10 performing school for the Elementary Level (95.06%), the Imus Campus ranked Top 3 for the Secondary Level (98.36%), the Silang Campus Top 7 (96.97%), and six CvSU graduates were topnotchers. Program availability and majors vary per campus. Source: https://cvsu.edu.ph",
-        "CvSU offers BEEd and BSEd (with majors), plus BSNEd/BECEd/BTVTE at certain campuses. Graduates take the PRC LEPT — where CvSU excels: in March 2026, Main Campus was Top 10 (Elementary, 95.06%), Imus Top 3 (Secondary, 98.36%), Silang Top 7 (96.97%), with six topnotchers.",
-        "Ang CvSU ay nag-aalok ng BEEd at BSEd (na may iba't ibang major), at BSNEd/BECEd/BTVTE sa ilang campus. Ang mga graduates ay kumukuha ng LEPT — kung saan mahusay ang CvSU: noong Marso 2026, Top 10 ang Main Campus (Elementary, 95.06%), Top 3 ang Imus (Secondary, 98.36%), Top 7 ang Silang (96.97%), at may anim na topnotchers."
+        "CvSU offers teacher-education programs commonly including: Bachelor of Elementary Education (BEEd) and Bachelor of Secondary Education (BSEd) with majors in English, Mathematics, Science, Filipino, Social Studies, TLE, and similar fields. Bachelor of Special Needs Education (BSNEd), Bachelor of Early Childhood Education (BECEd), and Bachelor of Technical Vocational Teacher Education (BTVTE, at the CCAT Campus) may also be offered at certain campuses. Graduates take the Licensure Examination for Professional Teachers (LEPT) administered by the PRC — and CvSU performs strongly: in the March 2026 LEPT, the Main Campus was a Top 10 performing school for the Elementary Level (95.06%), the Imus Campus ranked Top 3 for the Secondary Level (98.36%), the Silang Campus Top 7 (96.97%), and six CvSU graduates were topnotchers. Program availability and majors vary per campus. Source: https://cvsu.edu.ph (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "CvSU offers BEEd and BSEd (with majors), plus BSNEd/BECEd/BTVTE at certain campuses. Graduates take the PRC LEPT — where CvSU excels: in March 2026, Main Campus was Top 10 (Elementary, 95.06%), Imus Top 3 (Secondary, 98.36%), Silang Top 7 (96.97%), with six topnotchers. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "Ang CvSU ay nag-aalok ng BEEd at BSEd (na may iba't ibang major), at BSNEd/BECEd/BTVTE sa ilang campus. Ang mga graduates ay kumukuha ng LEPT — kung saan mahusay ang CvSU: noong Marso 2026, Top 10 ang Main Campus (Elementary, 95.06%), Top 3 ang Imus (Secondary, 98.36%), Top 7 ang Silang (96.97%), at may anim na topnotchers. (Ang mga ranking, resulta ng board exam, at accreditation level na nabanggit dito ay hanggang 2026 — tingnan ang pinakabago sa https://cvsu.edu.ph.)"
       ]
     },
     {
@@ -3083,9 +3100,9 @@
         "Is there a Medical Technology course at CvSU?"
       ],
       "responses": [
-        "CvSU's College of Nursing offers BS Nursing, BS Medical Technology, and Diploma in Midwifery (per the official Colleges listing). BS Medical Technology holds AACCUP Level III re-accredited status (2026), and CvSU posted a 97.33% overall performance rating (73 of 75 examinees) in the March 2026 Medical Technologists Licensure Examination — well above the 84.17% national passing rate. Availability and slots may vary per campus and academic year. For the current admission and program details, see https://cvsu.edu.ph/category/colleges/ and the College of Nursing's official page.",
-        "The College of Nursing at CvSU offers BS Nursing, BS Medical Technology (AACCUP Level III re-accredited, 2026), and Diploma in Midwifery. CvSU scored 97.33% in the March 2026 Medical Technologists Licensure Exam (national: 84.17%). See https://cvsu.edu.ph/category/colleges/ for the latest details.",
-        "Ang College of Nursing ng CvSU ay nag-aalok ng BS Nursing, BS Medical Technology (AACCUP Level III re-accredited, 2026), at Diploma in Midwifery. Nakakuha ang CvSU ng 97.33% sa March 2026 Medical Technologists Licensure Exam (pambansa: 84.17%). Para sa kasalukuyang detalye, tingnan ang https://cvsu.edu.ph/category/colleges/."
+        "CvSU's College of Nursing offers BS Nursing, BS Medical Technology, and Diploma in Midwifery (per the official Colleges listing). BS Medical Technology holds AACCUP Level III re-accredited status (2026), and CvSU posted a 97.33% overall performance rating (73 of 75 examinees) in the March 2026 Medical Technologists Licensure Examination — well above the 84.17% national passing rate. Availability and slots may vary per campus and academic year. For the current admission and program details, see https://cvsu.edu.ph/category/colleges/ and the College of Nursing's official page. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "The College of Nursing at CvSU offers BS Nursing, BS Medical Technology (AACCUP Level III re-accredited, 2026), and Diploma in Midwifery. CvSU scored 97.33% in the March 2026 Medical Technologists Licensure Exam (national: 84.17%). See https://cvsu.edu.ph/category/colleges/ for the latest details. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "Ang College of Nursing ng CvSU ay nag-aalok ng BS Nursing, BS Medical Technology (AACCUP Level III re-accredited, 2026), at Diploma in Midwifery. Nakakuha ang CvSU ng 97.33% sa March 2026 Medical Technologists Licensure Exam (pambansa: 84.17%). Para sa kasalukuyang detalye, tingnan ang https://cvsu.edu.ph/category/colleges/. (Ang mga ranking, resulta ng board exam, at accreditation level na nabanggit dito ay hanggang 2026 — tingnan ang pinakabago sa https://cvsu.edu.ph.)"
       ]
     },
     {
@@ -3139,9 +3156,9 @@
         "ano ang CEMDS"
       ],
       "responses": [
-        "CvSU does not have a college named exactly “College of Business Management and Operations.” Business and management programs — including the Bachelor of Science in Business Management (BSBM) and the Bachelor of Science in Business Administration (BSBA) — are offered through the Department of Management under the College of Economics, Management and Development Studies (CEMDS). Per the official site, BS Business Administration at the Carmona and CCAT (Rosario) campuses holds AACCUP Level III re-accredited status (2026). Hospitality and tourism programs (BS Hospitality Management and BS Tourism Management) sit separately under the College of Tourism and Hospitality Management (CTHM), approved as an independent college on September 26, 2024. For the current list of business/management programs and the campuses that offer each, see https://cvsu.edu.ph/category/colleges/.",
-        "Business and management programs at CvSU — BSBM (Bachelor of Science in Business Management) and BSBA (Bachelor of Science in Business Administration) — are offered via the Department of Management under CEMDS (College of Economics, Management and Development Studies); there is no college named “College of Business Management and Operations.” BSBA at the Carmona and CCAT campuses is AACCUP Level III re-accredited (2026). Hospitality/tourism programs are under CTHM. See https://cvsu.edu.ph/category/colleges/ for the current list.",
-        "Walang college sa CvSU na eksaktong tinatawag na “College of Business Management and Operations.” Ang mga business at management programs — kabilang ang BS Business Management (BSBM) at BS Business Administration (BSBA) — ay inaalok sa pamamagitan ng Department of Management sa ilalim ng CEMDS (College of Economics, Management and Development Studies). Ang BSBA sa Carmona at CCAT ay AACCUP Level III re-accredited (2026). Ang hospitality at tourism programs ay nasa ilalim ng CTHM. Tingnan ang https://cvsu.edu.ph/category/colleges/."
+        "CvSU does not have a college named exactly “College of Business Management and Operations.” Business and management programs — including the Bachelor of Science in Business Management (BSBM) and the Bachelor of Science in Business Administration (BSBA) — are offered through the Department of Management under the College of Economics, Management and Development Studies (CEMDS). Per the official site, BS Business Administration at the Carmona and CCAT (Rosario) campuses holds AACCUP Level III re-accredited status (2026). Hospitality and tourism programs (BS Hospitality Management and BS Tourism Management) sit separately under the College of Tourism and Hospitality Management (CTHM), approved as an independent college on September 26, 2024. For the current list of business/management programs and the campuses that offer each, see https://cvsu.edu.ph/category/colleges/. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "Business and management programs at CvSU — BSBM (Bachelor of Science in Business Management) and BSBA (Bachelor of Science in Business Administration) — are offered via the Department of Management under CEMDS (College of Economics, Management and Development Studies); there is no college named “College of Business Management and Operations.” BSBA at the Carmona and CCAT campuses is AACCUP Level III re-accredited (2026). Hospitality/tourism programs are under CTHM. See https://cvsu.edu.ph/category/colleges/ for the current list. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "Walang college sa CvSU na eksaktong tinatawag na “College of Business Management and Operations.” Ang mga business at management programs — kabilang ang BS Business Management (BSBM) at BS Business Administration (BSBA) — ay inaalok sa pamamagitan ng Department of Management sa ilalim ng CEMDS (College of Economics, Management and Development Studies). Ang BSBA sa Carmona at CCAT ay AACCUP Level III re-accredited (2026). Ang hospitality at tourism programs ay nasa ilalim ng CTHM. Tingnan ang https://cvsu.edu.ph/category/colleges/. (Ang mga ranking, resulta ng board exam, at accreditation level na nabanggit dito ay hanggang 2026 — tingnan ang pinakabago sa https://cvsu.edu.ph.)"
       ]
     },
     {
@@ -3158,9 +3175,9 @@
         "criminology requirements"
       ],
       "responses": [
-        "Yes — BS Criminology is offered at CvSU (including the Main and Bacoor campuses), and the University is a top performer in the field: per the official CvSU site, CvSU was the top performing school in the February 2026 Criminologist Licensure Examination — the Main Campus posted a 99.25% passing rate (132 of 133 examinees) in its category, while the Bacoor Campus ranked Top 1 with a 100% passing rate (63 of 63 examinees) in its category. Graduates take the Criminologist Licensure Examination administered by the PRC. Availability and admission requirements vary per campus and per year — verify via https://cvsu.edu.ph.",
-        "BS Criminology is offered at CvSU (Main and Bacoor campuses among others). CvSU was the top performing school in the February 2026 Criminologist Licensure Exam — Main Campus 99.25% (132/133) and Bacoor Campus Top 1 at 100% (63/63) in their categories. Graduates take the PRC Criminologist Licensure Examination. Verify current availability via https://cvsu.edu.ph.",
-        "Inaalok ang BS Criminology sa CvSU (kabilang ang Main at Bacoor campus). Ayon sa opisyal na site, ang CvSU ang top performing school sa February 2026 Criminologist Licensure Examination — Main Campus 99.25% (132/133) at Bacoor Campus Top 1 na may 100% (63/63) sa kani-kanilang kategorya. Ang mga graduates ay kumukuha ng PRC Criminologist Licensure Exam. Kumpirmahin sa https://cvsu.edu.ph."
+        "Yes — BS Criminology is offered at CvSU (including the Main and Bacoor campuses), and the University is a top performer in the field: per the official CvSU site, CvSU was the top performing school in the February 2026 Criminologist Licensure Examination — the Main Campus posted a 99.25% passing rate (132 of 133 examinees) in its category, while the Bacoor Campus ranked Top 1 with a 100% passing rate (63 of 63 examinees) in its category. Graduates take the Criminologist Licensure Examination administered by the PRC. Availability and admission requirements vary per campus and per year — verify via https://cvsu.edu.ph. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "BS Criminology is offered at CvSU (Main and Bacoor campuses among others). CvSU was the top performing school in the February 2026 Criminologist Licensure Exam — Main Campus 99.25% (132/133) and Bacoor Campus Top 1 at 100% (63/63) in their categories. Graduates take the PRC Criminologist Licensure Examination. Verify current availability via https://cvsu.edu.ph. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "Inaalok ang BS Criminology sa CvSU (kabilang ang Main at Bacoor campus). Ayon sa opisyal na site, ang CvSU ang top performing school sa February 2026 Criminologist Licensure Examination — Main Campus 99.25% (132/133) at Bacoor Campus Top 1 na may 100% (63/63) sa kani-kanilang kategorya. Ang mga graduates ay kumukuha ng PRC Criminologist Licensure Exam. Kumpirmahin sa https://cvsu.edu.ph. (Ang mga ranking, resulta ng board exam, at accreditation level na nabanggit dito ay hanggang 2026 — tingnan ang pinakabago sa https://cvsu.edu.ph.)"
       ]
     },
     {
@@ -3687,9 +3704,9 @@
         "first take CvSU"
       ],
       "responses": [
-        "CvSU graduates of board-program courses take their licensure examinations under the Professional Regulation Commission (PRC), and CvSU has a strong recent record — per the official site's 2026 results: top performing school in the February 2026 Criminologist Licensure Exam (Main 99.25%, Bacoor 100%); Top 10 (Elementary, Main Campus, 95.06%) and Top 3 (Secondary, Imus Campus, 98.36%) performing schools in the March 2026 LEPT with six topnotchers; 7th top performing school in the March 2026 Electronics Engineers Licensure Exam (82.14%); 97.33% in the March 2026 Medical Technologists exam; 95.56% in the June 2026 Architects exam (vs 85.08% national) and 100% in the January 2026 run; and top 10 performing school in the February 2026 Master Plumbers exam (83.33%). Some colleges offer in-house review classes or partner with accredited review centers; others let graduates choose external review centers. For your college's review program, contact your Department Chair. Source: https://cvsu.edu.ph",
-        "Board exam reviews at CvSU vary by program — some colleges offer in-house review; others partner with external review centers. CvSU's recent 2026 results (per the official site) include: top performing school for Criminologists (Feb 2026), Top 3/Top 10 LEPT performances with six topnotchers (Mar 2026), 7th top performing school for Electronics Engineers (Mar 2026), 97.33% for Medical Technologists (Mar 2026), and 95.56–100% for Architects (2026). Verify review options with your Department Chair after graduation.",
-        "Ang board exam review sa CvSU ay nag-iiba bawat programa — may in-house, may external partner. Malakas ang resulta ng CvSU sa 2026 (ayon sa opisyal na site): top performing school sa Criminologist LE (Peb 2026), Top 3/Top 10 sa LEPT na may anim na topnotchers (Mar 2026), ika-7 top performing school sa Electronics Engineers LE (Mar 2026), 97.33% sa Medical Technologists (Mar 2026), at 95.56–100% sa Architects (2026). Magtanong sa inyong Department Chair pagkatapos ng graduation."
+        "CvSU graduates of board-program courses take their licensure examinations under the Professional Regulation Commission (PRC), and CvSU has a strong recent record — per the official site's 2026 results: top performing school in the February 2026 Criminologist Licensure Exam (Main 99.25%, Bacoor 100%); Top 10 (Elementary, Main Campus, 95.06%) and Top 3 (Secondary, Imus Campus, 98.36%) performing schools in the March 2026 LEPT with six topnotchers; 7th top performing school in the March 2026 Electronics Engineers Licensure Exam (82.14%); 97.33% in the March 2026 Medical Technologists exam; 95.56% in the June 2026 Architects exam (vs 85.08% national) and 100% in the January 2026 run; and top 10 performing school in the February 2026 Master Plumbers exam (83.33%). Some colleges offer in-house review classes or partner with accredited review centers; others let graduates choose external review centers. For your college's review program, contact your Department Chair. Source: https://cvsu.edu.ph (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "Board exam reviews at CvSU vary by program — some colleges offer in-house review; others partner with external review centers. CvSU's recent 2026 results (per the official site) include: top performing school for Criminologists (Feb 2026), Top 3/Top 10 LEPT performances with six topnotchers (Mar 2026), 7th top performing school for Electronics Engineers (Mar 2026), 97.33% for Medical Technologists (Mar 2026), and 95.56–100% for Architects (2026). Verify review options with your Department Chair after graduation. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "Ang board exam review sa CvSU ay nag-iiba bawat programa — may in-house, may external partner. Malakas ang resulta ng CvSU sa 2026 (ayon sa opisyal na site): top performing school sa Criminologist LE (Peb 2026), Top 3/Top 10 sa LEPT na may anim na topnotchers (Mar 2026), ika-7 top performing school sa Electronics Engineers LE (Mar 2026), 97.33% sa Medical Technologists (Mar 2026), at 95.56–100% sa Architects (2026). Magtanong sa inyong Department Chair pagkatapos ng graduation. (Ang mga ranking, resulta ng board exam, at accreditation level na nabanggit dito ay hanggang 2026 — tingnan ang pinakabago sa https://cvsu.edu.ph.)"
       ]
     },
     {
@@ -3810,9 +3827,9 @@
         "CvSU vs CSU"
       ],
       "responses": [
-        "I won't make a 'better than' comparison between schools — every university has its strengths, and the right fit depends on your program, finances, distance, learning style, and goals. What I can say about CvSU (verified from its official site): it is a Philippine state university covered by RA 10931 (free tuition for qualified Filipino undergraduate students), with 11 campuses across Cavite and close to 100 curricular programs. It holds AACCUP Institutional Accreditation Level III (and was recognized as the second top performing state university with the highest number of Level III accredited programs), is ISO 9001:2015 certified, earned a 3-star QS rating, and ranked 217th in the WURI 2026 Top 500 Global Innovative Universities, 197th in the 2026 HE Higher Education Ranking, and 1001-1500th in the Times Higher Education (THE) Sustainability Impact Ratings 2026 (improved from 1501+ in 2024-2025). For further specifics — program accreditations, board pass rates — check https://cvsu.edu.ph and CHED's published data.",
-        "I won't rank CvSU against other schools — fit depends on your program, finances, distance, and goals. Verified facts about CvSU: a Philippine SUC covered by RA 10931, 11 campuses across Cavite, close to 100 programs, AACCUP Institutional Accreditation Level III, ISO 9001:2015 certified, QS 3 Stars, 217th in WURI 2026, 197th in the 2026 HE Higher Education Ranking, and 1001-1500th in the THE Sustainability Impact Ratings 2026 (up from 1501+). Check https://cvsu.edu.ph for specifics.",
-        "Hindi ko ikinukumpara ang CvSU sa ibang paaralan — depende sa programa, pinansyal, distansya, at layunin ang tamang piliin. Mga beripikadong detalye tungkol sa CvSU: isang state university (SUC) na sakop ng RA 10931, may 11 campus sa Cavite at halos 100 programa, may AACCUP Institutional Accreditation Level III, ISO 9001:2015 certified, QS 3 Stars, ika-217 sa WURI 2026, ika-197 sa 2026 HE Higher Education Ranking, at 1001-1500th sa THE Sustainability Impact Ratings 2026 (mula sa 1501+). Tingnan ang https://cvsu.edu.ph para sa detalye."
+        "I won't make a 'better than' comparison between schools — every university has its strengths, and the right fit depends on your program, finances, distance, learning style, and goals. What I can say about CvSU (verified from its official site): it is a Philippine state university covered by RA 10931 (free tuition for qualified Filipino undergraduate students), with 11 campuses across Cavite and close to 100 curricular programs. It holds AACCUP Institutional Accreditation Level III (and was recognized as the second top performing state university with the highest number of Level III accredited programs), is ISO 9001:2015 certified, earned a 3-star QS rating, and ranked 217th in the WURI 2026 Top 500 Global Innovative Universities, 197th in the 2026 HE Higher Education Ranking, and 1001-1500th in the Times Higher Education (THE) Sustainability Impact Ratings 2026 (improved from 1501+ in 2024-2025). For further specifics — program accreditations, board pass rates — check https://cvsu.edu.ph and CHED's published data. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "I won't rank CvSU against other schools — fit depends on your program, finances, distance, and goals. Verified facts about CvSU: a Philippine SUC covered by RA 10931, 11 campuses across Cavite, close to 100 programs, AACCUP Institutional Accreditation Level III, ISO 9001:2015 certified, QS 3 Stars, 217th in WURI 2026, 197th in the 2026 HE Higher Education Ranking, and 1001-1500th in the THE Sustainability Impact Ratings 2026 (up from 1501+). Check https://cvsu.edu.ph for specifics. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+        "Hindi ko ikinukumpara ang CvSU sa ibang paaralan — depende sa programa, pinansyal, distansya, at layunin ang tamang piliin. Mga beripikadong detalye tungkol sa CvSU: isang state university (SUC) na sakop ng RA 10931, may 11 campus sa Cavite at halos 100 programa, may AACCUP Institutional Accreditation Level III, ISO 9001:2015 certified, QS 3 Stars, ika-217 sa WURI 2026, ika-197 sa 2026 HE Higher Education Ranking, at 1001-1500th sa THE Sustainability Impact Ratings 2026 (mula sa 1501+). Tingnan ang https://cvsu.edu.ph para sa detalye. (Ang mga ranking, resulta ng board exam, at accreditation level na nabanggit dito ay hanggang 2026 — tingnan ang pinakabago sa https://cvsu.edu.ph.)"
       ]
     },
     {
@@ -4108,12 +4125,130 @@
         "current president of CvSU",
         "CvSU key officials",
         "Dr. Nuestro CvSU",
-        "president Nuestro"
+        "president Nuestro",
+        "name of the CvSU president",
+        "who leads Cavite State University",
+        "who is the university president who received the award",
+        "who gave the message at the anniversary",
+        "sino ang kasalukuyang pangulo ng CvSU",
+        "pangalan ng pangulo ng CvSU",
+        "sino ang pangulo na nagbigay ng mensahe",
+        "vice presidents of CvSU",
+        "university officials of CvSU"
       ],
       "responses": [
         "The University President of Cavite State University is Dr. Ma. Agnes P. Nuestro. Per the official CvSU site, the Vice Presidents include Dr. Cristina M. Signo (Vice President for Academic Affairs), Dr. Melbourne R. Talactac (Vice President for Research, Innovation and Extension), Mr. John Xavier B. Nepomuceno (Vice President for Administrative and Support Services), and Dr. Almira G. Magcawas (Vice President for Business and Resource Generation). CvSU is governed by a Board of Regents, whose Secretary is Ms. Catherine J. Quiñones (Office of the Board Secretary, 2nd Floor, Administration Building, Indang — obs@cvsu.edu.ph). The full CvSU Key Officials list is published under the Transparency Seal on https://cvsu.edu.ph; designations change over time, so please verify the current roster there.",
         "CvSU's University President is Dr. Ma. Agnes P. Nuestro, supported by Vice Presidents Dr. Cristina M. Signo (Academic Affairs), Dr. Melbourne R. Talactac (Research, Innovation and Extension), Mr. John Xavier B. Nepomuceno (Administrative and Support Services), and Dr. Almira G. Magcawas (Business and Resource Generation), under the governance of the Board of Regents (Board Secretary: Ms. Catherine J. Quiñones, obs@cvsu.edu.ph). See the CvSU Key Officials list under the Transparency Seal at https://cvsu.edu.ph for the current roster.",
         "Ang Pangulo ng Cavite State University ay si Dr. Ma. Agnes P. Nuestro. Ang mga Vice President ay sina Dr. Cristina M. Signo (Academic Affairs), Dr. Melbourne R. Talactac (Research, Innovation and Extension), G. John Xavier B. Nepomuceno (Administrative and Support Services), at Dr. Almira G. Magcawas (Business and Resource Generation). Pinamamahalaan ang CvSU ng Board of Regents (Board Secretary: Bb. Catherine J. Quiñones, obs@cvsu.edu.ph). Tingnan ang CvSU Key Officials sa Transparency Seal sa https://cvsu.edu.ph para sa kasalukuyang listahan."
+      ]
+    },
+    {
+      "tag": "licensure_results",
+      "patterns": [
+        "board exam passing rate",
+        "licensure exam results",
+        "how did CvSU do in the board exam",
+        "PRC exam results of CvSU",
+        "did CvSU pass the nursing board",
+        "criminology board exam result",
+        "teacher licensure exam result",
+        "engineering board exam passers",
+        "how many passed the boards",
+        "topnotchers from CvSU",
+        "CvSU board exam performance",
+        "CPA board result CvSU",
+        "architect licensure result CvSU",
+        "medtech board passers CvSU",
+        "electronics engineer board result",
+        "ilan ang pumasa sa board exam ng CvSU",
+        "resulta ng board exam ng CvSU",
+        "pasado ba ang CvSU sa boards",
+        "may topnotcher ba ang CvSU",
+        "anong performance ng CvSU sa licensure",
+        "passing rate sa nursing board ng CvSU",
+        "civil engineer board result CvSU"
+      ],
+      "responses": [
+        "CvSU has a strong board-exam (PRC licensure) track record across its programs — recent results have included top-performing marks in the Criminologist, Medical Technologist, Licensure Exam for Teachers (LEPT), Civil/Electrical/Electronics Engineering, Architecture, Master Plumber, and CPA examinations. Passing rates and topnotchers are released every exam cycle, so for the specific, most-recent figures please see CvSU's official news at https://cvsu.edu.ph. (Board-exam results change each cycle — verify the latest at https://cvsu.edu.ph.)",
+        "Malakas ang record ng CvSU sa mga board exam (PRC licensure) sa iba't ibang programa — kabilang sa mga kamakailang resulta ang mataas na marka sa Criminologist, Medical Technologist, LEPT (guro), Civil/Electrical/Electronics Engineering, Architecture, Master Plumber, at CPA. Nagbabago ang passing rate bawat cycle, kaya para sa pinakabagong bilang at topnotchers, tingnan ang opisyal na balita sa https://cvsu.edu.ph."
+      ]
+    },
+    {
+      "tag": "university_rankings",
+      "patterns": [
+        "CvSU ranking",
+        "world university ranking of CvSU",
+        "WURI ranking of CvSU",
+        "is CvSU ranked",
+        "global ranking of CvSU",
+        "CvSU QS stars",
+        "THE sustainability ranking CvSU",
+        "how is CvSU ranked",
+        "where does CvSU rank",
+        "university ranking Cavite State",
+        "CvSU innovation ranking",
+        "sustainability ranking of CvSU",
+        "CvSU higher education ranking",
+        "ranggo ng CvSU sa mundo",
+        "may ranking ba ang CvSU",
+        "anong ranking ng CvSU",
+        "gaano kataas ang ranking ng CvSU",
+        "ranggo ng CvSU sa WURI",
+        "kilala ba ang CvSU sa ranking"
+      ],
+      "responses": [
+        "CvSU holds several recent rankings and ratings: 217th in the WURI (World University Rankings for Innovation) Top 500, a 1001–1500th band in the THE Sustainability Impact Ratings, 197th in the 2026 HE Higher Education Ranking, and a QS 3-Star rating. For current standings and per-category details, see https://cvsu.edu.ph. (Rankings are updated periodically — verify the latest at https://cvsu.edu.ph.)",
+        "May ilang ranggo at rating ang CvSU: ika-217 sa WURI (World University Rankings for Innovation) Top 500, nasa 1001–1500 banda sa THE Sustainability Impact Ratings, ika-197 sa 2026 HE Higher Education Ranking, at QS 3-Star rating. Para sa pinakabagong ranggo at detalye, tingnan ang https://cvsu.edu.ph."
+      ]
+    },
+    {
+      "tag": "awards_recognition",
+      "patterns": [
+        "awards received by CvSU",
+        "what awards did CvSU win",
+        "CvSU recognitions",
+        "IPOPHL award CvSU",
+        "Palladium award CvSU",
+        "Platinum award CvSU",
+        "eco-friendly school award CvSU",
+        "DENR award CvSU",
+        "recent awards of CvSU",
+        "honors received by CvSU",
+        "green school award CvSU",
+        "anong parangal ang natanggap ng CvSU",
+        "mga parangal ng CvSU",
+        "kinilala ba ang CvSU",
+        "may award ba ang CvSU",
+        "mga karangalan ng CvSU",
+        "natanggap na parangal ng CvSU"
+      ],
+      "responses": [
+        "CvSU's recent recognitions include its 5th IPOPHL Platinum Award and first Palladium Award, and being named one of DENR-EMB's top eco-friendly schools. For the complete and latest list of awards and honors, see CvSU's official news at https://cvsu.edu.ph. (New recognitions are added over time — verify the latest at https://cvsu.edu.ph.)",
+        "Kabilang sa mga kamakailang parangal ng CvSU ang ika-5 IPOPHL Platinum Award at kauna-unahang Palladium Award, at ang pagkilala bilang isa sa top eco-friendly schools ng DENR-EMB. Para sa kumpleto at pinakabagong listahan ng mga parangal, tingnan ang https://cvsu.edu.ph."
+      ]
+    },
+    {
+      "tag": "accreditation_status",
+      "patterns": [
+        "is CvSU accredited",
+        "AACCUP accreditation of CvSU",
+        "accreditation level of CvSU",
+        "accredited programs at CvSU",
+        "institutional accreditation CvSU",
+        "ISO certification of CvSU",
+        "level IV accredited program CvSU",
+        "accreditation status of CvSU",
+        "quality accreditation CvSU",
+        "which CvSU programs are accredited",
+        "accredited ba ang CvSU",
+        "anong level ng accreditation ng CvSU",
+        "may AACCUP ba ang CvSU",
+        "accreditation ng mga programa ng CvSU",
+        "may ISO ba ang CvSU"
+      ],
+      "responses": [
+        "CvSU holds AACCUP Institutional Accreditation Level III. Several programs are AACCUP-accredited — for example, BS Food Technology at Level IV, and BS Medical Technology, BS Computer Science (Carmona), BS Information Technology (Cavite City), and BS Business Administration at Level III. For the complete, current accreditation list, see https://cvsu.edu.ph. (Accreditation levels are re-evaluated over time — verify the latest at https://cvsu.edu.ph.)",
+        "May AACCUP Institutional Accreditation Level III ang CvSU. Maraming programa ang AACCUP-accredited — halimbawa, Level IV ang BS Food Technology, at Level III ang BS Medical Technology, BS Computer Science (Carmona), BS Information Technology (Cavite City), at BS Business Administration. Para sa kumpletong listahan, tingnan ang https://cvsu.edu.ph."
       ]
     }
   ]

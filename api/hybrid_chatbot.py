@@ -681,7 +681,10 @@ class HybridChatbot:
     Strategy: Use fast NB first, fallback to accurate NN if uncertain
     """
 
-    NB_CONFIDENCE_THRESHOLD = 0.55  # If NB confidence > 55%, use it; otherwise defer to NN
+    NB_CONFIDENCE_THRESHOLD = 0.65  # If NB confidence >= 65%, use it; otherwise defer to NN.
+    # Raised from 0.55: with the NLU boost no longer inflating confidence, borderline
+    # NB force-fits (e.g. an off-topic query landing in courses_offered at ~0.63) now
+    # defer to the NN + scope/nonsense gates + LLM-grounded tiers instead of being served.
     NN_CONFIDENCE_THRESHOLD = 0.50  # NN minimum confidence threshold
     FALLBACK_INTENT = "nlu_fallback"
 
@@ -944,10 +947,22 @@ class HybridChatbot:
             )
         excerpts = "\n\n".join(f"[{cite}]\n{text[:700]}" for _, cite, text, _ in grounding)
         return (
-            "Excerpts from official CvSU sources are provided below. Base your answer ONLY "
-            "on these excerpts and the conversation context, and mention the bracketed "
-            "source you used. If the excerpts do not contain the answer, say you don't have "
-            "that information and point the user to https://cvsu.edu.ph — do not guess."
+            "Excerpts from official CvSU sources are provided below. Answer the question "
+            "using ONLY these excerpts and the conversation context, and mention the "
+            "bracketed source you used.\n"
+            "STRICT RULES — follow exactly:\n"
+            "1. State a specific figure, date, count, rank, name, or venue ONLY if it "
+            "appears verbatim in an excerpt above. Never substitute a related, national, "
+            "or approximate number for the one asked.\n"
+            "2. If the excerpts are about a DIFFERENT exam, event, year, or program than "
+            "the question asks about, do NOT answer from them — instead say you don't have "
+            "that specific information yet and point the user to https://cvsu.edu.ph.\n"
+            "3. If the exact detail asked for is not in the excerpts, say you don't have "
+            "that specific information yet and point to https://cvsu.edu.ph — do not guess "
+            "or fill the gap.\n"
+            "4. Do NOT cite the Citizens' Charter as the source for news, licensure/board "
+            "results, rankings, or awards; those come only from news excerpts.\n"
+            "5. Keep the answer concise and only cite a source you actually used."
             f"{hint}\n\n{excerpts}\n\nQuestion: {user_input}"
         )
 

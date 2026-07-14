@@ -150,7 +150,7 @@ export default function App() {
     } catch (e: any) {
       setApiError(e?.message ?? "Network error");
       pushMessage({
-        text: "I'm having trouble reaching the server right now. Please try again in a moment, or contact CvSU at (046) 430-6332.",
+        text: "I'm having trouble reaching the server right now. Please try again in a moment, or contact CvSU at (046) 415-0010.",
         isBot: true,
       });
 
@@ -338,7 +338,7 @@ export default function App() {
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-3 text-center">
-            For urgent concerns, contact CvSU Main Campus: (046) 430-6332
+            For urgent concerns, contact CvSU Main Campus: (046) 415-0010
           </p>
         </div>
 

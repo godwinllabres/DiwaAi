@@ -30,6 +30,11 @@ notebooks/
 training/
 ref/
 docs/
+# …but the RAG corpora MUST ship in the image — site_rag/charter_rag read these
+# at runtime; without them both grounding tiers silently disable (the LLM tier
+# then answers ungrounded and over-refuses). See docs/eval/redesign_report.md.
+!docs/site_corpus.txt
+!docs/citizens_charter_text.txt
 
 # Static demo site (api.app does not serve it)
 web/

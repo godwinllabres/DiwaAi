@@ -1,0 +1,42 @@
+[
+  {
+    "id": "doc00_q1",
+    "question": "When and where will the 4th International Conference on WELA 2026 be held?",
+    "gold_answer": "WELA 2026 will be held at the Cavite State University International Convention Center on March 17-19, 2026.",
+    "category": "events",
+    "expected_intent": "events",
+    "language": "en",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/01/06/4th-international-conference-on-wela-2026/",
+    "uid": "q0000",
+    "src_file": "doc_00.json",
+    "response": {
+      "ok": true,
+      "text": "Maraming events ang CvSU sa buong taon: Founding Anniversary tuwing huling bahagi ng Enero (ika-120 noong Enero 28-29, 2026, kasama ang Gawad Laya at Diwa), Intramurals, Research Symposium, Career/Job Fair, Cultural Festival, at Graduation. Nagho-host din ang CvSU ng mga international conference sa CvSU International Convention Center (hal. WELA 2026, Marso 17-19, 2026). Para sa tiyak na petsa at opisyal na schedule, sundan ang opisyal na Facebook page at www.cvsu.edu.ph.",
+      "intent": "events",
+      "confidence": 0.6266428749193326,
+      "source": "Intent Retrieval",
+      "latency_ms": 2605
+    }
+  },
+  {
+    "id": "doc00_q2",
+    "question": "What is the deadline for submitting abstracts to WELA 2026?",
+    "gold_answer": "The deadline for submission of abstracts is March 5, 2026.",
+    "category": "events",
+    "expected_intent": "events",
+    "language": "en",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/01/06/4th-international-conference-on-wela-2026/",
+    "uid": "q0001",
+    "src_file": "doc_00.json",
+    "response": {
+      "ok": true,
+      "text": "The deadline for submitting abstracts to WELA 2026 is until March 5, 2026, as stated in the official CvSU source. [https://cvsu.edu.ph/blog/2026/01/06/4th-international-conference-on-wela-2026/] If you need assistance with removing an incomplete grade, feel free to ask.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 23304
+    }
+  }
+]

@@ -33,3 +33,7 @@ kics-local/
 # Local security-scan artifacts
 bandit-local.json
 ba*.json
+
+# Local model backups (rollback snapshots) — kept out of git
+models_old/
+archive/models_backups/

@@ -1,0 +1,706 @@
+[
+  {
+    "id": "doc20_q3",
+    "question": "When and where was the NSSEFS awarding ceremony held?",
+    "gold_answer": "The national awarding ceremonies were held on April 22, 2026 at Seda Vertis North Hotel in Quezon City.",
+    "category": "events",
+    "expected_intent": "events",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/04/23/cvsu-awarded-as-one-of-denr-embs-top-eco-friendly-schools/",
+    "uid": "q0162",
+    "src_file": "doc_20.json",
+    "response": {
+      "ok": true,
+      "text": "The NSSEFS awarding ceremony details were not mentioned in the provided excerpts. For specific information about the NSSEFS awarding ceremony, please visit [https://cvsu.edu.ph](https://cvsu.edu.ph). Would you like to know about any upcoming events at CvSU?",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 13013
+    }
+  },
+  {
+    "id": "doc12_q6",
+    "question": "Did both CvSU Main and Bacoor campuses rank first in the February 2026 Criminologist exam?",
+    "gold_answer": "Yes. CvSU Main Campus ranked top with a 99.25% passing rate (132 of 133) in the 101–199 examinees category, and CvSU Bacoor Campus ranked Top 1 with a 100% passing rate (63 of 63) in the 51–100 examinees category.",
+    "category": "licensure",
+    "expected_intent": "MISSING:licensure_exam_results",
+    "language": "en",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/16/cvsu-is-top-performing-school-in-february-2026-licensure-exam-for-criminologists/",
+    "uid": "q0101",
+    "src_file": "doc_12.json",
+    "response": {
+      "ok": true,
+      "text": "Yes, both the CvSU Main Campus and Bacoor Campus ranked first in their respective categories in the February 2026 Criminologist Licensure Examination. The Main Campus achieved a 99.25% passing rate, while the Bacoor Campus had a perfect 100% passing rate. [https://cvsu.edu.ph/blog/2026/03/16/cvsu-is-top-performing-school-in-february-2026-licensure-exam-for-criminologists/]",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 16069
+    }
+  },
+  {
+    "id": "doc10_q6",
+    "question": "Anong board ang nag-administer ng Med Tech licensure exam na ito, at saan ginanap?",
+    "gold_answer": "Ibinigay ang exam ng Board of Medical Technology sa mga testing center sa National Capital Region, Baguio, Butuan, Cagayan de Oro, Cebu, Davao, Iloilo, Legazpi, Lucena, Pagadian, Pampanga, Rosales, Tacloban, Tuguegarao at Zamboanga.",
+    "category": "licensure",
+    "expected_intent": "MISSING:licensure_exam_results",
+    "language": "taglish",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/12/cvsu-produces-73-newly-registered-medical-technologists/",
+    "uid": "q0085",
+    "src_file": "doc_10.json",
+    "response": {
+      "ok": true,
+      "text": "Ang licensure exam para sa Medical Technology (Med Tech) ay pinangungunahan ng Professional Regulation Commission (PRC) ng Pilipinas. Ang mga resulta ng licensure exam ay maitutuloy sa opisyal na website ng PRC o sa official website ng Cavite State University (CvSU) kung ito ay kaugnay sa mga mag-aaral nito. Para sa pinakabagong impormasyon, maaari mong bisitahin ang website ng PRC o CvSU: https://cvsu.edu.ph. Maaari rin mong tanungin ang tanong tungkol sa \"licensure results\" para sa karagdagang tulong.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM",
+      "latency_ms": 18047
+    }
+  },
+  {
+    "id": "doc13_q6",
+    "question": "What kind of performance does the HE Higher Education Ranking recognize?",
+    "gold_answer": "The ranking acknowledges institutions that demonstrate outstanding performance in upholding high standards in education and research, as well as in contributing to global innovation and development.",
+    "category": "rankings",
+    "expected_intent": "MISSING:university_rankings",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/24/cvsu-ranks-197th-in-2026-he-higher-education-ranking/",
+    "uid": "q0109",
+    "src_file": "doc_13.json",
+    "response": {
+      "ok": true,
+      "text": "CvSU holds several recent rankings and ratings: 217th in the WURI (World University Rankings for Innovation) Top 500, a 1001–1500th band in the THE Sustainability Impact Ratings, 197th in the 2026 HE Higher Education Ranking, and a QS 3-Star rating. For current standings and per-category details, see https://cvsu.edu.ph. (Rankings are updated periodically — verify the latest at https://cvsu.edu.ph.)",
+      "intent": "university_rankings",
+      "confidence": 0.6121851418412008,
+      "source": "Intent Retrieval",
+      "latency_ms": 59
+    }
+  },
+  {
+    "id": "doc20_q1",
+    "question": "What environmental awards did CvSU receive from DENR-EMB in 2026?",
+    "gold_answer": "In the 2025 National Search for Sustainable and Eco-friendly Schools (NSSEFS) of DENR-EMB, CvSU received the Recognition of Excellence Award (College Category), the Luntiang Puso Sustainability Award (Champion – College Category), and the Water Leadership Award (College Category).",
+    "category": "awards",
+    "expected_intent": "MISSING:awards_recognition",
+    "language": "en",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/04/23/cvsu-awarded-as-one-of-denr-embs-top-eco-friendly-schools/",
+    "uid": "q0160",
+    "src_file": "doc_20.json",
+    "response": {
+      "ok": true,
+      "text": "Cavite State University (CvSU) was awarded as one of the DENR-EMB's top eco-friendly schools in 2026. This recognition highlights CvSU's commitment to sustainability and environmental stewardship. [https://cvsu.edu.ph/blog/2026/04/23/cvsu-awarded-as-one-of-denr-embs-top-eco-friendly-schools/]",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (site-grounded)",
+      "latency_ms": 16853
+    }
+  },
+  {
+    "id": "doc02_q6",
+    "question": "Ilang bagong CPA ang na-produce ng CvSU at ano ang overall performance nila?",
+    "gold_answer": "May 38 na bagong CPA ang CvSU, na may 57.58% overall performance.",
+    "category": "licensure",
+    "expected_intent": "MISSING:licensure_results",
+    "language": "taglish",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/01/28/cvsu-congratulates-its-new-licensed-architects-2/",
+    "uid": "q0021",
+    "src_file": "doc_02.json",
+    "response": {
+      "ok": true,
+      "text": "Ang mga detalye tungkol sa bilang ng mga bagong CPA (Certified Public Accountant) na na-produce ng CvSU at ang kanilang overall performance ay hindi nakapaloob sa mga eksipto mula sa opisyales na pahina ng CvSU. Para makakuha ng pinakabagong impormasyon, maaari mong i-verify ang mga detalye sa [https://cvsu.edu.ph](https://cvsu.edu.ph). Ang CvSU ay mayroon din mga opisyal na pahina para sa mga resulta ng pagsusulit at mga akreditasyon. Kung gusto mo, maaari mong i-ask ang tanong tungkol sa \"about cvsu\" para mas malaman ang mga pangunahing impormasyon.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (site-grounded)",
+      "latency_ms": 23806
+    }
+  },
+  {
+    "id": "doc08_q6",
+    "question": "Is this the first time CvSU has been institutionally accredited?",
+    "gold_answer": "Yes. The AACCUP Level III conferment marks CvSU's first institutional accreditation, described as a significant milestone and a collective victory for the entire CvSU community.",
+    "category": "accreditation",
+    "expected_intent": "MISSING:accreditation_status",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/11/cvsu-gets-aaccup-level-iii-institutional-accreditation-status/",
+    "uid": "q0069",
+    "src_file": "doc_08.json",
+    "response": {
+      "ok": true,
+      "text": "The provided excerpts do not contain information about the accreditation history of Cavite State University. For details on the accreditation status, you may refer to the official CvSU website at https://cvsu.edu.ph. If you would like, I can also assist you with information about the accreditation process or current status.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter-grounded)",
+      "latency_ms": 9496
+    }
+  },
+  {
+    "id": "doc08_q4",
+    "question": "Saan at kailan ginanap ang conferment ceremony ng CvSU accreditation?",
+    "gold_answer": "Ginanap ang conferment sa 2nd National Network of Quality Assurance Agencies (NNQAA), Inc. Quality Assurance Summit and Conferment Ceremony 2026, noong March 5-7, 2026, sa Heritage Hotel Manila sa Pasay City.",
+    "category": "events",
+    "expected_intent": "events",
+    "language": "fil",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/11/cvsu-gets-aaccup-level-iii-institutional-accreditation-status/",
+    "uid": "q0067",
+    "src_file": "doc_08.json",
+    "response": {
+      "ok": true,
+      "text": "Ang conferment ceremony ng CvSU accreditation ay ginanap sa Heritage Hotel Manila sa Pasay City noong March 5-7, 2026, ayon sa opisyales na impormasyon mula sa official CvSU site (https://cvsu.edu.ph/blog/2026/03/11/cvsu-gets-aaccup-level-iii-institutional-accreditation-status/). Ang event ay bahagi ng 2nd National Network of Quality Assurance Agencies (NNQAA), Inc. Quality Assurance Summit and Conferment Ceremony 2026.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 16890
+    }
+  },
+  {
+    "id": "trap_15",
+    "question": "Does CvSU offer a Doctor of Medicine (MD) degree program?",
+    "gold_answer": "I don't have confirmed information that CvSU offers a Doctor of Medicine (MD) program, so I can't state that it does or doesn't without verifying. Please check the official CvSU list of programs or contact the Office of the Registrar / Admissions to confirm current program offerings. I can tell you about the health-related programs I do have on record if that's helpful.",
+    "category": "trap",
+    "subtype": "coverage_gap",
+    "expected_intent": "MISSING:medicine_program",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "adversarial",
+    "uid": "q0262",
+    "src_file": "traps.json",
+    "response": {
+      "ok": true,
+      "text": "Yes, Cavite State University (CvSU) offers a Doctor of Medicine (MD) degree program. The admission and enrollment services for the MD program are handled by the College of Medicine - Office of Student Affairs & Admissions, as outlined in the CvSU Citizens' Charter [CvSU Citizens' Charter, FY 2026 edition, p. 728]. For detailed requirements and procedures, you may refer to the official sources or contact the relevant office.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter-grounded)",
+      "latency_ms": 14310
+    }
+  },
+  {
+    "id": "doc17_q5",
+    "question": "Sino ang CvSU President na dumalo sa IPOPHL awarding?",
+    "gold_answer": "Ang dumalo ay si CvSU President Dr. Ma. Agnes P. Nuestro, kasama ang iba pang mga opisyal ng unibersidad.",
+    "category": "governance",
+    "expected_intent": "university_officials",
+    "language": "taglish",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/25/cvsu-receives-5th-ipophl-platinum-palladium-awards/",
+    "uid": "q0140",
+    "src_file": "doc_17.json",
+    "response": {
+      "ok": true,
+      "text": "Ang CvSU President na dumalo sa IPOPHL awarding ay si Dr. Ma. Agnes P. Nuestro. [“Employees, students, partners recognized during CvSU@120 celebration” — official CvSU site, 2026-02-10]",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 10498
+    }
+  },
+  {
+    "id": "trap_8",
+    "question": "mahirap ba yun?",
+    "gold_answer": "Pasensya na, hindi ko sigurado kung ano ang tinutukoy mong 'yun' — baka program, exam, o proseso. Para hindi ako mag-assume, pwede mo bang linawin kung alin ang tinatanong mo? Tapos masasagot kita nang maayos.",
+    "category": "trap",
+    "subtype": "ambiguous_topic_switch",
+    "expected_intent": "nlu_fallback",
+    "language": "fil",
+    "volatility": "stable",
+    "source_url": "adversarial",
+    "uid": "q0255",
+    "src_file": "traps.json",
+    "response": {
+      "ok": true,
+      "text": "Ang pag-uwi ng interview para sa mga kursong tulad ng BS Business Administration, BS Psychology, at iba pa ay depende sa pormal na proseso ng kada college. Ang mga mag-aaral ay dapat sumunod sa mga direksyon ng kanilang college (kung saan sila nagsimula ng aplikasyon) at magbigay ng impormasyon sa OSAS. Kung nais mong malaman ang mga detalye o magtanong pa tungkol sa scholarship, maaari mong ikuha ang tulong ng CvSU. [CvSU Citizens' Charter, FY 2026 edition, p. 1067]",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter-grounded)",
+      "latency_ms": 19176
+    }
+  },
+  {
+    "id": "doc07_q4",
+    "question": "Ilan sa mga CvSU examinees ang pumasa sa February 2026 Master Plumbers Licensure Examination?",
+    "gold_answer": "Sampu (10) sa 12 na CvSU examinees ang pumasa, katumbas ng 83.33% overall performance rating.",
+    "category": "licensure",
+    "expected_intent": "MISSING:licensure_exam_results",
+    "language": "fil",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/02/26/cvsu-congratulates-its-newly-licensed-master-plumbers/",
+    "uid": "q0059",
+    "src_file": "doc_07.json",
+    "response": {
+      "ok": true,
+      "text": "Sa February 2026 Master Plumbers Licensure Examination, 2,030 sa 3,287 examinees na tumakda sa pagsusulit ay pumasa. Ang impormasyon na ito ay nakuha mula sa official CvSU site (https://cvsu.edu.ph/blog/2026/02/26/cvsu-congratulates-its-newly-licensed-master-plumbers/). Ang CvSU ay nakakuha ng 83.33% overall performance rating sa pagsusulit.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (site-grounded)",
+      "latency_ms": 17095
+    }
+  },
+  {
+    "id": "doc03_q5",
+    "question": "Ano ang core values ng CvSU na binanggit sa 120th anniversary celebration?",
+    "gold_answer": "Ang core values ng CvSU ay Truth, Integrity, Excellence, and Service, na siyang paggabay sa commitment nito sa quality education at nation-building.",
+    "category": "mission_vision",
+    "expected_intent": "vision_mission",
+    "language": "taglish",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/02/02/cvsu-marks-120th-founding-anniversary/",
+    "uid": "q0028",
+    "src_file": "doc_03.json",
+    "response": {
+      "ok": true,
+      "text": "Ang mga core values ng CvSU na binanggit sa 120th anniversary celebration ay \"Truth, Integrity, Excellence, and Service\" [https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/]. Ang mga ito ay nangangahulugan ng mga pribilehiyo at mga gawaing pangkaunlaran na inilalagay ng unibersidad para sa mga mag-aaral, empleyado, at partner. Kung nais mong malaman ang mas detalyadong impormasyon tungkol sa vision at mission ng CvSU, maaari mong i-ask ang tanong.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (site-grounded)",
+      "latency_ms": 22016
+    }
+  },
+  {
+    "id": "doc13_q8",
+    "question": "Ilang bagong CPA ang naipagmalaki ng CvSU at ano ang overall performance nila?",
+    "gold_answer": "Nagkaroon ang CvSU ng 38 bagong CPAs na may 57.58% overall performance.",
+    "category": "licensure",
+    "expected_intent": "MISSING:licensure_results",
+    "language": "fil",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/24/cvsu-ranks-197th-in-2026-he-higher-education-ranking/",
+    "uid": "q0111",
+    "src_file": "doc_13.json",
+    "response": {
+      "ok": true,
+      "text": "Ang mga detalye tungkol sa bilang ng mga bagong CPA (Certified Public Accountant) na naipagmalaki ng CvSU at ang kanilang overall performance ay hindi nakalikha sa mga eksipto na ibinigay. Para makakuha ng pinakabagong impormasyon, maaari mong i-verify ang detalye sa [https://cvsu.edu.ph](https://cvsu.edu.ph). Ang CvSU ay naglalayong magbigay ng mabuting edukasyon at pag-unlad sa mga mag-aaral. Kung may tanong pa tungkol sa CvSU, masaya akong makatulong!",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (site-grounded)",
+      "latency_ms": 21376
+    }
+  },
+  {
+    "id": "doc25_q6",
+    "question": "Which board administered the May 2026 CPA Licensure Examination?",
+    "gold_answer": "The May 2026 CPALE was given by the Board of Accountancy under the Professional Regulation Commission (PRC).",
+    "category": "licensure",
+    "expected_intent": "MISSING:licensure_exam_results",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/06/03/congratulations-to-cvsus-38-new-cpas/",
+    "uid": "q0205",
+    "src_file": "doc_25.json",
+    "response": {
+      "ok": true,
+      "text": "The provided excerpts do not mention the board that administered the May 2026 CPA Licensure Examination. For accurate information, please refer to the official sources or contact the Professional Regulation Commission (PRC) directly. You may also ask about \"licensure results\" for further details.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 10496
+    }
+  },
+  {
+    "id": "doc01_q2",
+    "question": "What does the acronym LINGAP stand for?",
+    "gold_answer": "LINGAP stands for Leaders Integrating Networks for General Aid Preparedness (LINGAP CvSU).",
+    "category": "misc",
+    "expected_intent": "MISSING:volunteerism_service_program",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/01/27/esc-orients-student-leaders-on-cvsus-volunteerism-service-program/",
+    "uid": "q0009",
+    "src_file": "doc_01.json",
+    "response": {
+      "ok": true,
+      "text": "LINGAP stands for **L**iving **I**nclusive **N**etwork for **G**rowth and **A**ction **P**rogram. This acronym is used to refer to the University's centralized hub for volunteerism and service initiatives, as mentioned in the official CvSU blog post. [https://cvsu.edu.ph/blog/2026/01/27/esc-orients-student-leaders-on-cvsus-volunteerism-service-program/]",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 15371
+    }
+  },
+  {
+    "id": "trap_18",
+    "question": "Where is the Indang campus located and what programs does it offer?",
+    "gold_answer": "Two parts here — location and programs for the Indang (Main) campus. Location: I can give you the campus address and directions on how to get there. Programs: I can share the courses offered at that campus. Would you like the location details, the program list, or both? I'll give you each so nothing gets missed.",
+    "category": "trap",
+    "subtype": "multi_intent",
+    "expected_intent": "campus_location+courses_offered",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "adversarial",
+    "uid": "q0265",
+    "src_file": "traps.json",
+    "response": {
+      "ok": true,
+      "text": "The Cavite State University (CvSU) Indang campus is located in Indang, Cavite, Philippines. It offers a wide range of academic programs across various colleges, including the College of Arts and Sciences (CAS), College of Education (CED), College of Engineering and Information Technology (CEIT), College of Tourism and Hospitality Management (CTHM), College of Nursing (CON), College of Veterinary Medicine and Biological Sciences (CVMBS), and others. For detailed information on specific programs, please visit [https://cvsu.edu.ph](https://cvsu.edu.ph).",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM",
+      "latency_ms": 16557
+    }
+  },
+  {
+    "id": "doc09_q8",
+    "question": "Kailan inanunsyo na nakatanggap ng AACCUP accreditation ang CvSU programs?",
+    "gold_answer": "Inanunsyo ito noong March 11, 2026 sa isang news article ng Cavite State University.",
+    "category": "accreditation",
+    "expected_intent": "MISSING:accreditation",
+    "language": "fil",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/11/cvsu-academic-programs-receive-aaccup-accreditation/",
+    "uid": "q0079",
+    "src_file": "doc_09.json",
+    "response": {
+      "ok": true,
+      "text": "Ang pagkakatanggap ng AACCUP accreditation ng mga academic programs ng CvSU ay inanunsyo noong March 11, 2026, ayon sa opisyales na post sa official CvSU site (https://cvsu.edu.ph/blog/2026/03/11/cvsu-academic-programs-receive-aaccup-accreditation/). Ang anunsyo ay naglalaman ng mga detalye tungkol sa mga program na nakuha ang accreditation at ang mga campus na naging bahagi nito.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 18556
+    }
+  },
+  {
+    "id": "doc18_q1",
+    "question": "When is the new deadline to submit application or nomination documents for the two Private Sector Representatives (PSR) to the Governing Board?",
+    "gold_answer": "The extended deadline for submission of application/nomination documents is April 13, 2026 at 6:00 PM.",
+    "category": "governance",
+    "expected_intent": "MISSING:governing_board_psr_search",
+    "language": "en",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/25/%f0%9d%97%a6%f0%9d%97%b2%f0%9d%97%ae%f0%9d%97%bf%f0%9d%97%b0%f0%9d%97%b5-%f0%9d%97%b3%f0%9d%97%bc%f0%9d%97%bf-%f0%9d%97%a7%f0%9d%98%84%f0%9d%97%bc-%f0%9d%9f%ae-%f0%9d%97%a3%f0%9d%97%bf%f0%9d%97%b6/",
+    "uid": "q0144",
+    "src_file": "doc_18.json",
+    "response": {
+      "ok": true,
+      "text": "The new deadline to submit application or nomination documents for the two Private Sector Representatives (PSR) to the Governing Board is April 13, 2026, at 6:00 PM. [“Search for Two (2) Private Sector Representatives (PSR) to the Governing Board (Extended)” — official CvSU site, 2026-03-25 (https://cvsu.edu.ph/blog/2026/03/25/%f0%9d%97%a6%f0%9d%97%b2%f0%9d%97%ae%f0%9d%97%bf%f0%9d%97%b0%f0%9d%97%b5-%f0%9d%97%b3%f0%9d%97%bc%f0%9d%97%bf-%f0%9d%97%a7%f0%9d%98%84%f0%9d%97%bc-%f0%9d%9f%ae-%f0%9d%97%a3%f0%9d%97%bf%f0%9d%97%b6/)]",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (site-grounded)",
+      "latency_ms": 41003
+    }
+  },
+  {
+    "id": "doc30_q8",
+    "question": "What is CvSU's vision as a university?",
+    "gold_answer": "CvSU aims to be the \"premier University in historic Cavite recognized for excellence in the development of globally competitive and morally upright individuals,\" guided by its commitment to Truth, Excellence and Service.",
+    "category": "mission_vision",
+    "expected_intent": "vision_mission",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/history/",
+    "uid": "q0246",
+    "src_file": "doc_30.json",
+    "response": {
+      "ok": true,
+      "text": "Cavite State University's vision is to be \"the premier university in historic Cavite globally recognized for excellence in character development, academics, research, innovation and sustainable community engagement.\" [CvSU Citizens' Charter, FY 2026 edition, p. 2]",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 9396
+    }
+  },
+  {
+    "id": "doc08_q7",
+    "question": "What institutional pillars did CvSU reaffirm its commitment to through this accreditation?",
+    "gold_answer": "CvSU reaffirmed its dedication to excellence across all institutional pillars: governance, academic instruction, research, community extension, and student services.",
+    "category": "accreditation",
+    "expected_intent": "MISSING:accreditation_status",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/11/cvsu-gets-aaccup-level-iii-institutional-accreditation-status/",
+    "uid": "q0070",
+    "src_file": "doc_08.json",
+    "response": {
+      "ok": true,
+      "text": "May AACCUP Institutional Accreditation Level III ang CvSU. Maraming programa ang AACCUP-accredited — halimbawa, Level IV ang BS Food Technology, at Level III ang BS Medical Technology, BS Computer Science (Carmona), BS Information Technology (Cavite City), at BS Business Administration. Para sa kumpletong listahan, tingnan ang https://cvsu.edu.ph.",
+      "intent": "accreditation_status",
+      "confidence": 0.6184617758817017,
+      "source": "Intent Retrieval",
+      "latency_ms": 50
+    }
+  },
+  {
+    "id": "trap_12",
+    "question": "What exactly happened at CvSU's 2026 founding anniversary celebration this year?",
+    "gold_answer": "I don't have verified details about the specific 2026 founding anniversary program or events, so I can't describe what took place without risking inaccuracy. For confirmed details, please check CvSU's official website or official social media pages, or contact the University's Public Affairs / Information Office.",
+    "category": "trap",
+    "subtype": "coverage_gap",
+    "expected_intent": "MISSING:cvsu_founding_anniversary_2026",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "adversarial",
+    "uid": "q0259",
+    "src_file": "traps.json",
+    "response": {
+      "ok": true,
+      "text": "At Cavite State University's 2026 founding anniversary celebration, the university honored its 120-year legacy of providing quality education and service to society. The event emphasized the university's commitment to academic excellence and public service, with recognition given to the contributions of employees, students, retirees, and partner agencies during the annual Gawad Laya at Diwa and Partners' Recognition Day. [https://cvsu.edu.ph/blog/2026/02/02/cvsu-marks-120th-founding-anniversary/]",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 16387
+    }
+  },
+  {
+    "id": "doc12_q5",
+    "question": "Kailan lumabas yung news na top school ang CvSU sa Criminologist exam?",
+    "gold_answer": "Ang balita ay nai-publish noong March 16, 2026, para sa February 2026 Criminologist Licensure Examination.",
+    "category": "licensure",
+    "expected_intent": "MISSING:licensure_exam_results",
+    "language": "taglish",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/16/cvsu-is-top-performing-school-in-february-2026-licensure-exam-for-criminologists/",
+    "uid": "q0100",
+    "src_file": "doc_12.json",
+    "response": {
+      "ok": true,
+      "text": "Ang Cavite State University (CvSU) ay nagsilbing top school sa Criminologist exam, ngunit ang eksaktong petsa kung kailan ito lumabas ay hindi nakapaloob sa mga eksklusibong impormasyon na ibinigay. Para sa detalyadong impormasyon, maaari mong bisitahin ang opisyal na website ng CvSU sa [https://cvsu.edu.ph](https://cvsu.edu.ph). Kung gusto mo, maaari mong tanungin ang tungkol sa \"criminology program\" para makakuha ng karagdagang detalye.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter-grounded)",
+      "latency_ms": 19034
+    }
+  },
+  {
+    "id": "doc06_q7",
+    "question": "Sino-sino ang mga stakeholders na tinipon sa public forum ng CvSU?",
+    "gold_answer": "Tinipon sa public forum ang community members, local government units, non-government organizations, at iba pang stakeholders para talakayin ang mga proposed amendments at ang compliance status ng University sa ECC conditions nito.",
+    "category": "events",
+    "expected_intent": "events",
+    "language": "taglish",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/02/11/cvsu-conducts-public-forum-for-ecc-amendment/",
+    "uid": "q0054",
+    "src_file": "doc_06.json",
+    "response": {
+      "ok": true,
+      "text": "Ang mga stakeholders na tinipon sa public forum ng CvSU ay ang mga empleyado, mag-aaral, at partner ng unibersidad, ayon sa eksklusibong pag-uugali ng CvSU@120 celebration. Ang mga ito ay napatunayan na mahalaga sa pagbuo ng unibersidad at sa pagtupad ng kanyang mga layunin. [https://cvsu.edu.ph/blog/2026/02/10/employees-students-partners-recognized-during-cvsu120-celebration/]",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (site-grounded)",
+      "latency_ms": 18531
+    }
+  },
+  {
+    "id": "doc26_q7",
+    "question": "Where did CvSU rank in SDG 4 (quality education) in 2026?",
+    "gold_answer": "CvSU ranked 801-1000th in SDG 4 (quality education) in the 2026 THE Sustainability Impact Ratings.",
+    "category": "rankings",
+    "expected_intent": "MISSING:university_rankings",
+    "language": "en",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/06/25/cvsu-ranks-1001-1500th-in-the-sustainability-impact-ratings/",
+    "uid": "q0214",
+    "src_file": "doc_26.json",
+    "response": {
+      "ok": true,
+      "text": "CvSU ranked 801-1000th in SDG 4 (quality education) in 2026 [https://cvsu.edu.ph/blog/2026/06/25/cvsu-ranks-1001-1500th-in-the-sustainability-impact-ratings/].",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 11671
+    }
+  },
+  {
+    "id": "doc23_q7",
+    "question": "Which licensure exam did CvSU excel in, and when was it held?",
+    "gold_answer": "CvSU achieved remarkable results in the March 2026 Licensure Examination for Professional Teachers (LEPT), covering both the Elementary and Secondary Levels; the announcement was dated May 14, 2026.",
+    "category": "licensure",
+    "expected_intent": "MISSING:licensure_results",
+    "language": "en",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/05/14/cvsu-congratulates-its-new-licensed-professional-teachers-2/",
+    "uid": "q0190",
+    "src_file": "doc_23.json",
+    "response": {
+      "ok": true,
+      "text": "Cavite State University (CvSU) excelled in the February 2026 licensure exam for Criminologists. [“CvSU is top performing school in February 2026 licensure exam for Criminologists” — official CvSU site, 2026-03-16 (https://cvsu.edu.ph/blog/2026/03/16/cvsu-is-top-performing-school-in-february-2026-licensure-exam-for-criminologists/)]",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 18630
+    }
+  },
+  {
+    "id": "doc14_q4",
+    "question": "Sino ang nag-present ng resulta ng seagrass research ng CvSU sa turnover?",
+    "gold_answer": "Si Mr. Glenn Bryan A. Creencia, ang CvSU's designated Faculty Researcher, ang nag-present ng mga outcome ng seagrass research initiatives ng University.",
+    "category": "governance",
+    "expected_intent": "university_officials",
+    "language": "fil",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/24/cvsu-turns-over-seagrass-research-data-to-denr-lgu-maragondon/",
+    "uid": "q0115",
+    "src_file": "doc_14.json",
+    "response": {
+      "ok": true,
+      "text": "Ang tanong ay hindi nakapaloob sa mga eksipto mula sa opisyales na pahayag ng CvSU. Ang resulta ng seagrass research ng CvSU ay hindi nabanggit sa mga eksipto. Kung nais mong malaman ang detalye, maaari mong i-verify ang impormasyon sa opsyonal na website ng CvSU: https://cvsu.edu.ph. Kung nais mong malaman ang resulta ng licensure exams, maaari mong i-ask ito.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (site-grounded)",
+      "latency_ms": 17847
+    }
+  },
+  {
+    "id": "doc24_q8",
+    "question": "What did CvSU's WURI 2026 result mean for the university?",
+    "gold_answer": "Securing the 217th spot among the Top 500 Global Innovative Universities in WURI 2026 was described as a significant achievement highlighting CvSU's continuing pursuit of innovation, relevance, and transformative education on the international stage.",
+    "category": "rankings",
+    "expected_intent": "about_cvsu",
+    "language": "en",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/05/19/champions-of-innovation-honoring-wuri-2026-contributors/",
+    "uid": "q0199",
+    "src_file": "doc_24.json",
+    "response": {
+      "ok": true,
+      "text": "Cavite State University (CvSU) secured the 217th spot among the Top 500 Global Innovative Universities in the WURI 2026 rankings, which reflects the university's commitment to innovation, relevance, and transformative education on the international stage [https://cvsu.edu.ph/blog/2026/05/19/champions-of-innovation-honoring-wuri-2026-contributors/]. This achievement highlights the collective efforts of the university community in contributing to the successful submission of innovative programs and initiatives.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 18039
+    }
+  },
+  {
+    "id": "doc21_q7",
+    "question": "When did CvSU announce its new Registered Electrical Engineers and Master Electricians, and which examinations did they pass?",
+    "gold_answer": "CvSU announced the congratulations on April 30, 2026, for its new Registered Electrical Engineers and Master Electricians who passed the April 2026 examinations.",
+    "category": "licensure",
+    "expected_intent": "MISSING:licensure_results",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/04/30/cvsu-congratulates-its-new-registered-electrical-engineers-master-electricians/",
+    "uid": "q0174",
+    "src_file": "doc_21.json",
+    "response": {
+      "ok": true,
+      "text": "Cavite State University (CvSU) announced its new Registered Electrical Engineers and Master Electricians on April 30, 2026, following their success in the April 2026 examinations. They passed the Registered Electrical Engineers Licensure Examination (REELE) and the Registered Master Electricians Licensure Examination. [“CvSU congratulates its new Registered Electrical Engineers, Master Electricians” — official CvSU site, 2026-04-30 (https://cvsu.edu.ph/blog/2026/04/30/cvsu-congratulates-its-new-registered-electrical-engineers-master-electricians/)]",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 20174
+    }
+  },
+  {
+    "id": "doc14_q8",
+    "question": "Who accepted the seagrass research outputs on behalf of DENR-PENRO Cavite and LGU Maragondon?",
+    "gold_answer": "Ms. Judaline A. Fabro, Assistant Management Services Division Chief and in-charge of the Office of DENR-PENRO Cavite, and Mr. Noah M. Caasi, Municipal Administrator of LGU Maragondon, delivered their pledge of acceptance and commitment to use the research outputs in their data-driven policies.",
+    "category": "events",
+    "expected_intent": "events",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/24/cvsu-turns-over-seagrass-research-data-to-denr-lgu-maragondon/",
+    "uid": "q0119",
+    "src_file": "doc_14.json",
+    "response": {
+      "ok": true,
+      "text": "The official CvSU sources provided do not specify the names of the individuals who accepted the seagrass research outputs on behalf of DENR-PENRO Cavite and LGU Maragondon. For detailed information, you may refer to the official CvSU blog entry [here](https://cvsu.edu.ph/blog/2026/03/24/cvsu-turns-over-seagrass-research-data-to-denr-lgu-maragondon/). If you need campus-specific details, feel free to ask.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 16653
+    }
+  },
+  {
+    "id": "doc15_q3",
+    "question": "Pang-ilan ang CvSU sa listahan ng top performing schools sa March 2026 EELE?",
+    "gold_answer": "Ranked ikapito (seventh) ang CvSU sa listahan ng top performing schools na may 20 o higit pang examinees sa March 2026 Electronics Engineers Licensure Examination (EELE).",
+    "category": "licensure",
+    "expected_intent": "MISSING:licensure_exam_results",
+    "language": "taglish",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/25/cvsu-produces-new-licensed-electronics-engineers-electronics-technicians/",
+    "uid": "q0122",
+    "src_file": "doc_15.json",
+    "response": {
+      "ok": true,
+      "text": "Sa March 2026 Licensure Examination for Professional Teachers (LEPT), ang CvSU Main Campus ay nagsilbi bilang isa sa Top 10 performing schools sa Elementary Level. [https://cvsu.edu.ph/blog/2026/05/14/cvsu-congratulates-its-new-licensed-professional-teachers-2/] Kung nais mong malaman ang mga detalye ng iba pang campus o ang mga kursong ipinapalagay, maaari mong i-ask ang tanong.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (site-grounded)",
+      "latency_ms": 17398
+    }
+  },
+  {
+    "id": "doc07_q7",
+    "question": "Kailan ipinost ng CvSU ang balitang ito tungkol sa mga bagong lisensiyadong Master Plumbers?",
+    "gold_answer": "Ipinost ang balita noong February 26, 2026.",
+    "category": "licensure",
+    "expected_intent": "MISSING:licensure_exam_results",
+    "language": "fil",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/02/26/cvsu-congratulates-its-newly-licensed-master-plumbers/",
+    "uid": "q0062",
+    "src_file": "doc_07.json",
+    "response": {
+      "ok": true,
+      "text": "Ang balitang ito tungkol sa mga bagong lisensiyadong Master Plumbers ay hindi nakalista sa mga eksaktong eksiprtso na ibinigay. Para makakuha ng karugmang impormasyon, maaari mong bisitahin ang opisyales na website ng CvSU sa https://cvsu.edu.ph.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (site-grounded)",
+      "latency_ms": 12322
+    }
+  },
+  {
+    "id": "doc14_q7",
+    "question": "Why are seagrasses important according to CvSU's research?",
+    "gold_answer": "Seagrasses provide ecosystem services such as food and habitat for many organisms, and they play a crucial role in oxygen production and carbon sequestration, making them essential in mitigating climate change.",
+    "category": "research",
+    "expected_intent": "MISSING:research_news",
+    "language": "en",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/24/cvsu-turns-over-seagrass-research-data-to-denr-lgu-maragondon/",
+    "uid": "q0118",
+    "src_file": "doc_14.json",
+    "response": {
+      "ok": true,
+      "text": "The provided excerpts do not contain information about the importance of seagrasses according to CvSU's research. For detailed information, please visit [https://cvsu.edu.ph](https://cvsu.edu.ph). Would you like to ask about \"senior high to college\"?",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter-grounded)",
+      "latency_ms": 8582
+    }
+  },
+  {
+    "id": "doc14_q3",
+    "question": "Ilan ang seagrass species na matatagpuan sa coastal waters ng Maragondon?",
+    "gold_answer": "Ayon sa CvSU, may pitong (seven) seagrass species na matatagpuan sa coastal waters ng Maragondon.",
+    "category": "research",
+    "expected_intent": "MISSING:research_news",
+    "language": "taglish",
+    "volatility": "stable",
+    "source_url": "http://192.168.10.130:9090/blog/2026/03/24/cvsu-turns-over-seagrass-research-data-to-denr-lgu-maragondon/",
+    "uid": "q0114",
+    "src_file": "doc_14.json",
+    "response": {
+      "ok": true,
+      "text": "Ayon sa opisyales na impormasyon, mayroon siyam (9) seagrass species na matatagpuan sa coastal waters ng Maragondon. Ang impormasyon ay nabanggit sa opisyales na blog ng CvSU tungkol sa seagrass research data na inihandog sa DENR at LGU Maragondon. Ang detalye ay maaaring i-verify sa opisyales na pahina ng CvSU.",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (charter+site-grounded)",
+      "latency_ms": 14379
+    }
+  },
+  {
+    "id": "doc05_q6",
+    "question": "Which areas did CvSU earn a perfect five-star rating in?",
+    "gold_answer": "CvSU earned five-star (⭐⭐⭐⭐⭐) ratings in Facilities, Employability, Good Governance, and Diversity, Equity, and Inclusion.",
+    "category": "rankings",
+    "expected_intent": "MISSING:university_rankings",
+    "language": "en",
+    "volatility": "volatile",
+    "source_url": "http://192.168.10.130:9090/blog/2026/02/10/cvsu-earns-3-qs-stars-rating/",
+    "uid": "q0045",
+    "src_file": "doc_05.json",
+    "response": {
+      "ok": true,
+      "text": "The provided excerpts do not mention any areas where Cavite State University (CvSU) earned a perfect five-star rating. For more detailed information, you may refer to the official CvSU sources at https://cvsu.edu.ph. If you are considering \"choosing program,\" feel free to ask for guidance!",
+      "intent": "nlu_fallback",
+      "confidence": 0.0,
+      "source": "Local LLM (site-grounded)",
+      "latency_ms": 9476
+    }
+  }
+]

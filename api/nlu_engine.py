@@ -156,36 +156,27 @@ class IntentConfidenceBooster:
         confidence: float,
         context: Optional[ConversationContext] = None,
     ) -> Tuple[str, float]:
-        """Boost confidence with multiple strategies"""
+        """Adjust confidence — downward only, never inflated.
 
-        original_confidence = confidence
-        boost = 1.0
-
-        # Strategy 1: Keyword matching
+        The classifier's calibrated probability is the ceiling. Earlier
+        versions inflated confidence on keyword hits, question marks, and
+        conversation stickiness (same-intent / user-focus boosts). That pushed
+        borderline and off-topic queries past the tier gate at a fake-high
+        confidence — e.g. a courses-themed chat inflated an unrelated
+        "available strands in senior high" question from 0.63 to 1.0 and served
+        the wrong intent. Topic momentum must not override what the current
+        message actually says, so the only adjustment we keep is the negation
+        reducer. (`context` is retained for signature stability and is still
+        tracked by enhance_prediction for entities/history.)
+        """
         text_lower = text.lower()
-        if predicted_intent in cls.KEYWORD_BOOSTERS:
-            keywords = cls.KEYWORD_BOOSTERS[predicted_intent]
-            matching_keywords = sum(1 for kw in keywords if kw in text_lower)
-            if matching_keywords > 0:
-                boost += 0.05 * matching_keywords  # +5% per keyword match
+        factor = 1.0
 
-        # Strategy 2: Negation detection (confidence reducer)
+        # Negation detection: the sole confidence adjustment, and it only lowers.
         if any(word in text_lower for word in ["not", "don't", "doesn't", "won't"]):
-            boost *= 0.85  # -15% if negation detected
+            factor *= 0.85  # -15% if negation detected
 
-        # Strategy 3: Question marks (usually more focused)
-        if "?" in text:
-            boost += 0.10  # +10% for explicit questions
-
-        # Strategy 4: Context-based boosting
-        if context:
-            context_boost = context.get_context_boost(predicted_intent, confidence)
-            return predicted_intent, context_boost
-
-        # Calculate final confidence
-        final_confidence = min(confidence * boost, 1.0)
-
-        return predicted_intent, final_confidence
+        return predicted_intent, confidence * factor
 
     @classmethod
     def ensemble_predict(
