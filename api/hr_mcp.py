@@ -70,6 +70,8 @@ _DENIAL_MSGS = {
                    "your DTR. Ask HR to set your User ID on your Employee record."),
     "no_access": "You don't have access to Daily Time Records.",
     "no_dtr": "You don't have a Daily Time Record on file for that period yet.",
+    "no_attendance": ("You don't have any check-in records for that period, so there's "
+                      "nothing to build a DTR from yet."),
 }
 
 
@@ -119,6 +121,9 @@ def _format_dtr(data: Any) -> Optional[dict]:
         f"  Present: {t.get('days_present', 0)} workday(s) · Leave: {t.get('days_leave', 0)}",
         f"  Tardiness: {tardy} day(s) · Total undertime: {t.get('undertime_h', 0)}h {t.get('undertime_m', 0)}m",
     ]
+    if data.get("generated"):
+        lines.append("  No saved DTR record for this period yet — this is computed live "
+                     "from your check-in logs; the download below generates the official form the same way.")
     if missing:
         lines.append(f"  ⚠ {missing} day(s) with a missing punch — fix in the attendance record before signing.")
     lines.append("  Tap \"Download my DTR\" below for the official CSC Form 48 (PDF).")
@@ -184,6 +189,7 @@ async def _dtr_pdf_reply(args: dict, acting_user: Optional[str]) -> dict:
     exists for this user, so the link never opens onto a 'no DTR' page."""
     mn = _MONTH_NAMES.get(args.get("month"), "")
     yr = args.get("year")
+    pre = None
     if _ATT_SOURCE == "frappe":
         try:
             pre = await _frappe_attendance(args.get("month"), yr, acting_user)
@@ -198,8 +204,12 @@ async def _dtr_pdf_reply(args: dict, acting_user: Optional[str]) -> dict:
             return denied
     link = (f"{_FRAPPE_PUBLIC}/api/method/cvsu_web.sevi_web.api.sevi_my_dtr_pdf"
             f"?month={mn}&year={yr}")
-    return {"text": (f"Your official DTR — CSC Form No. 48 — for {mn} {yr} is ready.\n"
-                     f"[Download the DTR (PDF)]({link}) — opens with your Desk login."),
+    generated = bool(isinstance(pre, dict) and pre.get("generated"))
+    intro = (f"No saved DTR record for {mn} {yr} yet, so I generated your official DTR — "
+             f"CSC Form No. 48 — live from your check-in logs."
+             if generated else
+             f"Your official DTR — CSC Form No. 48 — for {mn} {yr} is ready.")
+    return {"text": f"{intro}\n[Download the DTR (PDF)]({link}) — opens with your Desk login.",
             "source": "hr_mcp",
             "suggestions": [f"My attendance summary for {mn} {yr}"]}
 
