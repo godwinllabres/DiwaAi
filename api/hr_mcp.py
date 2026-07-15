@@ -42,7 +42,15 @@ _MONTHS = {m.lower(): i for i, m in enumerate(
      "July", "August", "September", "October", "November", "December"]) if m}
 _MONTHS.update({m[:3]: i for m, i in list(_MONTHS.items())})
 
-_DTR_RE = re.compile(r"\b(dtr|daily\s+time\s+record|time\s+record|attendance)\b", re.IGNORECASE)
+# DTR / attendance intent. Widened with common synonyms — this only runs for an
+# authenticated INTERNAL user, so generous matching can't affect the student surface.
+_DTR_RE = re.compile(
+    r"\b(dtr|daily\s*time\s*record|time\s*record|attendance|"
+    r"time\s*sheet|timesheet|time\s*logs?|"
+    r"csc\s*form\s*(no\.?\s*)?48|form\s*48|"
+    r"biometrics?|clock\s*(in|out)|time\s*(in|out)|"
+    r"hours\s*worked|my\s*hours|punch(es|ed)?)\b",
+    re.IGNORECASE)
 # A DTR query that also asks to print/download -> return the official PDF link.
 _DTR_PDF_RE = re.compile(r"\b(pdf|render|print|download|official|form\s*48)\b", re.IGNORECASE)
 _MONTH_NAMES = {1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June",
@@ -238,8 +246,13 @@ async def try_handle(message: str, employee: Optional[str] = None,
         return None
     routed = route(message)
     if routed is None:
-        if _DTR_RE.search(message) and _DTR_PDF_RE.search(message):
-            return {"text": "Which month's DTR? e.g. \"download my DTR for June 2026\".", "source": "hr_mcp"}
+        # A DTR / attendance query missing only the month — ask for it (with quick
+        # options) instead of falling through to the student chatbot, which would
+        # answer with student content or refuse the internal user as out of scope.
+        if _DTR_RE.search(message):
+            return {"text": "Which month would you like? For example, \"my DTR for June 2026\".",
+                    "source": "hr_mcp",
+                    "suggestions": ["My DTR for June 2026", "Download my DTR for June 2026"]}
         return None
     tool_name, args = routed
     if _DTR_PDF_RE.search(message):
