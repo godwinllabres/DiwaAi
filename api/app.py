@@ -431,9 +431,15 @@ _ABBREV_TAIL_RE = re.compile(
 )
 
 
+# A name initial or short title before the period ("Dr. Ma. Agnes P. Nuestro"):
+# a 1–2 char capitalized token is never a real sentence end.
+_INITIAL_TAIL_RE = re.compile(r"(?:^|\s)[A-Z][a-z]?\.$")
+
+
 def _split_outside_parens(text: str, boundary: str) -> List[str]:
     """Split on `boundary` ('. ' sentence ends or ', ' list commas) at paren
-    depth 0. Sentence mode skips known abbreviations ("hal.", "No.")."""
+    depth 0. Sentence mode skips known abbreviations ("hal.", "No.") and name
+    initials ("Ma.", "P.")."""
     parts, depth, start, i = [], 0, 0, 0
     while i < len(text) - 1:
         ch = text[i]
@@ -443,7 +449,10 @@ def _split_outside_parens(text: str, boundary: str) -> List[str]:
             depth = max(0, depth - 1)
         elif depth == 0 and text[i : i + 2] == boundary:
             head = text[start : i + (1 if boundary == ". " else 0)]
-            if boundary != ". " or not _ABBREV_TAIL_RE.search(head.rstrip()):
+            tail = head.rstrip()
+            if boundary != ". " or not (
+                _ABBREV_TAIL_RE.search(tail) or _INITIAL_TAIL_RE.search(tail)
+            ):
                 parts.append(head.strip())
                 start = i + 2
         i += 1
@@ -1217,7 +1226,7 @@ async def connectors_mcp_stats():
 
 
 class LlmToggleRequest(BaseModel):
-    provider: Literal["ollama", "claude", "none"]
+    provider: Literal["ollama", "openai", "localai", "claude", "none"]
     model: Optional[str] = None  # e.g. "llama3.2:3b", "qwen3:8b", "claude-haiku-4-5"
 
 
