@@ -20,3 +20,10 @@ anthropic>=0.40.0
 
 # PostgreSQL driver (used when DATABASE_URL is set; SQLite needs no extra dep)
 psycopg[binary]==3.3.4
+
+# MCP client for the AIS / HR connector bridges (api/ais_mcp.py, api/hr_mcp.py).
+# Without it the bridges are a silent no-op. [sse] pulls the SSE transport deps.
+mcp[sse]==1.23.3
+
+# JWT verification for the internal auth fence (SEVI_INTERNAL_AUTH_MODE=jwt).
+PyJWT==2.13.0

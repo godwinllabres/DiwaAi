@@ -41,6 +41,7 @@ from .ais_mcp import call_tool as _ais_call_tool
 from .ais_mcp import ToolCallError as _AisToolCallError
 from .ais_mcp import _sanitize_tool_error as _ais_sanitize_tool_error
 from .connectors_mcp import try_handle as _try_connectors
+from .hr_mcp import try_handle as _try_hr
 from .connectors_mcp import metrics_snapshot as _connectors_metrics_snapshot
 from .ais_mcp import circuit_status as _ais_circuit_status
 from . import safety as _safety
@@ -232,6 +233,63 @@ async def require_admin(request: Request) -> None:
     pin = request.headers.get("X-Admin-Pin", "")
     if pin != DASHBOARD_PIN:
         raise HTTPException(401, "Unauthorized")
+
+
+def _internal_identity(http_request: Request) -> Optional[str]:
+    """Resolve the authenticated INTERNAL user for this request, or None.
+
+    FAIL-CLOSED fence for the internal capabilities (AIS finance, HR/DTR): those
+    short-circuits run ONLY when this returns a user. Anonymous callers get None
+    and never reach finance/HR tools — which is why the public, anonymous surface
+    stays student-only regardless of the connector enable flags.
+
+    Modes (SEVI_INTERNAL_AUTH_MODE):
+      off  (default) — no identity source; internal tools never fire.
+      jwt            — PRODUCTION. Verify a short-lived HS256 JWT minted by the
+                       Desk (Authorization: Bearer <jwt> or X-Sevi-Token), signed
+                       with SEVI_JWT_SECRET, aud="sevi"; the `sub` claim is the user.
+      demo           — LOCAL ONLY. Returns SEVI_DEMO_USER for every request so a
+                       local stack works without real auth. Never set off-local.
+
+    Trusted-proxy path (any mode, fallback): an auth proxy that already validated
+    the Desk session sets `X-Internal-Key` (== INTERNAL_KEY, constant-time
+    compared) + `X-Sevi-User`. Sevi never sees the user's password.
+
+    See docs/phase0-auth-fencing.md for the Desk-side JWT minting endpoint.
+    """
+    # 1. Trusted proxy (any mode).
+    key = os.getenv("INTERNAL_KEY", "")
+    provided = http_request.headers.get("X-Internal-Key", "")
+    if key and secrets.compare_digest(provided, key):
+        return http_request.headers.get("X-Sevi-User", "").strip() or "internal-client"
+    mode = os.getenv("SEVI_INTERNAL_AUTH_MODE", "off").strip().lower()
+    # 2. Signed JWT from the Desk (chosen production mechanism).
+    if mode == "jwt":
+        return _jwt_identity(http_request)
+    # 3. Local demo bypass.
+    if mode == "demo":
+        return os.getenv("SEVI_DEMO_USER", "demo.user") or None
+    return None  # fail closed
+
+
+def _jwt_identity(http_request: Request) -> Optional[str]:
+    """Verify a Desk-minted HS256 JWT and return its `sub` (user), or None.
+
+    Fail-closed: any missing/expired/bad-signature/wrong-audience token -> None.
+    Token source: `Authorization: Bearer <jwt>` or the `X-Sevi-Token` header.
+    """
+    auth = http_request.headers.get("Authorization", "")
+    token = auth[7:].strip() if auth.startswith("Bearer ") else ""
+    token = token or http_request.headers.get("X-Sevi-Token", "").strip()
+    secret = os.getenv("SEVI_JWT_SECRET", "")
+    if not (token and secret):
+        return None
+    try:
+        import jwt  # PyJWT
+        claims = jwt.decode(token, secret, algorithms=["HS256"], audience="sevi")
+    except Exception:  # noqa: BLE001 — invalid/expired/bad-sig -> deny
+        return None
+    return (claims.get("sub") or "").strip() or None
 
 
 # ============================================================================
@@ -709,6 +767,10 @@ def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optiona
         return ResponseSource.AIS_MCP, None
     if m == "connectors_mcp":
         return ResponseSource.CONNECTORS_MCP, None
+    if m == "hr_mcp":
+        # HR/DTR is live-data too; classify as a connectors-style source so the
+        # frontend renders it as a real answer, not the nlu-fallback UI.
+        return ResponseSource.CONNECTORS_MCP, None
     if m.startswith("Charter RAG"):
         return ResponseSource.CHARTER_RAG, None
     if m.startswith("Site RAG"):
@@ -1003,12 +1065,16 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     # On transient AIS failure (timeout/transport error), `failure_note` is
     # set and we fall back to NLU with a discreet annotation prepended —
     # better UX than dumping a stack trace into the chat bubble.
+    # FENCE: finance (AIS) and HR/DTR run ONLY for an authenticated internal
+    # user. Anonymous callers get None -> both short-circuits are skipped and the
+    # student NLU answers, so the public surface can never reach internal tools.
+    internal_user = _internal_identity(http_request)
     ais_reply = await _try_ais(
         request.message,
         session_id=request.session_id,
         intent_hint=request.intent_hint,
         intent_args=request.intent_args,
-    )
+    ) if internal_user else None
     ais_dv_card: Optional[DvCard] = None
     ais_failure_note: Optional[str] = None
     ais_context_set: Optional[Dict[str, Any]] = None
@@ -1040,14 +1106,29 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         else:
             if conn_reply is not None and not ais_failure_note:
                 ais_failure_note = conn_reply.get("failure_note")
-            intent, response, confidence, model_used, nlu_data = chatbot.chat(
-                request.message,
-                user_id=request.user_id,
-                session_id=request.session_id,
-                skip_intents=campus_grounded,
-            )
-            if ais_failure_note:
-                response = f"{ais_failure_note}\n\n{response}"
+            # HR / DTR short-circuit — attendance / Daily Time Record queries,
+            # served by the cvsu-hr MCP server. Runs only when HR_MCP_ENABLED=1
+            # (off by default; DPA-sensitive, never on an anonymous surface) and
+            # when neither AIS nor connectors handled the turn.
+            hr_reply = await _try_hr(
+                request.message, session_id=request.session_id,
+                acting_user=internal_user,
+            ) if internal_user else None
+            if hr_reply is not None and hr_reply.get("text") is not None:
+                ais_table = hr_reply.get("table")
+                ais_suggestions = hr_reply.get("suggestions") or None
+                intent, response, confidence, model_used, nlu_data = (
+                    "hr_mcp", hr_reply["text"], 1.0, "hr_mcp", {},
+                )
+            else:
+                intent, response, confidence, model_used, nlu_data = chatbot.chat(
+                    request.message,
+                    user_id=request.user_id,
+                    session_id=request.session_id,
+                    skip_intents=campus_grounded,
+                )
+                if ais_failure_note:
+                    response = f"{ais_failure_note}\n\n{response}"
 
     response_time_ms = (time.time() - start_time) * 1000
 
