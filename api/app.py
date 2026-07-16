@@ -16,7 +16,8 @@ import random
 import re
 import secrets
 import time
-from collections import defaultdict
+import sys
+from collections import defaultdict, deque
 from datetime import datetime
 from pathlib import Path
 
@@ -53,6 +54,66 @@ from . import auth_ais as _ais_auth
 
 import logging as _logging
 _logger = _logging.getLogger("diwa.api")
+
+# ── In-container log tail ────────────────────────────────────────────────────
+# Recent log lines kept in memory and served by GET /admin/logs, so deployments
+# where `docker logs` isn't reachable (the test server) can still read the
+# diagnostics that explain a failure — e.g. the "[4/5] LLM fallback" init lines
+# and per-turn tier decisions. Captures BOTH logging records and print() output.
+# Bounded ring buffer; cleared on restart; fine under --workers 1.
+_LOG_TAIL: deque = deque(maxlen=int(os.getenv("LOG_TAIL_LINES", "2000")))
+_LOG_TS = "%Y-%m-%d %H:%M:%S"
+
+
+class _LogTailHandler(_logging.Handler):
+    """Copy every logging record into the in-memory tail."""
+
+    def emit(self, record):
+        try:
+            _LOG_TAIL.append(self.format(record))
+        except Exception:
+            pass  # diagnostics must never break the request path
+
+
+_tail_fmt = _logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s", _LOG_TS)
+_tail_handler = _LogTailHandler()
+_tail_handler.setFormatter(_tail_fmt)
+# Root gets the tail plus an explicit stderr handler: without one, Python's
+# last-resort handler drops INFO records entirely (and adding only the tail
+# would steal WARNINGs from docker logs). INFO now reaches both destinations.
+_stderr_handler = _logging.StreamHandler()
+_stderr_handler.setFormatter(_tail_fmt)
+_logging.getLogger().addHandler(_tail_handler)
+_logging.getLogger().addHandler(_stderr_handler)
+_logging.getLogger().setLevel(_logging.INFO)
+# uvicorn's loggers don't propagate to root — tap uvicorn.error explicitly
+# (skip uvicorn.access: polling /admin/logs would fill the tail with itself).
+_logging.getLogger("uvicorn.error").addHandler(_tail_handler)
+
+
+class _StdoutTee:
+    """Pass-through stdout wrapper that copies print() lines into the tail.
+
+    stdout ONLY — logging handlers write to stderr, so teeing stderr would
+    double-capture every record. The chatbot's diagnostics are print()s."""
+
+    def __init__(self, stream):
+        self._stream = stream
+
+    def write(self, text):
+        self._stream.write(text)
+        for line in text.splitlines():
+            if line.strip():
+                _LOG_TAIL.append(f"{time.strftime(_LOG_TS)} STDOUT: {line}")
+
+    def flush(self):
+        self._stream.flush()
+
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+
+
+sys.stdout = _StdoutTee(sys.stdout)
 
 # Download NLTK resources (idempotent — no-op if already present)
 for resource, kind in [('punkt_tab', 'tokenizers'), ('wordnet', 'corpora')]:
@@ -1355,6 +1416,28 @@ async def set_llm_config(request: LlmToggleRequest):
         status["provider"], status["model"], status["available"],
     )
     return status
+
+
+@app.get("/admin/logs/tail", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def get_log_tail(lines: int = 200, grep: Optional[str] = None):
+    """Recent in-process log lines (logging records + stdout prints — the
+    "[4/5] LLM" init lines, tier decisions, warnings), readable from a browser
+    when `docker logs` isn't reachable on the deployment host.
+
+    (GET /admin/logs, without /tail, is the chat-logs dashboard HTML page —
+    a different thing that predates this endpoint and owns that path.)
+
+    `lines` caps how many of the newest lines return (max LOG_TAIL_LINES,
+    default buffer 2000); `grep` filters case-insensitively BEFORE the cap
+    (e.g. /admin/logs?grep=llm&lines=50). PIN-gated: lines can contain user
+    messages. In-memory only — restart clears it."""
+    tail = list(_LOG_TAIL)
+    if grep:
+        needle = grep.lower()
+        tail = [ln for ln in tail if needle in ln.lower()]
+    lines = max(1, min(lines, _LOG_TAIL.maxlen or 2000))
+    tail = tail[-lines:]
+    return {"count": len(tail), "capacity": _LOG_TAIL.maxlen, "lines": tail}
 
 
 # ============================================================================
