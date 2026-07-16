@@ -119,6 +119,14 @@ _NON_ALPHA_RE = r"[^a-z0-9\s]"
 # a canned refusal in its place.
 LLM_REFUSAL_TOKEN = "[OUT_OF_SCOPE]"
 
+# Every LLM_PROVIDER value the fallback tier understands. Adding a new backend
+# means adding its client class AND its name here (and to the admin toggle's
+# Literal in app.py). Anything outside this set is treated as a hard config
+# error at startup rather than silently disabling the LLM tier — that silent
+# path is what made LLM_PROVIDER=localai look "broken" before the provider
+# existed. "none" is valid and means: intentionally no LLM fallback.
+KNOWN_LLM_PROVIDERS = frozenset({"claude", "ollama", "openai", "localai", "none"})
+
 
 def build_scope_locked_prompt(
     base_persona: str,
@@ -859,6 +867,9 @@ class HybridChatbot:
         self.nonsense_gate = NonsenseGate()
         self.llm = None
         self.llm_provider = provider
+        # Populated below so /health and the log can explain *why* a provider is
+        # not ready without anyone shelling into the container.
+        self.llm_last_error: Optional[str] = None
 
         # Build campus glossary so the LLM doesn't hallucinate on CvSU acronyms
         # (e.g. asking about CAFENR shouldn't return "Cafeteria"). Pulls the
@@ -872,18 +883,35 @@ class HybridChatbot:
             campus_glossary=campus_glossary,
         )
 
+        # Echo the resolved config up front so the log shows exactly what the
+        # process will try — the #1 thing you want when llm_ready comes back
+        # false. Env is the source of truth here; values not secret are printed.
+        print(f"\n[4/5] LLM fallback — resolving provider (LLM_PROVIDER={provider!r})")
+        print(f"       known providers: {', '.join(sorted(KNOWN_LLM_PROVIDERS))}")
+        if provider in ("openai", "localai"):
+            print(f"       OPENAI_BASE_URL={os.getenv('OPENAI_BASE_URL', OpenAICompatLLM.DEFAULT_BASE_URL)}")
+            print(f"       OPENAI_MODEL={os.getenv('OPENAI_MODEL', OpenAICompatLLM.DEFAULT_MODEL)}")
+            print(f"       OPENAI_API_KEY={'set' if os.getenv('OPENAI_API_KEY') else 'unset'}")
+        elif provider == "ollama":
+            print(f"       OLLAMA_BASE_URL={os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}")
+            print(f"       OLLAMA_MODEL={os.getenv('OLLAMA_MODEL', 'llama3.2:3b')}")
+        elif provider == "claude":
+            print(f"       CLAUDE_MODEL={os.getenv('CLAUDE_MODEL', '(default)')}")
+            print(f"       ANTHROPIC_API_KEY={'set' if os.getenv('ANTHROPIC_API_KEY') else 'unset'}")
+
         if provider == "claude":
-            print("\n[4/5] Initialising Claude API fallback...")
+            print("       initialising Claude API fallback...")
             self.llm = ClaudeLLM(system_prompt=scope_locked_prompt)
             if self.llm.available:
                 print(f"[OK] Claude LLM ready  model={self.llm.model}")
             else:
                 if not ANTHROPIC_AVAILABLE:
-                    print("[WARNING] anthropic package not installed — pip install anthropic")
+                    self.llm_last_error = "anthropic package not installed (pip install anthropic)"
                 else:
-                    print("[WARNING] ANTHROPIC_API_KEY not set or invalid — Claude fallback disabled")
+                    self.llm_last_error = "ANTHROPIC_API_KEY not set or invalid"
+                print(f"[WARNING] Claude fallback disabled — {self.llm_last_error}")
         elif provider == "ollama":
-            print("\n[4/5] Initialising local LLM fallback (Ollama)...")
+            print("       initialising local LLM fallback (Ollama)...")
             self.llm = LocalLLM(system_prompt=scope_locked_prompt)
             if self.llm.available:
                 print(f"[OK] Local LLM ready  model={self.llm.model}  url={self.llm.base_url}")
@@ -891,19 +919,40 @@ class HybridChatbot:
                 # the 60-120s cold-start cost on CPU-only machines.
                 self._warm_up_llm_async()
             else:
-                print("[WARNING] Local LLM not reachable — deep-fallback disabled")
+                self.llm_last_error = (
+                    f"Ollama not reachable at {getattr(self.llm, 'base_url', '?')} "
+                    f"(model={getattr(self.llm, 'model', '?')})"
+                )
+                print(f"[WARNING] {self.llm_last_error} — deep-fallback disabled")
                 print("          Start Ollama and run: ollama pull llama3.1")
         elif provider in ("openai", "localai"):
-            print(f"\n[4/5] Initialising OpenAI-compatible LLM fallback ({provider})...")
+            print(f"       initialising OpenAI-compatible LLM fallback ({provider})...")
             self.llm = OpenAICompatLLM(system_prompt=scope_locked_prompt)
             if self.llm.available:
                 print(f"[OK] OpenAI-compat LLM ready  model={self.llm.model}  url={self.llm.base_url}")
                 self._warm_up_llm_async()
             else:
-                print("[WARNING] OpenAI-compat LLM not reachable — deep-fallback disabled")
+                self.llm_last_error = (
+                    f"OpenAI-compat server not reachable at {self.llm.base_url} "
+                    f"(model={self.llm.model})"
+                )
+                print(f"[WARNING] {self.llm_last_error} — deep-fallback disabled")
                 print("          Check OPENAI_BASE_URL / OPENAI_MODEL and that the model is loaded")
+        elif provider == "none":
+            print("       LLM fallback intentionally disabled (LLM_PROVIDER=none)")
         else:
-            print(f"\n[4/5] LLM fallback disabled (LLM_PROVIDER={provider})")
+            # Unknown provider: the exact trap that made localai silently disable
+            # before ff665e7. Do NOT swallow it — make it impossible to miss.
+            self.llm_provider = provider  # keep the bad value visible in /health
+            self.llm_last_error = (
+                f"unknown LLM_PROVIDER={provider!r} -- valid values are "
+                f"{', '.join(sorted(KNOWN_LLM_PROVIDERS))}"
+            )
+            print("[ERROR] " + "!" * 60)
+            print(f"[ERROR] {self.llm_last_error}")
+            print("[ERROR] LLM fallback is DISABLED because the provider name was not recognised.")
+            print("[ERROR] Fix LLM_PROVIDER in sevi.env and recreate the api container.")
+            print("[ERROR] " + "!" * 60)
 
         self.model_usage_stats["llm_fallback_used"] = 0
         self.model_usage_stats["scope_gate_blocked"] = 0
@@ -917,11 +966,18 @@ class HybridChatbot:
         print("=" * 60 + "\n")
 
     def llm_status(self) -> dict:
-        """Current LLM tier state, for /health-style reporting and the admin toggle."""
+        """Current LLM tier state, for /health-style reporting and the admin toggle.
+
+        Includes base_url and the last init error so an operator can see *why*
+        the tier is down (unreachable server, unknown provider, missing key)
+        without reading container logs."""
         return {
             "provider": self.llm_provider,
             "model": getattr(self.llm, "model", None),
+            "base_url": getattr(self.llm, "base_url", None),
             "available": bool(self.llm and self.llm.available),
+            "known_provider": self.llm_provider in KNOWN_LLM_PROVIDERS,
+            "error": self.llm_last_error,
         }
 
     def set_llm(self, provider: str, model: Optional[str] = None) -> dict:
@@ -932,6 +988,7 @@ class HybridChatbot:
         follow the same switch.
         """
         provider = (provider or "none").strip().lower()
+        self.llm_last_error = None
         scope_locked_prompt = build_scope_locked_prompt(
             base_persona=self._system_prompt_text(),
             intent_list=list(self.responses_map.keys()),
@@ -950,8 +1007,21 @@ class HybridChatbot:
             if model:
                 os.environ["OPENAI_MODEL"] = model
         else:
+            # The Literal in app.py should stop this, but a direct caller could
+            # still pass junk — record it rather than silently masking as "none".
+            if provider != "none":
+                self.llm_last_error = (
+                    f"unknown provider {provider!r} -- valid values are "
+                    f"{', '.join(sorted(KNOWN_LLM_PROVIDERS))}"
+                )
             provider = "none"
             self.llm = None
+        if self.llm is not None and not self.llm.available and self.llm_last_error is None:
+            self.llm_last_error = (
+                f"{provider} provider initialised but not reachable "
+                f"(url={getattr(self.llm, 'base_url', '?')}, "
+                f"model={getattr(self.llm, 'model', '?')})"
+            )
         self.llm_provider = provider
         os.environ["LLM_PROVIDER"] = provider
         if provider in ("ollama", "openai", "localai") and self.llm and self.llm.available:

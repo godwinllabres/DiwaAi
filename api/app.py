@@ -744,13 +744,23 @@ async def root():
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """Health check endpoint. Reports model and LLM readiness without leaking internals."""
-    llm_ok = bool(chatbot.llm and chatbot.llm.available)
+    """Health check endpoint. Reports model and LLM readiness.
+
+    When the LLM tier is down, `llm_error` says why (unreachable server, unknown
+    provider, missing key) and `llm_base_url`/`llm_model` show the config it
+    tried — enough to diagnose `llm_ready: false` from a browser, no shell
+    needed. None of these leak secrets (keys are reported only as set/unset in
+    the container log, never here)."""
+    status = chatbot.llm_status()
     return {
         "status": "healthy",
         "classifier_ready": chatbot.nb_model is not None,
-        "llm_provider": chatbot.llm_provider,
-        "llm_ready": llm_ok,
+        "llm_provider": status["provider"],
+        "llm_ready": status["available"],
+        "llm_model": status["model"],
+        "llm_base_url": status["base_url"],
+        "llm_known_provider": status["known_provider"],
+        "llm_error": status["error"],
     }
 
 # ─────────────────────────────────────────────────────────────────────────────
