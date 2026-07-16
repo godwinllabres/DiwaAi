@@ -488,7 +488,7 @@ def _redact_office_phones(text: str, intent: Optional[str] = None) -> str:
 # enumerations ("events: A, B, at C") become bullet lists. Splitting is
 # parenthesis-aware so "(Enero 28–29, 2026, kasama …)" stays intact.
 _ABBREV_TAIL_RE = re.compile(
-    r"\b(?:hal|e\.g|i\.e|etc|No|Blg|Mr|Mrs|Ms|Dr|Engr|Atty|Sta|Sto|s)\.$", re.IGNORECASE
+    r"\b(?:hal|e\.g|i\.e|etc|No|Blg|Mr|Mrs|Ms|Dr|Engr|Atty|Sta|Sto|s|loc)\.$", re.IGNORECASE
 )
 
 
