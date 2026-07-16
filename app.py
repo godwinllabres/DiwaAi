@@ -283,9 +283,14 @@ _CVSU_DIRECTORY: List[dict] = [
         "place_id": "admin",
     },
     {
-        "office": "Office of the VP for Research and Extension (OVPRE)",
+        "office": "Office of the VP for Research, Innovation and Extension (OVPRIE)",
         "location": "CvSU Main, Indang, Cavite",
-        "phone": "(046) 862-0850 / +63 998 937 2020",
+        "phone": "4839250 loc. 1007",
+    },
+    {
+        "office": "CvSU Main Switchboard",
+        "location": "CvSU Main, Indang, Cavite",
+        "phone": "4839250",
     },
 ]
 

@@ -635,7 +635,12 @@ _INTENT_TO_PLACE: Dict[str, str] = {
 _OUR = "Office of the University Registrar"
 _OUR_ENROLLMENT = "Office of the University Registrar (Enrollment)"
 _REGISTRAR_EMAIL = "registrarmain@cvsu.edu.ph"
-_REGISTRAR_PHONE = None  # Sanitized: refer to the official CvSU directory at cvsu.edu.ph for the verified contact number.
+# CvSU trunkline + PABX locals (static CvSU Phone Directory). Callers dial the
+# trunk number, then the office local. From campus phones, press 9 first for
+# outside calls (e.g. 94150013).
+_CVSU_TRUNK = "4839250"
+_REGISTRAR_PHONE = f"{_CVSU_TRUNK} loc. 1026"
+_OSAS_PHONE = f"{_CVSU_TRUNK} loc. 1025"
 _OSAS_BUILDING = "OSAS Building"
 _OSAS_EMAIL = "osasmain@cvsu.edu.ph"
 _ADMIN_BUILDING = "Administration Building"
@@ -687,6 +692,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         location=_OSAS_BUILDING,
         place_id="osas",
         email=_OSAS_EMAIL,
+        phone=_OSAS_PHONE,
         hours=_OFFICE_HOURS,
     ),
     "scholarship": Directory(
@@ -701,7 +707,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         location=_ADMIN_BUILDING,
         place_id="admin",
         email="admissionmain@cvsu.edu.ph",
-        phone=_REGISTRAR_PHONE,
+        phone=_CVSU_TRUNK,
         hours=_OFFICE_HOURS,
     ),
     "admissions_exam": Directory(
@@ -716,6 +722,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         location="Administration Building, ground floor",
         place_id="admin",
         email="cashiermain@cvsu.edu.ph",
+        phone=f"{_CVSU_TRUNK} loc. 1015",
         hours=_OFFICE_HOURS,
     ),
     "academic_policies": Directory(
@@ -756,6 +763,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         location="Central campus, north of Administration Building",
         place_id="library",
         email="librarymain@cvsu.edu.ph",
+        phone=f"{_CVSU_TRUNK} loc. 1038",
         hours="Mon–Fri, 8:00 AM – 7:00 PM; Sat 8:00 AM – 12:00 NN",
     ),
     "dormitory": Directory(
@@ -770,6 +778,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         location="Central campus, near the library",
         place_id="grad",
         email="gradschoolmain@cvsu.edu.ph",
+        phone=f"{_CVSU_TRUNK} loc. 1042",
         hours=_OFFICE_HOURS,
     ),
     "career_opportunity": Directory(
@@ -790,6 +799,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         location="Bahay Alumni, near the east dorm cluster",
         place_id="bahay_alumni",
         email="alumnimain@cvsu.edu.ph",
+        phone=f"{_CVSU_TRUNK} loc. 1049",
         hours=_OFFICE_HOURS,
     ),
     "international_students": Directory(
@@ -810,7 +820,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         location=_ADMIN_BUILDING,
         place_id="admin",
         email=_INFO_EMAIL,
-        phone=_REGISTRAR_PHONE,
+        phone=_CVSU_TRUNK,
         hours=_OFFICE_HOURS,
     ),
     "directory": Directory(
@@ -818,7 +828,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         location=_ADMIN_BUILDING,
         place_id="admin",
         email=_INFO_EMAIL,
-        phone=_REGISTRAR_PHONE,
+        phone=_CVSU_TRUNK,
         hours=_OFFICE_HOURS,
     ),
     "it_cs_courses": Directory(
@@ -826,6 +836,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         location="West side of campus, near Gate 2",
         place_id="ceit",
         email="ceit@cvsu.edu.ph",
+        phone=f"{_CVSU_TRUNK} loc. 1055",
         hours=_OFFICE_HOURS,
     ),
     "student_portal": Directory(
@@ -833,6 +844,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         location="CEIT Building",
         place_id="ceit",
         email="mis@cvsu.edu.ph",
+        phone=f"{_CVSU_TRUNK} loc. 1054",
         hours=_OFFICE_HOURS,
     ),
     "campus_location": Directory(
@@ -847,6 +859,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         location="OSAS Building, east of the oval",
         place_id="osas",
         email=_OSAS_EMAIL,
+        phone=_OSAS_PHONE,
         hours=_OFFICE_HOURS,
     ),
     "events": Directory(
