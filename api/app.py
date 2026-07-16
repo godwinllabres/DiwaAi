@@ -1008,6 +1008,21 @@ async def _safety_screen(message: str, session_id: Optional[str]):
     return None, message
 
 
+# chatbot.chat() is synchronous and can block for the full LLM inference
+# (45s+ on CPU localai). Run it in a worker thread so the single-worker event
+# loop keeps serving /health and other endpoints, but keep turns single-flight
+# with a lock: the chatbot's in-memory state (conversation history, usage
+# stats, TF predict) assumes one chat at a time, and two concurrent localai
+# inferences would double its memory spike on a small host.
+_chat_turn_lock = asyncio.Lock()
+
+
+async def _chat_turn(*args, **kwargs):
+    """Run chatbot.chat off the event loop, one turn at a time."""
+    async with _chat_turn_lock:
+        return await asyncio.to_thread(chatbot.chat, *args, **kwargs)
+
+
 @app.post("/chat", response_model=ChatResponse, tags=["Chat"],
           responses={400: {"description": "Message cannot be empty"}})
 async def chat_endpoint(request: ChatRequest, http_request: Request):
@@ -1140,7 +1155,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
                     "hr_mcp", hr_reply["text"], 1.0, "hr_mcp", {},
                 )
             else:
-                intent, response, confidence, model_used, nlu_data = chatbot.chat(
+                intent, response, confidence, model_used, nlu_data = await _chat_turn(
                     request.message,
                     user_id=request.user_id,
                     session_id=request.session_id,
@@ -1329,7 +1344,12 @@ async def set_llm_config(request: LlmToggleRequest):
     """Hot-swap the responding LLM: provider ollama/claude/none, optional
     model override. Also steers the AIS/connectors LLM routers (they follow
     LLM_PROVIDER per call). Takes effect on the next chat turn — no restart."""
-    status = chatbot.set_llm(request.provider, request.model)
+    # set_llm probes the provider (up to 15s) — keep that off the event loop,
+    # and take the turn lock so a toggle can't swap/None self.llm out from
+    # under a chat turn running in another worker thread (mid-turn swap →
+    # AttributeError → 500). Preserves the docstring's next-turn semantics.
+    async with _chat_turn_lock:
+        status = await asyncio.to_thread(chatbot.set_llm, request.provider, request.model)
     _logger.info(
         "admin llm toggle: provider=%s model=%s available=%s",
         status["provider"], status["model"], status["available"],
@@ -1629,15 +1649,24 @@ async def model_info():
 async def reload_model():
     """Hot-reload all model artifacts from disk without restarting the server."""
     global chatbot
-    chatbot = HybridChatbot(
-        model_dir=MODEL_DIR,
-        responses_path=os.path.join(MODEL_DIR, "responses_map.json")
-    )
-    # Retrieval tiers read the same artifacts (intents DB, site corpus) —
-    # rebuild them so a retrain/resync is picked up in the same call.
-    _intent_retrieval.reload_index()
-    _site_rag.reload_index()
-    _intent_grounding.reload_index()
+
+    def _rebuild():
+        # TF/joblib loads plus a synchronous LLM probe (up to 15s) — multi-second
+        # work that must stay off the event loop, and behind the turn lock so the
+        # swap never lands mid-chat-turn.
+        new_bot = HybridChatbot(
+            model_dir=MODEL_DIR,
+            responses_path=os.path.join(MODEL_DIR, "responses_map.json")
+        )
+        # Retrieval tiers read the same artifacts (intents DB, site corpus) —
+        # rebuild them so a retrain/resync is picked up in the same call.
+        _intent_retrieval.reload_index()
+        _site_rag.reload_index()
+        _intent_grounding.reload_index()
+        return new_bot
+
+    async with _chat_turn_lock:
+        chatbot = await asyncio.to_thread(_rebuild)
     return {"status": "reloaded"}
 
 
@@ -1659,7 +1688,12 @@ async def sync_site_corpus():
 @app.get("/conversation/{user_id}", tags=["Conversation"])
 async def get_conversation_history(user_id: str):
     """Get conversation history for a user."""
-    history = chatbot.conversation_history.get(user_id, [])
+    # Turn lock: chat turns now mutate conversation_history from a worker
+    # thread; snapshot under the lock so we never serialize a list the worker
+    # is appending to/truncating. (Pre-thread-offload these handlers waited
+    # behind turns anyway — the loop was blocked — so semantics are unchanged.)
+    async with _chat_turn_lock:
+        history = list(chatbot.conversation_history.get(user_id, []))
     return {
         "user_id": user_id,
         "message_count": len(history),
@@ -1669,9 +1703,12 @@ async def get_conversation_history(user_id: str):
 @app.delete("/conversation/{user_id}", tags=["Conversation"])
 async def clear_conversation(user_id: str):
     """Clear conversation history for a user."""
-    if user_id in chatbot.conversation_history:
-        del chatbot.conversation_history[user_id]
-        return {"status": "cleared", "user_id": user_id}
+    # Turn lock: deleting the key mid-turn would KeyError the worker thread
+    # between its move_to_end and read — serialize with turns instead.
+    async with _chat_turn_lock:
+        if user_id in chatbot.conversation_history:
+            del chatbot.conversation_history[user_id]
+            return {"status": "cleared", "user_id": user_id}
     return {"status": "no_history", "user_id": user_id}
 
 _BATCH_MAX = int(os.getenv("BATCH_MAX", "20"))
@@ -1696,7 +1733,7 @@ async def batch_chat(requests: List[ChatRequest]):
         if block:
             results.append(_short_circuit_response(request, original_message, start_time, **block))
             continue
-        intent, response, confidence, model_used, nlu_data = chatbot.chat(
+        intent, response, confidence, model_used, nlu_data = await _chat_turn(
             request.message,
             user_id=request.user_id,
             session_id=request.session_id

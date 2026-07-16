@@ -167,7 +167,10 @@ class ChatLogger:
     def _connect(self, dicts: bool = False):
         """Open a connection + cursor. dicts=True yields mapping-style rows."""
         if self.is_pg:
-            conn = psycopg.connect(self.database_url)
+            # connect_timeout bounds a Postgres stall/partition to seconds —
+            # these connects run on the request path, and libpq's default is
+            # to wait on TCP indefinitely (minutes on a black-holed host).
+            conn = psycopg.connect(self.database_url, connect_timeout=5)
             cursor = conn.cursor(row_factory=dict_row) if dicts else conn.cursor()
         else:
             conn = sqlite3.connect(self.db_path)
