@@ -72,7 +72,7 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Welcome to Sevi, the CvSU Virtual Assistant! I'm here to help with information about admissions, enrollment, courses, facilities, and more. What can I help you with today?",
+      text: "Hi! I'm Sevi, the official chatbot of Cavite State University. I'm here to help you with admissions, enrollment, courses, scholarships, campus facilities, and more. What can I help you with today?",
       isBot: true,
       timestamp: timeNow(),
     },
