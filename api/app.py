@@ -46,6 +46,7 @@ from .hr_mcp import try_handle as _try_hr
 from .connectors_mcp import metrics_snapshot as _connectors_metrics_snapshot
 from .ais_mcp import circuit_status as _ais_circuit_status
 from . import safety as _safety
+from . import anti_patterns as _anti_patterns
 from . import campus_context as _campus
 from . import campus_directory as _campus_directory
 from . import charter_rag as _charter_rag
@@ -214,11 +215,36 @@ _is_production = os.getenv("RENDER", "") != "" or os.getenv("PRODUCTION", "") !=
 # eager here.
 from contextlib import asynccontextmanager  # noqa: E402
 
+async def _retention_loop(days: int):
+    """Enforce the log-retention window (docs/privacy_compliance.md §2): purge
+    chat rows older than `days`, once at startup and every 24h after. The
+    blocking DELETE runs off the event loop; failures are logged, never fatal.
+    LOG_RETENTION_DAYS=0 disables the sweep entirely."""
+    while True:
+        try:
+            deleted = await asyncio.to_thread(chat_logger.cleanup_old_logs, days)
+            if deleted:
+                _logger.info("retention sweep: purged %d chat rows older than %dd", deleted, days)
+        except Exception:  # noqa: BLE001 — retention must never take the app down
+            _logger.warning("retention sweep failed", exc_info=False)
+        await asyncio.sleep(24 * 3600)
+
+
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
+    retention_task = None
+    retention_days = int(os.getenv("LOG_RETENTION_DAYS", "365"))
+    if retention_days > 0:
+        retention_task = asyncio.create_task(_retention_loop(retention_days))
     try:
         yield
     finally:
+        if retention_task:
+            retention_task.cancel()
+            try:
+                await retention_task
+            except asyncio.CancelledError:
+                pass
         await _ais_close_pool()
 
 
@@ -1066,20 +1092,54 @@ def _safety_block(category: str, model_used: str) -> dict:
     }
 
 
+def _cooldown_block(seconds: int) -> dict:
+    """ChatResponse fields for a repeat-abuse cooldown — escalated copy that
+    replaces the standard boundary once a session keeps tripping the gate."""
+    return {
+        "text": _safety.cooldown_response(seconds),
+        "intent": "safety_cooldown",
+        "source": ResponseSource.REFUSAL,
+        "model_used": f"SafetyGate (cooldown {seconds}s)",
+        "refusal_reason": RefusalReason.ABUSIVE,
+        "suggestions": _safety.SUGGESTIONS["abuse"],
+    }
+
+
 async def _safety_screen(message: str, session_id: Optional[str]):
     """Front-door SafetyGate, shared by /chat and /batch so neither is an
     unscreened path. Returns (block, effective_message):
       • block is a dict of ChatResponse fields when the message must be
-        refused (self-harm / threat / abuse), else None;
+        refused (self-harm / threat / abuse / cooldown), else None;
       • effective_message is the message to process downstream (sanitized when
-        profanity was mere seasoning, otherwise unchanged)."""
+        profanity was mere seasoning, otherwise unchanged).
+
+    Progressive friction: repeated DIRECTED abuse from one session escalates to
+    a short cooldown reply (see api/safety.py). Two invariants hold — self-harm
+    is checked first and always reaches the referral (never cooled), and a clean
+    question is never held (the cooldown only changes the reply to more abuse)."""
     result = _safety.classify(message)
-    if result.category in ("self_harm", "threat", "abuse"):
+
+    # Self-harm wins over everything and is never rate-limited: a person in
+    # crisis must always reach the referral, whatever they sent before.
+    if result.category == "self_harm":
+        _safety.record("self_harm", message, session_id, result.max_severity)
+        return _safety_block("self_harm", "SafetyGate (self_harm)"), message
+
+    if result.category in ("threat", "abuse"):
         _safety.record(result.category, message, session_id, result.max_severity)
+        _safety.note_abuse(session_id)  # threats also count toward escalation
+        # Only directed abuse gets softened into a cooldown; a threat always
+        # gets the firm threat boundary, never a "take a break" reply.
+        if result.category == "abuse":
+            remaining = _safety.cooldown_remaining(session_id)
+            if remaining:
+                return _cooldown_block(remaining), message
         return _safety_block(result.category, f"SafetyGate ({result.category})"), message
+
     if result.category == "intensifier":
         _safety.record("intensifier", message, session_id, result.max_severity)
         return None, result.sanitized
+
     # Lexicon said safe — the opt-in LLM second opinion catches paraphrased
     # self-harm/threats the wordlists can't (no-op unless enabled + prefilter).
     llm_cat = await _safety.llm_second_opinion(message)
@@ -1398,8 +1458,25 @@ async def logs_dashboard():
 @app.get("/admin/moderation", tags=["Admin"], dependencies=[Depends(require_admin)])
 async def moderation_stats():
     """SafetyGate counters per category + the last 20 flagged messages
-    (truncated). Gated by `X-Admin-Pin`."""
+    (truncated), plus the repeat-abuse cooldown config/active count and whether
+    PII masking is on. Gated by `X-Admin-Pin`."""
     return _safety.snapshot()
+
+
+@app.get("/admin/anti_patterns", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def anti_patterns_report(days: int = 30, limit: int = 2000):
+    """Anti-pattern mining: cluster recent unanswered fallbacks, off-topic /
+    homework refusals, safety trips, and low-confidence answers into emerging
+    themes with representative examples — the input to the monthly "what intents
+    to add / what lexicon gaps to close" loop. Self-harm is counted but never
+    themed or quoted. Gated by `X-Admin-Pin`.
+
+    The same report prints from the CLI: `python scripts/mine_anti_patterns.py`."""
+    rows = await asyncio.to_thread(chat_logger.get_anti_pattern_rows, days, limit)
+    report = _anti_patterns.build_report(rows)
+    report["generated_at"] = datetime.now().isoformat()
+    report["window_days"] = days
+    return report
 
 
 _START_TIME = time.time()

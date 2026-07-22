@@ -98,3 +98,30 @@ messages.
 2. S4 policy: sanitize-and-answer (recommended) vs. boundary-only.
 3. Should S1/S2 trips push an admin notification (email/webhook), or is
    log-plus-review enough to start?
+
+The two sign-off items (S1 copy + consent copy) now have a working checklist:
+see [governance_signoff.md](governance_signoff.md).
+
+## 6. Progressive friction — repeat-abuse cooldown
+
+A single boundary reply per abusive message rewards the "poke the filter" game:
+every send earns an instant reaction. After a **burst** of directed-abuse trips
+from one session (default 3 within 120s), further abusive messages get a firm
+"let's take a short break — try again in ~45s" instead of the standard boundary.
+The reaction stops; the game loses its point.
+
+Two invariants keep it safe:
+
+- **Clean questions are never held.** The cooldown only changes the reply to
+  further *abuse* — a user wrongly flagged a few times can just ask their real
+  question and be answered, so a false positive costs nothing.
+- **Self-harm is never counted or cooled.** `_safety_screen` checks self-harm
+  first and always returns the referral, regardless of any active cooldown.
+
+Config: `SAFETY_ABUSE_COOLDOWN_{TRIPS,WINDOW,SECONDS}`. State is in-memory,
+keyed by `session_id` (single-worker assumption, same as the /chat rate
+limiter). Threats increment the counter but always get the firm threat
+boundary, never a "take a break" reply. Active cooldowns + config surface in
+`GET /admin/moderation`. Implementation: `api/safety.py`
+(`note_abuse`, `cooldown_remaining`, `cooldown_response`), wired in
+`api/app.py` `_safety_screen` / `_cooldown_block`.

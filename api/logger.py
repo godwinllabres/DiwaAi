@@ -25,6 +25,11 @@ try:
 except ImportError:  # imported as a top-level module (scripts, tests)
     import model_registry
 
+try:
+    from . import pii as _pii
+except ImportError:  # imported as a top-level module (scripts, tests)
+    import pii as _pii
+
 try:  # psycopg is only needed when DATABASE_URL points at Postgres
     import psycopg
     from psycopg.rows import dict_row
@@ -174,6 +179,13 @@ class ChatLogger:
             cursor = conn.cursor(row_factory=dict_row) if dicts else conn.cursor()
         else:
             conn = sqlite3.connect(self.db_path)
+            # WAL lets readers proceed during a write (the retention sweep and
+            # /admin reads no longer collide with /chat inserts); busy_timeout
+            # makes a would-be writer wait rather than raise "database is
+            # locked". Together with self.lock on the write paths this keeps the
+            # single shared DB file race-free under the async server.
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA busy_timeout=5000")
             if dicts:
                 conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
@@ -353,6 +365,12 @@ class ChatLogger:
         try:
             timestamp = datetime.now().isoformat()
             message_id = None
+
+            # Minimize by design: mask volunteered PII (student numbers, emails,
+            # phone numbers) BEFORE it is persisted to the DB and the daily file.
+            # Masking happens only here at the logging boundary — the live
+            # message the brain already answered is never touched. See api/pii.py.
+            user_message = _pii.mask_pii(user_message)
 
             with self.lock:
                 # Log to database
@@ -666,6 +684,10 @@ class ChatLogger:
         try:
             timestamp = datetime.now().isoformat()
             helpful_int = int(helpful) if helpful is not None else None
+            # Same minimization as the chat log: if a client sends the raw query
+            # on the feedback record (used when message_id is unavailable), mask
+            # any volunteered PII before it is stored on this sibling column.
+            user_message = _pii.mask_pii(user_message) if user_message else user_message
 
             with self.lock:
                 conn, cursor = self._connect()
@@ -892,6 +914,46 @@ class ChatLogger:
             print(f"[ERROR] Error retrieving fallback examples: {e}")
             return []
 
+    def get_anti_pattern_rows(
+        self,
+        days: int = 30,
+        limit: int = 2000,
+        low_conf_threshold: float = 0.5,
+    ) -> List[Dict]:
+        """Rows relevant to anti-pattern mining within the retention window:
+        unanswered fallbacks, off-topic / homework / comparison refusals, every
+        safety trip, and low-confidence answers. Fed to
+        anti_patterns.build_report(). Messages are already PII-masked at write
+        time. The safety-intent match is a BOUND LIKE parameter, not a literal:
+        a literal '%' in the SQL text raises in psycopg (which reserves
+        %s/%b/%t), so 'safety_%' must travel in the params to stay portable
+        across SQLite and Postgres."""
+        try:
+            conn, cursor = self._connect(dicts=True)
+
+            cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+            cursor.execute(self._sql("""
+                SELECT user_message, intent, confidence, timestamp, model_used
+                FROM chat_messages
+                WHERE timestamp >= ?
+                  AND (
+                    intent IN ('nlu_fallback', 'fallback', 'out_of_scope',
+                               'off_topic_homework', 'compare_to_other_school')
+                    OR intent LIKE ?
+                    OR confidence < ?
+                  )
+                ORDER BY timestamp DESC
+                LIMIT ?
+            """), (cutoff, "safety_%", low_conf_threshold, limit))
+
+            rows = cursor.fetchall()
+            conn.close()
+
+            return [dict(row) for row in rows]
+        except Exception as e:
+            print(f"[ERROR] Error retrieving anti-pattern rows: {e}")
+            return []
+
     def export_user_data(self, user_id: str) -> str:
         """Export all data for a user as JSON"""
         try:
@@ -918,27 +980,50 @@ class ChatLogger:
             return None
 
     def cleanup_old_logs(self, days: int = 30):
-        """Delete logs older than specified days"""
+        """Enforce the retention window: delete chat_messages AND feedback rows
+        older than `days`, and prune the daily chat_*.log files past the same
+        cutoff. Runs under self.lock so the DELETE serializes with the writer
+        paths (log_chat / log_feedback) on the shared SQLite file instead of
+        racing them on a second connection."""
         try:
-            conn, cursor = self._connect()
-
             # ISO-8601 strings compare lexically in chronological order, so a
             # plain < against the cutoff ISO string is portable — replaces the
             # SQLite-only strftime('%s', timestamp) epoch comparison.
             # timedelta (not epoch math): fromtimestamp() rejects pre-1970
             # values on Windows, which a large `days` would produce.
-            cutoff_iso = (datetime.now() - timedelta(days=days)).isoformat()
+            cutoff = datetime.now() - timedelta(days=days)
+            cutoff_iso = cutoff.isoformat()
 
-            cursor.execute(self._sql("""
-                DELETE FROM chat_messages
-                WHERE timestamp < ?
-            """), (cutoff_iso,))
+            with self.lock:
+                conn, cursor = self._connect()
+                cursor.execute(self._sql(
+                    "DELETE FROM chat_messages WHERE timestamp < ?"), (cutoff_iso,))
+                deleted = cursor.rowcount
+                # feedback rows carry user_id / session_id / free-text comment —
+                # purge them on the same window so nothing outlives the policy.
+                try:
+                    cursor.execute(self._sql(
+                        "DELETE FROM feedback WHERE timestamp < ?"), (cutoff_iso,))
+                except Exception:  # very old DBs may lack the table
+                    pass
+                conn.commit()
+                conn.close()
 
-            deleted = cursor.rowcount
-            conn.commit()
-            conn.close()
+            # Prune the daily JSON log files (chat_YYYY-MM-DD.log) — they hold a
+            # (masked) copy of every turn and would otherwise accumulate forever.
+            purged_files = 0
+            cutoff_date = cutoff.strftime("%Y-%m-%d")
+            for f in self.log_dir.glob("chat_*.log"):
+                date_part = f.stem[len("chat_"):]
+                if len(date_part) == 10 and date_part < cutoff_date:
+                    try:
+                        f.unlink()
+                        purged_files += 1
+                    except OSError:
+                        pass
 
-            print(f"[OK] Deleted {deleted} old log entries")
+            print(f"[OK] Retention: deleted {deleted} chat rows, "
+                  f"purged {purged_files} old log file(s)")
             return deleted
         except Exception as e:
             print(f"[ERROR] Error cleaning logs: {e}")
