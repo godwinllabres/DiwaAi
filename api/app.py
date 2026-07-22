@@ -7,7 +7,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Annotated, Optional, List, Dict, Any, Literal, Union
 import asyncio
 import json
@@ -384,6 +384,12 @@ def _jwt_identity(http_request: Request) -> Optional[str]:
 # ============================================================================
 # Request/Response Models
 # ============================================================================
+# Hard cap on a single chat message. Longer input is truncated before it can
+# reach the models / LLM prompt / logs — a client shouldn't be able to inflate
+# any of those. Pairs with the per-session rate limiter (_check_chat_rate_limit).
+_CHAT_MAX_MESSAGE_CHARS = int(os.getenv("CHAT_MAX_MESSAGE_CHARS", "4000"))
+
+
 class ChatRequest(BaseModel):
     message: str
     user_id: Optional[str] = None
@@ -393,6 +399,16 @@ class ChatRequest(BaseModel):
     # router. When set, `message` is still logged but `intent_hint` wins.
     intent_hint: Optional[str] = None
     intent_args: Optional[Dict[str, Any]] = None
+
+    @field_validator("message")
+    @classmethod
+    def _sanitize_message(cls, v: str) -> str:
+        """Defense-in-depth on the one free-text field: drop control characters
+        (keep tab/newline), trim, and hard-cap the length. The empty-message 400
+        is still enforced in the endpoint; this only bounds oversized/'binary'
+        input before it reaches the pipeline."""
+        v = "".join(ch for ch in v if ch in "\t\n" or ord(ch) >= 32).strip()
+        return v[:_CHAT_MAX_MESSAGE_CHARS]
 
 # Campus map (48 official locations) — see api/campus_places.py
 # All functions are now DB-primary with hardcoded fallback.
