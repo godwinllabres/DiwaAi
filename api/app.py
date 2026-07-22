@@ -585,6 +585,7 @@ class ResponseSource(str, Enum):
     SITE_RAG        = "site_rag"
     INTENT_RETRIEVAL = "intent_retrieval"
     CAMPUS_DIRECTORY = "campus_directory"  # charter contact-table answers
+    PLACE_RESOLVER  = "place_resolver"     # deterministic campus wayfinding
     FALLBACK        = "fallback"
     REFUSAL         = "refusal"
 
@@ -859,6 +860,8 @@ def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optiona
         return ResponseSource.SITE_RAG, None
     if m.startswith("Intent Retrieval"):
         return ResponseSource.INTENT_RETRIEVAL, None
+    if m == "Place Resolver":
+        return ResponseSource.PLACE_RESOLVER, None
     if m.startswith("NonsenseGate"):
         return ResponseSource.REFUSAL, RefusalReason.NONSENSE
     if m.startswith("ScopeGate") or "(out-of-scope)" in m:
@@ -947,11 +950,14 @@ def _build_attachments(
     ais_table: Optional[Dict[str, Any]],
     ais_context_set: Optional[Dict[str, Any]],
     campus: Optional[str] = None,
+    place_id: Optional[str] = None,
 ) -> tuple[List[ChatCard], Optional[ChatContext], DisplayHint]:
     """Resolve every typed card the reply should carry, plus the layout hint.
     `campus` is the session's resolved campus (campus_context) — when it is a
     satellite, the Indang map card is suppressed so the reply never pairs
-    General Trias text with a Don Severino map."""
+    General Trias text with a Don Severino map. `place_id` is the Place
+    Resolver's resolution for this turn (nlu_data) — when set, the map card
+    reuses it so the text and the pin can never disagree."""
     cards: List[ChatCard] = []
 
     # AIS card / table take top billing when present.
@@ -977,7 +983,12 @@ def _build_attachments(
 
     # Map preview / accordion. The only map we have depicts the Indang main
     # campus — never attach it while the conversation is about a satellite.
-    map_data = None if _campus_directory.is_satellite(campus) else _resolve_map_data(message, intent)
+    if _campus_directory.is_satellite(campus):
+        map_data = None
+    elif place_id and _has_place(place_id):
+        map_data = MapData(place_id=place_id, label=_build_place_meta(place_id).label)
+    else:
+        map_data = _resolve_map_data(message, intent)
     if map_data is not None:
         is_map_first = bool(intent and _MAP_FIRST_INTENT_RE.search(intent))
         cards.append(
@@ -1255,6 +1266,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
                     user_id=request.user_id,
                     session_id=request.session_id,
                     skip_intents=campus_grounded,
+                    campus=campus_routing.campus,
                 )
                 if ais_failure_note:
                     response = f"{ais_failure_note}\n\n{response}"
@@ -1286,6 +1298,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         ais_table=ais_table,
         ais_context_set=ais_context_set,
         campus=campus_routing.campus,
+        place_id=nlu_data.get("place_id"),
     )
     source, refusal_reason = _classify_source(model_used)
 
@@ -1880,6 +1893,7 @@ async def batch_chat(requests: List[ChatRequest]):
             ais_dv_card=None,
             ais_table=None,
             ais_context_set=None,
+            place_id=nlu_data.get("place_id"),
         )
         source, refusal_reason = _classify_source(model_used)
 

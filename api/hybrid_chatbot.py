@@ -794,6 +794,10 @@ class HybridChatbot:
     # defer to the NN + scope/nonsense gates + LLM-grounded tiers instead of being served.
     NN_CONFIDENCE_THRESHOLD = 0.50  # NN minimum confidence threshold
     FALLBACK_INTENT = "nlu_fallback"
+    # Wayfinding replies from the Place Resolver tier. Matches the map-first
+    # regexes on both ends (api/app.py _MAP_FIRST_INTENT_RE and the frontend),
+    # so the map card renders open above the text.
+    FIND_PLACE_INTENT = "find_place"
 
     def __init__(self, model_dir: str, responses_path: str):
         """
@@ -849,6 +853,7 @@ class HybridChatbot:
         self.model_usage_stats = {
             "naive_bayes_used": 0,
             "neural_network_used": 0,
+            "place_resolver_used": 0,
             "fallback_used": 0,
             "nlu_enhanced": 0
         }
@@ -1288,10 +1293,38 @@ class HybridChatbot:
         self.model_usage_stats[stat] = self.model_usage_stats.get(stat, 0) + 1
         return tag, reply, score, label
 
-    def predict(self, user_input: str, user_id: str = None, skip_intents: bool = False) -> Tuple[str, str, float, str, dict]:
+    def _place_resolver_result(self, user_input: str, campus: Optional[str] = None):
+        """Step 2.7: deterministic campus wayfinding from the map lexicon.
+
+        A location ask whose place the classifiers don't know ("saan yung
+        saluysoy", "saan pwede kumain?") resolves here from the same keyword
+        lexicon the map card uses, so the reply text and the map pin always
+        agree. Skipped when the session is grounded on a satellite campus —
+        every place in the lexicon is on the Indang main campus.
+
+        Returns (place_id, response) or None.
         """
-        Hierarchical prediction: NB → NN → intent retrieval → LLM
-        (charter+site grounded) → verbatim documents → static fallback.
+        try:
+            try:
+                from .campus_places import resolve_place_query, place_answer
+                from .campus_directory import is_satellite
+            except ImportError:
+                from campus_places import resolve_place_query, place_answer
+                from campus_directory import is_satellite
+        except ImportError:
+            return None
+        if is_satellite(campus):
+            return None
+        pq = resolve_place_query(user_input)
+        if pq is None:
+            return None
+        return pq.place_id, place_answer(pq)
+
+    def predict(self, user_input: str, user_id: str = None, skip_intents: bool = False,
+                campus: Optional[str] = None) -> Tuple[str, str, float, str, dict]:
+        """
+        Hierarchical prediction: NB → NN → intent retrieval → Place Resolver
+        → LLM (charter+site grounded) → verbatim documents → static fallback.
 
         skip_intents: bypass the NB/NN tiers and go straight to the deep
         tiers (charter RAG + LLM). Used for context-rewritten queries (e.g.
@@ -1328,6 +1361,19 @@ class HybridChatbot:
             if served is not None:
                 intent, response, score = served
                 return intent, response, score, "Intent Retrieval", nlu_data
+
+            # Step 2.7: Place Resolver — deterministic campus wayfinding.
+            # Rescues location asks the classifiers dropped ("saan yung
+            # saluysoy") with an answer built from the same place metadata the
+            # map card uses. Runs after the curated intent tiers so richer
+            # canned answers (registrar, library, ...) still win when the
+            # classifiers are confident.
+            placed = self._place_resolver_result(user_input, campus)
+            if placed is not None:
+                place_id, response = placed
+                self.model_usage_stats["place_resolver_used"] += 1
+                nlu_data = {**nlu_data, "place_id": place_id}
+                return self.FIND_PLACE_INTENT, response, 1.0, "Place Resolver", nlu_data
 
         # Step 3: LLM fallback — fires only when NB+NN are both below threshold
         if self.llm and self.llm.available:
@@ -1384,6 +1430,7 @@ class HybridChatbot:
         user_id: Optional[str] = None,
         session_id: Optional[str] = None,
         skip_intents: bool = False,
+        campus: Optional[str] = None,
     ) -> Tuple[str, str, float, str, dict]:
         """
         Chat with conversation tracking and NLU enhancements
@@ -1396,7 +1443,8 @@ class HybridChatbot:
         # for them too.
         user_id = user_id or session_id
 
-        intent, response, confidence, model_used, nlu_data = self.predict(user_input, user_id, skip_intents=skip_intents)
+        intent, response, confidence, model_used, nlu_data = self.predict(
+            user_input, user_id, skip_intents=skip_intents, campus=campus)
 
         # Track conversation (bounded LRU — see __init__).
         if user_id:
@@ -1439,6 +1487,8 @@ class HybridChatbot:
             "naive_bayes_percentage": pct("naive_bayes_used"),
             "neural_network_used": self.model_usage_stats["neural_network_used"],
             "neural_network_percentage": pct("neural_network_used"),
+            "place_resolver_used": self.model_usage_stats["place_resolver_used"],
+            "place_resolver_percentage": pct("place_resolver_used"),
             "llm_fallback_used": self.model_usage_stats["llm_fallback_used"],
             "llm_fallback_percentage": pct("llm_fallback_used"),
             "fallback_used": self.model_usage_stats["fallback_used"],

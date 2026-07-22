@@ -559,6 +559,35 @@ _LOCATION_KEYWORDS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Amenity/category asks — "saan pwede kumain?" carries no place *name*, but
+# the need maps to a canonical place. Checked only after the place-name pass
+# (see `resolve_place_query`) so an explicit name always wins. Terms follow
+# the same whole-word matching as `_PLACE_KEYWORDS` and include Tagalog.
+# ---------------------------------------------------------------------------
+
+_CATEGORY_PLACES: List[Tuple[str, str, List[str]]] = [
+    # (place_id, what you can do there — completes "you can ... there", trigger terms)
+    ("mall",       "grab food at the canteen and food-court stalls",
+                   ["kumain", "kakain", "kain", "pagkain", "gutom", "eat", "food",
+                    "meal", "lunch", "breakfast", "dinner", "merienda", "snack", "snacks"]),
+    ("library",    "study or review",
+                   ["mag-aral", "magaral", "aral", "mag-review", "magreview", "study"]),
+    ("chapel",     "attend mass or pray",
+                   ["magsimba", "simba", "misa", "magdasal", "dasal", "pray", "mass", "worship"]),
+    ("clinic",     "get first aid and medical help",
+                   ["masakit", "sakit", "sugat", "first aid", "emergency", "checkup",
+                    "check-up", "gamot", "nurse", "doctor", "medical"]),
+    ("girls_dorm", "arrange dormitory boarding (the Boy's Dormitory is in the same row)",
+                   ["matulog", "tulog", "tumira", "boarding", "dormitoryo"]),
+    ("oval",       "jog or exercise",
+                   ["tumakbo", "takbo", "jogging", "jog", "mag-exercise", "exercise",
+                    "mag-workout", "workout"]),
+    ("admin",      "pay fees at the University Cashier",
+                   ["magbayad", "bayad", "magbabayad", "pay", "payment"]),
+]
+
+
 _TERM_REGEX_CACHE: Dict[str, "re.Pattern[str]"] = {}
 
 
@@ -908,6 +937,65 @@ def resolve_directory(intent: str) -> Optional[Directory]:
     return _INTENT_TO_DIRECTORY.get(intent)
 
 
+class PlaceQuery(BaseModel):
+    """A campus wayfinding ask resolved from the message text."""
+    place_id: str
+    label: str
+    kind: str                       # "place" (named) | "category" (amenity ask)
+    activity: Optional[str] = None  # set for category matches ("grab food ...")
+
+
+def resolve_place_query(message: str) -> Optional[PlaceQuery]:
+    """Deterministic wayfinding resolver for the chat pipeline's rescue tier.
+
+    Fires for messages the intent classifiers dropped:
+      1. location keyword + known place name  ("saan yung saluysoy")
+      2. short bare-entity ask                ("saluysoy?")
+      3. location keyword + amenity category  ("saan pwede kumain?")
+
+    "main" (the whole-campus catch-all) never resolves here — generic campus
+    asks keep the richer campus_location intent / campus-directory answers.
+    """
+    msg = message.lower()
+    labels = _place_labels()
+    has_location_kw = any(_matches_term(msg, kw) for kw in _LOCATION_KEYWORDS)
+
+    place_hit: Optional[str] = None
+    for pid, keywords in _PLACE_KEYWORDS:
+        if pid != "main" and pid in labels and any(_matches_term(msg, kw) for kw in keywords):
+            place_hit = pid
+            break
+
+    bare_entity = place_hit is not None and len(msg.split()) <= 4
+    if place_hit and (has_location_kw or bare_entity):
+        return PlaceQuery(place_id=place_hit, label=labels[place_hit], kind="place")
+
+    if has_location_kw:
+        for pid, activity, terms in _CATEGORY_PLACES:
+            if pid in labels and any(_matches_term(msg, t) for t in terms):
+                return PlaceQuery(place_id=pid, label=labels[pid], kind="category", activity=activity)
+    return None
+
+
+def place_answer(pq: PlaceQuery) -> str:
+    """Plain-text wayfinding answer built from the same PlaceMeta the map pin
+    uses, so the reply and the map card always agree."""
+    meta = build_place_meta(pq.place_id)
+    walk = meta.walk_minutes_from_gate
+    if walk <= 0:
+        walk_line = "It's right at the campus entrance."
+    else:
+        walk_line = f"It's about a {walk}-minute walk from Gate 1 (Main Gate)."
+    if pq.kind == "category" and pq.activity:
+        lead = (f"For that, head to {meta.full} (#{meta.num} on the campus map) — "
+                f"you can {pq.activity} there.")
+    else:
+        lead = (f"{meta.full} is #{meta.num} on the main campus map "
+                f"(CvSU Don Severino delas Alas Campus, Indang).")
+    return " ".join([lead, meta.direction_from_gate, walk_line,
+                     "Open the map below to see the exact spot."])
+
+
 def build_place_meta(place_id: str) -> PlaceMeta:
     places = get_all_places()
     meta = places[place_id]
@@ -939,8 +1027,9 @@ def has_place(place_id: str) -> bool:
 
 # Re-exported for convenience
 __all__ = [
-    "MapData", "PlaceMeta", "Directory",
+    "MapData", "PlaceMeta", "Directory", "PlaceQuery",
     "resolve_map_data", "resolve_directory",
+    "resolve_place_query", "place_answer",
     "build_place_meta", "campus_map_payload", "has_place",
     "save_coord_overrides", "list_coord_overrides", "reset_coord_overrides",
     "save_waypoint_overrides", "list_waypoint_overrides", "reset_waypoint_overrides",
