@@ -47,6 +47,7 @@ from .connectors_mcp import metrics_snapshot as _connectors_metrics_snapshot
 from .ais_mcp import circuit_status as _ais_circuit_status
 from . import safety as _safety
 from . import anti_patterns as _anti_patterns
+from . import workflows as _workflows
 from . import campus_context as _campus
 from . import campus_directory as _campus_directory
 from . import charter_rag as _charter_rag
@@ -607,6 +608,7 @@ class ResponseSource(str, Enum):
     LLM_CLAUDE      = "llm_claude"
     AIS_MCP         = "ais_mcp"
     CONNECTORS_MCP  = "connectors_mcp"
+    WORKFLOW        = "workflow"            # Tier 5.5 — stateful agentic workflow
     CHARTER_RAG     = "charter_rag"
     SITE_RAG        = "site_rag"
     INTENT_RETRIEVAL = "intent_retrieval"
@@ -1211,6 +1213,24 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     block, request.message = await _safety_screen(request.message, request.session_id)
     if block:
         return _short_circuit_response(request, original_message, start_time, **block)
+
+    # Agentic workflow tier (Tier 5.5) — stateful, tool-executing conversations
+    # (e.g. booking an advising appointment). Runs AFTER safety (so an abusive
+    # or self-harm message mid-workflow is still caught first) but BEFORE campus
+    # context and the MCP/NLU tiers: an active workflow owns the turn, and a
+    # trigger phrase starts one. No-op unless AGENTIC_WORKFLOWS_ENABLED=1.
+    # See docs/agentic_workflows_poc.md.
+    wf_key = request.session_id or request.user_id
+    wf_turn = await _workflows.dispatch(wf_key, request.message)
+    if wf_turn is not None:
+        return _short_circuit_response(
+            request, original_message, start_time,
+            text=wf_turn.text,
+            intent="action_book_advising",
+            source=ResponseSource.WORKFLOW,
+            model_used="Workflow (Tier 5.5)",
+            suggestions=wf_turn.suggestions,
+        )
 
     # Campus context — CvSU has 11 campuses; "where is the campus located?"
     # is ambiguous. Remember the session's campus, clarify when unknown
