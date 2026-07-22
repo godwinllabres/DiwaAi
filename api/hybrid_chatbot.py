@@ -1346,9 +1346,16 @@ class HybridChatbot:
                 self.model_usage_stats["naive_bayes_used"] += 1
                 return nb_intent, random.choice(self.responses_map[nb_intent]), nb_confidence, "Naive Bayes (NLU Enhanced)", nlu_data
 
-            # Step 2: Neural Network with adaptive per-intent threshold
+            # Step 2: Neural Network with adaptive per-intent threshold, gated
+            # on agreement with NB's top (sub-threshold) guess — the same guard
+            # the Intent Retrieval tier uses. Measured on the 268-Q mirror eval
+            # (2026-07): unguarded NN served 98 with 38 correct (39%); with the
+            # agreement guard the NN tier is 29/39 correct and overall NB+NN
+            # precision returns to the pre-cleanup baseline (~79%) at 4.6x its
+            # recall. Disagreements fall through to retrieval / the LLM tiers.
             nn_intent, nn_confidence = self._nn_result(user_input)
-            if nn_intent and nn_confidence >= self.nn_model.get_threshold(nn_intent):
+            if (nn_intent and nn_confidence >= self.nn_model.get_threshold(nn_intent)
+                    and nn_intent == nb_intent):
                 response = random.choice(self.responses_map.get(nn_intent, self.responses_map[self.FALLBACK_INTENT]))
                 self.model_usage_stats["neural_network_used"] += 1
                 return nn_intent, response, nn_confidence, "Neural Network", nlu_data

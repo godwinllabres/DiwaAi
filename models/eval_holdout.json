@@ -1,56 +1,55 @@
 {
-  "overall_accuracy": 0.7731,
-  "total_queries": 119,
-  "total_correct": 92,
+  "overall_accuracy": 0.7436,
+  "total_queries": 156,
+  "total_correct": 116,
   "min_accuracy_gate": 0.5,
   "passed_gate": true,
   "per_intent": {
     "greeting": {
       "total": 8,
-      "correct": 6,
-      "accuracy": 0.75,
-      "avg_confidence": 0.4591,
+      "correct": 8,
+      "accuracy": 1.0,
+      "avg_confidence": 0.7527,
+      "wrong": []
+    },
+    "goodbye": {
+      "total": 8,
+      "correct": 7,
+      "accuracy": 0.875,
+      "avg_confidence": 0.7913,
       "wrong": [
         {
-          "query": "Hi",
+          "query": "See you",
+          "predicted": "chitchat",
+          "confidence": 0.7397
+        }
+      ]
+    },
+    "thanks": {
+      "total": 7,
+      "correct": 7,
+      "accuracy": 1.0,
+      "avg_confidence": 0.7981,
+      "wrong": []
+    },
+    "admissions_requirements": {
+      "total": 8,
+      "correct": 5,
+      "accuracy": 0.625,
+      "avg_confidence": 0.4434,
+      "wrong": [
+        {
+          "query": "How to get admitted?",
           "predicted": "nlu_fallback",
           "confidence": 0.0
         },
         {
-          "query": "Hi there",
+          "query": "What paperwork do freshmen submit?",
           "predicted": "nlu_fallback",
           "confidence": 0.0
-        }
-      ]
-    },
-    "goodbye": {
-      "total": 8,
-      "correct": 8,
-      "accuracy": 1.0,
-      "avg_confidence": 0.7053,
-      "wrong": []
-    },
-    "thanks": {
-      "total": 7,
-      "correct": 6,
-      "accuracy": 0.8571,
-      "avg_confidence": 0.5596,
-      "wrong": [
+        },
         {
-          "query": "Appreciate it",
-          "predicted": "nlu_fallback",
-          "confidence": 0.0
-        }
-      ]
-    },
-    "admissions_requirements": {
-      "total": 8,
-      "correct": 7,
-      "accuracy": 0.875,
-      "avg_confidence": 0.56,
-      "wrong": [
-        {
-          "query": "How to get admitted?",
+          "query": "Mga requirements para sumali sa CvSU",
           "predicted": "nlu_fallback",
           "confidence": 0.0
         }
@@ -58,20 +57,10 @@
     },
     "admissions_exam": {
       "total": 5,
-      "correct": 2,
-      "accuracy": 0.4,
-      "avg_confidence": 0.4423,
+      "correct": 4,
+      "accuracy": 0.8,
+      "avg_confidence": 0.5967,
       "wrong": [
-        {
-          "query": "CVSUCAT schedule",
-          "predicted": "nlu_fallback",
-          "confidence": 0.0
-        },
-        {
-          "query": "How do I register for the admission test?",
-          "predicted": "admissions_requirements",
-          "confidence": 0.693
-        },
         {
           "query": "When is CVSUCAT?",
           "predicted": "nlu_fallback",
@@ -83,45 +72,40 @@
       "total": 5,
       "correct": 5,
       "accuracy": 1.0,
-      "avg_confidence": 0.6461,
+      "avg_confidence": 0.7191,
       "wrong": []
     },
     "enrollment_schedule": {
       "total": 4,
       "correct": 2,
       "accuracy": 0.5,
-      "avg_confidence": 0.4265,
+      "avg_confidence": 0.5983,
       "wrong": [
         {
-          "query": "Enrollment dates",
-          "predicted": "nlu_fallback",
-          "confidence": 0.0
+          "query": "When is enrollment?",
+          "predicted": "enrollment_procedure",
+          "confidence": 0.8745
         },
         {
           "query": "When to enroll?",
-          "predicted": "enrollment_procedure",
-          "confidence": 0.4362
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
         }
       ]
     },
     "courses_offered": {
       "total": 5,
-      "correct": 2,
-      "accuracy": 0.4,
-      "avg_confidence": 0.2532,
+      "correct": 3,
+      "accuracy": 0.6,
+      "avg_confidence": 0.4441,
       "wrong": [
         {
           "query": "What programs do you offer?",
-          "predicted": "campus_specific",
-          "confidence": 0.4526
-        },
-        {
-          "query": "Available degrees",
           "predicted": "nlu_fallback",
           "confidence": 0.0
         },
         {
-          "query": "What can I study?",
+          "query": "Show me every program you offer",
           "predicted": "nlu_fallback",
           "confidence": 0.0
         }
@@ -131,30 +115,41 @@
       "total": 5,
       "correct": 4,
       "accuracy": 0.8,
-      "avg_confidence": 0.6358,
+      "avg_confidence": 0.6197,
       "wrong": [
         {
-          "query": "IT courses",
-          "predicted": "courses_offered",
-          "confidence": 0.3557
+          "query": "BSCS program",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
         }
       ]
     },
     "graduate_programs": {
       "total": 5,
-      "correct": 5,
-      "accuracy": 1.0,
-      "avg_confidence": 0.7314,
-      "wrong": []
+      "correct": 4,
+      "accuracy": 0.8,
+      "avg_confidence": 0.5713,
+      "wrong": [
+        {
+          "query": "Post graduate courses",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        }
+      ]
     },
     "tuition_fees": {
       "total": 7,
-      "correct": 6,
-      "accuracy": 0.8571,
-      "avg_confidence": 0.5875,
+      "correct": 5,
+      "accuracy": 0.7143,
+      "avg_confidence": 0.5111,
       "wrong": [
         {
-          "query": "Is CvSU free?",
+          "query": "Tuition price",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        },
+        {
+          "query": "Magkano ang tuition?",
           "predicted": "nlu_fallback",
           "confidence": 0.0
         }
@@ -164,117 +159,124 @@
       "total": 6,
       "correct": 5,
       "accuracy": 0.8333,
-      "avg_confidence": 0.5677,
+      "avg_confidence": 0.7051,
       "wrong": [
         {
           "query": "TES",
-          "predicted": "nlu_fallback",
-          "confidence": 0.0
+          "predicted": "vision_mission",
+          "confidence": 0.6878
         }
       ]
     },
     "campus_location": {
       "total": 5,
-      "correct": 2,
-      "accuracy": 0.4,
-      "avg_confidence": 0.2991,
+      "correct": 4,
+      "accuracy": 0.8,
+      "avg_confidence": 0.6605,
       "wrong": [
         {
-          "query": "Where is CvSU?",
-          "predicted": "campus_specific",
-          "confidence": 0.3061
-        },
-        {
           "query": "How to get there",
-          "predicted": "nlu_fallback",
-          "confidence": 0.0
-        },
-        {
-          "query": "CvSU Indang",
           "predicted": "nlu_fallback",
           "confidence": 0.0
         }
       ]
     },
     "campus_facilities": {
-      "total": 5,
+      "total": 4,
       "correct": 3,
-      "accuracy": 0.6,
-      "avg_confidence": 0.4103,
+      "accuracy": 0.75,
+      "avg_confidence": 0.7172,
       "wrong": [
         {
           "query": "Library and gym",
           "predicted": "library",
-          "confidence": 0.5195
-        },
-        {
-          "query": "Dormitory available?",
-          "predicted": "nlu_fallback",
-          "confidence": 0.0
+          "confidence": 0.7115
         }
       ]
     },
     "library": {
       "total": 5,
-      "correct": 4,
-      "accuracy": 0.8,
-      "avg_confidence": 0.6357,
-      "wrong": [
-        {
-          "query": "Library hours",
-          "predicted": "campus_facilities",
-          "confidence": 0.7632
-        }
-      ]
+      "correct": 5,
+      "accuracy": 1.0,
+      "avg_confidence": 0.7067,
+      "wrong": []
     },
     "events": {
       "total": 5,
-      "correct": 5,
-      "accuracy": 1.0,
-      "avg_confidence": 0.5231,
-      "wrong": []
-    },
-    "academic_calendar": {
-      "total": 4,
-      "correct": 2,
-      "accuracy": 0.5,
-      "avg_confidence": 0.2712,
+      "correct": 4,
+      "accuracy": 0.8,
+      "avg_confidence": 0.6317,
       "wrong": [
         {
-          "query": "When does school start?",
-          "predicted": "nlu_fallback",
-          "confidence": 0.0
-        },
-        {
-          "query": "Semester schedule",
+          "query": "Anything scheduled at the university soon?",
           "predicted": "nlu_fallback",
           "confidence": 0.0
         }
       ]
+    },
+    "academic_calendar": {
+      "total": 4,
+      "correct": 4,
+      "accuracy": 1.0,
+      "avg_confidence": 0.7105,
+      "wrong": []
     },
     "contact_info": {
       "total": 5,
       "correct": 4,
       "accuracy": 0.8,
-      "avg_confidence": 0.5026,
+      "avg_confidence": 0.6619,
       "wrong": [
         {
-          "query": "What's the email?",
+          "query": "How do I reach the university?",
           "predicted": "nlu_fallback",
           "confidence": 0.0
         }
       ]
     },
     "registrar": {
-      "total": 5,
-      "correct": 4,
-      "accuracy": 0.8,
-      "avg_confidence": 0.6737,
+      "total": 3,
+      "correct": 2,
+      "accuracy": 0.6667,
+      "avg_confidence": 0.5723,
       "wrong": [
         {
-          "query": "Graduation requirements",
-          "predicted": "admissions_requirements",
-          "confidence": 0.5414
+          "query": "Which office handles student records?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        }
+      ]
+    },
+    "transcript_request_details": {
+      "total": 3,
+      "correct": 2,
+      "accuracy": 0.6667,
+      "avg_confidence": 0.4785,
+      "wrong": [
+        {
+          "query": "Magkano ang bayad sa TOR?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        }
+      ]
+    },
+    "diploma_request": {
+      "total": 2,
+      "correct": 2,
+      "accuracy": 1.0,
+      "avg_confidence": 0.6943,
+      "wrong": []
+    },
+    "graduation_requirements": {
+      "total": 2,
+      "correct": 1,
+      "accuracy": 0.5,
+      "avg_confidence": 0.3591,
+      "wrong": [
+        {
+          "query": "What do I need to complete before graduating?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
         }
       ]
     },
@@ -282,34 +284,220 @@
       "total": 4,
       "correct": 3,
       "accuracy": 0.75,
-      "avg_confidence": 0.4816,
+      "avg_confidence": 0.7377,
       "wrong": [
         {
-          "query": "What is CvSU?",
-          "predicted": "nlu_fallback",
-          "confidence": 0.0
+          "query": "Tell me about CvSU",
+          "predicted": "out_of_scope",
+          "confidence": 0.6961
         }
       ]
     },
     "vision_mission": {
       "total": 4,
+      "correct": 4,
+      "accuracy": 1.0,
+      "avg_confidence": 0.7418,
+      "wrong": []
+    },
+    "student_organizations": {
+      "total": 4,
       "correct": 3,
       "accuracy": 0.75,
-      "avg_confidence": 0.5126,
+      "avg_confidence": 0.5361,
       "wrong": [
         {
-          "query": "What does CvSU stand for?",
+          "query": "How to join an org",
           "predicted": "nlu_fallback",
           "confidence": 0.0
         }
       ]
     },
-    "student_organizations": {
+    "shifting_program": {
       "total": 4,
-      "correct": 4,
+      "correct": 1,
+      "accuracy": 0.25,
+      "avg_confidence": 0.1751,
+      "wrong": [
+        {
+          "query": "I want to move to a different course",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        },
+        {
+          "query": "How can I switch programs?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        },
+        {
+          "query": "Requirements for changing my degree program",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        }
+      ]
+    },
+    "retention_policy": {
+      "total": 3,
+      "correct": 1,
+      "accuracy": 0.3333,
+      "avg_confidence": 0.2305,
+      "wrong": [
+        {
+          "query": "Will they remove me from the program if my grades are low?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        },
+        {
+          "query": "What happens to students with failing grades?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        }
+      ]
+    },
+    "retention_policy_grades": {
+      "total": 3,
+      "correct": 3,
       "accuracy": 1.0,
-      "avg_confidence": 0.7145,
+      "avg_confidence": 0.8243,
       "wrong": []
+    },
+    "transferee_admission": {
+      "total": 3,
+      "correct": 0,
+      "accuracy": 0.0,
+      "avg_confidence": 0.0,
+      "wrong": [
+        {
+          "query": "Admission checklist for transferees",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        },
+        {
+          "query": "I'm from another school and want to move to CvSU",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        },
+        {
+          "query": "What do transfer students need to submit?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        }
+      ]
+    },
+    "licensure_results": {
+      "total": 3,
+      "correct": 2,
+      "accuracy": 0.6667,
+      "avg_confidence": 0.4766,
+      "wrong": [
+        {
+          "query": "Did CvSU produce topnotchers this year?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        }
+      ]
+    },
+    "university_rankings": {
+      "total": 3,
+      "correct": 1,
+      "accuracy": 0.3333,
+      "avg_confidence": 0.2368,
+      "wrong": [
+        {
+          "query": "Is CvSU ranked internationally?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        },
+        {
+          "query": "How high is CvSU in the WURI list?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        }
+      ]
+    },
+    "university_officials": {
+      "total": 3,
+      "correct": 3,
+      "accuracy": 1.0,
+      "avg_confidence": 0.7478,
+      "wrong": []
+    },
+    "awards_recognition": {
+      "total": 2,
+      "correct": 1,
+      "accuracy": 0.5,
+      "avg_confidence": 0.3598,
+      "wrong": [
+        {
+          "query": "What recognitions has the university received lately?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        }
+      ]
+    },
+    "accreditation_status": {
+      "total": 2,
+      "correct": 1,
+      "accuracy": 0.5,
+      "avg_confidence": 0.3598,
+      "wrong": [
+        {
+          "query": "Is CvSU an accredited university?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        }
+      ]
+    },
+    "student_portal": {
+      "total": 2,
+      "correct": 1,
+      "accuracy": 0.5,
+      "avg_confidence": 0.3532,
+      "wrong": [
+        {
+          "query": "I can't log in to my student account",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        }
+      ]
+    },
+    "free_tuition_law_details": {
+      "total": 2,
+      "correct": 0,
+      "accuracy": 0.0,
+      "avg_confidence": 0.0,
+      "wrong": [
+        {
+          "query": "Am I covered by the free tuition law?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        },
+        {
+          "query": "Who qualifies for free college tuition?",
+          "predicted": "nlu_fallback",
+          "confidence": 0.0
+        }
+      ]
+    },
+    "dormitory": {
+      "total": 2,
+      "correct": 2,
+      "accuracy": 1.0,
+      "avg_confidence": 0.7195,
+      "wrong": []
+    },
+    "food_canteen": {
+      "total": 1,
+      "correct": 0,
+      "accuracy": 0.0,
+      "avg_confidence": 1.0,
+      "wrong": [
+        {
+          "query": "Where can I buy food inside the campus?",
+          "predicted": "find_place",
+          "confidence": 1.0
+        }
+      ]
     }
   }
 }

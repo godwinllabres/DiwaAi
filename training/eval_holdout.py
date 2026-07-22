@@ -45,7 +45,7 @@ HOLDOUT_QUERIES = {
         "What are admission requirements?", "How do I apply?",
         "What documents needed?", "CvSU admission process",
         "Requirements to enroll as a freshman", "How to get admitted?",
-        "Admission checklist for transferees", "Mga requirements para sumali sa CvSU",
+        "What paperwork do freshmen submit?", "Mga requirements para sumali sa CvSU",
     ],
     "admissions_exam": [
         "When is the entrance exam?", "CVSUCAT schedule",
@@ -62,7 +62,7 @@ HOLDOUT_QUERIES = {
     ],
     "courses_offered": [
         "What courses are available?", "What programs do you offer?",
-        "List of courses", "Available degrees", "What can I study?",
+        "Show me every program you offer", "Available degrees", "What can I study?",
     ],
     "it_cs_courses": [
         "Does CvSU offer Computer Science?", "IT courses",
@@ -87,7 +87,7 @@ HOLDOUT_QUERIES = {
     ],
     "campus_facilities": [
         "What facilities do you have?", "Library and gym",
-        "Dormitory available?", "Canteen", "Student facilities",
+        "What amenities does the campus have?", "Student facilities",
     ],
     "library": [
         "Library hours", "CvSU library", "Online library",
@@ -95,7 +95,7 @@ HOLDOUT_QUERIES = {
     ],
     "events": [
         "Upcoming events", "CvSU events this month", "Sportsfest",
-        "Cultural events", "What's happening on campus",
+        "Cultural events", "Anything scheduled at the university soon?",
     ],
     "academic_calendar": [
         "Academic calendar", "When does school start?",
@@ -103,11 +103,22 @@ HOLDOUT_QUERIES = {
     ],
     "contact_info": [
         "How can I contact CvSU?", "Phone number",
-        "What's the email?", "CvSU hotline", "Contact details",
+        "What's the email?", "CvSU hotline", "How do I reach the university?",
     ],
     "registrar": [
-        "Registrar office", "How to get TOR?", "Request for transcript",
-        "Diploma request", "Graduation requirements",
+        "Registrar office", "I need something from the registrar",
+        "Which office handles student records?",
+    ],
+    "transcript_request_details": [
+        "How do I request my transcript of records?", "Steps to claim my TOR",
+        "Magkano ang bayad sa TOR?",
+    ],
+    "diploma_request": [
+        "How can I claim my diploma?", "I lost my diploma, can I get a copy?",
+    ],
+    "graduation_requirements": [
+        "What do I need to complete before graduating?",
+        "Requirements to march at graduation",
     ],
     "about_cvsu": [
         "What is CvSU?", "Tell me about CvSU", "History of CvSU",
@@ -120,6 +131,63 @@ HOLDOUT_QUERIES = {
     "student_organizations": [
         "Student organizations", "Clubs at CvSU", "How to join an org",
         "Student council",
+    ],
+    # Rescoped / newly-covered intents (taxonomy cleanup 2026-07) — paraphrases
+    # deliberately absent from data/cavsu_intents.json patterns.
+    "shifting_program": [
+        "I want to move to a different course", "How can I switch programs?",
+        "Requirements for changing my degree program", "Pwede po ba akong lumipat ng kurso?",
+    ],
+    "retention_policy": [
+        "How many subjects can I fail before getting kicked out?",
+        "Will they remove me from the program if my grades are low?",
+        "What happens to students with failing grades?",
+    ],
+    "retention_policy_grades": [
+        "What grade is considered passing?",
+        "How do you compute the general weighted average?",
+        "What does a grade of 5.0 mean?",
+    ],
+    "transferee_admission": [
+        "Admission checklist for transferees",
+        "I'm from another school and want to move to CvSU",
+        "What do transfer students need to submit?",
+    ],
+    "licensure_results": [
+        "How did CvSU perform in the recent board exams?",
+        "Criminology board exam passing rate of CvSU",
+        "Did CvSU produce topnotchers this year?",
+    ],
+    "university_rankings": [
+        "Is CvSU ranked internationally?",
+        "CvSU position in world university rankings",
+        "How high is CvSU in the WURI list?",
+    ],
+    "university_officials": [
+        "Who is the president of CvSU?", "Who are the vice presidents?",
+        "Sino ang pangulo ng CvSU?",
+    ],
+    "awards_recognition": [
+        "What recognitions has the university received lately?",
+        "Did CvSU win any awards recently?",
+    ],
+    "accreditation_status": [
+        "Is CvSU an accredited university?",
+        "What accreditation level does CvSU hold?",
+    ],
+    "student_portal": [
+        "I can't log in to my student account",
+        "Where do I check my grades online?",
+    ],
+    "free_tuition_law_details": [
+        "Am I covered by the free tuition law?",
+        "Who qualifies for free college tuition?",
+    ],
+    "dormitory": [
+        "Dormitory available?", "How do I get a dorm slot?",
+    ],
+    "food_canteen": [
+        "Where can I buy food inside the campus?",
     ],
 }
 

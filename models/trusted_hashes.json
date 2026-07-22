@@ -1,9 +1,9 @@
 {
   "_comment": "SHA-256 integrity anchors for model artifacts. hybrid_chatbot loads these via pickle/joblib/keras, which execute code on load, so a hash mismatch is treated as tampering and blocks the load (override with SEVI_ALLOW_UNVERIFIED_MODELS=1). Regenerate after a legitimate retrain: python scripts/update_trusted_hashes.py",
   "artifacts": {
-    "nn_tokenizer.pkl": "035b460c33df36d319e1b24875b8f4a41eedbcba5fcfbe9c721c30115dd5fa69",
-    "nn_label_encoder.pkl": "adfba4246b88ce2b196c86128f132b5f47d6e9154eb0608d214de3f1b13c4c1d",
-    "CvSU_classifier.pkl": "4ad4f1a98d456c7d081cb04b723d33b6790fce2d1d8803a5978ee1c1858f9fbf",
-    "nn_model.h5": "dac3054ad646adf6ac36a531be3b3e680679467876717a99541e4fd4247ede59"
+    "nn_tokenizer.pkl": "7e22cb10de874cfeab30914bb1f03e9a2357c3258da9a424eb4e58c794e584f6",
+    "nn_label_encoder.pkl": "6b1ecb723c5fb4c63f0d3b7c22965d5bbcc8e69491858bac193fdb67fa98d07f",
+    "CvSU_classifier.pkl": "0f211d6f34c404bb962f2d368cc35fedd1ecd682a484b2361ed29e461083724e",
+    "nn_model.h5": "9f6073d2bd16a80a492072193bf3a3abee01af3f59c11f28674e22d5ef7df8c2"
   }
 }

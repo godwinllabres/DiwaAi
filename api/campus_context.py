@@ -103,11 +103,24 @@ def extract_campus(text: str) -> Optional[str]:
     return None
 
 
+# News/recognition asks that mention "where" incidentally ("Where does CvSU
+# rank in WURI?", "When and where was the conference held?") are NOT campus-
+# location asks — without this guard they hijack the clarify flow away from
+# the events/rankings/officials intents.
+_NEWS_TOPIC_RE = re.compile(
+    r"\b(rank(?:s|ed|ing|ings)?|wuri|qs star(?:s)?|award(?:s|ed)?|recognition|"
+    r"conference|forum|symposium|ceremony|celebration|anniversary|held|"
+    r"officials?|topnotcher(?:s)?|licensure|board exam|when and where)\b",
+    re.IGNORECASE,
+)
+
+
 def is_campus_location_question(text: str) -> bool:
     """A location/address ask about a campus ITSELF ("where is CvSU Imus"),
-    not about a place inside one ("where is the CvSU library" → map intent).
+    not about a place inside one ("where is the CvSU library" → map intent)
+    or a news/recognition ask that merely contains a where-word.
     Shared with the campus-directory gate in api/app.py."""
-    if _SPECIFIC_PLACE_RE.search(text):
+    if _SPECIFIC_PLACE_RE.search(text) or _NEWS_TOPIC_RE.search(text):
         return False
     return bool(_LOCATION_Q_RE.search(text) and _CAMPUS_WORD_RE.search(text))
 
