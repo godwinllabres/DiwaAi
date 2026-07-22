@@ -47,6 +47,7 @@ from .connectors_mcp import metrics_snapshot as _connectors_metrics_snapshot
 from .ais_mcp import circuit_status as _ais_circuit_status
 from . import safety as _safety
 from . import campus_context as _campus
+from . import campus_directory as _campus_directory
 from . import charter_rag as _charter_rag
 from . import intent_grounding as _intent_grounding
 # Phase 2A Wave 2 — per-user AIS authentication for write actions.
@@ -583,6 +584,7 @@ class ResponseSource(str, Enum):
     CHARTER_RAG     = "charter_rag"
     SITE_RAG        = "site_rag"
     INTENT_RETRIEVAL = "intent_retrieval"
+    CAMPUS_DIRECTORY = "campus_directory"  # charter contact-table answers
     FALLBACK        = "fallback"
     REFUSAL         = "refusal"
 
@@ -944,8 +946,12 @@ def _build_attachments(
     ais_dv_card: Optional[DvCard],
     ais_table: Optional[Dict[str, Any]],
     ais_context_set: Optional[Dict[str, Any]],
+    campus: Optional[str] = None,
 ) -> tuple[List[ChatCard], Optional[ChatContext], DisplayHint]:
-    """Resolve every typed card the reply should carry, plus the layout hint."""
+    """Resolve every typed card the reply should carry, plus the layout hint.
+    `campus` is the session's resolved campus (campus_context) — when it is a
+    satellite, the Indang map card is suppressed so the reply never pairs
+    General Trias text with a Don Severino map."""
     cards: List[ChatCard] = []
 
     # AIS card / table take top billing when present.
@@ -969,8 +975,9 @@ def _build_attachments(
             )
         )
 
-    # Map preview / accordion.
-    map_data = _resolve_map_data(message, intent)
+    # Map preview / accordion. The only map we have depicts the Indang main
+    # campus — never attach it while the conversation is about a satellite.
+    map_data = None if _campus_directory.is_satellite(campus) else _resolve_map_data(message, intent)
     if map_data is not None:
         is_map_first = bool(intent and _MAP_FIRST_INTENT_RE.search(intent))
         cards.append(
@@ -1001,10 +1008,12 @@ def _short_circuit_response(
     model_used: str,
     refusal_reason: Optional[RefusalReason] = None,
     suggestions: Optional[List[str]] = None,
+    cards: Optional[List[ChatCard]] = None,
 ) -> ChatResponse:
-    """Build + log a terminal (no-cards) reply for a gate that answers before
-    the NLU cascade (safety refusal, campus clarify). `log_message` is the
-    user's ORIGINAL text — request.message may have been mutated by a gate."""
+    """Build + log a terminal reply for a gate that answers before the NLU
+    cascade (safety refusal, campus clarify, campus directory). `log_message`
+    is the user's ORIGINAL text — request.message may have been mutated by a
+    gate."""
     message_id = chat_logger.log_chat(
         user_id=request.user_id or "anonymous",
         user_message=log_message,
@@ -1025,10 +1034,10 @@ def _short_circuit_response(
         confidence=1.0,
         source=source,
         refusal_reason=refusal_reason,
-        cards=[],
+        cards=cards or [],
         context=None,
         suggestions=suggestions or [],
-        display_hint=DisplayHint.TEXT_ONLY,
+        display_hint=DisplayHint.DEFAULT if cards else DisplayHint.TEXT_ONLY,
     )
 
 
@@ -1154,6 +1163,31 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         # send these to the deep tiers (charter RAG + LLM) instead.
         request.message = campus_routing.message
 
+    # Campus directory — "where is CvSU <satellite campus>?" answers from the
+    # charter's official contact table (api/campus_directory.py), never from
+    # retrieval: the charter's per-campus sections rank cover pages (title
+    # text, no address) above anything useful, and the only campus map is
+    # Indang's. Main-campus asks stay with the cascade — the campus_location
+    # intent has the richer answer plus the map card.
+    if _campus_directory.is_directory_turn(request.message, campus_routing.campus):
+        text, info = _campus_directory.build_answer(campus_routing.campus)
+        return _short_circuit_response(
+            request, original_message, start_time,
+            text=text,
+            intent="campus_location",
+            source=ResponseSource.CAMPUS_DIRECTORY,
+            model_used="CampusDirectory (charter contact table)",
+            suggestions=_campus_directory.SUGGESTIONS,
+            cards=[
+                DirectoryCard(
+                    office=info.display_name,
+                    location=info.address,
+                    email=info.email,
+                    phone=info.phone,
+                )
+            ],
+        )
+
     # AIS MCP short-circuit — if the query looks like a finance/accounting
     # lookup (DV name, budget balance, RAPAL/RAOD report, UACS lookup),
     # answer it from the AIS MCP server instead of the student-facing NLU.
@@ -1251,6 +1285,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         ais_dv_card=ais_dv_card,
         ais_table=ais_table,
         ais_context_set=ais_context_set,
+        campus=campus_routing.campus,
     )
     source, refusal_reason = _classify_source(model_used)
 

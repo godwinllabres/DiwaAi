@@ -35,6 +35,7 @@ CAMPUSES: dict[str, list[str]] = {
     "CvSU-CCAT Campus (Rosario)": ["ccat", "rosario"],
     "General Trias City Campus": ["general trias", "gen trias", "gentri"],
     "Imus City Campus": ["imus"],
+    "Maragondon Campus": ["maragondon"],
     "Naic Campus": ["naic"],
     "Silang Campus": ["silang"],
     "Tanza Campus": ["tanza"],
@@ -65,8 +66,8 @@ _SPECIFIC_PLACE_RE = re.compile(
 )
 
 CLARIFY_TEXT = (
-    "CvSU has a main campus in Indang and ten satellite campuses po — "
-    "which campus are you asking about?"
+    "CvSU has a main campus in Indang and satellite campuses across Cavite "
+    "po — which campus are you asking about?"
 )
 CLARIFY_SUGGESTIONS = list(CAMPUSES.keys())
 
@@ -102,12 +103,17 @@ def extract_campus(text: str) -> Optional[str]:
     return None
 
 
-def _is_ambiguous_campus_question(text: str) -> bool:
-    # "where is the CvSU library" names a specific place → map intent, not a
-    # which-campus question.
+def is_campus_location_question(text: str) -> bool:
+    """A location/address ask about a campus ITSELF ("where is CvSU Imus"),
+    not about a place inside one ("where is the CvSU library" → map intent).
+    Shared with the campus-directory gate in api/app.py."""
     if _SPECIFIC_PLACE_RE.search(text):
         return False
     return bool(_LOCATION_Q_RE.search(text) and _CAMPUS_WORD_RE.search(text))
+
+
+def _is_ambiguous_campus_question(text: str) -> bool:
+    return is_campus_location_question(text)
 
 
 # Filler tokens that don't count as "a real question" when deciding whether a
