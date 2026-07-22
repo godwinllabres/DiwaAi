@@ -35,6 +35,11 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Optional
 
+try:  # PII masking for the stored moderation feed (see api/pii.py)
+    from . import pii as _pii
+except ImportError:  # imported as a top-level module (scripts, tests)
+    import pii as _pii
+
 _logger = logging.getLogger("diwa.safety")
 
 _LEXICON_PATH = os.environ.get(
@@ -510,10 +515,98 @@ async def _judge_anthropic(message: str) -> Optional[str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Repeat-abuse cooldown (progressive friction, moderation_plan.md §6).
+#
+# A single boundary reply per abusive message rewards the "poke the filter"
+# game: every send earns an instant reaction. After a BURST of directed-abuse
+# trips from one session, further abusive messages get a firm "let's take a
+# short break" instead — the reaction stops, the game loses its point.
+#
+# Two hard rules make this safe to ship:
+#   • Clean questions are NEVER held. A user wrongly flagged a few times can
+#     simply ask their real question and be answered — the cooldown only
+#     changes the reply to further ABUSE, so a false positive costs nothing.
+#   • Self-harm is never counted or cooled. A person in crisis must always
+#     reach the referral, no matter what they sent before (enforced by the
+#     caller ordering self-harm ahead of the cooldown check).
+# In-memory, single-worker assumption (same as the /chat rate limiter); a
+# multi-worker deploy would move this to Redis.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_COOLDOWN_TRIPS = int(os.environ.get("SAFETY_ABUSE_COOLDOWN_TRIPS", "3"))
+_COOLDOWN_WINDOW = float(os.environ.get("SAFETY_ABUSE_COOLDOWN_WINDOW", "120"))
+_COOLDOWN_SECONDS = float(os.environ.get("SAFETY_ABUSE_COOLDOWN_SECONDS", "45"))
+
+_abuse_hits: dict = {}       # session_id -> deque[timestamps] within the window
+_cooldown_until: dict = {}   # session_id -> epoch when the cooldown lifts
+_PRUNE_CAP = 5000            # sweep stale sessions once the map grows past this
+
+
+def _prune(now: float) -> None:
+    """Drop sessions with no activity inside the window so the maps can't grow
+    without bound under rotating session_ids. Only called past _PRUNE_CAP."""
+    for sid in [s for s, dq in _abuse_hits.items()
+                if not dq or now - dq[-1] > _COOLDOWN_WINDOW]:
+        _abuse_hits.pop(sid, None)
+    for sid in [s for s, until in _cooldown_until.items() if until <= now]:
+        _cooldown_until.pop(sid, None)
+
+
+def note_abuse(session_id: Optional[str]) -> None:
+    """Record a directed-abuse (or threat) trip and arm a cooldown once this
+    session crosses the burst threshold. No-op without a session_id — an
+    anonymous single-shot can't be tracked across turns."""
+    if not session_id:
+        return
+    now = time.time()
+    if len(_abuse_hits) > _PRUNE_CAP:
+        _prune(now)
+    dq = _abuse_hits.setdefault(session_id, deque(maxlen=64))
+    dq.append(now)
+    while dq and now - dq[0] > _COOLDOWN_WINDOW:
+        dq.popleft()
+    if len(dq) >= _COOLDOWN_TRIPS:
+        already_active = _cooldown_until.get(session_id, 0.0) > now
+        _cooldown_until[session_id] = now + _COOLDOWN_SECONDS
+        if not already_active:  # count only the transition into cooldown
+            _stats["cooldown"] = _stats.get("cooldown", 0) + 1
+
+
+def cooldown_remaining(session_id: Optional[str]) -> int:
+    """Whole seconds left on an active cooldown for this session (0 if none).
+    Expired entries are pruned on read."""
+    if not session_id:
+        return 0
+    until = _cooldown_until.get(session_id)
+    if not until:
+        return 0
+    rem = until - time.time()
+    if rem <= 0:
+        _cooldown_until.pop(session_id, None)
+        return 0
+    return int(rem) + (1 if rem % 1 else 0)  # ceil, for honest display
+
+
+def cooldown_response(seconds: int) -> str:
+    """Firm, de-escalating copy for a session that keeps tripping the gate."""
+    return (
+        "I've gotten a few messages like that in a row, so let's take a short "
+        f"break — try again in about {seconds} seconds po. I'm still here for "
+        "your CvSU questions: admissions, enrollment, courses, campus services."
+    )
+
+
+def reset_cooldowns() -> None:
+    """Clear all cooldown state. For tests and admin reset only."""
+    _abuse_hits.clear()
+    _cooldown_until.clear()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Observability — counters + a small ring buffer for /admin/moderation.
 # ─────────────────────────────────────────────────────────────────────────────
 
-_stats: dict = {"self_harm": 0, "threat": 0, "abuse": 0, "intensifier": 0}
+_stats: dict = {"self_harm": 0, "threat": 0, "abuse": 0, "intensifier": 0, "cooldown": 0}
 _recent: deque = deque(maxlen=20)
 
 
@@ -524,7 +617,9 @@ def record(category: str, message: str, session_id: Optional[str], max_severity:
             "at": time.strftime("%Y-%m-%d %H:%M:%S"),
             "category": category,
             "severity": max_severity or None,
-            "message": message[:120],
+            # Mask volunteered PII (student numbers, contacts) even in the
+            # admin-only, in-memory feed — dignity + minimization by default.
+            "message": _pii.mask_pii(message)[:120],
             "session_id": session_id,
         }
     )
@@ -532,9 +627,17 @@ def record(category: str, message: str, session_id: Optional[str], max_severity:
 
 def snapshot() -> dict:
     lex = _get_lexicon()
+    now = time.time()
     return {
         "counts": dict(_stats),
         "recent": list(_recent),
+        "cooldown": {
+            "active_sessions": sum(1 for u in _cooldown_until.values() if u > now),
+            "trips_to_trigger": _COOLDOWN_TRIPS,
+            "window_seconds": _COOLDOWN_WINDOW,
+            "cooldown_seconds": _COOLDOWN_SECONDS,
+        },
+        "pii_masking": _pii.enabled(),
         "lexicon": {
             "loaded": lex.loaded,
             "version": lex.version,
