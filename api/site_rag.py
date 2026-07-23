@@ -68,12 +68,26 @@ _CHUNK_CHARS = 700
 # slots the LLM is given.
 _OVERLAP_CHARS = 150
 
-# Coverage-weighted cosine thresholds, calibrated on the synced portal corpus
-# (president/WELA/seagrass/WURI/AACCUP queries: 0.125-0.264; off-topic probes
-# top out at 0.121 with zero bigram hits). Off-topic queries are additionally
+# Coverage-weighted cosine thresholds. Off-topic queries are additionally
 # blocked by the Nonsense/Scope gates before either consumer fires, and the
 # verbatim tier requires >= 1 bigram hit.
-AUGMENT_MIN_SCORE = 0.10
+#
+# RECALIBRATED for the 961-document corpus. The previous 0.10 was tuned when
+# the corpus held 32 documents (president/WELA/seagrass/WURI/AACCUP queries
+# scored 0.125-0.264, off-topic probes topped out at 0.121). With ~4,750 chunks
+# the score distribution moved and 0.10 no longer separated the two: 9 of the
+# 20 adversarial eval questions found a passage above it, up from 6.
+#
+# Swept on the current corpus (coverage = gold doc retrieved in top-3 AND above
+# the gate; trap-safe = adversarial question where NOTHING clears the gate):
+#     gate   coverage   trap-safe
+#     0.10     65.3%      55.0%
+#     0.12     63.3%      65.0%      <- chosen
+#     0.14     57.3%      70.0%
+#     0.16     52.0%      85.0%
+# 0.12 buys back 10 points of trap safety for 2 of coverage. Past 0.14 the
+# coverage loss accelerates without a matching safety gain.
+AUGMENT_MIN_SCORE = 0.12
 QUOTE_MIN_SCORE = 0.15
 
 # WordPress boilerplate that must not enter the retrieval corpus.
