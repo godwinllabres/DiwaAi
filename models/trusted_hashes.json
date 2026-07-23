@@ -3,7 +3,7 @@
   "artifacts": {
     "nn_tokenizer.pkl": "7e22cb10de874cfeab30914bb1f03e9a2357c3258da9a424eb4e58c794e584f6",
     "nn_label_encoder.pkl": "6b1ecb723c5fb4c63f0d3b7c22965d5bbcc8e69491858bac193fdb67fa98d07f",
-    "CvSU_classifier.pkl": "973ef6aee270da4ce873e5e0c1b59a60f7cda871b890e0dbdca6a4abcd755c44",
+    "CvSU_classifier.pkl": "0f211d6f34c404bb962f2d368cc35fedd1ecd682a484b2361ed29e461083724e",
     "nn_model.h5": "9f6073d2bd16a80a492072193bf3a3abee01af3f59c11f28674e22d5ef7df8c2"
   }
 }
