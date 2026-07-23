@@ -292,9 +292,18 @@ async def _lifespan(_app: FastAPI):
         await _ais_close_pool()
 
 
+# Deployed version, set by compose (SEVI_VERSION in the api service's
+# environment) and surfaced at /health so you can confirm from a browser which
+# build a server is actually running — the failure this closes is a deploy that
+# reports healthy while still serving the previous image. `dev` means the
+# variable was never set, i.e. a local run or a compose file that predates it.
+# SEVI_BUILD carries the commit SHA when CI injects it.
+APP_VERSION = os.getenv("SEVI_VERSION", "dev").strip() or "dev"
+APP_BUILD = os.getenv("SEVI_BUILD", "").strip()
+
 app = FastAPI(
     title="DIWA API",
-    version="1.0.0",
+    version=APP_VERSION,
     docs_url=None if _is_production else "/docs",
     redoc_url=None if _is_production else "/redoc",
     openapi_url=None if _is_production else "/openapi.json",
@@ -992,6 +1001,8 @@ async def health_check():
     status = chatbot.llm_status()
     return {
         "status": "healthy",
+        "version": APP_VERSION,
+        "build": APP_BUILD or None,
         "classifier_ready": chatbot.nb_model is not None,
         "llm_provider": status["provider"],
         "llm_ready": status["available"],

@@ -63,6 +63,14 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 
 # The entrypoint refreshes repo-owned files in the /app/data volume, then
 # execs the CMD — so an image upgrade can no longer leave stale intents behind.
+# Baked so the image reports its own identity at /health even when compose
+# does not set SEVI_VERSION (a bare `docker run`, or a server whose compose
+# file predates the variable). compose's environment: still wins at runtime.
+ARG SEVI_VERSION=dev
+ARG SEVI_BUILD=""
+ENV SEVI_VERSION=${SEVI_VERSION} \
+    SEVI_BUILD=${SEVI_BUILD}
+
 ENTRYPOINT ["/app/deployment/docker-entrypoint.sh"]
 
 # api.app:app is the server SeviWeb talks to (auth, map, logs, feedback, admin).
