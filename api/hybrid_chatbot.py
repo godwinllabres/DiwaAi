@@ -127,6 +127,52 @@ LLM_REFUSAL_TOKEN = "[OUT_OF_SCOPE]"
 # existed. "none" is valid and means: intentionally no LLM fallback.
 KNOWN_LLM_PROVIDERS = frozenset({"claude", "ollama", "openai", "localai", "none"})
 
+# Function words that are UNAMBIGUOUSLY Filipino — used only to answer "was
+# this written in Filipino/Taglish?" when choosing which curated response
+# variant to serve. Deliberately excludes tokens that collide with English
+# ("at", "may", "o", "an", "a", "i"), so an English sentence cannot drift over
+# the threshold on a coincidence.
+_FILIPINO_MARKERS = frozenset({
+    "ang", "ng", "mga", "sa", "ay", "na", "ba", "po", "opo",
+    "ako", "ikaw", "ka", "ko", "mo", "siya", "niya", "kami", "kayo", "sila",
+    "nila", "namin", "natin", "niyo", "nyo",
+    "yung", "ung", "ito", "iyan", "iyon", "dito", "diyan", "doon",
+    "kung", "pero", "kasi", "lang", "naman", "nga", "din", "rin", "pa",
+    "meron", "wala", "hindi", "oo", "para", "dahil", "tapos", "kaya",
+    "ano", "anong", "saan", "kailan", "kelan", "sino", "paano", "bakit",
+    "alin", "ilan", "magkano", "salamat", "raw", "daw", "sana", "muna",
+    # Standalone words that ARE the whole message often enough to matter — a
+    # one-token input has no other signal, so "sige" must be recognisable on
+    # its own or the acknowledgement comes back in English.
+    "sige", "ayos", "talaga", "grabe", "tama", "mali", "ganun", "ganon",
+    "gets", "oo", "opo", "aywan", "ewan", "bakit",
+})
+_WORD_RE = re.compile(r"[a-zñ']+")
+
+
+def _filipino_ratio(text: str) -> float:
+    """Share of tokens that are unambiguously Filipino function words."""
+    tokens = _WORD_RE.findall((text or "").lower())
+    if not tokens:
+        return 0.0
+    return sum(1 for t in tokens if t in _FILIPINO_MARKERS) / len(tokens)
+
+
+def _is_filipino(text: str, threshold: float = 0.10) -> bool:
+    """True when `text` reads as Filipino/Taglish rather than English.
+
+    A ratio, not a keyword hit: one stray marker in a long English passage
+    should not flip it, while a short Taglish question ("kelan ang enrollment")
+    is mostly markers and clears the bar easily.
+
+    Only use this on USER INPUT. For choosing between response variants use the
+    ratio directly — a Filipino answer that is mostly proper nouns ("- CEIT
+    (College of Engineering and Information Technology): Dr. Willie C.
+    Buclatin") dilutes below any fixed threshold and would be misread as
+    English.
+    """
+    return _filipino_ratio(text) >= threshold
+
 
 def build_scope_locked_prompt(
     base_persona: str,
@@ -1073,6 +1119,42 @@ class HybridChatbot:
                 print(f"[WARNING] Local LLM warm-up failed: {e}")
         threading.Thread(target=_warm, daemon=True).start()
 
+    def _select_response(self, intent: str, user_input: str) -> str:
+        """Pick a curated response variant deterministically, in the user's language.
+
+        This was random.choice, which is why an English question could come
+        back in Taglish: 122 of 124 intents carry more than one variant and the
+        pick ignored the question entirely. Observed in production — one user
+        asked "What facilities are available on campus?" and got "Ang mga
+        pasilidad ng CvSU ay kinabibilangan ng library...", then asked a
+        related question two turns later and got English. Same intent, coin
+        flip.
+
+        Order of preference within the matching-language pool:
+          1. a variant that cites a source (contains a link)
+          2. the longer variant — curated long-forms carry the office name,
+             hours and caveats the short ones drop
+        Ties break on the variant's own text so the choice is stable across
+        processes (no dict/set ordering dependence).
+        """
+        variants = self.responses_map.get(intent) or self.responses_map[self.FALLBACK_INTENT]
+        if len(variants) == 1:
+            return variants[0]
+        # RELATIVE, not absolute. Classifying each variant against a fixed
+        # threshold fails on answers that are mostly proper nouns — a Filipino
+        # dean list is 90% college names and person names, so its marker ratio
+        # falls under any threshold and it reads as "English". Ranking the
+        # variants against each other has no such failure mode: whichever is
+        # the most Filipino IS the Filipino one, whatever its absolute ratio.
+        want_filipino = _is_filipino(user_input)
+        ratios = {id(v): _filipino_ratio(v) for v in variants}
+        best = max(ratios.values()) if want_filipino else min(ratios.values())
+        pool = [v for v in variants if ratios[id(v)] == best]
+        # Stable tie-break: prefer a variant that cites a source, then the
+        # longer (curated long-forms keep the office name, hours and caveats),
+        # then the text itself so the pick never depends on dict ordering.
+        return max(pool, key=lambda v: ("http" in v, len(v), v))
+
     @staticmethod
     def _system_prompt_text() -> str:
         """Compact system prompt passed to the local LLM for deep-fallback answers."""
@@ -1184,7 +1266,7 @@ class HybridChatbot:
         self.model_usage_stats["intent_retrieval_used"] = (
             self.model_usage_stats.get("intent_retrieval_used", 0) + 1
         )
-        return match.intent, random.choice(self.responses_map[match.intent]), match.score
+        return match.intent, self._select_response(match.intent, user_input), match.score
 
     @staticmethod
     def _cross_corpus_rank_key(bigram_hits: int, score: float, floor: float) -> Tuple[int, float]:
@@ -1344,7 +1426,7 @@ class HybridChatbot:
             nb_intent, nb_confidence, nlu_data = self._nb_result(user_input, user_id)
             if nb_intent and nb_confidence >= self.NB_CONFIDENCE_THRESHOLD:
                 self.model_usage_stats["naive_bayes_used"] += 1
-                return nb_intent, random.choice(self.responses_map[nb_intent]), nb_confidence, "Naive Bayes (NLU Enhanced)", nlu_data
+                return nb_intent, self._select_response(nb_intent, user_input), nb_confidence, "Naive Bayes (NLU Enhanced)", nlu_data
 
             # Step 2: Neural Network with adaptive per-intent threshold, gated
             # on agreement with NB's top (sub-threshold) guess — the same guard
@@ -1356,7 +1438,7 @@ class HybridChatbot:
             nn_intent, nn_confidence = self._nn_result(user_input)
             if (nn_intent and nn_confidence >= self.nn_model.get_threshold(nn_intent)
                     and nn_intent == nb_intent):
-                response = random.choice(self.responses_map.get(nn_intent, self.responses_map[self.FALLBACK_INTENT]))
+                response = self._select_response(nn_intent, user_input)
                 self.model_usage_stats["neural_network_used"] += 1
                 return nn_intent, response, nn_confidence, "Neural Network", nlu_data
 
@@ -1429,7 +1511,8 @@ class HybridChatbot:
 
         # Step 4: Static fallback
         self.model_usage_stats["fallback_used"] += 1
-        return self.FALLBACK_INTENT, random.choice(self.responses_map[self.FALLBACK_INTENT]), 0.0, "Fallback", nlu_data
+        return (self.FALLBACK_INTENT, self._select_response(self.FALLBACK_INTENT, user_input),
+                0.0, "Fallback", nlu_data)
 
     def chat(
         self,
