@@ -26,8 +26,12 @@ data/*.db-wal
 *.backup_*
 models/nn_backup_*/
 
-# Generated site-RAG corpus (synced from the deployment-local portal)
-docs/site_corpus.txt
+# NOTE: docs/site_corpus.txt is deliberately TRACKED, like
+# docs/citizens_charter_text.txt. It was ignored here until 2026-07-23, which
+# meant CI built the image from a fresh clone that had no corpus, get_index()
+# returned None, and the site tier was silently dead in every deployment —
+# 0 of 382 production turns were ever "(site-grounded)". .dockerignore already
+# un-ignores it (`!docs/site_corpus.txt`); that only works if git carries it.
 kics-local/
 
 # Local security-scan artifacts
