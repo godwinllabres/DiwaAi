@@ -549,10 +549,24 @@ class NonsenseGate:
     MIN_VOWEL_RATIO = 0.18  # below this on length-5+ tokens = keysmash
 
     # Short words we accept on their own (whole-message equality).
+    # The second row is conversational Filipino/English particles observed
+    # refused in production testing (2026-07): "po"/"opo" answered with a
+    # CvSU-scope refusal reads as a non-sequitur to a Filipino user.
     _ALLOW_SHORT = {
         "hi", "hello", "hey", "yes", "no", "ok", "okay",
+        "po", "opo", "oo", "ty", "thx", "tnx", "sup", "yo",
+        "gm", "gn", "bye", "lol", "wow", "yep", "yup", "nah", "thanks", "k",
         "cvsu", "ceit", "con", "cas", "cafenr", "cemds",
-        "ojt", "tor", "cat", "map", "fee", "fees",
+        "ojt", "tor", "cor", "cav", "cat", "map", "fee", "fees",
+    }
+
+    # Vowel-free-but-real tokens the keysmash heuristic must not score:
+    # campus acronyms ("CWTS CvSU" is 1 vowel in 8 letters) and connectors.
+    _KNOWN_TOKENS = _ALLOW_SHORT | {
+        "cwts", "lts", "rotc", "nstp", "gwa", "dtr", "coe", "cog",
+        "mdl", "lms", "gmc", "ssg", "lgbtq", "vs",
+        "bsit", "bscs", "bsba", "bsn", "dvm", "bshm", "bstm", "bsbm",
+        "bsed", "beed", "bsa", "bsp",
     }
 
     # Profanity / pure venting — no information to act on.
@@ -630,12 +644,21 @@ class NonsenseGate:
             return False, "empty"
         t = text.strip()
         t_lower = t.lower()
+        # Allowlist comparisons ignore trailing punctuation: "TOR?" and "po!"
+        # are the allowlisted word, asked — curated patterns "TOR?"/"COR?"/
+        # "Hey?" were refused as too_short before this strip (2026-07).
+        t_bare = t_lower.strip("?!.,")
+        # An exact allowlisted token is conversational, not junk — accept it
+        # before the length rules ("k" is a curated acknowledgement pattern
+        # that MIN_ALPHAS would refuse).
+        if t_bare in self._ALLOW_SHORT:
+            return True, "ok"
         alphas = sum(c.isalpha() for c in t)
 
         # Single-word / very short input — only allow well-known short tokens.
         if alphas < self.MIN_ALPHAS:
             return False, "too_short"
-        if " " not in t and t_lower not in self._ALLOW_SHORT and alphas < 4:
+        if " " not in t and alphas < 4:
             return False, "too_short"
 
         if self._PROFANITY.search(t):
@@ -649,11 +672,21 @@ class NonsenseGate:
         if self._PROMPT_INJECTION.search(t):
             return False, "prompt_injection"
 
-        # Vowel-starved token = keyboard noise (e.g. "fgbhnj", "tnsmnsl")
-        if alphas >= 5:
-            vowels = sum(c.lower() in "aeiou" for c in t if c.isalpha())
-            if vowels / alphas < self.MIN_VOWEL_RATIO:
-                return False, "low_vowel_ratio"
+        # Vowel-starved text = keyboard noise (e.g. "fgbhnj", "tnsmnsl") —
+        # but score only the tokens we don't recognize: acronym asks like
+        # "CWTS CvSU" (1 vowel / 8 letters) and "thanks" (1/6, < 0.18) are
+        # real messages the raw ratio refused (2026-07). CvSU context words
+        # exempt the whole message the same way they do for fact-injection.
+        if alphas >= 5 and not self._CVSU_CONTEXT.search(t):
+            unknown = "".join(
+                w for w in re.split(r"[^a-z]+", t_lower)
+                if w and w not in self._KNOWN_TOKENS
+            )
+            u_alphas = len(unknown)
+            if u_alphas >= 5:
+                vowels = sum(c in "aeiou" for c in unknown)
+                if vowels / u_alphas < self.MIN_VOWEL_RATIO:
+                    return False, "low_vowel_ratio"
 
         # Off-topic food / non-CvSU noun without any CvSU context.
         if self._OFFTOPIC_NOUNS.search(t) and not self._CVSU_CONTEXT.search(t):
@@ -683,26 +716,47 @@ class ScopeGate:
     MAX_LENGTH = 800  # chars — anything longer is suspicious
 
     # Math / computation patterns (lowercased input)
+    # Tuned 2026-07 against all 3135 intent patterns + the 268-Q mirror eval;
+    # the previous form refused real CvSU questions as math:
+    #   "how much is the tuition fee for BSIT"   (bare "how much is")
+    #   "how to compute GWA" / "calculate my GWA" (bare "compute|calculate")
+    #   "what is 1.0 in CvSU"                     ("what is \d" — a grades ask)
+    # compute/calculate/evaluate/simplify now need a digit in the next word,
+    # and the bare what-is/how-much-is forms are gone: pure arithmetic still
+    # trips _MATH_EXPRESSION ("what is 2 + 2"), and anything that slips is
+    # caught by the LLM's own out-of-scope refusal token downstream.
+    # (?<!-)integrate: Tagalog "na-integrate sa CvSU" is school history, not
+    # calculus. "integrated" never matched (the trailing \b sees the 'd').
     _MATH_KEYWORDS = re.compile(
-        r"\b(solve|calculate|compute|evaluate|simplify|integrate|"
+        r"\b(solve|(?<!-)integrate|"
         r"differentiate|derivative|integral|equation|factorial|"
         r"logarithm|sine|cosine|tangent|matrix|determinant|"
-        r"probability of|how much is|what is \d|whats \d)\b",
+        r"probability of|(?:calculate|compute|evaluate|simplify)\s+[^\s\d]*\d)\b",
         re.IGNORECASE,
     )
-    _MATH_EXPRESSION = re.compile(r"\d+\s*[\+\-\*/\^x×÷]\s*\d+")
-    _EQUATION_LIKE = re.compile(r"[a-z]\s*[\+\-\*/=]\s*\d+", re.IGNORECASE)
+    # Minus only counts with spaces around it: "2025-2028", "AY 2025-2026",
+    # and "10:00-12:00" are ranges in academic content, not subtraction.
+    # Single \d+ prefix (no alternation restart) keeps the scan linear (S8786).
+    _MATH_EXPRESSION = re.compile(r"\d+(?:\s*[\+\*/\^x×÷]\s*|\s+-\s+)\d")
+    # No '-' in the operator class: "K-12", "F-137", "RA-9163", "2025-2028"
+    # are compounds and ranges, not subtraction. "x - 3 = 7" still trips on
+    # '='; "solve x-3" trips on "solve".
+    _EQUATION_LIKE = re.compile(r"[a-z]\s*[\+\*/=]\s*\d+", re.IGNORECASE)
 
     # Off-topic keyword list (each must match as a whole phrase/word)
     _OFFTOPIC = re.compile(
         r"\b(capital of|weather in|recipe|cook|bake|"
         r"celebrity|movie|netflix|tiktok|"
-        r"sports score|football|basketball game|nba|fifa|"
+        # Bare "football|basketball game" blocked sports_athletics asks
+        # ("football team CvSU" is intramurals, not the NFL).
+        r"sports score|nba|fifa|nfl|premier league|world cup|"
         r"write code|debug|python|javascript|java code|c\+\+|"
         r"write a poem|write a story|write a song|write me a|"
         r"translate to|translate this|translation of|"
         r"tell a joke|tell me a joke|funny joke|"
-        r"president of|prime minister|election|"
+        # "president of CvSU / Cavite State" is a university_officials ask;
+        # only the national-politics form is off-topic.
+        r"president of (?!cvsu|cavite)|prime minister|election|"
         r"bitcoin|crypto|stock price|forex|"
         r"horoscope|zodiac|tarot)\b",
         re.IGNORECASE,
@@ -844,6 +898,28 @@ class HybridChatbot:
     # regexes on both ends (api/app.py _MAP_FIRST_INTENT_RE and the frontend),
     # so the map card renders open above the text.
     FIND_PLACE_INTENT = "find_place"
+    # Session-recap replies from the Conversation Recap tier. Not in the
+    # trained taxonomy: the tier answers deterministically from this session's
+    # history, so the classifiers must never own it ("chitchat" captures
+    # "summarize our conversation" at 0.65 and answers with a greeting, and
+    # the grounded LLM invents a recap from corpus passages instead).
+    RECAP_INTENT = "conversation_recap"
+
+    # Meta-questions about the conversation itself. Every alternative requires
+    # a conversation word or a we/I-asked construction so content asks like
+    # "summarize the admission requirements" never match. Swept against all
+    # 3135 intent patterns and the 268-question mirror eval: 0 hits.
+    _RECAP_RE = re.compile(
+        r"(?:\b(?:summarize|summarise|recap)\b.{0,24}?"
+        r"\b(?:our|this|the)\s+(?:conversation|convo|chat|discussion|usapan)\b)"
+        r"|(?:\b(?:summarize|summarise|recap)\s+what\s+(?:i|we)\b)"
+        r"|(?:\bwhat\s+(?:did|have|had)\s+(?:we|i)\s+"
+        r"(?:talk(?:ed)?|discuss(?:ed)?|ask(?:ed)?|say|said|cover(?:ed)?)\b)"
+        r"|(?:\bwhat\s+(?:did|do)\s+(?:we|i)\s+(?:talk|speak)\s+about\b)"
+        r"|(?:\b(?:ano|anong)\b.{0,16}?\b(?:napag|pinag)-?usapan\b)"
+        r"|(?:\bbuod\s+ng\s+(?:usapan|pinag-?usapan)\b)",
+        re.IGNORECASE,
+    )
 
     def __init__(self, model_dir: str, responses_path: str):
         """
@@ -900,6 +976,7 @@ class HybridChatbot:
             "naive_bayes_used": 0,
             "neural_network_used": 0,
             "place_resolver_used": 0,
+            "conversation_recap_used": 0,
             "fallback_used": 0,
             "nlu_enhanced": 0
         }
@@ -1402,6 +1479,51 @@ class HybridChatbot:
             return None
         return pq.place_id, place_answer(pq)
 
+    def _conversation_recap_result(self, user_input: str, user_id: Optional[str]) -> Optional[str]:
+        """Step 0.5: deterministic session recap for meta-questions about the
+        conversation itself ("what did we talk about", "summarize our chat").
+
+        Runs before the classifiers because chitchat captures these phrasings
+        at ~0.65-0.70 and answers with a greeting, and the grounded LLM tier
+        summarizes retrieved corpus passages instead of the conversation —
+        a confident fabrication (observed 2026-07: it "recapped" campus
+        locations in a session that discussed admissions and scholarships).
+
+        Answers only from this session's history: it lists the user's own
+        prior questions verbatim (PII-masked) and never involves the LLM,
+        so it cannot invent topics. Returns the reply text, or None when the
+        message is not a recap ask.
+        """
+        if not self._RECAP_RE.search(user_input):
+            return None
+        try:
+            from .pii import mask_pii
+        except ImportError:
+            from pii import mask_pii
+
+        history = self.conversation_history.get(user_id, []) if user_id else []
+        # Prior recap turns would recurse into "1. can you summarize..." noise.
+        asked = [t["user_message"] for t in history if t.get("intent") != self.RECAP_INTENT]
+
+        filipino = _is_filipino(user_input)
+        if not asked:
+            return ("Wala pa tayong napag-uusapan sa session na ito. Magtanong ka lang "
+                    "tungkol sa CvSU — admissions, enrollment, tuition, scholarships, o campus services."
+                    if filipino else
+                    "We haven't discussed anything yet this session. Ask me anything about "
+                    "CvSU — admissions, enrollment, tuition, scholarships, or campus services.")
+
+        recent = asked[-10:]
+        header = ("Narito ang mga natanong mo sa session na ito:" if filipino
+                  else "Here's what you've asked so far this session:")
+        lines = [f"{i}. {mask_pii(q)}" for i, q in enumerate(recent, 1)]
+        if len(asked) > len(recent):
+            lines.append("… (earlier questions omitted)" if not filipino
+                         else "… (may mga naunang tanong na hindi na isinama)")
+        footer = ("Gusto mo bang balikan ang alinman sa mga ito?" if filipino
+                  else "Want me to go over any of these again?")
+        return "\n".join([header, *lines, footer])
+
     def predict(self, user_input: str, user_id: str = None, skip_intents: bool = False,
                 campus: Optional[str] = None) -> Tuple[str, str, float, str, dict]:
         """
@@ -1421,6 +1543,14 @@ class HybridChatbot:
             skip_intents = False
 
         nlu_data = {}
+
+        # Step 0.5: Conversation Recap — must precede the classifiers; see
+        # _conversation_recap_result for why neither tier below can own this.
+        recap = self._conversation_recap_result(user_input, user_id)
+        if recap is not None:
+            self.model_usage_stats["conversation_recap_used"] += 1
+            return self.RECAP_INTENT, recap, 1.0, "Conversation Recap", nlu_data
+
         if not skip_intents:
             # Step 1: Naive Bayes (+ optional NLU enhancement)
             nb_intent, nb_confidence, nlu_data = self._nb_result(user_input, user_id)

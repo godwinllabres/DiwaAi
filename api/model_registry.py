@@ -136,6 +136,8 @@ def resolve(model_used: Optional[str]) -> str:
         return "site_rag"
     if m.startswith("Intent Retrieval"):
         return "intent_retrieval"
+    if m.startswith("Conversation Recap"):
+        return "conversation_recap"
     if m.startswith("NonsenseGate"):
         return "nonsense_gate"
     if m.startswith("ScopeGate") or "(out-of-scope)" in m:
