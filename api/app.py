@@ -601,11 +601,56 @@ def _bulletize(sentence: str) -> Optional[str]:
     return intro + ":\n" + "\n".join(f"- {item.rstrip('.')}" for item in items)
 
 
+# A lead-in that introduces an enumeration without a colon: "examples
+# include A; B; C". Used to keep the lead-in as a heading over the bullets.
+_LEADIN_RE = re.compile(
+    r"\b(?:includes?|including|such as|namely|are|offers?)\s+", re.IGNORECASE
+)
+
+
+def _bulletize_semicolons(sentence: str) -> Optional[str]:
+    """Turn 'intro include A (x); B (y); C (z).' into a heading + bullet list.
+
+    _bulletize only fires on a colon-introduced, comma-separated list. Curated
+    answers frequently enumerate with semicolons and no colon instead — the
+    courses_offered reply is one 1,660-character sentence listing 14 colleges
+    that way, and rendered as a single wall of prose in the UI.
+    """
+    parts = _split_outside_parens(sentence, "; ")
+    # Same shape test as _bulletize: a real enumeration, not an aside.
+    if len(parts) < 3 or sum(len(p) >= 12 for p in parts) * 2 < len(parts):
+        return None
+    intro = None
+    match = _LEADIN_RE.search(parts[0])
+    if match:
+        intro, parts[0] = parts[0][: match.end()].rstrip(), parts[0][match.end():]
+    parts[-1] = re.sub(r"^(?:and|at)\s+", "", parts[-1], flags=re.IGNORECASE)
+    items = [p.strip().rstrip(".") for p in parts if p.strip()]
+    if len(items) < 3:
+        return None
+    body = "\n".join(f"- {item}" for item in items)
+    return f"{intro}:\n{body}" if intro else body
+
+
+def _format_paragraph(paragraph: str) -> str:
+    if len(paragraph) < 240:
+        return paragraph
+    sentences = _split_outside_parens(paragraph, ". ")
+    return "\n\n".join(
+        _bulletize(s) or _bulletize_semicolons(s) or s for s in sentences
+    )
+
+
 def _format_display_text(text: str) -> str:
-    if not text or "\n" in text or len(text) < 240:
-        return text  # already structured, or short enough to read as-is
-    sentences = _split_outside_parens(text, ". ")
-    return "\n\n".join(_bulletize(s) or s for s in sentences)
+    if not text:
+        return text
+    # Format per paragraph rather than bailing on the whole reply at the first
+    # newline: a mostly-structured answer can still hide one dense enumeration
+    # paragraph, which is exactly the case the old whole-text guard skipped.
+    return "\n\n".join(
+        _format_paragraph(p) if p.strip() else p
+        for p in text.split("\n\n")
+    )
 
 
 def _extract_summary(text: str, max_chars: int = 240) -> str:

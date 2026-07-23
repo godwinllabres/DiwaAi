@@ -17,6 +17,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 os.environ.setdefault("SEVI_ALLOW_UNVERIFIED_MODELS", "1")
 
+import api.hybrid_chatbot as hc
 from api.hybrid_chatbot import HybridChatbot, NonsenseGate, ScopeGate
 
 FAILURES = []
@@ -212,6 +213,67 @@ def test_recap_collapses_whitespace_and_caps_length():
     check("no blank lines injected", all(ln.strip() for ln in body), body)
     check("each echoed line is length-capped", max(len(ln) for ln in body) < 200,
           max(len(ln) for ln in body))
+
+
+MENU = (
+    "Here are topics I can help with:\n"
+    "1. Admission requirements\n2. Tuition fees\n3. Scholarships\n"
+    "4. Enrollment procedure\n5. Campus location\n6. Library services\n"
+    "7. Dormitory\n8. OJT and internship\n9. Student portal\n10. College deans"
+)
+
+
+def _seed_menu(bot, user_id="u"):
+    bot.conversation_history[user_id] = [{
+        "user_message": "what can you help with", "bot_response": MENU,
+        "intent": "x", "confidence": 1.0, "model_used": "t", "session_id": None,
+        "entities": {}, "is_follow_up": False,
+        "list_items": hc._numbered_items(MENU),
+    }]
+
+
+def test_numbered_items_parsing():
+    items = hc._numbered_items(MENU)
+    check("parses 10 items", len(items) == 10, len(items))
+    check("item 10 is College deans", items[9] == "College deans", items[9:])
+    check("prose with a stray number is not a list",
+          hc._numbered_items("CvSU was founded in 1906. It grew.") == [], "matched")
+    check("list must start at 1",
+          hc._numbered_items("2. second\n3. third") == [], "matched")
+    check("single item is not a menu", hc._numbered_items("1. only one") == [], "matched")
+
+
+def test_ordinal_reference_resolves_against_last_list():
+    bot = make_bot()
+    for probe, expected in [("10", "College deans"), ("number 10", "College deans"),
+                            ("the 10th one", "College deans"), ("#10", "College deans"),
+                            ("no. 2", "Tuition fees"), ("1", "Admission requirements"),
+                            ("ika-3", "Scholarships")]:
+        _seed_menu(bot)
+        check(f"{probe!r} -> {expected!r}",
+              bot._resolve_list_reference(probe, "u") == expected,
+              bot._resolve_list_reference(probe, "u"))
+
+
+def test_ordinal_reference_never_fires_when_it_should_not():
+    bot = make_bot()
+    _seed_menu(bot)
+    # Out of range, real questions, and CvSU grade values must pass through.
+    for probe in ["11", "0", "99", "what is 10", "10 units", "1.0", "2.75",
+                  "what does 1.0 mean", "section 10 of the handbook", "10 am"]:
+        check(f"{probe!r} not rewritten", bot._resolve_list_reference(probe, "u") is None,
+              bot._resolve_list_reference(probe, "u"))
+    bot2 = make_bot()
+    check("no history -> no rewrite", bot2._resolve_list_reference("10", "nobody") is None)
+    check("no user_id -> no rewrite", bot2._resolve_list_reference("10", None) is None)
+    # A previous turn with no list must not resolve anything.
+    bot2.conversation_history["u"] = [{"user_message": "hi", "bot_response": "Hello!",
+                                       "intent": "greeting", "confidence": 1.0,
+                                       "model_used": "t", "session_id": None,
+                                       "entities": {}, "is_follow_up": False,
+                                       "list_items": []}]
+    check("previous turn had no list -> no rewrite",
+          bot2._resolve_list_reference("10", "u") is None)
 
 
 if __name__ == "__main__":

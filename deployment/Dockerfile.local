@@ -41,15 +41,29 @@ COPY . .
 # .dockerignore'd so COPY never creates it — mkdir it here, otherwise the
 # compose named volume mounted at /app/logs is seeded root-owned and appuser
 # can't write to it.
-RUN mkdir -p /app/data /app/logs \
+# data.seed is a snapshot of data/ taken outside the mount point. A named
+# volume at /app/data seeds from the image only when Docker first creates it,
+# so without this a `docker compose pull` ships new code over permanently
+# stale intents. The entrypoint diffs .seed_version and refreshes repo-owned
+# files on upgrade.
+RUN cp -a /app/data /app/data.seed \
+    && find /app/data.seed -type f -exec sha256sum {} + \
+       | sort | sha256sum | cut -d' ' -f1 \
+       > /app/data.seed/.seed_version \
+    && mkdir -p /app/data /app/logs \
     && useradd --create-home --uid 10001 appuser \
-    && chown -R appuser:appuser /app
+    && chown -R appuser:appuser /app \
+    && chmod +x /app/deployment/docker-entrypoint.sh
 USER appuser
 
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -fsS http://localhost:8000/health || exit 1
+
+# The entrypoint refreshes repo-owned files in the /app/data volume, then
+# execs the CMD — so an image upgrade can no longer leave stale intents behind.
+ENTRYPOINT ["/app/deployment/docker-entrypoint.sh"]
 
 # api.app:app is the server SeviWeb talks to (auth, map, logs, feedback, admin).
 # Keep --workers 1: rate limiting, PIN lockout, and conversation state are

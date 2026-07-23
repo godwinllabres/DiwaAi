@@ -45,6 +45,9 @@ data/*.backup_*
 data/*.backup*.json
 data/*.before_snap
 data/intents_cleanup/
+# Eval harness inputs/outputs — dev-only, never read by api/ at runtime.
+# 5.9 MB, and the entrypoint's data.seed snapshot would double it.
+data/eval/
 data/*.db-shm
 data/*.db-wal
 models/*.bak_*

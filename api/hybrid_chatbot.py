@@ -897,6 +897,32 @@ class ClaudeLLM:
             return None
 
 
+# "1. College deans" / "2) Tuition" — an enumerated item in a bot reply.
+_NUMBERED_ITEM_RE = re.compile(r"^[ \t]*(\d{1,2})[.)]\s+(\S.*?)[ \t]*$", re.MULTILINE)
+
+# A whole message that is nothing but a pointer at a list position: "10",
+# "#10", "no. 10", "number 10", "the 10th one", "ika-10". Anchored end to end
+# so it can never fire on a real question, and \d{1,2} with no decimal part
+# keeps CvSU grade values ("1.0", "2.75") out of it.
+_ORDINAL_REF_RE = re.compile(
+    r"^\s*(?:the\s+)?(?:#|no\.?|nr\.?|number|item|option|choice|ika-)?\s*"
+    r"(\d{1,2})(?:st|nd|rd|th)?\s*(?:one|item|option|po|please|pls)?\s*[.?!]*\s*$",
+    re.IGNORECASE,
+)
+
+
+def _numbered_items(text: str) -> list:
+    """Ordered list items in a bot reply, so the next turn can dereference them."""
+    if not text or len(text) > 20000:
+        return []
+    items = _NUMBERED_ITEM_RE.findall(text)
+    # Require a real enumeration starting at 1 — a lone "1. step" or a stray
+    # "2024." in prose is not a menu the user can point at.
+    if len(items) < 2 or items[0][0] != "1":
+        return []
+    return [text.strip() for _, text in items]
+
+
 class HybridChatbot:
     """
     Hierarchical Hybrid Chatbot
@@ -1494,6 +1520,33 @@ class HybridChatbot:
             return None
         return pq.place_id, place_answer(pq)
 
+    def _resolve_list_reference(self, user_input: str, user_id: Optional[str]) -> Optional[str]:
+        """Turn a bare "10" into the text of item 10 of the list just shown.
+
+        When the previous reply was an enumeration, a lone number is a pointer
+        into it, not a question. The classifiers cannot know that: "10" scores
+        0.72 on retention_policy_grades (its patterns are full of "1.0"/"5.0"),
+        so the bot confidently answers about GWA and Latin honors instead of
+        the item the user picked. Observed in UAT, 2026-07.
+
+        This is coreference resolution, but it needs no model: the bot wrote
+        the list itself one turn ago, so the mapping is a lookup. Returns the
+        rewritten query, or None to leave the message alone.
+        """
+        if not user_id:
+            return None
+        match = _ORDINAL_REF_RE.match(user_input or "")
+        if not match:
+            return None
+        history = self.conversation_history.get(user_id) or []
+        if not history:
+            return None
+        items = history[-1].get("list_items") or []
+        index = int(match.group(1))
+        if not 1 <= index <= len(items):
+            return None
+        return items[index - 1]
+
     def _conversation_recap_result(self, user_input: str, user_id: Optional[str]) -> Optional[str]:
         """Step 0.5: deterministic session recap for meta-questions about the
         conversation itself ("what did we talk about", "summarize our chat").
@@ -1690,8 +1743,17 @@ class HybridChatbot:
         # for them too.
         user_id = user_id or session_id
 
+        # Resolve "10" against a list the bot itself just printed, BEFORE the
+        # classifiers see it (see _resolve_list_reference).
+        resolved = self._resolve_list_reference(user_input, user_id)
+        if resolved:
+            user_input, nlu_extra = resolved, {"resolved_from": user_input}
+        else:
+            nlu_extra = {}
+
         intent, response, confidence, model_used, nlu_data = self.predict(
             user_input, user_id, skip_intents=skip_intents, campus=campus)
+        nlu_data = {**nlu_data, **nlu_extra}
 
         # Track conversation (bounded LRU — see __init__).
         if user_id:
@@ -1713,6 +1775,8 @@ class HybridChatbot:
                 "session_id": session_id,
                 "entities": nlu_data.get("entities", {}),
                 "is_follow_up": nlu_data.get("is_follow_up", False),
+                # Lets the NEXT turn resolve a bare "10" against this reply.
+                "list_items": _numbered_items(response),
             })
             if len(turns) > self._MAX_HISTORY_TURNS:
                 del turns[: -self._MAX_HISTORY_TURNS]
