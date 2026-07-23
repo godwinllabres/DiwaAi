@@ -41,3 +41,15 @@ ba*.json
 # Local model backups (rollback snapshots) — kept out of git
 models_old/
 archive/models_backups/
+
+# Joint slot-filling model artifacts and eval outputs — regenerable, and nothing
+# at runtime loads them (the shadow integration was measured and not merged, see
+# docs/SLOT_FILLING.md). Kept out of git so 2.3 MB of dead weight does not ride
+# `COPY . .` into the deploy image. Rebuild with:
+#   python scripts/build_slot_corpus.py && python training/train_joint_nlu.py
+# Training is deterministic under the fixed seed, so the committed corpus plus
+# these two commands reproduce the reported numbers exactly.
+models/joint_*
+models/eval_joint*.json
+data/eval/slot_preds*.json
+data/eval/slot_failures*.json
