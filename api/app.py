@@ -232,19 +232,61 @@ async def _retention_loop(days: int):
         await asyncio.sleep(24 * 3600)
 
 
+async def _corpus_sync_loop(hours: float):
+    """Re-mirror the official site every `hours` and rebuild the RAG index.
+
+    Without this the corpus only refreshes when an admin posts to
+    /admin/site_corpus/sync, so the mirror drifts from the portal silently.
+    SITE_CORPUS_SYNC_HOURS=0 (the default) disables it.
+
+    Two things this deliberately does NOT do. It never syncs at startup — a
+    portal outage during a deploy would otherwise rewrite the corpus on every
+    restart; the first sync lands one interval in. And it never lets a failure
+    propagate: sync_corpus raises rather than truncate, so on error the last
+    good corpus simply stays in place.
+
+    NOTE: freshness here is mirror freshness only. Several official program
+    pages have not been edited upstream in years (CEIT's is from 2018), so
+    syncing nightly re-fetches the same old page. Answers must carry the
+    source's own date rather than imply currency this loop cannot provide.
+    """
+    interval = max(hours, 1.0) * 3600
+    while True:
+        await asyncio.sleep(interval)
+        try:
+            stats = await asyncio.to_thread(_site_rag.sync_corpus)
+            await asyncio.to_thread(_site_rag.reload_index)
+            _logger.info(
+                "site corpus sync: %d docs, %d skipped -> %s",
+                stats.get("docs", 0), stats.get("skipped", 0), stats.get("path"),
+            )
+        except Exception:  # noqa: BLE001 — a dead portal must never take the app down
+            _logger.warning("site corpus sync failed; keeping the existing corpus",
+                            exc_info=False)
+
+
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
-    retention_task = None
+    tasks = []
     retention_days = int(os.getenv("LOG_RETENTION_DAYS", "365"))
     if retention_days > 0:
-        retention_task = asyncio.create_task(_retention_loop(retention_days))
+        tasks.append(asyncio.create_task(_retention_loop(retention_days)))
+
+    sync_hours = float(os.getenv("SITE_CORPUS_SYNC_HOURS", "0") or 0)
+    if sync_hours > 0 and os.getenv("SITE_CORPUS_URL"):
+        tasks.append(asyncio.create_task(_corpus_sync_loop(sync_hours)))
+        _logger.info("site corpus auto-sync every %.1fh", max(sync_hours, 1.0))
+    elif sync_hours > 0:
+        _logger.warning("SITE_CORPUS_SYNC_HOURS is set but SITE_CORPUS_URL is not "
+                        "— auto-sync disabled")
     try:
         yield
     finally:
-        if retention_task:
-            retention_task.cancel()
+        for task in tasks:
+            task.cancel()
+        for task in tasks:
             try:
-                await retention_task
+                await task
             except asyncio.CancelledError:
                 pass
         await _ais_close_pool()

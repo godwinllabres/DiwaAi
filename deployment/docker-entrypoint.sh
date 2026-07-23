@@ -65,5 +65,24 @@ seed_data() {
     echo "[seed] refreshed $copied file(s); preserved: $KEEP"
 }
 
+seed_corpus() {
+    # The RAG corpus ships in the image at docs/site_corpus.txt, but docs/ is
+    # NOT a mounted volume — so anything sync_corpus() rewrites there is lost
+    # the moment the container is recreated. Point SITE_RAG_PATH at the
+    # /app/data volume to make syncs durable, and seed it once from the image
+    # so the very first boot still has a corpus to serve.
+    target="${SITE_RAG_PATH:-}"
+    [ -n "$target" ] || return 0
+    [ -f "$target" ] && return 0
+    [ -f /app/docs/site_corpus.txt ] || {
+        echo "[seed] SITE_RAG_PATH=$target but the image carries no corpus to seed from"
+        return 0
+    }
+    mkdir -p "$(dirname "$target")"
+    cp -f /app/docs/site_corpus.txt "$target"
+    echo "[seed] seeded site corpus -> $target (synced copies now persist)"
+}
+
 seed_data
+seed_corpus
 exec "$@"
