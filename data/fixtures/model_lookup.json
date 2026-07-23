@@ -3,7 +3,9 @@
     "name": "naive_bayes",
     "display_name": "Naive Bayes (NLU Enhanced)",
     "kind": "classifier",
-    "artifacts": ["models/CvSU_classifier.pkl"]
+    "artifacts": [
+      "models/CvSU_classifier.pkl"
+    ]
   },
   {
     "name": "neural_network",
@@ -34,19 +36,25 @@
     "name": "charter_rag",
     "display_name": "Citizens' Charter RAG",
     "kind": "retrieval",
-    "artifacts": ["docs/citizens_charter_text.txt"]
+    "artifacts": [
+      "docs/citizens_charter_text.txt"
+    ]
   },
   {
     "name": "site_rag",
     "display_name": "Official Website RAG",
     "kind": "retrieval",
-    "artifacts": ["docs/site_corpus.txt"]
+    "artifacts": [
+      "docs/site_corpus.txt"
+    ]
   },
   {
     "name": "intent_retrieval",
     "display_name": "Intent Pattern Retrieval",
     "kind": "retrieval",
-    "artifacts": ["data/cavsu_intents.db"]
+    "artifacts": [
+      "data/cavsu_intents.db"
+    ]
   },
   {
     "name": "ais_mcp",
@@ -82,5 +90,10 @@
     "name": "unknown",
     "display_name": "Unknown / Legacy",
     "kind": "other"
+  },
+  {
+    "name": "conversation_recap",
+    "display_name": "Conversation Recap",
+    "kind": "deterministic"
   }
 ]

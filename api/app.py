@@ -650,6 +650,7 @@ class ResponseSource(str, Enum):
     INTENT_RETRIEVAL = "intent_retrieval"
     CAMPUS_DIRECTORY = "campus_directory"  # charter contact-table answers
     PLACE_RESOLVER  = "place_resolver"     # deterministic campus wayfinding
+    CONVERSATION_RECAP = "conversation_recap"  # session recap from chat history
     FALLBACK        = "fallback"
     REFUSAL         = "refusal"
 
@@ -926,6 +927,8 @@ def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optiona
         return ResponseSource.INTENT_RETRIEVAL, None
     if m == "Place Resolver":
         return ResponseSource.PLACE_RESOLVER, None
+    if m == "Conversation Recap":
+        return ResponseSource.CONVERSATION_RECAP, None
     if m.startswith("NonsenseGate"):
         return ResponseSource.REFUSAL, RefusalReason.NONSENSE
     if m.startswith("ScopeGate") or "(out-of-scope)" in m:

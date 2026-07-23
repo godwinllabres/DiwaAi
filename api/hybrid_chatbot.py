@@ -675,18 +675,23 @@ class NonsenseGate:
         # Vowel-starved text = keyboard noise (e.g. "fgbhnj", "tnsmnsl") —
         # but score only the tokens we don't recognize: acronym asks like
         # "CWTS CvSU" (1 vowel / 8 letters) and "thanks" (1/6, < 0.18) are
-        # real messages the raw ratio refused (2026-07). CvSU context words
-        # exempt the whole message the same way they do for fact-injection.
-        if alphas >= 5 and not self._CVSU_CONTEXT.search(t):
+        # real messages the raw ratio refused (2026-07). Recognizing tokens
+        # is the whole exemption — do NOT also exempt on _CVSU_CONTEXT, or
+        # "tnsmnsl bcdfg cvsu" walks straight through the keysmash guard.
+        if alphas >= 5:
             unknown = "".join(
                 w for w in re.split(r"[^a-z]+", t_lower)
                 if w and w not in self._KNOWN_TOKENS
             )
             u_alphas = len(unknown)
-            if u_alphas >= 5:
-                vowels = sum(c in "aeiou" for c in unknown)
-                if vowels / u_alphas < self.MIN_VOWEL_RATIO:
-                    return False, "low_vowel_ratio"
+            vowels = sum(c in "aeiou" for c in unknown)
+            # A single vowel-light English word ("sports", "sprint", "stars")
+            # sits at 1/6 = 0.167, under the ratio — so the ratio alone only
+            # judges longer spans, and short spans must be vowel-FREE to count
+            # as keysmash ("jkjkjk", "fgbhnjk").
+            if (u_alphas >= 5 and vowels == 0) or (
+                    u_alphas >= 8 and vowels / u_alphas < self.MIN_VOWEL_RATIO):
+                return False, "low_vowel_ratio"
 
         # Off-topic food / non-CvSU noun without any CvSU context.
         if self._OFFTOPIC_NOUNS.search(t) and not self._CVSU_CONTEXT.search(t):
@@ -721,27 +726,37 @@ class ScopeGate:
     #   "how much is the tuition fee for BSIT"   (bare "how much is")
     #   "how to compute GWA" / "calculate my GWA" (bare "compute|calculate")
     #   "what is 1.0 in CvSU"                     ("what is \d" — a grades ask)
-    # compute/calculate/evaluate/simplify now need a digit in the next word,
-    # and the bare what-is/how-much-is forms are gone: pure arithmetic still
-    # trips _MATH_EXPRESSION ("what is 2 + 2"), and anything that slips is
-    # caught by the LLM's own out-of-scope refusal token downstream.
+    # calculate/compute/evaluate/simplify fire only on a MATH OBJECT, not on
+    # the bare verb: an allowlist beats a blocklist here because those verbs
+    # are ordinary CvSU vocabulary ("how to compute GWA", "paano mag-compute
+    # ng GWA", "criteria used to evaluate PSR candidates") while the objects
+    # ("two plus two", "the square root of", "the area of") are not. Homework
+    # asks that slip ("compute this") have their own curated intent,
+    # off_topic_homework, which refuses them properly.
     # (?<!-)integrate: Tagalog "na-integrate sa CvSU" is school history, not
     # calculus. "integrated" never matched (the trailing \b sees the 'd').
     _MATH_KEYWORDS = re.compile(
         r"\b(solve|(?<!-)integrate|"
         r"differentiate|derivative|integral|equation|factorial|"
         r"logarithm|sine|cosine|tangent|matrix|determinant|"
-        r"probability of|(?:calculate|compute|evaluate|simplify)\s+[^\s\d]*\d)\b",
+        r"probability of|(?:calculate|compute|evaluate|simplify)\s+"
+        r"(?:the\s+|this\s+|that\s+|a\s+)?"
+        r"(?:\d|one|two|three|four|five|six|seven|eight|nine|ten|"
+        r"hundred|thousand|square\s+root|fraction|area|volume|perimeter|"
+        r"circumference|sum|product|quotient|expression))\b",
         re.IGNORECASE,
     )
-    # Minus only counts with spaces around it: "2025-2028", "AY 2025-2026",
-    # and "10:00-12:00" are ranges in academic content, not subtraction.
-    # Single \d+ prefix (no alternation restart) keeps the scan linear (S8786).
-    _MATH_EXPRESSION = re.compile(r"\d+(?:\s*[\+\*/\^x×÷]\s*|\s+-\s+)\d")
-    # No '-' in the operator class: "K-12", "F-137", "RA-9163", "2025-2028"
-    # are compounds and ranges, not subtraction. "x - 3 = 7" still trips on
-    # '='; "solve x-3" trips on "solve".
-    _EQUATION_LIKE = re.compile(r"[a-z]\s*[\+\*/=]\s*\d+", re.IGNORECASE)
+    _MATH_EXPRESSION = re.compile(r"\d+\s*[\+\*/\^x×÷]\s*\d")
+    # Subtraction needs its own rule: "500-125" is arithmetic but "2025-2028",
+    # "AY 2025-2026", "10:00-12:00", "K-12" and "F-137" are ranges/compounds.
+    # The lookbehind rejects a digit/colon/dot/hyphen on the left, so only the
+    # first number of a run can start a match; the lookahead spares year pairs.
+    _SUBTRACTION = re.compile(
+        r"(?<![\d:.\-])(?!(?:19|20)\d{2}\s*-\s*(?:19|20)\d{2})\d{1,4}\s*-\s*\d{1,4}(?![\d:])"
+    )
+    # No bare '-' here either (it would eat "K-12"); "x-3 = 7" is caught by the
+    # '=' arm, which accepts a digit or a letter on its left.
+    _EQUATION_LIKE = re.compile(r"[a-z]\s*[\+\*/]\s*\d+|[a-z0-9]\s*=\s*\d", re.IGNORECASE)
 
     # Off-topic keyword list (each must match as a whole phrase/word)
     _OFFTOPIC = re.compile(
@@ -778,7 +793,7 @@ class ScopeGate:
             return False, "too_long"
         if self._MATH_KEYWORDS.search(text):
             return False, "math_keyword"
-        if self._MATH_EXPRESSION.search(text):
+        if self._MATH_EXPRESSION.search(text) or self._SUBTRACTION.search(text):
             return False, "math_expression"
         if self._EQUATION_LIKE.search(text):
             return False, "equation"
@@ -1502,8 +1517,16 @@ class HybridChatbot:
             from pii import mask_pii
 
         history = self.conversation_history.get(user_id, []) if user_id else []
-        # Prior recap turns would recurse into "1. can you summarize..." noise.
-        asked = [t["user_message"] for t in history if t.get("intent") != self.RECAP_INTENT]
+        # Skip prior recaps (they would recurse into "1. can you summarize…"
+        # noise) and anything a gate refused. Echoing a refused turn would put
+        # attacker-controlled text into a bot_response that _llm_context later
+        # replays in the ASSISTANT role — the one role prompt-injection
+        # defenses treat as the model's own prior words.
+        asked = [
+            t["user_message"] for t in history
+            if t.get("intent") != self.RECAP_INTENT
+            and not str(t.get("model_used", "")).startswith(("NonsenseGate", "ScopeGate", "SafetyGate"))
+        ]
 
         filipino = _is_filipino(user_input)
         if not asked:
@@ -1516,7 +1539,11 @@ class HybridChatbot:
         recent = asked[-10:]
         header = ("Narito ang mga natanong mo sa session na ito:" if filipino
                   else "Here's what you've asked so far this session:")
-        lines = [f"{i}. {mask_pii(q)}" for i, q in enumerate(recent, 1)]
+        # Collapse whitespace and cap length: the echoed text is replayed to
+        # the LLM as assistant content, so it must stay a short quoted line
+        # and cannot carry multi-line structure of its own.
+        lines = [f"{i}. {mask_pii(' '.join(q.split()))[:160]}"
+                 for i, q in enumerate(recent, 1)]
         if len(asked) > len(recent):
             lines.append("… (earlier questions omitted)" if not filipino
                          else "… (may mga naunang tanong na hindi na isinama)")
