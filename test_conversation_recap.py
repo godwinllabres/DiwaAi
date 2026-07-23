@@ -276,6 +276,47 @@ def test_ordinal_reference_never_fires_when_it_should_not():
           bot2._resolve_list_reference("10", "u") is None)
 
 
+def test_correction_after_a_pick_still_resolves():
+    """'I mean 3' after already picking 2 — the UAT blocker, 2026-07-23.
+
+    Two bugs met here: the ordinal matcher had no lead-in, and the resolver
+    only looked at history[-1] — which by then holds the ANSWER to pick #2,
+    not the menu. Both are pinned below.
+    """
+    bot = make_bot()
+    _seed_menu(bot)
+    # The reply to the first pick lands between the menu and the correction.
+    bot.conversation_history["u"].append({
+        "user_message": "2", "bot_response": "CvSU tuition is covered by RA 10931...",
+        "intent": "tuition_fees", "confidence": 0.9, "model_used": "Intent Retrieval",
+        "session_id": None, "entities": {}, "is_follow_up": True, "list_items": [],
+    })
+    for probe in ["I mean 3", "i meant 3", "sorry 3", "actually 3", "no 3",
+                  "make it 3", "yung 3", "wait 3", "3"]:
+        check(f"correction {probe!r} -> item 3",
+              bot._resolve_list_reference(probe, "u") == "Scholarships",
+              bot._resolve_list_reference(probe, "u"))
+    # Corrections must still not swallow real questions or grades.
+    for probe in ["I mean what is GWA", "1.0", "what is 3", "3 units", "I mean 99"]:
+        check(f"correction guard {probe!r}", bot._resolve_list_reference(probe, "u") is None,
+              bot._resolve_list_reference(probe, "u"))
+
+
+def test_list_reference_lookback_is_bounded():
+    bot = make_bot()
+    _seed_menu(bot)
+    filler = {"user_message": "q", "bot_response": "a", "intent": "x",
+              "confidence": 0.9, "model_used": "t", "session_id": None,
+              "entities": {}, "is_follow_up": False, "list_items": []}
+    bot.conversation_history["u"].extend([dict(filler) for _ in range(3)])
+    check("list still pointable a few turns later",
+          bot._resolve_list_reference("3", "u") == "Scholarships")
+    bot.conversation_history["u"].extend([dict(filler) for _ in range(6)])
+    check("stale list is no longer pointable",
+          bot._resolve_list_reference("3", "u") is None,
+          bot._resolve_list_reference("3", "u"))
+
+
 def test_joke_requests_are_answered_not_refused():
     from api.smalltalk import is_joke_request, joke_reply
     for probe in ["tell me a joke", "joke", "can you tell me a joke", "another joke",

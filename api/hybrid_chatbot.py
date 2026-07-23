@@ -913,15 +913,35 @@ _NUMBERED_ITEM_RE = re.compile(r"^[ \t]*(\d{1,2})[.)]\s+(\S.*?)[ \t]*$", re.MULT
 # "#10", "no. 10", "number 10", "the 10th one", "ika-10". Anchored end to end
 # so it can never fire on a real question, and \d{1,2} with no decimal part
 # keeps CvSU grade values ("1.0", "2.75") out of it.
+# The optional lead-in covers corrections and second attempts — "I mean 3",
+# "sorry, 3", "actually 3", "no 3", "yung 3" — which are the commonest way a
+# user re-points at the list after the first pick answered something else.
 _ORDINAL_REF_RE = re.compile(
-    r"^\s*(?:the\s+)?(?:#|no\.?|nr\.?|number|item|option|choice|ika-)?\s*"
-    r"(\d{1,2})(?:st|nd|rd|th)?\s*(?:one|item|option|po|please|pls)?\s*[.?!]*\s*$",
+    r"^\s*(?:(?:i\s+)?mean(?:t)?|sorry|oops|actually|no|nope|wait|"
+    r"make\s+it|let'?s\s+do|give\s+me|show\s+me|yung|ay|hindi)?[\s,:-]*"
+    r"(?:the\s+)?(?:#|no\.?|nr\.?|number|item|option|choice|ika-)?\s*"
+    r"(\d{1,2})(?:st|nd|rd|th)?\s*(?:one|item|option|po|please|pls|nga|naman)?"
+    r"\s*[.?!]*\s*$",
     re.IGNORECASE,
 )
 
+# How far back a printed list stays pointable. The answer to the user's first
+# pick sits between the menu and their correction, so looking only at the
+# previous turn misses "I mean 3" entirely.
+_LIST_REF_LOOKBACK = 6
+
+
+# Retention bounds. Parsing costs ~22 microseconds on the largest curated
+# reply, so the cost is storage, not CPU: without caps, 2000 sessions x 50
+# turns each holding a long enumeration is ~191 MB, against a 2 GB container.
+# A pointer only needs enough text to re-run as a query, and _ORDINAL_REF_RE
+# reads at most two digits, so anything past 20 items is unreachable anyway.
+_MAX_LIST_ITEMS = 20
+_MAX_LIST_ITEM_CHARS = 120
+
 
 def _numbered_items(text: str) -> list:
-    """Ordered list items in a bot reply, so the next turn can dereference them."""
+    """Ordered list items in a bot reply, so a later turn can dereference them."""
     if not text or len(text) > 20000:
         return []
     items = _NUMBERED_ITEM_RE.findall(text)
@@ -929,7 +949,10 @@ def _numbered_items(text: str) -> list:
     # "2024." in prose is not a menu the user can point at.
     if len(items) < 2 or items[0][0] != "1":
         return []
-    return [text.strip() for _, text in items]
+    return [
+        body.strip()[:_MAX_LIST_ITEM_CHARS]
+        for _, body in items[:_MAX_LIST_ITEMS]
+    ]
 
 
 class HybridChatbot:
@@ -1552,9 +1575,14 @@ class HybridChatbot:
         if not match:
             return None
         history = self.conversation_history.get(user_id) or []
-        if not history:
-            return None
-        items = history[-1].get("list_items") or []
+        # Walk back to the most recent turn that actually printed a list: the
+        # reply to the user's first pick sits in between, so history[-1] alone
+        # cannot answer "I mean 3".
+        items = []
+        for turn in reversed(history[-_LIST_REF_LOOKBACK:]):
+            if turn.get("list_items"):
+                items = turn["list_items"]
+                break
         index = int(match.group(1))
         if not 1 <= index <= len(items):
             return None
@@ -1798,6 +1826,12 @@ class HybridChatbot:
                 # Lets the NEXT turn resolve a bare "10" against this reply.
                 "list_items": _numbered_items(response),
             })
+            # Drop the enumeration from the turn that just aged out of the
+            # pointable window — _resolve_list_reference will never read it
+            # again, and holding it is what makes retention grow with history.
+            if len(turns) > _LIST_REF_LOOKBACK:
+                turns[-(_LIST_REF_LOOKBACK + 1)]["list_items"] = []
+
             if len(turns) > self._MAX_HISTORY_TURNS:
                 del turns[: -self._MAX_HISTORY_TURNS]
 
