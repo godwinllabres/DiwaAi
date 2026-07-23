@@ -95,5 +95,10 @@
     "name": "conversation_recap",
     "display_name": "Conversation Recap",
     "kind": "deterministic"
+  },
+  {
+    "name": "smalltalk",
+    "display_name": "Small Talk (curated)",
+    "kind": "deterministic"
   }
 ]

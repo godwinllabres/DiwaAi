@@ -138,6 +138,8 @@ def resolve(model_used: Optional[str]) -> str:
         return "intent_retrieval"
     if m.startswith("Conversation Recap"):
         return "conversation_recap"
+    if m.startswith("Small Talk"):
+        return "smalltalk"
     if m.startswith("NonsenseGate"):
         return "nonsense_gate"
     if m.startswith("ScopeGate") or "(out-of-scope)" in m:

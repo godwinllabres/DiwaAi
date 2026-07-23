@@ -276,6 +276,54 @@ def test_ordinal_reference_never_fires_when_it_should_not():
           bot2._resolve_list_reference("10", "u") is None)
 
 
+def test_joke_requests_are_answered_not_refused():
+    from api.smalltalk import is_joke_request, joke_reply
+    for probe in ["tell me a joke", "joke", "can you tell me a joke", "another joke",
+                  "crack a joke", "joke po", "give me a funny joke", "jokes please",
+                  "pabiro naman", "may biro ka ba"]:
+        check(f"joke ask: {probe!r}", is_joke_request(probe), "not matched")
+    # Real questions that merely contain the word must fall through.
+    for probe in ["is this a joke of a policy", "write a joke about my professor",
+                  "what is the joke policy at CvSU", "the enrollment system is a joke",
+                  "tuition fees"]:
+        check(f"not a joke ask: {probe!r}", not is_joke_request(probe), "matched")
+    reply = joke_reply()
+    check("states the scope boundary", "what I'm built for" in reply, reply[:60])
+    check("still tells the joke", reply.count("\n\n") == 2, reply)
+    check("redirects back to CvSU", "CvSU-related" in reply, reply[-60:])
+
+
+def test_jokes_pass_the_gad_screen():
+    """Fails the build if an added joke breaks the GAD rules in smalltalk.py.
+
+    Not a substitute for GAD Focal Point review — it only catches the
+    mechanical cases (gendered subjects, protected attributes as punchline).
+    """
+    import re as _re
+    from api import smalltalk
+    # Whole words only — substring matching produced nonsense hits
+    # ("he" in "the", "man" in "halaman", "gay" in "Ngayon").
+    banned = [
+        # gendered subjects / roles / stereotypes
+        "he", "she", "his", "her", "him", "man", "men", "woman", "women",
+        "girl", "girls", "boy", "boys", "wife", "husband", "girlfriend",
+        "boyfriend", "babae", "lalaki", "asawa", "misis", "mister",
+        # appearance / body / age / ability
+        "fat", "ugly", "pretty", "skinny", "blind", "deaf", "crazy", "dumb",
+        "mataba", "pangit", "bobo",
+        # protected attributes
+        "muslim", "christian", "gay", "lesbian", "bakla", "tomboy", "poor",
+        "mahirap", "bisaya", "igorot",
+    ]
+    pattern = _re.compile(r"\b(?:%s)\b" % "|".join(banned), _re.IGNORECASE)
+    for pool, label in [(smalltalk.JOKES_EN, "EN"), (smalltalk.JOKES_TL, "TL")]:
+        for joke in pool:
+            hits = pattern.findall(joke)
+            check(f"GAD {label}: {joke[:44]!r}", not hits, f"contains {hits}")
+    check("EN pool is non-empty", len(smalltalk.JOKES_EN) >= 3, len(smalltalk.JOKES_EN))
+    check("TL pool is non-empty", len(smalltalk.JOKES_TL) >= 3, len(smalltalk.JOKES_TL))
+
+
 if __name__ == "__main__":
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("test_")]:
         fn()

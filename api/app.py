@@ -7,7 +7,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing import Annotated, Optional, List, Dict, Any, Literal, Union
 import asyncio
 import json
@@ -52,6 +52,7 @@ from . import campus_context as _campus
 from . import campus_directory as _campus_directory
 from . import charter_rag as _charter_rag
 from . import intent_grounding as _intent_grounding
+from .response_blocks import ContentBlock, parse_blocks as _parse_blocks
 # Phase 2A Wave 2 — per-user AIS authentication for write actions.
 from . import auth_ais as _ais_auth
 
@@ -632,8 +633,15 @@ def _bulletize_semicolons(sentence: str) -> Optional[str]:
     return f"{intro}:\n{body}" if intro else body
 
 
+# A paragraph that already carries list markers ("1. …", "- …") is authored
+# structure, not a wall of prose. Reflowing it splits on the "1. " marker itself
+# and leaves the number stranded on its own line ("1.\n\nFILE THE ONLINE …"),
+# which is exactly the shape this formatter exists to prevent.
+_STRUCTURED_LINE_RE = re.compile(r"^\s*(?:\d{1,3}[.)]|[-*•])\s+\S", re.MULTILINE)
+
+
 def _format_paragraph(paragraph: str) -> str:
-    if len(paragraph) < 240:
+    if len(paragraph) < 240 or _STRUCTURED_LINE_RE.search(paragraph):
         return paragraph
     sentences = _split_outside_parens(paragraph, ". ")
     return "\n\n".join(
@@ -696,6 +704,7 @@ class ResponseSource(str, Enum):
     CAMPUS_DIRECTORY = "campus_directory"  # charter contact-table answers
     PLACE_RESOLVER  = "place_resolver"     # deterministic campus wayfinding
     CONVERSATION_RECAP = "conversation_recap"  # session recap from chat history
+    SMALLTALK       = "smalltalk"          # curated benign small talk (jokes)
     FALLBACK        = "fallback"
     REFUSAL         = "refusal"
 
@@ -812,8 +821,11 @@ class ChatResponse(BaseModel):
     user_id: Optional[str] = None
     session_id: Optional[str] = None
 
-    # Content
+    # Content — `text` is the raw body (kept for older clients and for the audit
+    # log); `blocks` is the same content parsed into typed structure, and is what
+    # a renderer should prefer. See api/response_blocks.py.
     text: str
+    blocks: List[ContentBlock] = Field(default_factory=list)
     summary: Optional[str] = None
 
     # Classification + provenance
@@ -832,6 +844,15 @@ class ChatResponse(BaseModel):
 
     # Layout hint for the renderer
     display_hint: DisplayHint = DisplayHint.DEFAULT
+
+    @model_validator(mode="after")
+    def _derive_blocks(self) -> "ChatResponse":
+        """Every reply carries `blocks`, whichever tier built it — derived from
+        `text` unless a caller passed blocks explicitly. Keeping this on the
+        model means a new short-circuit path can't ship a block-less reply."""
+        if not self.blocks and self.text:
+            self.blocks = _parse_blocks(self.text)
+        return self
 
 class IntentInfo(BaseModel):
     tag: str
@@ -974,6 +995,8 @@ def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optiona
         return ResponseSource.PLACE_RESOLVER, None
     if m == "Conversation Recap":
         return ResponseSource.CONVERSATION_RECAP, None
+    if m == "Small Talk":
+        return ResponseSource.SMALLTALK, None
     if m.startswith("NonsenseGate"):
         return ResponseSource.REFUSAL, RefusalReason.NONSENSE
     if m.startswith("ScopeGate") or "(out-of-scope)" in m:

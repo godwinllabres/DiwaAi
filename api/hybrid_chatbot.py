@@ -89,6 +89,12 @@ except ImportError:
 # Citizens' Charter retrieval tier (document tier of the hybrid brain)
 from . import charter_rag, intent_retrieval, site_rag
 
+try:
+    from .smalltalk import smalltalk_reply as _smalltalk_reply
+except ImportError:  # pragma: no cover - smalltalk is optional, never fatal
+    def _smalltalk_reply(text, filipino=False):  # type: ignore[misc]
+        return None
+
 # TensorFlow imports (optional - graceful fallback if not available)
 try:
     import tensorflow as tf
@@ -768,7 +774,10 @@ class ScopeGate:
         r"write code|debug|python|javascript|java code|c\+\+|"
         r"write a poem|write a story|write a song|write me a|"
         r"translate to|translate this|translation of|"
-        r"tell a joke|tell me a joke|funny joke|"
+        # Joke asks are handled by api/smalltalk.py (Step 0.6) rather than
+        # refused: a flat "outside my scope" reads as cold from a campus
+        # assistant. They never reach here, so the alternatives are gone.
+        r"write a joke about|"
         # "president of CvSU / Cavite State" is a university_officials ask;
         # only the national-politics form is off-topic.
         r"president of (?!cvsu|cavite)|prime minister|election|"
@@ -945,6 +954,9 @@ class HybridChatbot:
     # "summarize our conversation" at 0.65 and answers with a greeting, and
     # the grounded LLM invents a recap from corpus passages instead).
     RECAP_INTENT = "conversation_recap"
+    # Benign small talk answered from curated content (api/smalltalk.py).
+    # Not in the trained taxonomy for the same reason as RECAP_INTENT.
+    SMALLTALK_INTENT = "smalltalk"
 
     # Meta-questions about the conversation itself. Every alternative requires
     # a conversation word or a we/I-asked construction so content asks like
@@ -1018,6 +1030,7 @@ class HybridChatbot:
             "neural_network_used": 0,
             "place_resolver_used": 0,
             "conversation_recap_used": 0,
+            "smalltalk_used": 0,
             "fallback_used": 0,
             "nlu_enhanced": 0
         }
@@ -1630,6 +1643,13 @@ class HybridChatbot:
         if recap is not None:
             self.model_usage_stats["conversation_recap_used"] += 1
             return self.RECAP_INTENT, recap, 1.0, "Conversation Recap", nlu_data
+
+        # Step 0.6: Benign small talk — states the scope boundary and still
+        # answers. Curated content only; see api/smalltalk.py for the GAD screen.
+        small = _smalltalk_reply(user_input, filipino=_is_filipino(user_input))
+        if small is not None:
+            self.model_usage_stats["smalltalk_used"] += 1
+            return self.SMALLTALK_INTENT, small, 1.0, "Small Talk", nlu_data
 
         if not skip_intents:
             # Step 1: Naive Bayes (+ optional NLU enhancement)
