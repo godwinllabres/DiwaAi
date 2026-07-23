@@ -30,7 +30,10 @@ os.environ.setdefault("SEVI_ALLOW_UNVERIFIED_MODELS", "1")
 os.environ.setdefault("OLLAMA_BASE_URL", "http://localhost:11434")
 if _args.model:
     os.environ["OLLAMA_MODEL"] = _args.model
-os.environ.setdefault("OLLAMA_MODEL", "llama3.2:3b")
+# Default to what the deployment actually serves. The previous default was
+# llama3.2:3b, which silently graded a DIFFERENT model than production and
+# made the result incomparable to any run taken from the live stack.
+os.environ.setdefault("OLLAMA_MODEL", "qwen3:8b")
 os.environ.setdefault("LLM_PROVIDER", "ollama")
 os.environ.pop("DATABASE_URL", None)  # avoid Postgres; not needed for predict()
 
@@ -55,7 +58,7 @@ def main():
     if args.limit:
         data = data[: args.limit]
 
-    print("Instantiating HybridChatbot (new models)...")
+    print(f"Instantiating HybridChatbot — OLLAMA_MODEL={os.environ['OLLAMA_MODEL']}")
     bot = HybridChatbot("models", "models/responses_map.json")
     print(f"Loaded {len(bot.responses_map)} intents. Running {len(data)} questions...\n")
 
