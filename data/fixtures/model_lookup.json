@@ -100,5 +100,10 @@
     "name": "smalltalk",
     "display_name": "Small Talk (curated)",
     "kind": "deterministic"
+  },
+  {
+    "name": "college_programs",
+    "display_name": "College Programs (registry)",
+    "kind": "deterministic"
   }
 ]

@@ -95,6 +95,12 @@ except ImportError:  # pragma: no cover - smalltalk is optional, never fatal
     def _smalltalk_reply(text, filipino=False):  # type: ignore[misc]
         return None
 
+try:
+    from .college_programs import college_program_reply as _college_program_reply
+except ImportError:  # pragma: no cover - registry is optional, never fatal
+    def _college_program_reply(text, filipino=False):  # type: ignore[misc]
+        return None
+
 # TensorFlow imports (optional - graceful fallback if not available)
 try:
     import tensorflow as tf
@@ -980,6 +986,8 @@ class HybridChatbot:
     # Benign small talk answered from curated content (api/smalltalk.py).
     # Not in the trained taxonomy for the same reason as RECAP_INTENT.
     SMALLTALK_INTENT = "smalltalk"
+    # Complete per-college program list from data/college_programs.json.
+    PROGRAMS_INTENT = "college_programs"
 
     # Meta-questions about the conversation itself. Every alternative requires
     # a conversation word or a we/I-asked construction so content asks like
@@ -1054,6 +1062,7 @@ class HybridChatbot:
             "place_resolver_used": 0,
             "conversation_recap_used": 0,
             "smalltalk_used": 0,
+            "college_programs_used": 0,
             "fallback_used": 0,
             "nlu_enhanced": 0
         }
@@ -1678,6 +1687,15 @@ class HybridChatbot:
         if small is not None:
             self.model_usage_stats["smalltalk_used"] += 1
             return self.SMALLTALK_INTENT, small, 1.0, "Small Talk", nlu_data
+
+        # Step 0.7: College Programs — naming any college and asking about
+        # programs returns that college's COMPLETE list. Must precede the
+        # classifiers: `courses_offered` owns the CEIT patterns and answers
+        # with the generic all-colleges blurb, so it would win every time.
+        programs = _college_program_reply(user_input, filipino=_is_filipino(user_input))
+        if programs is not None:
+            self.model_usage_stats["college_programs_used"] += 1
+            return self.PROGRAMS_INTENT, programs, 1.0, "College Programs", nlu_data
 
         if not skip_intents:
             # Step 1: Naive Bayes (+ optional NLU enhancement)

@@ -140,6 +140,8 @@ def resolve(model_used: Optional[str]) -> str:
         return "conversation_recap"
     if m.startswith("Small Talk"):
         return "smalltalk"
+    if m.startswith("College Programs"):
+        return "college_programs"
     if m.startswith("NonsenseGate"):
         return "nonsense_gate"
     if m.startswith("ScopeGate") or "(out-of-scope)" in m:

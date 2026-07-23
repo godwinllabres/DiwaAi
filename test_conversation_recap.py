@@ -317,6 +317,62 @@ def test_list_reference_lookback_is_bounded():
           bot._resolve_list_reference("3", "u"))
 
 
+def test_college_programs_returns_the_complete_list():
+    from api.college_programs import college_program_reply, _load
+    reply = college_program_reply("full course list of CEIT")
+    check("CEIT ask is answered", reply is not None)
+    for program in ["BS Agricultural and Biosystems Engineering",
+                    "BS Architecture", "BS Civil Engineering",
+                    "BS Computer Engineering", "BS Computer Science",
+                    "BS Electrical Engineering", "BS Electronics Engineering",
+                    "BS Industrial Engineering", "BS Industrial Technology",
+                    "BS Information Technology"]:
+        check(f"CEIT list contains {program!r}", program in reply, reply[:80])
+    check("majors are nested", "Major in Automotive Technology" in reply, reply)
+    check("carries the source date", "13 January 2018" in reply, reply[-140:])
+    check("carries the source url", "cvsu.edu.ph" in reply, reply[-140:])
+    # Abbreviation and full name must both work, for every college.
+    for college in _load():
+        for probe in (college["abbr"], college["full_name"]):
+            got = college_program_reply(f"what programs are offered by {probe}")
+            check(f"{college['abbr']}: {probe[:34]!r} resolves", got is not None)
+            check(f"{college['abbr']}: complete via {probe[:20]!r}",
+                  got and got.count("\n- ") >= len(college["programs"]),
+                  f"{got.count(chr(10)+'- ') if got else 0} of {len(college['programs'])}")
+
+
+def test_college_programs_does_not_hijack_other_intents():
+    from api.college_programs import college_program_reply
+    # A college named WITHOUT a program cue belongs to the map/directory tiers.
+    for probe in ["where is CEIT", "who is the dean of CEIT", "CEIT building",
+                  "contact number of CAS", "CAFENR location",
+                  "how do I get to the college of nursing"]:
+        check(f"no hijack: {probe!r}", college_program_reply(probe) is None,
+              "fired")
+    # A program cue with NO college stays with the general courses intent.
+    for probe in ["what courses does CvSU offer", "list of programs",
+                  "anong kurso sa CvSU"]:
+        check(f"no college named: {probe!r}", college_program_reply(probe) is None,
+              "fired")
+
+
+def test_college_registry_data_is_sane():
+    from api.college_programs import _load
+    colleges = _load()
+    check("registry loaded", len(colleges) >= 10, len(colleges))
+    seen_alias = {}
+    for college in colleges:
+        check(f"{college['abbr']} has programs", len(college["programs"]) > 0)
+        check(f"{college['abbr']} has a source url", college.get("source_url", "").startswith("http"))
+        check(f"{college['abbr']} has a source date",
+              len(college.get("source_date", "")) == 10, college.get("source_date"))
+        for alias in college["aliases"]:
+            owner = seen_alias.get(alias)
+            check(f"alias {alias!r} unique to {college['abbr']}",
+                  owner is None, f"also claimed by {owner}")
+            seen_alias[alias] = college["abbr"]
+
+
 def test_joke_requests_are_answered_not_refused():
     from api.smalltalk import is_joke_request, joke_reply
     for probe in ["tell me a joke", "joke", "can you tell me a joke", "another joke",
