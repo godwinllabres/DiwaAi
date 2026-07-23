@@ -14,6 +14,7 @@ SQLite-only DATE()/strftime()).
 
 import json
 import os
+import re
 import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -36,6 +37,35 @@ try:  # psycopg is only needed when DATABASE_URL points at Postgres
 except ImportError:  # pragma: no cover - sqlite-only environments
     psycopg = None
     dict_row = None
+
+
+def _clamp_limit(limit, default: int, cap: int) -> int:
+    """Bound a caller-supplied row limit before it reaches `LIMIT ?`.
+
+    SQLite treats a NEGATIVE limit as *unlimited*, so an unclamped `limit=-1`
+    on any retrieval method is a full-table dump (and an OOM on a large DB).
+    Clamped here rather than only at the API layer because these methods are
+    also called directly by scripts, the exporter, and the retention loop.
+    A non-numeric value falls back to the method's own default.
+    """
+    try:
+        limit = int(limit)
+    except (TypeError, ValueError):
+        return default
+    return max(1, min(limit, cap))
+
+
+# Filenames derived from a user id must not be able to escape log_dir:
+# on Windows an encoded backslash ("a%5C..%5Cb") survives the URL path decode
+# and would otherwise write outside the log directory.
+_SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
+
+
+def is_safe_user_id(user_id: str) -> bool:
+    """True if `user_id` is safe to embed in a filename (allowlist + no '..')."""
+    if not isinstance(user_id, str) or not _SAFE_ID_RE.match(user_id):
+        return False
+    return ".." not in user_id
 
 
 # Postgres DDL. Mirrors the SQLite schema below, with three deliberate choices:
@@ -488,6 +518,7 @@ class ChatLogger:
     def get_user_history(self, user_id: str, limit: int = 50) -> List[Dict]:
         """Get chat history for a user"""
         try:
+            limit = _clamp_limit(limit, 50, 1000)  # 1000 = export_user_data's ask
             conn, cursor = self._connect(dicts=True)
 
             cursor.execute(self._sql("""
@@ -508,6 +539,7 @@ class ChatLogger:
     def get_recent_messages(self, limit: int = 20) -> List[Dict]:
         """Get the most recent chat messages across all users."""
         try:
+            limit = _clamp_limit(limit, 20, 200)
             conn, cursor = self._connect(dicts=True)
 
             cursor.execute(self._sql("""
@@ -565,6 +597,7 @@ class ChatLogger:
     def get_session_list(self, user_id: Optional[str] = None, limit: int = 20) -> List[Dict]:
         """Get list of sessions"""
         try:
+            limit = _clamp_limit(limit, 20, 1000)
             conn, cursor = self._connect(dicts=True)
 
             if user_id:
@@ -647,6 +680,7 @@ class ChatLogger:
     def search_logs(self, query: str, limit: int = 20) -> List[Dict]:
         """Search logs by user message or bot response"""
         try:
+            limit = _clamp_limit(limit, 20, 200)
             conn, cursor = self._connect(dicts=True)
 
             # LOWER() on both sides keeps the search case-insensitive on
@@ -826,6 +860,7 @@ class ChatLogger:
     ) -> List[Dict]:
         """Return feedback rows joined with their source chat message when available."""
         try:
+            limit = _clamp_limit(limit, 100, 1000)
             conn, cursor = self._connect(dicts=True)
 
             where_clauses = []
@@ -896,6 +931,7 @@ class ChatLogger:
     def get_fallback_examples(self, limit: int = 100) -> List[Dict]:
         """Get recent fallback user utterances and metadata."""
         try:
+            limit = _clamp_limit(limit, 100, 1000)
             conn, cursor = self._connect(dicts=True)
 
             cursor.execute(self._sql("""
@@ -929,6 +965,10 @@ class ChatLogger:
         %s/%b/%t), so 'safety_%' must travel in the params to stay portable
         across SQLite and Postgres."""
         try:
+            # days is also bounded (a huge value overflows timedelta; a
+            # negative one puts the window in the future and returns nothing).
+            days = _clamp_limit(days, 30, 3650)
+            limit = _clamp_limit(limit, 2000, 5000)
             conn, cursor = self._connect(dicts=True)
 
             cutoff = (datetime.now() - timedelta(days=days)).isoformat()
@@ -954,9 +994,19 @@ class ChatLogger:
             print(f"[ERROR] Error retrieving anti-pattern rows: {e}")
             return []
 
-    def export_user_data(self, user_id: str) -> str:
-        """Export all data for a user as JSON"""
+    def export_user_data(self, user_id: str) -> Optional[str]:
+        """Export all data for a user as JSON.
+
+        `user_id` becomes part of the output FILENAME, so it is allowlisted
+        before anything is written — an id like `..%5C..%5Cwww/index` would
+        otherwise place an attacker-shaped JSON file anywhere the process can
+        write. Returns None when the id is rejected.
+        """
         try:
+            if not is_safe_user_id(user_id):
+                print(f"[ERROR] Export refused: unsafe user_id {user_id!r}")
+                return None
+
             history = self.get_user_history(user_id, limit=1000)
             sessions = self.get_session_list(user_id, limit=100)
 
@@ -969,8 +1019,12 @@ class ChatLogger:
                 "sessions": sessions
             }
 
-            # Save to file
-            filename = self.log_dir / f"export_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            # Save to file — second gate: the resolved path must still sit
+            # directly inside log_dir after the OS has had its say.
+            filename = (self.log_dir / f"export_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json").resolve()
+            if filename.parent != self.log_dir.resolve():
+                print("[ERROR] Export refused: path escapes the log directory")
+                return None
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
 
@@ -986,12 +1040,23 @@ class ChatLogger:
         paths (log_chat / log_feedback) on the shared SQLite file instead of
         racing them on a second connection."""
         try:
+            # Retention is DESTRUCTIVE, so `days` is clamped to at least 1 and
+            # the cutoff is asserted to be in the past before the DELETE runs.
+            # Without this, days <= 0 puts the cutoff in the FUTURE and
+            # `timestamp < cutoff` matches every row — wiping the entire chat +
+            # feedback history and every daily log file.
+            days = _clamp_limit(days, 30, 3650)
+
             # ISO-8601 strings compare lexically in chronological order, so a
             # plain < against the cutoff ISO string is portable — replaces the
             # SQLite-only strftime('%s', timestamp) epoch comparison.
             # timedelta (not epoch math): fromtimestamp() rejects pre-1970
             # values on Windows, which a large `days` would produce.
-            cutoff = datetime.now() - timedelta(days=days)
+            now = datetime.now()
+            cutoff = now - timedelta(days=days)
+            if cutoff >= now:  # unreachable after the clamp; belt and braces
+                print("[ERROR] Retention refused: cutoff is not in the past")
+                return 0
             cutoff_iso = cutoff.isoformat()
 
             with self.lock:

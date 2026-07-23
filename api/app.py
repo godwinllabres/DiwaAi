@@ -3,7 +3,7 @@ CvSU Chatbot REST API
 FastAPI-based endpoint for integration with web applications
 """
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from enum import Enum
@@ -26,7 +26,7 @@ import nltk
 from nltk.stem import WordNetLemmatizer
 
 # Import logger
-from .logger import ChatLogger
+from .logger import ChatLogger, is_safe_user_id as _is_safe_user_id
 # Import hybrid chatbot
 from .hybrid_chatbot import HybridChatbot
 from . import intent_retrieval as _intent_retrieval
@@ -315,12 +315,32 @@ def _check_chat_rate_limit(key: str) -> None:
     _chat_hits[key] = hits
 
 
+def _pin_matches(candidate: str) -> bool:
+    """Constant-time PIN comparison (never `==`: a short-circuiting compare
+    leaks the shared secret's prefix through response timing). Compared as
+    bytes so a non-ASCII header can't raise TypeError out of compare_digest."""
+    if not DASHBOARD_PIN:
+        return False
+    return secrets.compare_digest(
+        (candidate or "").encode("utf-8"), DASHBOARD_PIN.encode("utf-8")
+    )
+
+
 async def require_admin(request: Request) -> None:
-    """Dependency: verify the X-Admin-Pin header matches DASHBOARD_PIN."""
+    """Dependency: verify the X-Admin-Pin header matches DASHBOARD_PIN.
+
+    The brute-force throttle and the constant-time compare live HERE, not only
+    on /admin/verify — otherwise the ~30 routes carrying this dependency are an
+    unthrottled PIN oracle that simply skips the one endpoint that counts
+    attempts. Only FAILED attempts consume the budget, so a dashboard polling
+    with the correct PIN is never locked out.
+    """
     if not DASHBOARD_PIN:
         raise HTTPException(503, "Admin access not configured")
-    pin = request.headers.get("X-Admin-Pin", "")
-    if pin != DASHBOARD_PIN:
+    client_ip = request.client.host if request.client else "unknown"
+    _check_rate_limit(client_ip)
+    if not _pin_matches(request.headers.get("X-Admin-Pin", "")):
+        _record_attempt(client_ip)
         raise HTTPException(401, "Unauthorized")
 
 
@@ -1500,7 +1520,10 @@ async def moderation_stats():
 
 
 @app.get("/admin/anti_patterns", tags=["Admin"], dependencies=[Depends(require_admin)])
-async def anti_patterns_report(days: int = 30, limit: int = 2000):
+async def anti_patterns_report(
+    days: Annotated[int, Query(ge=1, le=3650)] = 30,
+    limit: Annotated[int, Query(ge=1, le=5000)] = 2000,
+):
     """Anti-pattern mining: cluster recent unanswered fallbacks, off-topic /
     homework refusals, safety trips, and low-confidence answers into emerging
     themes with representative examples — the input to the monthly "what intents
@@ -1929,7 +1952,8 @@ async def sync_site_corpus():
     stats["index_available"] = index is not None
     return stats
 
-@app.get("/conversation/{user_id}", tags=["Conversation"])
+@app.get("/conversation/{user_id}", tags=["Conversation"],
+         dependencies=[Depends(require_admin)])
 async def get_conversation_history(user_id: str):
     """Get conversation history for a user."""
     # Turn lock: chat turns now mutate conversation_history from a worker
@@ -1944,7 +1968,8 @@ async def get_conversation_history(user_id: str):
         "conversation": history
     }
 
-@app.delete("/conversation/{user_id}", tags=["Conversation"])
+@app.delete("/conversation/{user_id}", tags=["Conversation"],
+            dependencies=[Depends(require_admin)])
 async def clear_conversation(user_id: str):
     """Clear conversation history for a user."""
     # Turn lock: deleting the key mid-turn would KeyError the worker thread
@@ -1959,16 +1984,22 @@ _BATCH_MAX = int(os.getenv("BATCH_MAX", "20"))
 
 
 @app.post("/batch", tags=["Chat"])
-async def batch_chat(requests: List[ChatRequest]):
+async def batch_chat(requests: List[ChatRequest], http_request: Request):
     """
     Process multiple chat requests in batch.
 
     Useful for integration with web apps that need multiple responses.
+
+    Each sub-request spends from the SAME per-session/IP chat budget as /chat:
+    unthrottled, /batch was a 20x compute amplifier that ran the full tier
+    cascade behind the global turn lock for an anonymous caller.
     """
     if len(requests) > _BATCH_MAX:
         raise HTTPException(status_code=413, detail=f"Batch too large (max {_BATCH_MAX})")
+    client_host = http_request.client.host if http_request.client else "anon"
     results = []
     for request in requests:
+        _check_chat_rate_limit(f"chat:{request.session_id or client_host}")
         start_time = time.time()
         # Same front-door SafetyGate as /chat — /batch must not be an
         # unscreened second entrance for abusive/self-harm messages.
@@ -2037,7 +2068,7 @@ async def batch_chat(requests: List[ChatRequest]):
 # ============================================================================
 
 @app.get("/logs/user/{user_id}", tags=["Logging"], dependencies=[Depends(require_admin)])
-async def get_user_logs(user_id: str, limit: int = 50):
+async def get_user_logs(user_id: str, limit: Annotated[int, Query(ge=1, le=200)] = 50):
     """Get chat history for a specific user"""
     history = chat_logger.get_user_history(user_id, limit)
     return {
@@ -2057,7 +2088,7 @@ async def get_session_logs(session_id: str):
     }
 
 @app.get("/logs/recent", tags=["Logging"], dependencies=[Depends(require_admin)])
-async def get_recent_logs(limit: int = 20):
+async def get_recent_logs(limit: Annotated[int, Query(ge=1, le=200)] = 20):
     """Get the most recent messages across all users (dashboard 'Messages' tab)."""
     limit = max(1, min(limit, 200))
     messages = chat_logger.get_recent_messages(limit)
@@ -2076,7 +2107,10 @@ async def get_intent_logs():
     }
 
 @app.get("/logs/sessions", tags=["Logging"], dependencies=[Depends(require_admin)])
-async def get_sessions_list(user_id: Optional[str] = None, limit: int = 20):
+async def get_sessions_list(
+    user_id: Optional[str] = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 20,
+):
     """Get list of sessions"""
     sessions = chat_logger.get_session_list(user_id, limit)
     return {
@@ -2092,7 +2126,7 @@ async def get_today_statistics():
     return stats
 
 @app.get("/logs/search", tags=["Logging"], dependencies=[Depends(require_admin)])
-async def search_logs(query: str, limit: int = 20):
+async def search_logs(query: str, limit: Annotated[int, Query(ge=1, le=200)] = 20):
     """Search logs by message content"""
     results = chat_logger.search_logs(query, limit)
     return {
@@ -2105,7 +2139,14 @@ async def search_logs(query: str, limit: int = 20):
           dependencies=[Depends(require_admin)],
           responses={500: {"description": "Export failed"}})
 async def export_user_logs(user_id: str):
-    """Export all data for a user as JSON file"""
+    """Export all data for a user as JSON file.
+
+    `user_id` lands in the output filename, so it is allowlisted here (400)
+    before the logger's own hard guard sees it — a path-traversal id must not
+    read as a generic 500 "Export failed".
+    """
+    if not _is_safe_user_id(user_id):
+        raise HTTPException(status_code=400, detail="Invalid user_id")
     filepath = chat_logger.export_user_data(user_id)
     if filepath:
         return {"status": "success"}
@@ -2113,8 +2154,12 @@ async def export_user_logs(user_id: str):
         raise HTTPException(status_code=500, detail="Export failed")
 
 @app.delete("/logs/cleanup", tags=["Logging"], dependencies=[Depends(require_admin)])
-async def cleanup_old_logs(days: int = 30):
-    """Delete logs older than specified days"""
+async def cleanup_old_logs(days: Annotated[int, Query(ge=1, le=3650)] = 30):
+    """Delete logs older than specified days.
+
+    `days` is floored at 1: a zero/negative window puts the retention cutoff in
+    the future, which would delete the ENTIRE chat + feedback history.
+    """
     deleted = chat_logger.cleanup_old_logs(days)
     return {
         "status": "success",
@@ -2201,7 +2246,7 @@ async def submit_feedback(request: FeedbackRequest):
 
 @app.get("/feedback", tags=["Feedback"], dependencies=[Depends(require_admin)])
 async def get_feedback(
-    limit: int = 100,
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
     helpful: Optional[bool] = None,
     user_id: Optional[str] = None,
     session_id: Optional[str] = None,
@@ -2247,7 +2292,7 @@ async def get_feedback_stats():
 
 
 @app.get("/feedback/fallbacks", tags=["Feedback"], dependencies=[Depends(require_admin)])
-async def get_feedback_fallbacks(limit: int = 100):
+async def get_feedback_fallbacks(limit: Annotated[int, Query(ge=1, le=200)] = 100):
     """
     Return recent messages that triggered the nlu_fallback intent.
     Useful for manually identifying missing training patterns.
@@ -2417,7 +2462,7 @@ async def verify_admin_pin(body: PinRequest, request: Request):
     _check_rate_limit(client_ip)
     if not DASHBOARD_PIN:
         raise HTTPException(503, "Admin access not configured")
-    if body.pin != DASHBOARD_PIN:
+    if not _pin_matches(body.pin):
         _record_attempt(client_ip)
         raise HTTPException(401, "Invalid PIN")
     return {"status": "ok"}

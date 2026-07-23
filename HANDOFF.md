@@ -1,7 +1,8 @@
 # HANDOFF — Sevi security hardening (resume point) · 2026-07-23
 
-Paste this back to resume. The unfinished work is **applying the security-review
-fixes below**. When they're done + verified, **delete this file.**
+Paste this back to resume. **P1 + P2 are DONE** (branch `hardening/input-clamps`,
+verified — see "Verify after fixing"). The remaining work is **P3, which needs a
+decision first**. Delete this file once P3 is settled.
 
 ## Where things stand
 - **All prior session work is MERGED to `main`** (SeviAi `origin/main` @ `d60e136`):
@@ -23,29 +24,39 @@ Two app entrypoints exist:
 Several findings are Medium on `api.app` but High if the legacy root ships.
 **Retiring/auth-gating the legacy root `app.py` is the highest-leverage single fix.**
 
-## PENDING WORK — apply these fixes (priority order)
+## DONE — P1 + P2 (branch `hardening/input-clamps`)
 
 **P1 — input clamps + throttle (tiny, no behavior change for legit clients):**
-- [ ] Clamp `limit` everywhere it reaches SQL `LIMIT ?`: `Query(ge=1, le=200)` on the
-      endpoints + `limit = max(1, min(int(limit), 200))` inside each method.
-      `api/logger.py`: `search_logs`(659), `get_user_history`(497), `get_session_list`(582),
-      `get_feedback_entries`(878), `get_fallback_examples`(906), `get_anti_pattern_rows`(947).
-      (SQLite treats `LIMIT -1` as unlimited → full-table dump / OOM.)
-- [ ] Clamp `days` in `/logs/cleanup`: `Query(ge=1)` + `assert cutoff < datetime.now()`
-      before the DELETE in `cleanup_old_logs` (`api/logger.py:994`, endpoint `api/app.py:2116`).
+- [x] Clamp `limit` everywhere it reaches SQL `LIMIT ?`. Two layers: `Query(ge=1, le=200)`
+      on the endpoints (422 before the handler runs) **and** `_clamp_limit()` inside each
+      `api/logger.py` method, since scripts/the exporter call them directly. Per-method
+      caps, not a flat 200, so `export_user_data`(1000) and anti-pattern mining(2000)
+      keep working. (SQLite treats `LIMIT -1` as unlimited → full-table dump / OOM.)
+- [x] Clamp `days` in `/logs/cleanup`: `Query(ge=1, le=3650)` on the endpoint, plus a
+      floor-at-1 clamp and a `cutoff < now` guard before the DELETE in `cleanup_old_logs`.
       (Negative `days` → cutoff in the future → wipes the ENTIRE chat+feedback DB + log files.)
-- [ ] Rate-limit `/batch`: call `_check_chat_rate_limit` per sub-request in the loop
-      (`api/app.py:1962`). (Unauthenticated 20× compute amplifier behind the global lock.)
+- [x] Rate-limit `/batch`: `_check_chat_rate_limit` per sub-request, on the same
+      `chat:{session_id|ip}` key as `/chat`, so both share one budget.
+      Note: the throttle fires mid-loop, so a batch that trips it discards the
+      sub-responses already computed. Acceptable for a throttle; revisit if noisy.
 
 **P2 — access control:**
-- [ ] Gate `GET`+`DELETE /conversation/{user_id}` with `require_admin` (or bind to caller).
-      `api/app.py:1932/1947` — currently unauthenticated IDOR (read + wipe any user's history).
-- [ ] Move `secrets.compare_digest` + the `_check_rate_limit` throttle INTO `require_admin`
-      (`api/app.py:318-324`) — today the PIN throttle exists only on `/admin/verify`, so
-      ~30 admin routes are an unthrottled brute-force oracle. Also fixes the timing compare.
-- [ ] Sanitize `user_id` in `/logs/export/{user_id}` (`api/logger.py:973`): allowlist
-      `[A-Za-z0-9_.-]`, reject `..`/separators, assert resolved path stays under `log_dir`.
-      (Windows `%5C` path traversal → arbitrary-dir file write.)
+- [x] `GET`+`DELETE /conversation/{user_id}` now carry `require_admin`. (SeviWeb defines
+      `getConversation`/`clearConversation` in `app/lib/api.ts` but calls neither, so no
+      live caller breaks.)
+- [x] `secrets.compare_digest` + the `_check_rate_limit` throttle moved INTO
+      `require_admin` via `_pin_matches()`; `/admin/verify` uses the same helper.
+      Only FAILED attempts consume the 5-per-5-min budget, so a polling dashboard
+      with the right PIN is never locked out.
+- [x] `user_id` allowlisted in `/logs/export/{user_id}`: `is_safe_user_id()` in
+      `api/logger.py` (`[A-Za-z0-9_.-]{1,64}`, no `..`), a 400 at the endpoint, and a
+      resolved-path-stays-under-`log_dir` assert before the write.
+
+Regression test: **`python test_input_clamps.py`** (34 checks — clamp bounds, the
+allowlist, and real-SQLite proof that `limit=-1` returns 1 row, that `days<=0`
+deletes nothing, and that a legitimate 30-day window still purges stale rows).
+
+## PENDING WORK
 
 **P3 — design (bigger, discuss first):**
 - [ ] Read-only allowlist for `intent_hint` dispatch (`api/ais_mcp.py:1225`) — it can name
@@ -58,12 +69,17 @@ Several findings are Medium on `api.app` but High if the legacy root ships.
 
 ## Verify after fixing
 ```
+python test_input_clamps.py           # 34/34  (new — P1/P2 clamps + allowlist)
 python test_safety_gate.py            # 55/55 + 11/11
 python test_moderation_controls.py    # 36/36
 python test_agentic_workflow.py       # 23/23
 python -c "import api.app"            # imports clean
 ```
-Add tests for the new clamps (limit/days bounds).
+All five green as of the P1/P2 commit. The API-layer behaviour (401 on
+`/conversation` without a PIN, 422 on out-of-range `limit`/`days`, 400 on a
+traversal export id, 429 after 5 bad PINs on ANY admin route, `/batch` spending
+the chat budget) was checked with a FastAPI `TestClient` — 26 checks, ad hoc,
+not committed because importing `api.app` loads the models.
 
 ## Also still open (non-code)
 - **Governance sign-offs** still block production: crisis copy (Guidance) + consent copy
@@ -75,4 +91,9 @@ Add tests for the new clamps (limit/days bounds).
 `main` has everything merged+pushed. The three feature branches
 (`feat/moderation-controls`, `feat/agentic-workflows`, `hardening/chat-input-validation`)
 are all merged into `main` and can be deleted on the remote when convenient.
-Suggested: do the P1/P2 fixes on a new `hardening/input-clamps` branch.
+The P1/P2 fixes live on `hardening/input-clamps`, not yet merged to `main`.
+
+Note for P3: the legacy root `app.py` imports the SAME `api.logger.ChatLogger`,
+so it already inherits the P1 limit clamps, the retention floor, and the export
+allowlist. What it still lacks is the auth layer — its logger routes and
+`/conversation` remain unauthenticated there.
