@@ -98,14 +98,17 @@ On Windows, `run_server.bat` is a one-click launcher for the same server.
 
 ### Docker
 
-Single API container:
+The full stack (API + web + reverse proxy, port **8090**) is built and run from the
+`sevi-deploy` repository — see its README. That is the only supported Docker path.
+
+The old single-container `deployment/docker-compose.yml` was removed along with the
+legacy root `app.py` it started: that entrypoint served the same chat-log and
+conversation routes with no authentication, and published them on port 8000.
+To run just the API locally, use uvicorn directly:
 
 ```bash
-docker-compose -f deployment/docker-compose.yml up -d
+python -m uvicorn api.app:app --port 8000
 ```
-
-The full stack (API + web + reverse proxy, port **8090**) is built and run from the
-`sevi-deploy` repository — see its README.
 
 ---
 
