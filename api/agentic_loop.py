@@ -56,19 +56,10 @@ RESULT_CHARS_CAP = int(os.getenv("AIS_AGENTIC_RESULT_CAP", "6000"))  # per tool 
 
 # Every advertised tool is a READ today; deny writes explicitly so a future
 # write tool accidentally added to _LLM_TOOLS can NEVER be invoked in-loop.
-_WRITE_DENYLIST = {
-    # AIS writes
-    "create_dv", "approve_dv", "post_dv", "cancel_dv", "set_dv_status",
-    "draft_bir_2307", "issue_bir_2307", "submit_dv", "amend_dv",
-    # HR / DTR — render_dtr produces an official CSC form (DPA-sensitive) and
-    # draft_dtr writes a record; both go through the preview/confirm flow, never
-    # the loop. get_attendance stays a READ (allowed) once the cvsu-hr MCP ships.
-    "render_dtr", "draft_dtr",
-    # HR / COE + Service Record — official signed documents, rendered behind the
-    # confirm flow. Profile reads (get_employee_profile, salary permlevel-gated)
-    # stay READ.
-    "render_coe", "render_service_record",
-}
+#
+# Defined once in ais_mcp so this loop and the intent_hint bypass refuse exactly
+# the same set — a write tool added there is denied on every path at once.
+_WRITE_DENYLIST = ais_mcp.WRITE_TOOLS
 
 _AGENT_SYSTEM = (
     "You are Sevi, an internal CvSU accounting copilot for staff. Answer the user's "
