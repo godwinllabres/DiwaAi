@@ -93,6 +93,21 @@ class _SessionToken:
 # session_id -> _SessionToken. Process-local; vanishes on uvicorn restart.
 _sessions: dict[str, _SessionToken] = {}
 
+# A session id is now MINTED PER LOGIN rather than supplied by the caller, so
+# re-logging in no longer overwrites the same key — without this, every login
+# would leave its predecessor behind and the map would grow for the life of the
+# process, holding live OAuth tokens long after anyone could use them.
+# Dropped once the refresh token is far past expiry and the session is
+# unrecoverable anyway.
+_SESSION_GRACE_SECONDS = 24 * 3600
+
+
+def _sweep_sessions() -> None:
+	cutoff = time.time() - _SESSION_GRACE_SECONDS
+	for sid, tok in list(_sessions.items()):
+		if tok.expires_at < cutoff:
+			_sessions.pop(sid, None)
+
 
 def _frappe_headers() -> dict[str, str]:
 	"""Common headers for any direct call to Frappe — propagates the Host
@@ -170,6 +185,7 @@ def _store_session(session_id: str, payload: dict, previous_refresh: str | None 
 		full_name=identity.get("full_name") or claims.get("name") or "",
 		roles=list(identity.get("roles") or claims.get("roles") or []),
 	)
+	_sweep_sessions()
 	_sessions[session_id] = tok
 	return tok
 

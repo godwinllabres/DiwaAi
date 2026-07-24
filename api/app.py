@@ -474,9 +474,13 @@ def _enforce_chat_limits(request_session_id: Optional[str], http_request: Reques
 _ADMIN_COOKIE = "sevi_admin"
 _ADMIN_SESSION_TTL = float(os.getenv("ADMIN_SESSION_TTL_SECONDS", "3600"))
 _admin_sessions: Dict[str, float] = {}     # token -> expiry (epoch seconds)
-# Secure flag is dropped for local http:// development, where the browser would
-# otherwise refuse to store the cookie.
-_ADMIN_COOKIE_SECURE = os.getenv("ADMIN_COOKIE_SECURE", "1").strip() not in ("0", "false", "")
+# Secure flag for BOTH cookies this app sets (admin session and AIS session).
+# Dropped for local http:// development, where the browser would otherwise
+# refuse to store them and the dashboard would look like it never unlocks.
+# COOKIE_SECURE is the accurate name; ADMIN_COOKIE_SECURE is kept as an alias
+# because it shipped first and is referenced in the deploy examples.
+_COOKIE_SECURE_RAW = os.getenv("COOKIE_SECURE", os.getenv("ADMIN_COOKIE_SECURE", "1"))
+_ADMIN_COOKIE_SECURE = _COOKIE_SECURE_RAW.strip().lower() not in ("0", "false", "no", "off", "")
 
 
 def _admin_session_new() -> str:
@@ -532,9 +536,16 @@ async def require_admin(request: Request) -> None:
         return
     # 2. Script path — the raw PIN. Kept for CI, curl, and the training
     # scripts, which have no cookie jar.
+    pin_header = request.headers.get("X-Admin-Pin", "")
+    if not pin_header:
+        # No credential presented at all. This is NOT a PIN guess, so it must
+        # not spend the brute-force budget: a browser whose admin cookie has
+        # expired sends exactly this, and counting it would 429 the operator
+        # out of the unlock screen after five ordinary page loads.
+        raise HTTPException(401, "Unauthorized")
     client_ip = _client_ip(request)
     _check_rate_limit(client_ip)
-    if not _pin_matches(request.headers.get("X-Admin-Pin", "")):
+    if not _pin_matches(pin_header):
         _record_attempt(client_ip)
         raise HTTPException(401, "Unauthorized")
 
@@ -1912,7 +1923,10 @@ class AuthLoginRequest(BaseModel):
 
 
 class AuthLogoutRequest(BaseModel):
-    session_id: str
+    # Optional for the same reason as the login/write models: the cookie is the
+    # authority, so a browser has no session_id to send and a required field
+    # would make signing out impossible for exactly the callers we now expect.
+    session_id: Optional[str] = None
 
 
 def _auth_handle(handler):

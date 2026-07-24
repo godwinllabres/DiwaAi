@@ -276,7 +276,7 @@ A release of DIWA is acceptable when:
 7. **Map:** the 48 baseline places render; admin overrides persist across restart.
 8. **Feedback:** a user can submit a rating, reason, and comment; an admin can browse, filter, and export.
 9. **AIS bridge (when enabled):** DV lookup returns a `dv_card` with a working Desk deep-link; the circuit breaker activates after the configured failure count and recovers after the cooldown.
-10. **Deployment:** `docker compose -f deployment/docker-compose.yml up -d` brings the service to a healthy state on a clean host.
+10. **Deployment:** `cd ../sevi-deploy && docker compose up -d --wait` brings the service to a healthy state on a clean host.
 
 ---
 
