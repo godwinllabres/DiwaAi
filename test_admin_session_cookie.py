@@ -108,6 +108,42 @@ def main() -> int:
     check("/ais/write resolves the session from the cookie",
           "_ais_sid" in inspect.getsource(app_module.ais_write))
 
+    # ── HTTP-level wire compatibility ───────────────────────────────────────
+    # Signature checks alone missed that AuthLoginRequest.session_id was still
+    # REQUIRED while the new client had stopped sending it — every login would
+    # have 422'd. Exercise the real request shapes, old and new.
+    async def fake_login(username, password):
+        return "server-minted-sid", {"user": username, "full_name": "T",
+                                     "roles": [], "expires_in": 3600}
+
+    real_login = app_module._ais_auth.login
+    app_module._ais_auth.login = fake_login
+    try:
+        new_shape = client.post("/auth/login", json={"username": "u", "password": "p"})
+        check("new client shape {username,password} is accepted (no 422)",
+              new_shape.status_code == 200)
+        check("login sets the AIS session cookie",
+              app_module._AIS_COOKIE in new_shape.headers.get("set-cookie", ""))
+        check("login response body carries identity only, never the session id",
+              "server-minted-sid" not in new_shape.text)
+
+        old_shape = client.post("/auth/login", json={
+            "session_id": "client-chosen", "username": "u", "password": "p"})
+        check("old client shape (with session_id) still accepted during a deploy",
+              old_shape.status_code == 200)
+        check("a client-supplied session_id is ignored, not used as the session",
+              "client-chosen" not in old_shape.headers.get("set-cookie", ""))
+    finally:
+        app_module._ais_auth.login = real_login
+        client.cookies.clear()
+
+    # /ais/write must not 422 merely because the body omits session_id — the
+    # cookie is the authority. With no session at all it should be a clean 401.
+    no_sid = client.post("/ais/write", json={
+        "action": "approve_dv", "name": "DV-1", "idempotency_key": "k1"})
+    check("/ais/write without session_id is 401 (auth), not 422 (schema)",
+          no_sid.status_code == 401)
+
     print("\n" + ("ALL PASS" if not _failures else f"FAILURES: {_failures}"))
     return 1 if _failures else 0
 

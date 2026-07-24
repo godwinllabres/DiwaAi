@@ -1902,7 +1902,11 @@ async def get_log_tail(lines: int = 200, grep: Optional[str] = None):
 # evaporate on uvicorn restart.
 
 class AuthLoginRequest(BaseModel):
-    session_id: str
+    # Accepted but IGNORED. The server mints the session id itself and returns
+    # it as an httpOnly cookie, so a client no longer supplies one — but an
+    # older web build still sends it, and a required field would 422 every
+    # login attempt during a rolling deploy.
+    session_id: Optional[str] = None
     username: str
     password: str
 
@@ -2014,7 +2018,10 @@ _WRITE_ACTION_TOOL_MAP: Dict[str, str] = {
 
 
 class AisWriteRequest(BaseModel):
-    session_id: str
+    # Optional: the httpOnly cookie is the authority now (_ais_sid resolves it
+    # first). Still accepted so non-browser callers, and any web build that
+    # predates the cookie, keep working.
+    session_id: Optional[str] = None
     action: str                          # one of _WRITE_ACTION_TOOL_MAP keys
     name: str                            # DV name
     idempotency_key: str
