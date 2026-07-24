@@ -1,5 +1,20 @@
 # Sevi — CvSU Virtual Assistant
 
+> ### 🔴 Open handoff — read before deploying
+> **[`HANDOFF.md`](HANDOFF.md)** — security hardening landed on
+> `sync/hardening-personal` (DiwaAi/DiwaWeb) and `hardening/admin-decoupling`
+> (org repos), **but two settings are deliberately unset and the work is inert
+> until you apply them:**
+>
+> 1. `TRUSTED_CLIENT_IP_HEADER=CF-Connecting-IP` in `sevi-deploy/.env` — without
+>    it every visitor shares one rate-limit bucket and five bad PIN attempts by
+>    anyone locks out all admins.
+> 2. The deploy CI builds from `godwinllabres/DiwaAi` / `DiwaWeb`, **not** the
+>    org repos — merging an org PR does not change the built image.
+>
+> See [HANDOFF.md §1](HANDOFF.md#1--action-required-before-this-ships). Delete
+> this block once both are settled.
+
 Sevi is the intelligent assistant for **Cavite State University (CvSU)**. It answers
 student and visitor questions about admissions, programs, tuition, scholarships,
 campus navigation, and university services through a layered "hybrid brain" that
