@@ -18,6 +18,8 @@ import ipaddress
 import secrets
 import time
 import sys
+import functools
+from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict, deque
 from datetime import datetime
 from pathlib import Path
@@ -30,6 +32,9 @@ from nltk.stem import WordNetLemmatizer
 from .logger import ChatLogger, is_safe_user_id as _is_safe_user_id
 # Import hybrid chatbot
 from .hybrid_chatbot import HybridChatbot
+# The module itself, not just the class: the startup warm-up touches its
+# module-level NLTK lemmatizer (see _warm_lazy_singletons).
+from . import hybrid_chatbot as _hybrid_chatbot
 from . import intent_retrieval as _intent_retrieval
 from . import site_rag as _site_rag
 # Seasonal topic recommender + intent-onboarding sanitation checks
@@ -266,9 +271,86 @@ async def _corpus_sync_loop(hours: float):
                             exc_info=False)
 
 
+def _warm_lazy_singletons() -> None:
+    """Materialize the retrieval indexes and NLTK's lazy loaders before traffic.
+
+    Every one of these is a check-then-set singleton that today first builds
+    inside a chat worker thread. While a single global lock serialized every
+    chat turn that was safe by accident — only one thread could ever be in the
+    build. Once turns run concurrently, the first burst after a restart fans N
+    threads into the same unguarded `if _index is None` (see site_rag.get_index),
+    each constructing its own index inside a 2G container.
+
+    Warming here closes the window rather than reasoning about it. Nothing in
+    this function may raise: a cold index degrades an answer, a failed boot
+    takes the service down.
+    """
+    started = time.time()
+    for name, get_index in (
+        ("charter_rag", _charter_rag.get_index),
+        ("site_rag", _site_rag.get_index),
+        ("intent_retrieval", _intent_retrieval.get_index),
+        ("intent_grounding", _intent_grounding.get_index),
+    ):
+        try:
+            get_index()
+        except Exception:  # noqa: BLE001 — a cold index must never block boot
+            _logger.warning("warm-up: %s index failed to build", name, exc_info=False)
+
+    # WordNetLemmatizer is constructed at hybrid_chatbot import but never
+    # called, so the WordNet corpus behind it is still an unloaded
+    # LazyCorpusLoader — and that first load is the known NLTK thread race.
+    # Both helpers run on every turn (hybrid_chatbot._preprocess), so touching
+    # them once here is enough.
+    try:
+        _hybrid_chatbot.lemmatizer.lemmatize("tests")
+        nltk.word_tokenize("warm up")
+    except Exception:  # noqa: BLE001
+        _logger.warning("warm-up: NLTK lazy loaders failed", exc_info=False)
+
+    _logger.info("warm-up finished in %.1fs", time.time() - started)
+
+
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
     tasks = []
+
+    # Size the default thread pool explicitly. asyncio.to_thread uses the
+    # loop's default executor, which is sized min(32, os.cpu_count() + 4) — and
+    # under Docker `cpus: '2.0'` is a CFS quota, not a cpuset, so os.cpu_count()
+    # reports the HOST's core count. The default is therefore both unpredictable
+    # across machines and unrelated to the container's actual CPU budget.
+    # Headroom over the turn limit matters: index reloads, admin snapshots and
+    # the retention sweep all borrow from this pool, and a pool sized at exactly
+    # _TURN_LIMIT would let in-flight turns starve them.
+    _executor = ThreadPoolExecutor(
+        max_workers=_TURN_LIMIT + 8, thread_name_prefix="sevi",
+    )
+    asyncio.get_running_loop().set_default_executor(_executor)
+    _logger.info(
+        "turn gate: %d concurrent, %d queued, %.0fs queue timeout; worker pool %d",
+        _TURN_LIMIT, _TURN_QUEUE_MAX, _TURN_QUEUE_TIMEOUT, _TURN_LIMIT + 8,
+    )
+
+    # Off the event loop: these are blocking disk reads and TF-IDF builds, and
+    # /health must stay answerable while they run (compose gives the container
+    # a 30s start_period before the healthcheck counts against it).
+    await asyncio.to_thread(_warm_lazy_singletons)
+
+    # The per-IP tier is the only chat limit a client cannot rotate, but it can
+    # only see a real client address when a trusted proxy header is configured.
+    # Left unset, _client_ip falls back to the peer address — which behind a
+    # reverse proxy is ONE address for every user, quietly turning a per-client
+    # limit into a single global ceiling. Too easy to miss to stay silent.
+    if not _CLIENT_IP_HEADER:
+        _logger.warning(
+            "TRUSTED_CLIENT_IP_HEADER is unset — per-IP chat throttling keys on "
+            "the peer address. Behind a reverse proxy that is one address for "
+            "ALL traffic, so CHAT_RATE_LIMIT_IP_MAX (%d per %.0fs) acts as a "
+            "server-wide ceiling, not a per-client limit.",
+            _CHAT_IP_MAX_REQUESTS, _CHAT_WINDOW_SECONDS,
+        )
+
     retention_days = int(os.getenv("LOG_RETENTION_DAYS", "365"))
     if retention_days > 0:
         tasks.append(asyncio.create_task(_retention_loop(retention_days)))
@@ -291,6 +373,11 @@ async def _lifespan(_app: FastAPI):
             except asyncio.CancelledError:
                 pass
         await _ais_close_pool()
+        # Let queued log writes finish before the process goes away — losing an
+        # audit row on shutdown is avoidable. The turn pool is drained without
+        # waiting: anything still in it is a turn whose client is already gone.
+        _log_pool.shutdown(wait=True)
+        _executor.shutdown(wait=False)
 
 
 # Deployed version, set by compose (SEVI_VERSION in the api service's
@@ -437,8 +524,15 @@ def _record_attempt(client_ip: str) -> None:
 #                ceiling on abuse, not a per-person quota.
 #
 # In-memory only — single-worker uvicorn is assumed; multi-worker needs Redis.
+#
+# The per-IP default is deliberately generous because it is a ceiling on abuse,
+# not a capacity limit: the turn gate (CHAT_MAX_CONCURRENT_TURNS) is what bounds
+# how much work the server actually accepts. Raising this without that gate in
+# place would remove the only backpressure in the stack — the two settings are
+# a pair. A whole campus can sit behind one NAT address, so a limit tight enough
+# to be a per-person quota just throttles the campus.
 _CHAT_MAX_REQUESTS  = int(os.getenv("CHAT_RATE_LIMIT_MAX", "30"))
-_CHAT_IP_MAX_REQUESTS = int(os.getenv("CHAT_RATE_LIMIT_IP_MAX", "240"))
+_CHAT_IP_MAX_REQUESTS = int(os.getenv("CHAT_RATE_LIMIT_IP_MAX", "1200"))
 _CHAT_WINDOW_SECONDS = float(os.getenv("CHAT_RATE_LIMIT_WINDOW", "60"))
 _chat_hits: Dict[str, list] = {}
 
@@ -449,7 +543,13 @@ def _check_chat_rate_limit(key: str, limit: Optional[int] = None) -> None:
     now = time.time()
     hits = [t for t in _chat_hits.get(key, []) if now - t < _CHAT_WINDOW_SECONDS]
     if len(hits) >= ceiling:
-        raise HTTPException(429, "Too many chat requests. Slow down for a moment.")
+        # Retry-After so the client can back off for a real interval instead of
+        # guessing. The window is the honest answer: that is when a slot frees.
+        raise HTTPException(
+            429,
+            "Too many chat requests. Slow down for a moment.",
+            headers={"Retry-After": str(int(_CHAT_WINDOW_SECONDS))},
+        )
     hits.append(now)
     _chat_hits[key] = hits
 
@@ -615,16 +715,58 @@ def _jwt_identity(http_request: Request) -> Optional[str]:
 # any of those. Pairs with the per-session rate limiter (_check_chat_rate_limit).
 _CHAT_MAX_MESSAGE_CHARS = int(os.getenv("CHAT_MAX_MESSAGE_CHARS", "4000"))
 
+# Device telemetry, validated at the door (see ChatRequest below). The id is
+# whatever opaque token the client minted — a UUID today — so the shape is
+# bounded rather than parsed. The classes are an allowlist mirroring
+# `DeviceClass` in sevi-web app/lib/ids.ts; keep the two in step.
+_DEVICE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
+_DEVICE_CLASSES = frozenset({
+    "phone/portrait", "phone/landscape",
+    "tablet/portrait", "tablet/landscape",
+    "desktop/portrait", "desktop/landscape",
+    "unknown/unknown",
+})
+
 
 class ChatRequest(BaseModel):
     message: str
     user_id: Optional[str] = None
     session_id: Optional[str] = None
+    # How Sevi is actually being reached. `device_id` is a stable opaque id the
+    # browser keeps in localStorage, so usage can be counted per DEVICE rather
+    # than per session (a student who asks three questions over three days is
+    # one device, three sessions); `device_class` is the form factor and
+    # orientation of the turn. Both are optional — every client that predates
+    # them keeps working, they just do not appear in the device rollup.
+    device_id: Optional[str] = None
+    device_class: Optional[str] = None
     # Optional escape hatch for external clients (e.g. an admin tool or another
     # service) to call a specific AIS MCP tool without going through the
     # router. When set, `message` is still logged but `intent_hint` wins.
     intent_hint: Optional[str] = None
     intent_args: Optional[Dict[str, Any]] = None
+
+    @field_validator("device_id")
+    @classmethod
+    def _clean_device_id(cls, v: Optional[str]) -> Optional[str]:
+        """Keep the column to opaque client-generated ids.
+
+        Dropped rather than rejected: a malformed id is a broken metric, not a
+        reason to fail a student's question. The bound also stops the field
+        being used as a smuggling channel for free text into the logs.
+        """
+        if v is None:
+            return None
+        return v if _DEVICE_ID_RE.match(v) else None
+
+    @field_validator("device_class")
+    @classmethod
+    def _clean_device_class(cls, v: Optional[str]) -> Optional[str]:
+        """Allowlisted, so the rollup below can group on it without first
+        having to defend against whatever a caller felt like sending."""
+        if v is None:
+            return None
+        return v if v in _DEVICE_CLASSES else None
 
     @field_validator("message")
     @classmethod
@@ -1131,6 +1273,29 @@ chatbot = HybridChatbot(
 # Initialize chat logger
 chat_logger = ChatLogger(log_dir="logs", db_path="logs/chat_history.db")
 
+# Chat-log writes get their own single-thread executor.
+#
+# They were being made synchronously from async handlers, so every turn blocked
+# the event loop on a disk write — which also stalls /health, and a healthcheck
+# that fails under load gets the container restarted by compose exactly when it
+# is busiest. One thread, not several: ChatLogger already serializes writers
+# behind its own lock, so more threads would only add contention. Separate from
+# the default pool so a burst of log writes can never starve chat turns of
+# worker threads.
+_log_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="sevi-log")
+
+
+async def _log_chat(**kwargs):
+    """Write one chat-log row off the event loop, returning its message id.
+
+    The id goes into the reply, so this is awaited rather than fire-and-forget;
+    the point is to stop blocking the loop, not to drop the write.
+    """
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(
+        _log_pool, functools.partial(chat_logger.log_chat, **kwargs)
+    )
+
 # ============================================================================
 # API Endpoints
 # ============================================================================
@@ -1164,6 +1329,15 @@ async def health_check():
         "llm_base_url": status["base_url"],
         "llm_known_provider": status["known_provider"],
         "llm_error": status["error"],
+        # Turn-gate state. Without this a saturated gate — or a leaked waiter
+        # counter wedging it shut — is completely invisible: the container keeps
+        # reporting healthy while shedding every chat request with a 503.
+        "turn_gate": {
+            "limit": _chat_runner.limit,
+            "in_flight": _chat_runner.in_flight,
+            "waiting": _chat_runner.waiting,
+            "queue_max": _chat_runner.queue_max,
+        },
     }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1353,7 +1527,7 @@ def _build_attachments(
     return cards, _context_from_ais(ais_context_set), hint
 
 
-def _short_circuit_response(
+async def _short_circuit_response(
     request: "ChatRequest",
     log_message: str,
     start_time: float,
@@ -1370,7 +1544,7 @@ def _short_circuit_response(
     cascade (safety refusal, campus clarify, campus directory). `log_message`
     is the user's ORIGINAL text — request.message may have been mutated by a
     gate."""
-    message_id = chat_logger.log_chat(
+    message_id = await _log_chat(
         user_id=request.user_id or "anonymous",
         user_message=log_message,
         bot_response=text,
@@ -1379,6 +1553,8 @@ def _short_circuit_response(
         model_used=model_used,
         session_id=request.session_id,
         response_time_ms=(time.time() - start_time) * 1000,
+        device_id=request.device_id,
+        device_class=request.device_class,
     )
     return ChatResponse(
         message_id=message_id,
@@ -1468,19 +1644,103 @@ async def _safety_screen(message: str, session_id: Optional[str]):
     return None, message
 
 
-# chatbot.chat() is synchronous and can block for the full LLM inference
-# (45s+ on CPU localai). Run it in a worker thread so the single-worker event
-# loop keeps serving /health and other endpoints, but keep turns single-flight
-# with a lock: the chatbot's in-memory state (conversation history, usage
-# stats, TF predict) assumes one chat at a time, and two concurrent localai
-# inferences would double its memory spike on a small host.
-_chat_turn_lock = asyncio.Lock()
+# How many chat turns may run at once, how many may queue behind them, and how
+# long a queued turn waits before we give up on it. A turn is mostly network
+# wait (the Claude call), so the ceiling is about bounding memory and provider
+# concurrency, not CPU. Local providers are the exception: llama.cpp-class
+# backends spike memory per inference, so keep this at 1 for ollama/localai.
+_TURN_LIMIT = max(1, int(os.getenv("CHAT_MAX_CONCURRENT_TURNS", "4")))
+_TURN_QUEUE_MAX = max(0, int(os.getenv("CHAT_QUEUE_MAX", "16")))
+_TURN_QUEUE_TIMEOUT = float(os.getenv("CHAT_QUEUE_TIMEOUT", "25"))
+
+
+class ChatTurnRunner:
+    """Admission control for chat turns.
+
+    Replaces the single global lock that allowed exactly one turn server-wide —
+    which meant one student's 12s LLM question stalled every other student's
+    50ms FAQ answer. Two things it provides:
+
+      run()        bounded concurrency: N turns in flight, a bounded queue
+                   behind them, and a fast 503 past that rather than a wait
+                   that outlives the client's patience (and nginx's timeout).
+      exclusive()  a drain — no turn in flight — for the admin paths that swap
+                   the chatbot or its LLM out from under a running turn.
+
+    Deliberately an object rather than loose module state: changing the
+    concurrency model (or later moving admission control into Redis for a
+    multi-worker deploy) becomes a swap here instead of edits at five call
+    sites. chatbot.chat is passed in per call, never captured, so /model/reload
+    rebinding the global still takes effect on the next turn.
+    """
+
+    def __init__(self, limit: int, queue_max: int, queue_timeout: float):
+        self.limit = limit
+        self.queue_max = queue_max
+        self.queue_timeout = queue_timeout
+        self._sem = asyncio.Semaphore(limit)
+        # Serializes drains against each other. Without it two concurrent
+        # drains can each hold a subset of the permits and wait forever for the
+        # rest — a deadlock that no timeout would clear.
+        self._drain_lock = asyncio.Lock()
+        self.waiting = 0
+        self.in_flight = 0
+
+    def _busy(self) -> HTTPException:
+        return HTTPException(
+            status_code=503,
+            detail="Sevi is helping a lot of students right now. Please try again in a moment.",
+            headers={"Retry-After": "5"},
+        )
+
+    @asynccontextmanager
+    async def slot(self):
+        """Hold one turn permit, or raise 503 rather than queue unboundedly."""
+        if self.waiting >= self.queue_max:
+            raise self._busy()
+        self.waiting += 1
+        try:
+            await asyncio.wait_for(self._sem.acquire(), self.queue_timeout)
+        except (asyncio.TimeoutError, TimeoutError):
+            raise self._busy()
+        finally:
+            # Unconditional: this also covers the timeout path and a client
+            # that disconnected while queued. Leaking this counter would wedge
+            # the gate shut for every later request.
+            self.waiting -= 1
+        self.in_flight += 1
+        try:
+            yield
+        finally:
+            self.in_flight -= 1
+            self._sem.release()
+
+    async def run(self, fn, *args, **kwargs):
+        """Run a blocking turn off the event loop, under the gate."""
+        async with self.slot():
+            return await asyncio.to_thread(fn, *args, **kwargs)
+
+    @asynccontextmanager
+    async def exclusive(self):
+        """Drain every permit so no chat turn is in flight."""
+        async with self._drain_lock:
+            acquired = 0
+            try:
+                for _ in range(self.limit):
+                    await self._sem.acquire()
+                    acquired += 1
+                yield
+            finally:
+                for _ in range(acquired):
+                    self._sem.release()
+
+
+_chat_runner = ChatTurnRunner(_TURN_LIMIT, _TURN_QUEUE_MAX, _TURN_QUEUE_TIMEOUT)
 
 
 async def _chat_turn(*args, **kwargs):
-    """Run chatbot.chat off the event loop, one turn at a time."""
-    async with _chat_turn_lock:
-        return await asyncio.to_thread(chatbot.chat, *args, **kwargs)
+    """Run chatbot.chat off the event loop, under the turn gate."""
+    return await _chat_runner.run(chatbot.chat, *args, **kwargs)
 
 
 @app.post("/chat", response_model=ChatResponse, tags=["Chat"],
@@ -1528,7 +1788,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     # Scope gates only guard the LLM tier). See docs/moderation_plan.md.
     block, request.message = await _safety_screen(request.message, request.session_id)
     if block:
-        return _short_circuit_response(request, original_message, start_time, **block)
+        return await _short_circuit_response(request, original_message, start_time, **block)
 
     # Agentic workflow tier (Tier 5.5) — stateful, tool-executing conversations
     # (e.g. booking an advising appointment). Runs AFTER safety (so an abusive
@@ -1539,7 +1799,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     wf_key = request.session_id or request.user_id
     wf_turn = await _workflows.dispatch(wf_key, request.message)
     if wf_turn is not None:
-        return _short_circuit_response(
+        return await _short_circuit_response(
             request, original_message, start_time,
             text=wf_turn.text,
             intent="action_book_advising",
@@ -1556,7 +1816,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         request.session_id or request.user_id, request.message
     )
     if campus_routing.action == "clarify":
-        return _short_circuit_response(
+        return await _short_circuit_response(
             request, original_message, start_time,
             text=_campus.CLARIFY_TEXT,
             intent="campus_disambiguation",
@@ -1578,7 +1838,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     # intent has the richer answer plus the map card.
     if _campus_directory.is_directory_turn(request.message, campus_routing.campus):
         text, info = _campus_directory.build_answer(campus_routing.campus)
-        return _short_circuit_response(
+        return await _short_circuit_response(
             request, original_message, start_time,
             text=text,
             intent="campus_location",
@@ -1672,7 +1932,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     # Log the chat — record the user's ORIGINAL text, not the gate-rewritten
     # message (sanitized profanity / campus-grounded), so the moderation and
     # audit trail reflects what was actually sent.
-    message_id = chat_logger.log_chat(
+    message_id = await _log_chat(
         user_id=request.user_id or "anonymous",
         user_message=original_message,
         bot_response=response,
@@ -1680,7 +1940,9 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         confidence=confidence,
         model_used=model_used,
         session_id=request.session_id,
-        response_time_ms=response_time_ms
+        response_time_ms=response_time_ms,
+        device_id=request.device_id,
+        device_class=request.device_class,
     )
 
     # Logged verbatim above (audit trail); redacted for display. The summary
@@ -1873,7 +2135,7 @@ async def set_llm_config(request: LlmToggleRequest):
     # and take the turn lock so a toggle can't swap/None self.llm out from
     # under a chat turn running in another worker thread (mid-turn swap →
     # AttributeError → 500). Preserves the docstring's next-turn semantics.
-    async with _chat_turn_lock:
+    async with _chat_runner.exclusive():
         status = await asyncio.to_thread(chatbot.set_llm, request.provider, request.model)
     _logger.info(
         "admin llm toggle: provider=%s model=%s available=%s",
@@ -2269,7 +2531,7 @@ async def reload_model():
         _intent_grounding.reload_index()
         return new_bot
 
-    async with _chat_turn_lock:
+    async with _chat_runner.exclusive():
         chatbot = await asyncio.to_thread(_rebuild)
     return {"status": "reloaded"}
 
@@ -2285,7 +2547,10 @@ async def sync_site_corpus():
         stats = await asyncio.to_thread(_site_rag.sync_corpus)
     except Exception as exc:
         raise HTTPException(502, f"Site corpus sync failed: {exc}")
-    index = _site_rag.reload_index()
+    # Off the loop like the sync above it: reload_index now builds the whole
+    # index before swapping it in, so on the event loop it would stall every
+    # other request for the duration of the build.
+    index = await asyncio.to_thread(_site_rag.reload_index)
     stats["index_available"] = index is not None
     return stats
 
@@ -2293,12 +2558,13 @@ async def sync_site_corpus():
          dependencies=[Depends(require_admin)])
 async def get_conversation_history(user_id: str):
     """Get conversation history for a user."""
-    # Turn lock: chat turns now mutate conversation_history from a worker
-    # thread; snapshot under the lock so we never serialize a list the worker
-    # is appending to/truncating. (Pre-thread-offload these handlers waited
-    # behind turns anyway — the loop was blocked — so semantics are unchanged.)
-    async with _chat_turn_lock:
-        history = list(chatbot.conversation_history.get(user_id, []))
+    # Snapshot under the chatbot's own history lock rather than the turn gate.
+    # The requirement was never "no turn may run" — it was "don't serialize a
+    # list a worker is appending to". Blocking every turn to read one session's
+    # history was collateral damage from having a single lock; the narrow lock
+    # gives the same guarantee without stalling chat. Off the event loop so a
+    # contended lock can't stall the loop itself.
+    history = await asyncio.to_thread(chatbot.snapshot_history, user_id)
     return {
         "user_id": user_id,
         "message_count": len(history),
@@ -2309,12 +2575,12 @@ async def get_conversation_history(user_id: str):
             dependencies=[Depends(require_admin)])
 async def clear_conversation(user_id: str):
     """Clear conversation history for a user."""
-    # Turn lock: deleting the key mid-turn would KeyError the worker thread
-    # between its move_to_end and read — serialize with turns instead.
-    async with _chat_turn_lock:
-        if user_id in chatbot.conversation_history:
-            del chatbot.conversation_history[user_id]
-            return {"status": "cleared", "user_id": user_id}
+    # drop_history pops under the history lock, so it cannot land between a
+    # worker's move_to_end and its read — the KeyError this used to guard
+    # against. Check-and-delete is one atomic step there, not two here.
+    removed = await asyncio.to_thread(chatbot.drop_history, user_id)
+    if removed:
+        return {"status": "cleared", "user_id": user_id}
     return {"status": "no_history", "user_id": user_id}
 
 _BATCH_MAX = int(os.getenv("BATCH_MAX", "20"))
@@ -2344,7 +2610,7 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
         original_message = request.message
         block, request.message = await _safety_screen(request.message, request.session_id)
         if block:
-            results.append(_short_circuit_response(request, original_message, start_time, **block))
+            results.append(await _short_circuit_response(request, original_message, start_time, **block))
             continue
         intent, response, confidence, model_used, nlu_data = await _chat_turn(
             request.message,
@@ -2354,7 +2620,7 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
         response_time_ms = (time.time() - start_time) * 1000
 
         # Log each message (original text — request.message may be sanitized)
-        message_id = chat_logger.log_chat(
+        message_id = await _log_chat(
             user_id=request.user_id or "anonymous",
             user_message=original_message,
             bot_response=response,
@@ -2362,7 +2628,9 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
             confidence=confidence,
             model_used=model_used,
             session_id=request.session_id,
-            response_time_ms=response_time_ms
+            response_time_ms=response_time_ms,
+            device_id=request.device_id,
+            device_class=request.device_class,
         )
 
         # Logged verbatim above (audit trail); redacted for display. The summary
@@ -2462,6 +2730,15 @@ async def get_today_statistics():
     """Get today's chat statistics"""
     stats = chat_logger.get_today_stats()
     return stats
+
+@app.get("/logs/devices", tags=["Logging"], dependencies=[Depends(require_admin)])
+async def get_device_statistics(days: Annotated[int, Query(ge=1, le=365)] = 30):
+    """Device-usage rollup: distinct devices, form factor, and orientation.
+
+    Admin-gated like the rest of /logs — device_id is a persistent identifier
+    and the breakdown is operational data, not a public metric.
+    """
+    return chat_logger.get_device_stats(days)
 
 @app.get("/logs/search", tags=["Logging"], dependencies=[Depends(require_admin)])
 async def search_logs(query: str, limit: Annotated[int, Query(ge=1, le=200)] = 20):

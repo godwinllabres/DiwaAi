@@ -217,10 +217,13 @@ class AdvancedNLUEngine:
         self.contexts = {}  # user_id -> ConversationContext
 
     def get_context(self, user_id: str) -> ConversationContext:
-        """Get or create user context"""
-        if user_id not in self.contexts:
-            self.contexts[user_id] = ConversationContext()
-        return self.contexts[user_id]
+        """Get or create user context.
+
+        setdefault, not check-then-set: with concurrent turns the latter lets
+        two threads each build a context and the second overwrite the first,
+        silently discarding the turns already recorded against it.
+        """
+        return self.contexts.setdefault(user_id, ConversationContext())
 
     def enhance_prediction(
         self,
