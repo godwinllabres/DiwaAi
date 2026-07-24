@@ -12,7 +12,9 @@
 
 ### 1a. Set the trusted-proxy header, or every user shares one rate-limit bucket
 
-**Where:** `sevi-deploy/.env` (copy from `.env.example`)
+**Where:** `sevi-deploy/sevi.env` (copy from `sevi.env.example`) — **not `.env`.**
+Compose's `environment:` block outranks `env_file:`, so these are deliberately
+kept out of `compose.yaml`; setting them in `.env` has no effect.
 
 ```bash
 TRUSTED_CLIENT_IP_HEADER=CF-Connecting-IP
@@ -58,7 +60,9 @@ will keep drifting.
 | **DiwaWeb** | **`sync/hardening-personal`** | **everything, merged onto your personal main** |
 | sevi-deploy | `hardening/trusted-proxy-ip` | compose + `.env.example` wiring for §1a |
 
-Nothing was merged to any `main`, and nothing was force-pushed.
+**Merged to `main` on DiwaAi, DiwaWeb and sevi-deploy** (clean fast-forwards).
+Nothing was force-pushed. The org branches still hold only the first batch —
+see §6.
 
 ---
 
@@ -108,12 +112,12 @@ All are documented in the `.env.example` files; none are secrets.
 
 | Variable | Where | Default | Set it when |
 |---|---|---|---|
-| `TRUSTED_CLIENT_IP_HEADER` | sevi-deploy `.env` | *(unset)* | **behind the tunnel — see §1a** |
-| `TRUSTED_PROXY_HOPS` | sevi-deploy `.env` | `1` | XFF chains: position from the RIGHT |
+| `TRUSTED_CLIENT_IP_HEADER` | sevi-deploy `sevi.env` | *(unset)* | **behind the tunnel — see §1a** |
+| `TRUSTED_PROXY_HOPS` | sevi-deploy `sevi.env` | `1` | XFF chains: position from the RIGHT |
 | `CHAT_RATE_LIMIT_IP_MAX` | sevi.env | `240` | tuning the per-IP ceiling |
 | `CHAT_RATE_LIMIT_MAX` | sevi.env | `30` | tuning the per-session limit |
 | `ADMIN_SESSION_TTL_SECONDS` | sevi.env | `3600` | shorter/longer admin sessions |
-| `ADMIN_COOKIE_SECURE` | sevi.env | `1` | **`0` for local http:// only** |
+| `COOKIE_SECURE` (alias `ADMIN_COOKIE_SECURE`) | sevi.env | `1` | **`0` for local http:// only** — governs BOTH the admin and AIS cookies |
 
 ⚠️ **Local dev gotcha:** with `ADMIN_COOKIE_SECURE=1` (the default) over plain
 `http://`, the browser silently drops the admin cookie and the dashboard looks
@@ -149,6 +153,24 @@ directly on `origin/main` for comparison. Not caused by this work.
 
 - **Phase 3** — put `/admin/` behind Cloudflare Access. nginx already isolates
   the whole surface behind that one prefix, so this is ops config.
+- **Org repos are behind.** `hardening/admin-decoupling` on
+  `Cavite-State-University-Official/sevi-{api,web}` contains only the first
+  batch (admin decoupling + whoami header). Everything after it landed on the
+  personal repos, which is where the deploy builds from. Either sync org ← personal
+  or retire the org branches; do not merge them expecting the full change set.
+
+### Known limitations accepted (from the pre-merge review)
+- **Cross-origin deployments keep the PIN header.** On the GitHub Pages build
+  `VITE_API_URL` points at the Render API, so a cookie cannot apply
+  (cross-site + `allow_credentials=False` + `SameSite=Strict`). `adminApi`
+  detects this and uses `X-Admin-Pin` there — its pre-existing behaviour. The
+  cookie (and the "no PIN in storage" win) applies to the same-origin
+  nginx/tunnel stack, which is the deployment that matters.
+- **`SameSite=Strict` and iframes.** If AIS login is ever needed from inside the
+  embedded widget or an ERPNext Desk iframe, the cookie will not be sent —
+  that is cross-site by definition. Moving to `SameSite=None` would require
+  `Secure` plus CORS credentials; left as a deliberate decision rather than a
+  guess, since no current flow needs it.
 - **Fix the 2 pre-existing web test failures.**
 - **Multi-worker**: the admin sessions, throttles, and AIS token cache are all
   in-memory and assume single-worker uvicorn. Multi-worker needs Redis.
