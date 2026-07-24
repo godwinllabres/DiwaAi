@@ -14,6 +14,7 @@ import json
 import os
 import random
 import re
+import ipaddress
 import secrets
 import time
 import sys
@@ -323,6 +324,82 @@ app.add_middleware(
 )
 
 # ============================================================================
+# Client IP resolution (trusted proxy)
+# ============================================================================
+# Every throttle here is keyed by "who is calling". Behind the production
+# ingress (Cloudflare tunnel -> nginx -> api) `request.client.host` is the NGINX
+# CONTAINER's IP, identical for every visitor, so keying on it would put the
+# whole university in one bucket: one abusive client would rate-limit everyone,
+# and the PIN throttle would lock out real admins after five failures by anyone.
+#
+# Reading a forwarded header instead is only safe if something we control sets
+# it — otherwise a caller just sends their own and picks their bucket (or
+# poisons someone else's). So trust is OPT-IN and off by default.
+#
+#   TRUSTED_CLIENT_IP_HEADER  unset (default) -> use the peer address. Correct
+#                             when the API is exposed directly, and safe
+#                             everywhere else because a spoofed header is ignored.
+#                             Production (behind the tunnel): CF-Connecting-IP,
+#                             which Cloudflare sets and strips from client input.
+#                             A plain reverse proxy: X-Forwarded-For.
+#   TRUSTED_PROXY_HOPS        position of the real client from the RIGHT of a
+#                             comma-chained header, 1 = rightmost. Single-valued
+#                             headers (CF-Connecting-IP, X-Real-IP) use 1.
+#                             For this stack's X-Forwarded-For, nginx appends the
+#                             cloudflared peer, giving "<client>, <cloudflared>",
+#                             so the client sits at position 2.
+#
+# Counting from the right matters: the left end is attacker-controlled (a client
+# can send "X-Forwarded-For: 1.2.3.4" and everything we append lands to its
+# right), while each entry on the right was added by a hop we actually run.
+_CLIENT_IP_HEADER = os.getenv("TRUSTED_CLIENT_IP_HEADER", "").strip()
+_TRUSTED_PROXY_HOPS = max(1, int(os.getenv("TRUSTED_PROXY_HOPS", "1")))
+
+
+def _parse_ip(value: str) -> Optional[str]:
+    """Return `value` if it is a valid IP address, else None.
+
+    Rejecting non-IPs keeps a hostile header from becoming a throttle key:
+    unbounded distinct values would both evade the limit and grow the in-memory
+    buckets without bound.
+    """
+    candidate = (value or "").strip()
+    if not candidate:
+        return None
+    # "[2001:db8::1]:443" / "203.0.113.5:1234" -> bare address
+    if candidate.startswith("["):
+        candidate = candidate[1:].split("]", 1)[0]
+    elif candidate.count(":") == 1:
+        candidate = candidate.split(":", 1)[0]
+    try:
+        return str(ipaddress.ip_address(candidate))
+    except ValueError:
+        return None
+
+
+def _client_ip(request: Request) -> str:
+    """Best available identity for the caller, honouring a trusted proxy header.
+
+    Falls back to the peer address whenever the header is absent, malformed, or
+    not configured — never trusts a value we cannot attribute to our own ingress.
+    """
+    peer = request.client.host if request.client else "unknown"
+    if not _CLIENT_IP_HEADER:
+        return peer
+    raw = request.headers.get(_CLIENT_IP_HEADER, "")
+    parts = [p.strip() for p in raw.split(",") if p.strip()]
+    if not parts:
+        return peer
+    index = len(parts) - _TRUSTED_PROXY_HOPS
+    if not 0 <= index < len(parts):
+        # Chain shorter than configured: someone bypassed a hop, or the config is
+        # wrong. Use the leftmost entry (closest to the client) rather than an
+        # arbitrary one, then let validation decide.
+        index = 0
+    return _parse_ip(parts[index]) or peer
+
+
+# ============================================================================
 # Admin Authentication
 # ============================================================================
 DASHBOARD_PIN = os.getenv("DASHBOARD_PIN", "")
@@ -347,24 +424,41 @@ def _record_attempt(client_ip: str) -> None:
     _pin_attempts.setdefault(client_ip, []).append(time.time())
 
 
-# Per-session rate limiter for /chat. Cloudflare Access protects Desk but
-# Diwa's /chat is intentionally anonymous, so defense-in-depth here matters.
-# Keyed by session_id when present, else by client IP, so a single browser
-# tab can't burst-query indefinitely. In-memory only — single-worker uvicorn
-# is assumed; multi-worker deploys need Redis.
+# Rate limiter for /chat. Diwa's /chat is intentionally anonymous, so this is
+# the only thing standing between one script and the LLM bill.
+#
+# TWO tiers, because either one alone fails:
+#   per-session  session_id is CHOSEN BY THE CLIENT, so a caller that rotates it
+#                every request sees an empty bucket each time — on its own this
+#                limit is advisory, it only stops an honest tab from bursting.
+#   per-IP       closes that hole, since the address is not client-chosen (given
+#                TRUSTED_CLIENT_IP_HEADER is configured). Deliberately much
+#                looser: a campus behind one NAT address shares it, so this is a
+#                ceiling on abuse, not a per-person quota.
+#
+# In-memory only — single-worker uvicorn is assumed; multi-worker needs Redis.
 _CHAT_MAX_REQUESTS  = int(os.getenv("CHAT_RATE_LIMIT_MAX", "30"))
+_CHAT_IP_MAX_REQUESTS = int(os.getenv("CHAT_RATE_LIMIT_IP_MAX", "240"))
 _CHAT_WINDOW_SECONDS = float(os.getenv("CHAT_RATE_LIMIT_WINDOW", "60"))
 _chat_hits: Dict[str, list] = {}
 
 
-def _check_chat_rate_limit(key: str) -> None:
-    """Raise 429 if `key` has exceeded the chat-call budget for the window."""
+def _check_chat_rate_limit(key: str, limit: Optional[int] = None) -> None:
+    """Raise 429 if `key` has exceeded its budget for the window."""
+    ceiling = _CHAT_MAX_REQUESTS if limit is None else limit
     now = time.time()
     hits = [t for t in _chat_hits.get(key, []) if now - t < _CHAT_WINDOW_SECONDS]
-    if len(hits) >= _CHAT_MAX_REQUESTS:
+    if len(hits) >= ceiling:
         raise HTTPException(429, "Too many chat requests. Slow down for a moment.")
     hits.append(now)
     _chat_hits[key] = hits
+
+
+def _enforce_chat_limits(request_session_id: Optional[str], http_request: Request) -> None:
+    """Apply both chat tiers. IP first: it is the one a client cannot rotate."""
+    _check_chat_rate_limit(f"chat:ip:{_client_ip(http_request)}", _CHAT_IP_MAX_REQUESTS)
+    if request_session_id:
+        _check_chat_rate_limit(f"chat:sid:{request_session_id}")
 
 
 def _pin_matches(candidate: str) -> bool:
@@ -389,7 +483,7 @@ async def require_admin(request: Request) -> None:
     """
     if not DASHBOARD_PIN:
         raise HTTPException(503, "Admin access not configured")
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = _client_ip(request)
     _check_rate_limit(client_ip)
     if not _pin_matches(request.headers.get("X-Admin-Pin", "")):
         _record_attempt(client_ip)
@@ -1352,8 +1446,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
 
     # Rate-limit by session_id (so a single tab can't hammer us) with a
     # client-IP fallback for sessionless callers. Raises 429 when exceeded.
-    rl_key = request.session_id or (http_request.client.host if http_request.client else "anon")
-    _check_chat_rate_limit(f"chat:{rl_key}")
+    _enforce_chat_limits(request.session_id, http_request)
 
     if request.intent_hint is not None or request.intent_args is not None:
         internal_key = os.getenv("INTERNAL_KEY", "")
@@ -2138,10 +2231,11 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
     """
     if len(requests) > _BATCH_MAX:
         raise HTTPException(status_code=413, detail=f"Batch too large (max {_BATCH_MAX})")
-    client_host = http_request.client.host if http_request.client else "anon"
     results = []
     for request in requests:
-        _check_chat_rate_limit(f"chat:{request.session_id or client_host}")
+        # Same two tiers as /chat, so a batch cannot buy extra budget by varying
+        # session_id across its sub-requests.
+        _enforce_chat_limits(request.session_id, http_request)
         start_time = time.time()
         # Same front-door SafetyGate as /chat — /batch must not be an
         # unscreened second entrance for abusive/self-harm messages.
@@ -2600,7 +2694,7 @@ class PinRequest(BaseModel):
 @app.post("/admin/verify", tags=["Admin"])
 async def verify_admin_pin(body: PinRequest, request: Request):
     """Verify dashboard access PIN (rate-limited)."""
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = _client_ip(request)
     _check_rate_limit(client_ip)
     if not DASHBOARD_PIN:
         raise HTTPException(503, "Admin access not configured")

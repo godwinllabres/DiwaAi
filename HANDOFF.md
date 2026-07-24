@@ -71,7 +71,18 @@ deletes nothing, and that a legitimate 30-day window still purges stale rows).
       `api.app` too. The ungated variant can no longer be built or run.
 - [ ] Bind `session_id` server-side — it's an unbound bearer capability on `/auth/whoami`
       + `/ais/write` (confused deputy; mitigated in practice by UUID minting).
-- [ ] (optional) Key the chat rate limiter on client IP, not the client-chosen `session_id`.
+- [x] ~~(optional) Key the chat rate limiter on client IP~~ — **DONE, but not the naive way.**
+      Keying on `request.client.host` alone would have been a live outage: behind the
+      tunnel that address is the *web container*, identical for every visitor, so one
+      abusive client throttles the whole university and five bad PINs from anyone locks
+      out real admins. Instead: `_client_ip()` resolves the caller through an opt-in
+      trusted header (`TRUSTED_CLIENT_IP_HEADER`, `TRUSTED_PROXY_HOPS`, counted from the
+      RIGHT so a client-prepended entry can't win), defaulting to IGNORING forwarded
+      headers so an unconfigured deploy can't be spoofed. `/chat` and `/batch` now
+      enforce two tiers — per-session (honest bursts) and a much looser per-IP ceiling
+      (the tier a caller can't rotate around, kept generous for campus NAT). Both PIN
+      throttles use the same resolver. Set `TRUSTED_CLIENT_IP_HEADER=CF-Connecting-IP`
+      in the tunnel deployment. Tests: `test_client_ip_throttle.py` (10 checks).
 
 ## Verify after fixing
 ```
