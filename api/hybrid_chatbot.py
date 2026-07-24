@@ -794,7 +794,7 @@ class ScopeGate:
 
     REFUSAL_MESSAGES = [
         "I can only help with questions about Cavite State University — programs, admissions, fees, scholarships, campus services, and policies. Is there something CvSU-related I can help with?",
-        "That's outside my scope. I'm Sevi, the CvSU virtual assistant — I focus on Cavite State University topics like enrollment, courses, scholarships, and campus information. What would you like to know about CvSU?",
+        "That's not something I can help with. I'm Sevi, the CvSU virtual assistant — I stick to Cavite State University topics like enrollment, courses, scholarships, and campus information. What would you like to know about CvSU?",
         "I'm not able to answer that — I'm built to help with CvSU-related questions only (admissions, programs, fees, campus services). Please ask me something about Cavite State University.",
     ]
 

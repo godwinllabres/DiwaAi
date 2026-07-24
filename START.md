@@ -5,13 +5,14 @@ Get the CvSU Virtual Assistant running in minutes.
 ## 🚀 Fastest Start (2 minutes)
 
 ### Option A: Docker (Recommended)
+The full stack is built and run from the `sevi-deploy` repo:
 ```bash
-docker-compose -f deployment/docker-compose.yml up -d
+cd ../sevi-deploy && docker compose up -d --wait
 ```
 
 Then open:
-- **Chat**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
+- **Chat**: http://localhost:8090
+- **API Docs**: http://localhost:8090/api/docs
 - **Dashboard**: Open `web/logs_dashboard.html` in browser
 
 ### Option B: Local Python
@@ -49,8 +50,8 @@ SeviAI/
 
 ### Start API
 ```bash
-# Docker
-docker-compose -f deployment/docker-compose.yml up -d
+# Docker (full stack, from the sevi-deploy repo)
+cd ../sevi-deploy && docker compose up -d --wait
 
 # Local Python
 python -m uvicorn api.app:app --port 8000

@@ -3,7 +3,7 @@ CvSU Chatbot REST API
 FastAPI-based endpoint for integration with web applications
 """
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from enum import Enum
@@ -14,6 +14,7 @@ import json
 import os
 import random
 import re
+import ipaddress
 import secrets
 import time
 import sys
@@ -319,8 +320,84 @@ app.add_middleware(
     allow_origins=_allowed_origins,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "X-Admin-Pin"],
+    allow_headers=["Content-Type", "X-Admin-Pin", "X-Sevi-Session"],
 )
+
+# ============================================================================
+# Client IP resolution (trusted proxy)
+# ============================================================================
+# Every throttle here is keyed by "who is calling". Behind the production
+# ingress (Cloudflare tunnel -> nginx -> api) `request.client.host` is the NGINX
+# CONTAINER's IP, identical for every visitor, so keying on it would put the
+# whole university in one bucket: one abusive client would rate-limit everyone,
+# and the PIN throttle would lock out real admins after five failures by anyone.
+#
+# Reading a forwarded header instead is only safe if something we control sets
+# it — otherwise a caller just sends their own and picks their bucket (or
+# poisons someone else's). So trust is OPT-IN and off by default.
+#
+#   TRUSTED_CLIENT_IP_HEADER  unset (default) -> use the peer address. Correct
+#                             when the API is exposed directly, and safe
+#                             everywhere else because a spoofed header is ignored.
+#                             Production (behind the tunnel): CF-Connecting-IP,
+#                             which Cloudflare sets and strips from client input.
+#                             A plain reverse proxy: X-Forwarded-For.
+#   TRUSTED_PROXY_HOPS        position of the real client from the RIGHT of a
+#                             comma-chained header, 1 = rightmost. Single-valued
+#                             headers (CF-Connecting-IP, X-Real-IP) use 1.
+#                             For this stack's X-Forwarded-For, nginx appends the
+#                             cloudflared peer, giving "<client>, <cloudflared>",
+#                             so the client sits at position 2.
+#
+# Counting from the right matters: the left end is attacker-controlled (a client
+# can send "X-Forwarded-For: 1.2.3.4" and everything we append lands to its
+# right), while each entry on the right was added by a hop we actually run.
+_CLIENT_IP_HEADER = os.getenv("TRUSTED_CLIENT_IP_HEADER", "").strip()
+_TRUSTED_PROXY_HOPS = max(1, int(os.getenv("TRUSTED_PROXY_HOPS", "1")))
+
+
+def _parse_ip(value: str) -> Optional[str]:
+    """Return `value` if it is a valid IP address, else None.
+
+    Rejecting non-IPs keeps a hostile header from becoming a throttle key:
+    unbounded distinct values would both evade the limit and grow the in-memory
+    buckets without bound.
+    """
+    candidate = (value or "").strip()
+    if not candidate:
+        return None
+    # "[2001:db8::1]:443" / "203.0.113.5:1234" -> bare address
+    if candidate.startswith("["):
+        candidate = candidate[1:].split("]", 1)[0]
+    elif candidate.count(":") == 1:
+        candidate = candidate.split(":", 1)[0]
+    try:
+        return str(ipaddress.ip_address(candidate))
+    except ValueError:
+        return None
+
+
+def _client_ip(request: Request) -> str:
+    """Best available identity for the caller, honouring a trusted proxy header.
+
+    Falls back to the peer address whenever the header is absent, malformed, or
+    not configured — never trusts a value we cannot attribute to our own ingress.
+    """
+    peer = request.client.host if request.client else "unknown"
+    if not _CLIENT_IP_HEADER:
+        return peer
+    raw = request.headers.get(_CLIENT_IP_HEADER, "")
+    parts = [p.strip() for p in raw.split(",") if p.strip()]
+    if not parts:
+        return peer
+    index = len(parts) - _TRUSTED_PROXY_HOPS
+    if not 0 <= index < len(parts):
+        # Chain shorter than configured: someone bypassed a hop, or the config is
+        # wrong. Use the leftmost entry (closest to the client) rather than an
+        # arbitrary one, then let validation decide.
+        index = 0
+    return _parse_ip(parts[index]) or peer
+
 
 # ============================================================================
 # Admin Authentication
@@ -347,24 +424,86 @@ def _record_attempt(client_ip: str) -> None:
     _pin_attempts.setdefault(client_ip, []).append(time.time())
 
 
-# Per-session rate limiter for /chat. Cloudflare Access protects Desk but
-# Diwa's /chat is intentionally anonymous, so defense-in-depth here matters.
-# Keyed by session_id when present, else by client IP, so a single browser
-# tab can't burst-query indefinitely. In-memory only — single-worker uvicorn
-# is assumed; multi-worker deploys need Redis.
+# Rate limiter for /chat. Diwa's /chat is intentionally anonymous, so this is
+# the only thing standing between one script and the LLM bill.
+#
+# TWO tiers, because either one alone fails:
+#   per-session  session_id is CHOSEN BY THE CLIENT, so a caller that rotates it
+#                every request sees an empty bucket each time — on its own this
+#                limit is advisory, it only stops an honest tab from bursting.
+#   per-IP       closes that hole, since the address is not client-chosen (given
+#                TRUSTED_CLIENT_IP_HEADER is configured). Deliberately much
+#                looser: a campus behind one NAT address shares it, so this is a
+#                ceiling on abuse, not a per-person quota.
+#
+# In-memory only — single-worker uvicorn is assumed; multi-worker needs Redis.
 _CHAT_MAX_REQUESTS  = int(os.getenv("CHAT_RATE_LIMIT_MAX", "30"))
+_CHAT_IP_MAX_REQUESTS = int(os.getenv("CHAT_RATE_LIMIT_IP_MAX", "240"))
 _CHAT_WINDOW_SECONDS = float(os.getenv("CHAT_RATE_LIMIT_WINDOW", "60"))
 _chat_hits: Dict[str, list] = {}
 
 
-def _check_chat_rate_limit(key: str) -> None:
-    """Raise 429 if `key` has exceeded the chat-call budget for the window."""
+def _check_chat_rate_limit(key: str, limit: Optional[int] = None) -> None:
+    """Raise 429 if `key` has exceeded its budget for the window."""
+    ceiling = _CHAT_MAX_REQUESTS if limit is None else limit
     now = time.time()
     hits = [t for t in _chat_hits.get(key, []) if now - t < _CHAT_WINDOW_SECONDS]
-    if len(hits) >= _CHAT_MAX_REQUESTS:
+    if len(hits) >= ceiling:
         raise HTTPException(429, "Too many chat requests. Slow down for a moment.")
     hits.append(now)
     _chat_hits[key] = hits
+
+
+def _enforce_chat_limits(request_session_id: Optional[str], http_request: Request) -> None:
+    """Apply both chat tiers. IP first: it is the one a client cannot rotate."""
+    _check_chat_rate_limit(f"chat:ip:{_client_ip(http_request)}", _CHAT_IP_MAX_REQUESTS)
+    if request_session_id:
+        _check_chat_rate_limit(f"chat:sid:{request_session_id}")
+
+
+# ── Admin session cookie ─────────────────────────────────────────────────────
+# The PIN used to be kept in sessionStorage and re-attached by JavaScript on
+# every admin call, so a single XSS anywhere on the admin origin could lift the
+# shared secret itself. Instead /admin/verify exchanges the PIN once for an
+# opaque, expiring, httpOnly session token: JS can never read it, it is scoped
+# to this browser, and revoking it does not require rotating the PIN.
+#
+# Server-side store (not a signed token) so /admin/logout can revoke instantly.
+# In-memory, consistent with the throttles above — single-worker uvicorn is
+# assumed; a multi-worker deploy needs Redis for both.
+_ADMIN_COOKIE = "sevi_admin"
+_ADMIN_SESSION_TTL = float(os.getenv("ADMIN_SESSION_TTL_SECONDS", "3600"))
+_admin_sessions: Dict[str, float] = {}     # token -> expiry (epoch seconds)
+# Secure flag for BOTH cookies this app sets (admin session and AIS session).
+# Dropped for local http:// development, where the browser would otherwise
+# refuse to store them and the dashboard would look like it never unlocks.
+# COOKIE_SECURE is the accurate name; ADMIN_COOKIE_SECURE is kept as an alias
+# because it shipped first and is referenced in the deploy examples.
+_COOKIE_SECURE_RAW = os.getenv("COOKIE_SECURE", os.getenv("ADMIN_COOKIE_SECURE", "1"))
+_ADMIN_COOKIE_SECURE = _COOKIE_SECURE_RAW.strip().lower() not in ("0", "false", "no", "off", "")
+
+
+def _admin_session_new() -> str:
+    """Mint a session token, sweeping expired ones so the dict can't grow."""
+    now = time.time()
+    for token, expiry in list(_admin_sessions.items()):
+        if expiry <= now:
+            _admin_sessions.pop(token, None)
+    token = secrets.token_urlsafe(32)
+    _admin_sessions[token] = now + _ADMIN_SESSION_TTL
+    return token
+
+
+def _admin_session_valid(token: str) -> bool:
+    if not token:
+        return False
+    expiry = _admin_sessions.get(token)
+    if expiry is None:
+        return False
+    if expiry <= time.time():
+        _admin_sessions.pop(token, None)
+        return False
+    return True
 
 
 def _pin_matches(candidate: str) -> bool:
@@ -389,9 +528,24 @@ async def require_admin(request: Request) -> None:
     """
     if not DASHBOARD_PIN:
         raise HTTPException(503, "Admin access not configured")
-    client_ip = request.client.host if request.client else "unknown"
+    # 1. Browser path — the httpOnly session cookie minted by /admin/verify.
+    # Checked first and NOT throttled: it is an unguessable 256-bit token, and
+    # a dashboard polling with a valid session must never consume the PIN
+    # budget or it would lock itself out.
+    if _admin_session_valid(request.cookies.get(_ADMIN_COOKIE, "")):
+        return
+    # 2. Script path — the raw PIN. Kept for CI, curl, and the training
+    # scripts, which have no cookie jar.
+    pin_header = request.headers.get("X-Admin-Pin", "")
+    if not pin_header:
+        # No credential presented at all. This is NOT a PIN guess, so it must
+        # not spend the brute-force budget: a browser whose admin cookie has
+        # expired sends exactly this, and counting it would 429 the operator
+        # out of the unlock screen after five ordinary page loads.
+        raise HTTPException(401, "Unauthorized")
+    client_ip = _client_ip(request)
     _check_rate_limit(client_ip)
-    if not _pin_matches(request.headers.get("X-Admin-Pin", "")):
+    if not _pin_matches(pin_header):
         _record_attempt(client_ip)
         raise HTTPException(401, "Unauthorized")
 
@@ -1352,8 +1506,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
 
     # Rate-limit by session_id (so a single tab can't hammer us) with a
     # client-IP fallback for sessionless callers. Raises 429 when exceeded.
-    rl_key = request.session_id or (http_request.client.host if http_request.client else "anon")
-    _check_chat_rate_limit(f"chat:{rl_key}")
+    _enforce_chat_limits(request.session_id, http_request)
 
     if request.intent_hint is not None or request.intent_args is not None:
         internal_key = os.getenv("INTERNAL_KEY", "")
@@ -1760,13 +1913,20 @@ async def get_log_tail(lines: int = 200, grep: Optional[str] = None):
 # evaporate on uvicorn restart.
 
 class AuthLoginRequest(BaseModel):
-    session_id: str
+    # Accepted but IGNORED. The server mints the session id itself and returns
+    # it as an httpOnly cookie, so a client no longer supplies one — but an
+    # older web build still sends it, and a required field would 422 every
+    # login attempt during a rolling deploy.
+    session_id: Optional[str] = None
     username: str
     password: str
 
 
 class AuthLogoutRequest(BaseModel):
-    session_id: str
+    # Optional for the same reason as the login/write models: the cookie is the
+    # authority, so a browser has no session_id to send and a required field
+    # would make signing out impossible for exactly the callers we now expect.
+    session_id: Optional[str] = None
 
 
 def _auth_handle(handler):
@@ -1780,30 +1940,75 @@ def _auth_handle(handler):
     return wrapper
 
 
+# The AIS session id is a bearer for the user's OAuth token, so it lives in an
+# httpOnly cookie: minted server-side at login, never readable by JavaScript,
+# and never echoed in a response body or a URL.
+_AIS_COOKIE = "sevi_ais"
+
+
+def _ais_sid(request: Request, fallback: Optional[str] = None) -> str:
+    """Resolve the AIS session: cookie first, then an explicit value.
+
+    The fallback keeps non-browser callers (and any web build still in flight
+    during a deploy) working; browsers send the cookie and never see the value.
+    """
+    return (request.cookies.get(_AIS_COOKIE, "") or (fallback or "")).strip()
+
+
 @app.post("/auth/login", tags=["AIS Auth"])
-async def auth_login(request: AuthLoginRequest):
-    """Exchange CvSU credentials for an AIS OAuth token cached under
-    session_id. Subsequent /ais/write calls with the same session_id will
-    act as this user. Returns the user's identity claims (NOT the token)."""
-    return await _auth_handle(_ais_auth.login)(
-        request.session_id, request.username, request.password,
+async def auth_login(request: AuthLoginRequest, http_request: Request):
+    """Exchange CvSU credentials for an AIS OAuth session.
+
+    Returns the user's identity claims only. The session id is minted
+    server-side and returned as an httpOnly cookie — never in the body, so it
+    cannot be read by script or captured from a log.
+    """
+    sid, identity = await _auth_handle(_ais_auth.login)(
+        request.username, request.password,
     )
+    response = JSONResponse(identity)
+    response.set_cookie(
+        _AIS_COOKIE, sid,
+        httponly=True,
+        secure=_ADMIN_COOKIE_SECURE,
+        samesite="strict",
+        path="/",
+    )
+    return response
 
 
 @app.post("/auth/logout", tags=["AIS Auth"])
-async def auth_logout(request: AuthLogoutRequest):
+async def auth_logout(request: AuthLogoutRequest, http_request: Request):
     """Drop the cached AIS token for this session. Idempotent — succeeds
     even if there was no session to begin with."""
-    await _ais_auth.logout(request.session_id)
-    return {"ok": True}
+    await _ais_auth.logout(_ais_sid(http_request, request.session_id))
+    response = JSONResponse({"ok": True})
+    response.delete_cookie(_AIS_COOKIE, path="/")
+    return response
 
 
 @app.get("/auth/whoami", tags=["AIS Auth"])
-async def auth_whoami(session_id: str):
+async def auth_whoami(
+    http_request: Request,
+    x_sevi_session: Annotated[Optional[str], Header()] = None,
+    session_id: Optional[str] = None,
+):
     """Identity snapshot for an active session. Returns {"logged_in": false}
     when no session is cached so the frontend can decide whether to show
-    the login modal — no error, just a fact."""
-    snapshot = await _ais_auth.whoami(session_id)
+    the login modal — no error, just a fact.
+
+    The session id is read from the `X-Sevi-Session` HEADER, never the URL.
+    session_id is a bearer capability for the cached AIS token (possession of it
+    authorizes /ais/write financial actions), so it must not travel in the query
+    string, where the tunnel/nginx access log would persist it (CWE-598). The
+    `session_id` query param is a DEPRECATED fallback retained only so an
+    in-flight older web build doesn't spuriously log the user out mid-deploy;
+    current clients send the header.
+    """
+    sid = _ais_sid(http_request, x_sevi_session or session_id)
+    if not sid:
+        return {"logged_in": False}
+    snapshot = await _ais_auth.whoami(sid)
     if snapshot is None:
         return {"logged_in": False}
     return {"logged_in": True, **snapshot}
@@ -1827,7 +2032,10 @@ _WRITE_ACTION_TOOL_MAP: Dict[str, str] = {
 
 
 class AisWriteRequest(BaseModel):
-    session_id: str
+    # Optional: the httpOnly cookie is the authority now (_ais_sid resolves it
+    # first). Still accepted so non-browser callers, and any web build that
+    # predates the cookie, keep working.
+    session_id: Optional[str] = None
     action: str                          # one of _WRITE_ACTION_TOOL_MAP keys
     name: str                            # DV name
     idempotency_key: str
@@ -1837,7 +2045,7 @@ class AisWriteRequest(BaseModel):
 
 
 @app.post("/ais/write", tags=["AIS Write"])
-async def ais_write(request: AisWriteRequest):
+async def ais_write(request: AisWriteRequest, http_request: Request):
     """Invoke an AIS write tool as the end user behind `session_id`.
 
     Steps:
@@ -1854,9 +2062,11 @@ async def ais_write(request: AisWriteRequest):
     if request.action not in _WRITE_ACTION_TOOL_MAP:
         raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}")
 
-    # 1. Token resolution (may refresh).
+    # 1. Token resolution (may refresh). The session comes from the httpOnly
+    # cookie, so the value that authorizes a financial write is one the page's
+    # JavaScript never held and the client never chose.
     try:
-        token = await _ais_auth.get_user_token(request.session_id)
+        token = await _ais_auth.get_user_token(_ais_sid(http_request, request.session_id))
     except _ais_auth.AuthError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
 
@@ -2123,10 +2333,11 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
     """
     if len(requests) > _BATCH_MAX:
         raise HTTPException(status_code=413, detail=f"Batch too large (max {_BATCH_MAX})")
-    client_host = http_request.client.host if http_request.client else "anon"
     results = []
     for request in requests:
-        _check_chat_rate_limit(f"chat:{request.session_id or client_host}")
+        # Same two tiers as /chat, so a batch cannot buy extra budget by varying
+        # session_id across its sub-requests.
+        _enforce_chat_limits(request.session_id, http_request)
         start_time = time.time()
         # Same front-door SafetyGate as /chat — /batch must not be an
         # unscreened second entrance for abusive/self-harm messages.
@@ -2584,15 +2795,40 @@ class PinRequest(BaseModel):
 
 @app.post("/admin/verify", tags=["Admin"])
 async def verify_admin_pin(body: PinRequest, request: Request):
-    """Verify dashboard access PIN (rate-limited)."""
-    client_ip = request.client.host if request.client else "unknown"
+    """Exchange the dashboard PIN for an httpOnly admin session (rate-limited).
+
+    The PIN is presented ONCE, here. Everything after this rides the cookie, so
+    the shared secret never has to live in JavaScript-readable storage or be
+    re-sent on each admin call.
+    """
+    client_ip = _client_ip(request)
     _check_rate_limit(client_ip)
     if not DASHBOARD_PIN:
         raise HTTPException(503, "Admin access not configured")
     if not _pin_matches(body.pin):
         _record_attempt(client_ip)
         raise HTTPException(401, "Invalid PIN")
-    return {"status": "ok"}
+    token = _admin_session_new()
+    response = JSONResponse({"status": "ok", "expires_in": int(_ADMIN_SESSION_TTL)})
+    response.set_cookie(
+        _ADMIN_COOKIE, token,
+        max_age=int(_ADMIN_SESSION_TTL),
+        httponly=True,           # unreadable from JS — the whole point
+        secure=_ADMIN_COOKIE_SECURE,
+        samesite="strict",       # never sent on a cross-site request
+        path="/",
+    )
+    return response
+
+
+@app.post("/admin/logout", tags=["Admin"])
+async def admin_logout(request: Request):
+    """Revoke this browser's admin session. Idempotent."""
+    token = request.cookies.get(_ADMIN_COOKIE, "")
+    _admin_sessions.pop(token, None)
+    response = JSONResponse({"status": "ok"})
+    response.delete_cookie(_ADMIN_COOKIE, path="/")
+    return response
 
 
 @app.post("/admin/intents/sanitize", tags=["Admin"], dependencies=[Depends(require_admin)])
@@ -2751,6 +2987,82 @@ async def global_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={"error": True, "message": "Internal server error"},
+    )
+
+
+# ============================================================================
+# Admin surface invariant
+# ============================================================================
+# ~30 routes carry `dependencies=[Depends(require_admin)]` one by one, which is
+# easy to forget on the next route someone adds. This audit runs at import time
+# and fails LOUDLY, so an ungated admin route breaks the boot (and CI) instead
+# of silently shipping an open endpoint that returns chat logs or PII.
+#
+# Each entry below is public BY DESIGN — a considered exception, not an
+# oversight. Anything else under the admin path policy must carry the gate.
+_PUBLIC_BY_DESIGN: set = {
+    ("POST", "/admin/verify"),      # the PIN check itself — can't require the PIN
+    ("POST", "/admin/logout"),      # revokes the caller's own cookie; must stay
+                                    # callable with an expired/absent session so
+                                    # signing out never dead-ends
+    ("GET", "/admin/logs"),         # static HTML shell, no secrets in it; a browser
+                                    # can't attach X-Admin-Pin on a plain navigation
+    ("POST", "/feedback"),          # users submit feedback anonymously
+    ("GET", "/feedback/reasons"),   # public reason taxonomy the chat UI renders
+}
+
+
+def _route_is_admin_gated(route) -> bool:
+    """True when `require_admin` appears anywhere in the route's dependency tree."""
+    dependant = getattr(route, "dependant", None)
+    if dependant is None:
+        return False
+    stack = [dependant]
+    while stack:
+        node = stack.pop()
+        if getattr(node, "call", None) is require_admin:
+            return True
+        stack.extend(getattr(node, "dependencies", []) or [])
+    return False
+
+
+def _requires_admin_by_policy(method: str, path: str) -> bool:
+    """Whether (method, path) is part of the protected admin surface."""
+    if (method, path) in _PUBLIC_BY_DESIGN:
+        return False
+    if path.startswith(("/admin", "/logs", "/conversation", "/feedback")):
+        return True
+    # Operator-only endpoints that don't share a common prefix. Listed so that
+    # REMOVING their gate also trips this audit, not just forgetting to add it.
+    if path in ("/ais_mcp_stats", "/connectors_mcp_stats", "/model/reload"):
+        return True
+    if path.startswith("/map"):
+        # Map reads are public (the chat renders the campus map); writes are not.
+        return method not in ("GET", "HEAD")
+    return False
+
+
+def _audit_admin_surface() -> list:
+    """Return 'METHOD /path' for every protected route missing require_admin."""
+    gaps = []
+    for route in app.routes:
+        path = getattr(route, "path", "")
+        for method in sorted(getattr(route, "methods", None) or ()):
+            if method in ("HEAD", "OPTIONS"):
+                continue
+            if _requires_admin_by_policy(method, path) and not _route_is_admin_gated(route):
+                gaps.append(f"{method} {path}")
+    return sorted(set(gaps))
+
+
+_ADMIN_SURFACE_GAPS = _audit_admin_surface()
+if _ADMIN_SURFACE_GAPS:
+    raise RuntimeError(
+        "Admin surface invariant violated — these routes expose or mutate "
+        "protected data but carry no require_admin dependency:\n  "
+        + "\n  ".join(_ADMIN_SURFACE_GAPS)
+        + "\n\nAdd `dependencies=[Depends(require_admin)]` to the route, or — if it "
+          "is intentionally public — add an explicit entry to _PUBLIC_BY_DESIGN."
     )
 
 # ============================================================================

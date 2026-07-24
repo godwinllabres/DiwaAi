@@ -312,7 +312,7 @@ def expand_intents_json(input_file="data/cavsu_intents.json", output_file="data/
     print("\nNext steps:")
     print("  1. mv data/cavsu_intents_expanded.json data/cavsu_intents.json")
     print("  2. python train_naive_bayes.py")
-    print("  3. Restart API: python -m uvicorn app:app --port 8000")
+    print("  3. Restart API: python -m uvicorn api.app:app --port 8000")
     print("=" * 70 + "\n")
 
 if __name__ == "__main__":

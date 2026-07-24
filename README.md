@@ -1,5 +1,20 @@
 # Sevi — CvSU Virtual Assistant
 
+> ### 🔴 Open handoff — read before deploying
+> **[`HANDOFF.md`](HANDOFF.md)** — security hardening landed on
+> `sync/hardening-personal` (DiwaAi/DiwaWeb) and `hardening/admin-decoupling`
+> (org repos), **but two settings are deliberately unset and the work is inert
+> until you apply them:**
+>
+> 1. `TRUSTED_CLIENT_IP_HEADER=CF-Connecting-IP` in `sevi-deploy/.env` — without
+>    it every visitor shares one rate-limit bucket and five bad PIN attempts by
+>    anyone locks out all admins.
+> 2. The deploy CI builds from `godwinllabres/DiwaAi` / `DiwaWeb`, **not** the
+>    org repos — merging an org PR does not change the built image.
+>
+> See [HANDOFF.md §1](HANDOFF.md#1--action-required-before-this-ships). Delete
+> this block once both are settled.
+
 Sevi is the intelligent assistant for **Cavite State University (CvSU)**. It answers
 student and visitor questions about admissions, programs, tuition, scholarships,
 campus navigation, and university services through a layered "hybrid brain" that
@@ -83,14 +98,17 @@ On Windows, `run_server.bat` is a one-click launcher for the same server.
 
 ### Docker
 
-Single API container:
+The full stack (API + web + reverse proxy, port **8090**) is built and run from the
+`sevi-deploy` repository — see its README. That is the only supported Docker path.
+
+The old single-container `deployment/docker-compose.yml` was removed along with the
+legacy root `app.py` it started: that entrypoint served the same chat-log and
+conversation routes with no authentication, and published them on port 8000.
+To run just the API locally, use uvicorn directly:
 
 ```bash
-docker-compose -f deployment/docker-compose.yml up -d
+python -m uvicorn api.app:app --port 8000
 ```
-
-The full stack (API + web + reverse proxy, port **8090**) is built and run from the
-`sevi-deploy` repository — see its README.
 
 ---
 

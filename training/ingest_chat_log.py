@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 import time
@@ -389,8 +390,21 @@ def _scan_fallbacks(
     return mapped, unmapped, intent_counts
 
 
-def run(base_url: str, limit: int, dry_run: bool, retrain: bool) -> None:
-    session = requests.Session()
+def _make_session(admin_pin: Optional[str] = None) -> requests.Session:
+    """Session carrying the admin PIN so the gated reads this script relies on
+    (GET /feedback/fallbacks, POST /feedback/analyze) authenticate. Falls back
+    to the DASHBOARD_PIN env var. POST /feedback (submit) is public and needs no
+    pin, but sending it is harmless."""
+    s = requests.Session()
+    pin = admin_pin or os.getenv("DASHBOARD_PIN", "")
+    if pin:
+        s.headers["X-Admin-Pin"] = pin
+    return s
+
+
+def run(base_url: str, limit: int, dry_run: bool, retrain: bool,
+        admin_pin: Optional[str] = None) -> None:
+    session = _make_session(admin_pin)
 
     resp = session.get(f"{base_url}/feedback/fallbacks", params={"limit": limit}, timeout=30)
     resp.raise_for_status()
@@ -439,6 +453,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--limit",    type=int, default=10000)
     p.add_argument("--dry-run",  action="store_true", help="Preview mappings without posting.")
     p.add_argument("--retrain",  action="store_true", help="Retrain model after applying patterns.")
+    p.add_argument("--admin-pin", default=os.getenv("DASHBOARD_PIN", ""),
+                   help="X-Admin-Pin for gated /feedback reads (default: DASHBOARD_PIN env var).")
     return p.parse_args()
 
 
@@ -450,5 +466,6 @@ if __name__ == "__main__":
         limit=args.limit,
         dry_run=args.dry_run,
         retrain=args.retrain,
+        admin_pin=args.admin_pin,
     )
     print(f"\nDone in {time.time() - started:.1f}s")

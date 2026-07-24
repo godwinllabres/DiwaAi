@@ -88,7 +88,7 @@ def main():
         print("=" * 60)
         print("\nTo use the hybrid chatbot:")
         print("  1. Update app.py to use HybridChatbot")
-        print("  2. Start API: python -m uvicorn app:app --host 0.0.0.0 --port 8000")
+        print("  2. Start API: python -m uvicorn api.app:app --port 8000")
         print("  3. Chatbot will automatically use both models hierarchically")
         print()
 

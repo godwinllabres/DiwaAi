@@ -247,7 +247,7 @@ This is why both `train_naive_bayes.py` AND `train_hybrid.py` need to run after 
 | Run intent tests | `py -3.11 training\test_intents.py 8000 5` |
 | Run holdout eval | `py -3.11 training\eval_holdout.py` |
 | View chat logs | Open `web/logs_dashboard.html` in browser |
-| Docker run | `docker-compose -f deployment\docker-compose.yml up -d` |
+| Docker run | `cd ../sevi-deploy && docker compose up -d --wait` |
 | Rebuild SQLite from JSON | Just run any training script — `intents_db.py` syncs automatically |
 | Inspect SQLite manually | `py -3.11 -c "import sqlite3; c=sqlite3.connect('data/cavsu_intents.db'); print([r[0] for r in c.execute('SELECT tag FROM intents')])"` |
 
