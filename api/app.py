@@ -461,6 +461,47 @@ def _enforce_chat_limits(request_session_id: Optional[str], http_request: Reques
         _check_chat_rate_limit(f"chat:sid:{request_session_id}")
 
 
+# ── Admin session cookie ─────────────────────────────────────────────────────
+# The PIN used to be kept in sessionStorage and re-attached by JavaScript on
+# every admin call, so a single XSS anywhere on the admin origin could lift the
+# shared secret itself. Instead /admin/verify exchanges the PIN once for an
+# opaque, expiring, httpOnly session token: JS can never read it, it is scoped
+# to this browser, and revoking it does not require rotating the PIN.
+#
+# Server-side store (not a signed token) so /admin/logout can revoke instantly.
+# In-memory, consistent with the throttles above — single-worker uvicorn is
+# assumed; a multi-worker deploy needs Redis for both.
+_ADMIN_COOKIE = "sevi_admin"
+_ADMIN_SESSION_TTL = float(os.getenv("ADMIN_SESSION_TTL_SECONDS", "3600"))
+_admin_sessions: Dict[str, float] = {}     # token -> expiry (epoch seconds)
+# Secure flag is dropped for local http:// development, where the browser would
+# otherwise refuse to store the cookie.
+_ADMIN_COOKIE_SECURE = os.getenv("ADMIN_COOKIE_SECURE", "1").strip() not in ("0", "false", "")
+
+
+def _admin_session_new() -> str:
+    """Mint a session token, sweeping expired ones so the dict can't grow."""
+    now = time.time()
+    for token, expiry in list(_admin_sessions.items()):
+        if expiry <= now:
+            _admin_sessions.pop(token, None)
+    token = secrets.token_urlsafe(32)
+    _admin_sessions[token] = now + _ADMIN_SESSION_TTL
+    return token
+
+
+def _admin_session_valid(token: str) -> bool:
+    if not token:
+        return False
+    expiry = _admin_sessions.get(token)
+    if expiry is None:
+        return False
+    if expiry <= time.time():
+        _admin_sessions.pop(token, None)
+        return False
+    return True
+
+
 def _pin_matches(candidate: str) -> bool:
     """Constant-time PIN comparison (never `==`: a short-circuiting compare
     leaks the shared secret's prefix through response timing). Compared as
@@ -483,6 +524,14 @@ async def require_admin(request: Request) -> None:
     """
     if not DASHBOARD_PIN:
         raise HTTPException(503, "Admin access not configured")
+    # 1. Browser path — the httpOnly session cookie minted by /admin/verify.
+    # Checked first and NOT throttled: it is an unguessable 256-bit token, and
+    # a dashboard polling with a valid session must never consume the PIN
+    # budget or it would lock itself out.
+    if _admin_session_valid(request.cookies.get(_ADMIN_COOKIE, "")):
+        return
+    # 2. Script path — the raw PIN. Kept for CI, curl, and the training
+    # scripts, which have no cookie jar.
     client_ip = _client_ip(request)
     _check_rate_limit(client_ip)
     if not _pin_matches(request.headers.get("X-Admin-Pin", "")):
@@ -1873,26 +1922,56 @@ def _auth_handle(handler):
     return wrapper
 
 
+# The AIS session id is a bearer for the user's OAuth token, so it lives in an
+# httpOnly cookie: minted server-side at login, never readable by JavaScript,
+# and never echoed in a response body or a URL.
+_AIS_COOKIE = "sevi_ais"
+
+
+def _ais_sid(request: Request, fallback: Optional[str] = None) -> str:
+    """Resolve the AIS session: cookie first, then an explicit value.
+
+    The fallback keeps non-browser callers (and any web build still in flight
+    during a deploy) working; browsers send the cookie and never see the value.
+    """
+    return (request.cookies.get(_AIS_COOKIE, "") or (fallback or "")).strip()
+
+
 @app.post("/auth/login", tags=["AIS Auth"])
-async def auth_login(request: AuthLoginRequest):
-    """Exchange CvSU credentials for an AIS OAuth token cached under
-    session_id. Subsequent /ais/write calls with the same session_id will
-    act as this user. Returns the user's identity claims (NOT the token)."""
-    return await _auth_handle(_ais_auth.login)(
-        request.session_id, request.username, request.password,
+async def auth_login(request: AuthLoginRequest, http_request: Request):
+    """Exchange CvSU credentials for an AIS OAuth session.
+
+    Returns the user's identity claims only. The session id is minted
+    server-side and returned as an httpOnly cookie — never in the body, so it
+    cannot be read by script or captured from a log.
+    """
+    sid, identity = await _auth_handle(_ais_auth.login)(
+        request.username, request.password,
     )
+    response = JSONResponse(identity)
+    response.set_cookie(
+        _AIS_COOKIE, sid,
+        httponly=True,
+        secure=_ADMIN_COOKIE_SECURE,
+        samesite="strict",
+        path="/",
+    )
+    return response
 
 
 @app.post("/auth/logout", tags=["AIS Auth"])
-async def auth_logout(request: AuthLogoutRequest):
+async def auth_logout(request: AuthLogoutRequest, http_request: Request):
     """Drop the cached AIS token for this session. Idempotent — succeeds
     even if there was no session to begin with."""
-    await _ais_auth.logout(request.session_id)
-    return {"ok": True}
+    await _ais_auth.logout(_ais_sid(http_request, request.session_id))
+    response = JSONResponse({"ok": True})
+    response.delete_cookie(_AIS_COOKIE, path="/")
+    return response
 
 
 @app.get("/auth/whoami", tags=["AIS Auth"])
 async def auth_whoami(
+    http_request: Request,
     x_sevi_session: Annotated[Optional[str], Header()] = None,
     session_id: Optional[str] = None,
 ):
@@ -1908,7 +1987,7 @@ async def auth_whoami(
     in-flight older web build doesn't spuriously log the user out mid-deploy;
     current clients send the header.
     """
-    sid = (x_sevi_session or session_id or "").strip()
+    sid = _ais_sid(http_request, x_sevi_session or session_id)
     if not sid:
         return {"logged_in": False}
     snapshot = await _ais_auth.whoami(sid)
@@ -1945,7 +2024,7 @@ class AisWriteRequest(BaseModel):
 
 
 @app.post("/ais/write", tags=["AIS Write"])
-async def ais_write(request: AisWriteRequest):
+async def ais_write(request: AisWriteRequest, http_request: Request):
     """Invoke an AIS write tool as the end user behind `session_id`.
 
     Steps:
@@ -1962,9 +2041,11 @@ async def ais_write(request: AisWriteRequest):
     if request.action not in _WRITE_ACTION_TOOL_MAP:
         raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}")
 
-    # 1. Token resolution (may refresh).
+    # 1. Token resolution (may refresh). The session comes from the httpOnly
+    # cookie, so the value that authorizes a financial write is one the page's
+    # JavaScript never held and the client never chose.
     try:
-        token = await _ais_auth.get_user_token(request.session_id)
+        token = await _ais_auth.get_user_token(_ais_sid(http_request, request.session_id))
     except _ais_auth.AuthError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
 
@@ -2693,7 +2774,12 @@ class PinRequest(BaseModel):
 
 @app.post("/admin/verify", tags=["Admin"])
 async def verify_admin_pin(body: PinRequest, request: Request):
-    """Verify dashboard access PIN (rate-limited)."""
+    """Exchange the dashboard PIN for an httpOnly admin session (rate-limited).
+
+    The PIN is presented ONCE, here. Everything after this rides the cookie, so
+    the shared secret never has to live in JavaScript-readable storage or be
+    re-sent on each admin call.
+    """
     client_ip = _client_ip(request)
     _check_rate_limit(client_ip)
     if not DASHBOARD_PIN:
@@ -2701,7 +2787,27 @@ async def verify_admin_pin(body: PinRequest, request: Request):
     if not _pin_matches(body.pin):
         _record_attempt(client_ip)
         raise HTTPException(401, "Invalid PIN")
-    return {"status": "ok"}
+    token = _admin_session_new()
+    response = JSONResponse({"status": "ok", "expires_in": int(_ADMIN_SESSION_TTL)})
+    response.set_cookie(
+        _ADMIN_COOKIE, token,
+        max_age=int(_ADMIN_SESSION_TTL),
+        httponly=True,           # unreadable from JS — the whole point
+        secure=_ADMIN_COOKIE_SECURE,
+        samesite="strict",       # never sent on a cross-site request
+        path="/",
+    )
+    return response
+
+
+@app.post("/admin/logout", tags=["Admin"])
+async def admin_logout(request: Request):
+    """Revoke this browser's admin session. Idempotent."""
+    token = request.cookies.get(_ADMIN_COOKIE, "")
+    _admin_sessions.pop(token, None)
+    response = JSONResponse({"status": "ok"})
+    response.delete_cookie(_ADMIN_COOKIE, path="/")
+    return response
 
 
 @app.post("/admin/intents/sanitize", tags=["Admin"], dependencies=[Depends(require_admin)])
@@ -2875,6 +2981,9 @@ async def global_exception_handler(request: Request, exc: Exception):
 # oversight. Anything else under the admin path policy must carry the gate.
 _PUBLIC_BY_DESIGN: set = {
     ("POST", "/admin/verify"),      # the PIN check itself — can't require the PIN
+    ("POST", "/admin/logout"),      # revokes the caller's own cookie; must stay
+                                    # callable with an expired/absent session so
+                                    # signing out never dead-ends
     ("GET", "/admin/logs"),         # static HTML shell, no secrets in it; a browser
                                     # can't attach X-Admin-Pin on a plain navigation
     ("POST", "/feedback"),          # users submit feedback anonymously

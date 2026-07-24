@@ -1,121 +1,175 @@
-# HANDOFF — Sevi security hardening (resume point) · 2026-07-23
+# 🔴 HANDOFF — READ ME FIRST · Sevi security hardening · 2026-07-25
 
-Paste this back to resume. **P1 + P2 are DONE** (branch `hardening/input-clamps`,
-verified — see "Verify after fixing"). The remaining work is **P3, which needs a
-decision first**. Delete this file once P3 is settled.
+> **Paste this file back at the start of the next session.**
+>
+> **⚠️ TWO THINGS ARE NOT DONE AND WILL BITE YOU — see [§1 ACTION REQUIRED](#1--action-required-before-this-ships).**
+> The code is committed and tested, but two settings are deliberately left
+> unset, and until you set them the work is inert in production.
 
-## Where things stand
-- **All prior session work is MERGED to `main`** (SeviAi `origin/main` @ `d60e136`):
-  moderation/privacy controls, agentic Tier 5.5 workflows (OFF by default, mock
-  tool), and the `/chat` input validator. DiwaWeb is on `origin/main`
-  (Playwright E2E files added under `DiwaWeb/tests/e2e/`, untracked — not committed).
-- **Just completed a security review** of the API input-value surface (10 distinct
-  confirmed findings, below). One finder dimension (agentic/dynamic-dispatch) could
-  NOT complete — transient API 522s twice. Its principal risk (`intent_hint` →
-  arbitrary MCP tool dispatch, P3 below) was already caught by the ingress finder, so
-  incremental value is low; optionally re-run that one dimension later.
+---
 
-## ⚠️ Entrypoint caveat (changes several severities)
-Two app entrypoints exist:
-- `api/app.py` — **deploy-of-record** (`sevi-deploy`→`Dockerfile.local` / `Dockerfile.render`,
-  `uvicorn api.app:app`). Here `/logs/*` ARE admin-gated.
-- **legacy root `app.py`** (`uvicorn app:app`, used by `deployment/Dockerfile` +
-  `docker-compose`) — exposes the same logger routes **UNAUTHENTICATED**.
-Several findings are Medium on `api.app` but High if the legacy root ships.
-**Retiring/auth-gating the legacy root `app.py` is the highest-leverage single fix.**
+## 1 · ⚠️ ACTION REQUIRED BEFORE THIS SHIPS
 
-## DONE — P1 + P2 (branch `hardening/input-clamps`)
+### 1a. Set the trusted-proxy header, or every user shares one rate-limit bucket
 
-**P1 — input clamps + throttle (tiny, no behavior change for legit clients):**
-- [x] Clamp `limit` everywhere it reaches SQL `LIMIT ?`. Two layers: `Query(ge=1, le=200)`
-      on the endpoints (422 before the handler runs) **and** `_clamp_limit()` inside each
-      `api/logger.py` method, since scripts/the exporter call them directly. Per-method
-      caps, not a flat 200, so `export_user_data`(1000) and anti-pattern mining(2000)
-      keep working. (SQLite treats `LIMIT -1` as unlimited → full-table dump / OOM.)
-- [x] Clamp `days` in `/logs/cleanup`: `Query(ge=1, le=3650)` on the endpoint, plus a
-      floor-at-1 clamp and a `cutoff < now` guard before the DELETE in `cleanup_old_logs`.
-      (Negative `days` → cutoff in the future → wipes the ENTIRE chat+feedback DB + log files.)
-- [x] Rate-limit `/batch`: `_check_chat_rate_limit` per sub-request, on the same
-      `chat:{session_id|ip}` key as `/chat`, so both share one budget.
-      Note: the throttle fires mid-loop, so a batch that trips it discards the
-      sub-responses already computed. Acceptable for a throttle; revisit if noisy.
+**Where:** `sevi-deploy/.env` (copy from `.env.example`)
 
-**P2 — access control:**
-- [x] `GET`+`DELETE /conversation/{user_id}` now carry `require_admin`. (SeviWeb defines
-      `getConversation`/`clearConversation` in `app/lib/api.ts` but calls neither, so no
-      live caller breaks.)
-- [x] `secrets.compare_digest` + the `_check_rate_limit` throttle moved INTO
-      `require_admin` via `_pin_matches()`; `/admin/verify` uses the same helper.
-      Only FAILED attempts consume the 5-per-5-min budget, so a polling dashboard
-      with the right PIN is never locked out.
-- [x] `user_id` allowlisted in `/logs/export/{user_id}`: `is_safe_user_id()` in
-      `api/logger.py` (`[A-Za-z0-9_.-]{1,64}`, no `..`), a 400 at the endpoint, and a
-      resolved-path-stays-under-`log_dir` assert before the write.
-
-Regression test: **`python test_input_clamps.py`** (34 checks — clamp bounds, the
-allowlist, and real-SQLite proof that `limit=-1` returns 1 row, that `days<=0`
-deletes nothing, and that a legitimate 30-day window still purges stale rows).
-
-## PENDING WORK
-
-**P3 — design (bigger, discuss first):**
-- [ ] Read-only allowlist for `intent_hint` dispatch (`api/ais_mcp.py:1225`) — it can name
-      any MCP tool incl. writes, bypassing the fenced `/ais/write`. Requires the shared
-      `X-Internal-Key`, so lower urgency, but the hatch has no `_WRITE_DENYLIST` like the NL loop.
-- [x] ~~Retire or auth-gate the legacy root `app.py`~~ — **DONE, retired.** It was first
-      auth-gated (require_admin on all 13 logger/conversation/feedback-read routes, plus
-      explicit CORS origins), then deleted outright along with `deployment/Dockerfile`
-      and `deployment/docker-compose.yml`, the only two things that built it. Nothing
-      imports it; the live paths are `Dockerfile.render` (Render) and `Dockerfile.local`
-      (compose + CI), both `uvicorn api.app:app`. `run_server.bat` now points at
-      `api.app` too. The ungated variant can no longer be built or run.
-- [ ] Bind `session_id` server-side — it's an unbound bearer capability on `/auth/whoami`
-      + `/ais/write` (confused deputy; mitigated in practice by UUID minting).
-- [x] ~~(optional) Key the chat rate limiter on client IP~~ — **DONE, but not the naive way.**
-      Keying on `request.client.host` alone would have been a live outage: behind the
-      tunnel that address is the *web container*, identical for every visitor, so one
-      abusive client throttles the whole university and five bad PINs from anyone locks
-      out real admins. Instead: `_client_ip()` resolves the caller through an opt-in
-      trusted header (`TRUSTED_CLIENT_IP_HEADER`, `TRUSTED_PROXY_HOPS`, counted from the
-      RIGHT so a client-prepended entry can't win), defaulting to IGNORING forwarded
-      headers so an unconfigured deploy can't be spoofed. `/chat` and `/batch` now
-      enforce two tiers — per-session (honest bursts) and a much looser per-IP ceiling
-      (the tier a caller can't rotate around, kept generous for campus NAT). Both PIN
-      throttles use the same resolver. Set `TRUSTED_CLIENT_IP_HEADER=CF-Connecting-IP`
-      in the tunnel deployment. Tests: `test_client_ip_throttle.py` (10 checks).
-
-## Verify after fixing
+```bash
+TRUSTED_CLIENT_IP_HEADER=CF-Connecting-IP
+TRUSTED_PROXY_HOPS=1
 ```
-python test_input_clamps.py           # 34/34  (new — P1/P2 clamps + allowlist)
-python test_safety_gate.py            # 55/55 + 11/11
-python test_moderation_controls.py    # 36/36
-python test_agentic_workflow.py       # 23/23
-python -c "import api.app"            # imports clean
-```
-All five green as of the P1/P2 commit. The API-layer behaviour (401 on
-`/conversation` without a PIN, 422 on out-of-range `limit`/`days`, 400 on a
-traversal export id, 429 after 5 bad PINs on ANY admin route, `/batch` spending
-the chat budget) was checked with a FastAPI `TestClient` — 26 checks, ad hoc,
-not committed because importing `api.app` loads the models.
 
-## Also still open (non-code)
-- **Governance sign-offs** still block production: crisis copy (Guidance) + consent copy
-  (DPO) — `docs/governance_signoff.md`.
-- **`godwinllabres/DiwaAi` is a PUBLIC repo** (flagged; user chose to proceed).
+**Why it matters:** the API keys its chat and admin-PIN throttles on the
+caller's IP. Inside the compose stack the API's peer is the **web container** —
+the same address for every visitor. Until this is set, one abusive client
+rate-limits the whole university, and five bad PIN attempts by anyone locks out
+every admin for five minutes.
+
+**Why it is not already on:** trusting a forwarded header when nothing strips it
+lets any caller pick their own throttle bucket. It is safe only behind the
+tunnel, so it defaults to off. Set it **when running with
+`COMPOSE_PROFILES=tunnel`.**
+
+### 1b. Confirm which repos actually deploy
+
+`sevi-deploy/.github/workflows/deploy.yml` builds from:
+
+```
+SEVIAI_REPO:  godwinllabres/DiwaAi
+SEVIWEB_REPO: godwinllabres/DiwaWeb
+```
+
+…but the org repos are `Cavite-State-University-Official/sevi-{api,web}`.
+**Merging a PR into the org repo does not change the built image.** Confirmed:
+`DiwaAi/main` is **10 commits ahead** of the org main and `DiwaWeb/main` **6
+ahead** — the personal repos are the deploy source and hold work the org repos
+do not. Decide which is authoritative and make the sync one-directional, or this
+will keep drifting.
+
+---
+
+## 2 · Where the work lives
+
+| Repo | Branch | Contains |
+|---|---|---|
+| sevi-api (org) | `hardening/admin-decoupling` | 3 commits, based on org main |
+| sevi-web (org) | `hardening/admin-decoupling` | 4 commits, rebased onto current org main |
+| **DiwaAi** | **`sync/hardening-personal`** | **everything, merged onto your personal main — this is the deployable one** |
+| **DiwaWeb** | **`sync/hardening-personal`** | **everything, merged onto your personal main** |
+| sevi-deploy | `hardening/trusted-proxy-ip` | compose + `.env.example` wiring for §1a |
+
+Nothing was merged to any `main`, and nothing was force-pushed.
+
+---
+
+## 3 · What changed this session
+
+**Access control**
+- Legacy root `app.py` **retired** (with `deployment/Dockerfile` and
+  `deployment/docker-compose.yml`, the only things that built it). It served the
+  same logger routes unauthenticated and published port 8000. Nothing imports
+  it; live paths are `Dockerfile.render` / `Dockerfile.local`, both `api.app:app`.
+- **Import-time admin-surface audit** in `api/app.py`: walks every route's
+  dependency tree and **raises at boot** if a protected path lacks
+  `require_admin`. 34 routes covered; 5 public-by-design entries listed
+  explicitly in `_PUBLIC_BY_DESIGN`. Forgetting the gate now breaks the boot
+  instead of shipping an open endpoint.
+
+**Credentials out of JavaScript**
+- **Admin PIN echo retired.** The PIN is presented once to `/admin/verify`,
+  which returns an **httpOnly, SameSite=Strict** session cookie. It is no longer
+  kept in `sessionStorage` or re-sent per request, so an XSS on the admin origin
+  can no longer lift the shared secret. `X-Admin-Pin` still works for
+  scripts/CI. `/admin/logout` revokes server-side.
+- **AIS session bound server-side.** `auth_ais.login()` no longer accepts a
+  caller-supplied `session_id`; it mints a 256-bit one and returns it **only** as
+  an httpOnly cookie. Previously this value was the *chat* session id — chosen by
+  the client and echoed through feedback payloads and logs — while being a bearer
+  that authorizes `/ais/write` to approve/post/cancel a disbursement voucher.
+- **`session_id` out of the whoami URL** → `X-Sevi-Session` header (CWE-598).
+
+**Other**
+- `intent_hint` MCP bypass made **read-only** — it could invoke
+  `approve_dv`/`post_dv`/`cancel_dv` directly, skipping `/ais/write`'s confirm
+  and per-user token. `WRITE_TOOLS` is now canonical in `ais_mcp`; caller args
+  are stripped of `__auth_token`/`confirm`.
+- **Two-tier chat throttle**: per-session (honest bursts; advisory, since the
+  client picks the id) **plus** a looser per-IP ceiling (the tier a caller cannot
+  rotate around, kept generous for campus NAT).
+- **Admin panel decoupled** into its own Vite entry + bundle + API client
+  (`app/lib/adminApi.ts`); the public chat bundle now contains zero admin code
+  or admin route names. nginx serves `/admin/`.
+
+---
+
+## 4 · Every setting introduced
+
+All are documented in the `.env.example` files; none are secrets.
+
+| Variable | Where | Default | Set it when |
+|---|---|---|---|
+| `TRUSTED_CLIENT_IP_HEADER` | sevi-deploy `.env` | *(unset)* | **behind the tunnel — see §1a** |
+| `TRUSTED_PROXY_HOPS` | sevi-deploy `.env` | `1` | XFF chains: position from the RIGHT |
+| `CHAT_RATE_LIMIT_IP_MAX` | sevi.env | `240` | tuning the per-IP ceiling |
+| `CHAT_RATE_LIMIT_MAX` | sevi.env | `30` | tuning the per-session limit |
+| `ADMIN_SESSION_TTL_SECONDS` | sevi.env | `3600` | shorter/longer admin sessions |
+| `ADMIN_COOKIE_SECURE` | sevi.env | `1` | **`0` for local http:// only** |
+
+⚠️ **Local dev gotcha:** with `ADMIN_COOKIE_SECURE=1` (the default) over plain
+`http://`, the browser silently drops the admin cookie and the dashboard looks
+like it never unlocks. `sevi-api/.env` sets `0` for local runs.
+
+---
+
+## 5 · Verify
+
+```bash
+# API — all green as of this commit
+python test_input_clamps.py           # clamps + export allowlist
+python test_intent_hint_guard.py      # intent_hint is read-only
+python test_client_ip_throttle.py     # trusted proxy + two-tier throttle
+python test_admin_session_cookie.py   # admin cookie + AIS session binding
+python test_safety_gate.py
+python test_moderation_controls.py
+python test_agentic_workflow.py
+python -c "import api.app"            # must not raise — runs the admin audit
+
+# Web
+npm run build                         # tsc -b + two entries (main + admin)
+npm run demo:admin-split              # proves no admin code in the public bundle
+npm test                              # 88 pass / 2 fail — SAME on origin/main
+```
+
+The 2 web failures (`useChat`, `useTypewriter`) are **pre-existing**; measured
+directly on `origin/main` for comparison. Not caused by this work.
+
+---
+
+## 6 · Still open
+
+- **Phase 3** — put `/admin/` behind Cloudflare Access. nginx already isolates
+  the whole surface behind that one prefix, so this is ops config.
+- **Fix the 2 pre-existing web test failures.**
+- **Multi-worker**: the admin sessions, throttles, and AIS token cache are all
+  in-memory and assume single-worker uvicorn. Multi-worker needs Redis.
+- **Governance sign-offs** still block production: crisis copy (Guidance) +
+  consent copy (DPO) — `docs/governance_signoff.md`.
+- **`godwinllabres/DiwaAi` is a PUBLIC repo** (previously flagged; you chose to
+  proceed).
 - Agentic tier is OFF by default; needs real student auth before enabling.
 
-## Branch state
-`main` has everything merged+pushed. The three feature branches
-(`feat/moderation-controls`, `feat/agentic-workflows`, `hardening/chat-input-validation`)
-are all merged into `main` and can be deleted on the remote when convenient.
-The P1/P2 fixes live on `hardening/input-clamps`, not yet merged to `main`.
+---
 
-~~Note for P3: the legacy root `app.py` ...~~ — obsolete, the file is gone.
+## 7 · Local run
 
-Replacing that whole class of drift: `api/app.py` now runs an **admin-surface
-audit at import time**. It walks every route's dependency tree and raises if a
-protected path (`/admin`, `/logs`, `/conversation`, `/feedback`, non-GET `/map`,
-plus `/ais_mcp_stats`, `/connectors_mcp_stats`, `/model/reload`) is missing
-`require_admin`. 34 routes covered; four are public by design and listed
-explicitly in `_PUBLIC_BY_DESIGN`. Forgetting the gate on a new route now breaks
-the boot instead of silently shipping an open endpoint.
+```bash
+# API  (reads sevi-api/.env — DASHBOARD_PIN + ADMIN_COOKIE_SECURE=0)
+python -m uvicorn api.app:app --port 8090
+
+# Web
+npm run dev            # http://localhost:5173  ·  admin: /admin
+```
+
+The dev proxy override must go in **`.env.development.local`**, not
+`.env.local` — Vite ranks `.env.[mode]` above `.env.local`, so an override there
+is silently ignored.
