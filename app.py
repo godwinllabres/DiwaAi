@@ -3,16 +3,17 @@ CvSU Chatbot REST API
 FastAPI-based endpoint for integration with web applications
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Dict, Optional, List
 import json
 import os
 import random
 import re
+import secrets
 import time
 from collections import defaultdict
 from datetime import datetime
@@ -122,17 +123,81 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for web app integration
+# Enable CORS — explicit origins only (never wildcard in production). Mirrors
+# api/app.py: origins come from the CORS_ORIGINS env var (comma-separated) and
+# default to the local Vite dev server. `allow_credentials=False` because a
+# wildcard/reflected origin combined with credentials is a cross-site read of
+# authenticated responses — and this API has no cookie/session auth anyway.
+_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+_allowed_origins = [o.strip() for o in _cors_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change to specific origins in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_allowed_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-Admin-Pin"],
 )
 
 # Serve the web interface as static files
 app.mount("/web", StaticFiles(directory="web"), name="web")
+
+# ============================================================================
+# Admin Authentication
+# ----------------------------------------------------------------------------
+# Ported from api/app.py so this legacy entrypoint enforces the SAME gate: the
+# logging / conversation / feedback-read / export / cleanup routes expose (and
+# can delete) every stored chat message — user PII — and must never be
+# anonymous. Set DASHBOARD_PIN in the environment; callers pass it in the
+# X-Admin-Pin header. When DASHBOARD_PIN is unset the gated routes fail closed
+# with 503 (admin access not configured) rather than opening up.
+# ============================================================================
+DASHBOARD_PIN = os.getenv("DASHBOARD_PIN", "")
+
+# Simple in-memory rate limiter for PIN verification (brute-force protection).
+_pin_attempts: Dict[str, list] = {}       # ip -> [timestamps]
+_PIN_MAX_ATTEMPTS = 5
+_PIN_WINDOW_SECONDS = 300                  # 5-minute window
+
+
+def _check_rate_limit(client_ip: str) -> None:
+    """Raise 429 if the client has exceeded PIN attempt limits."""
+    now = time.time()
+    attempts = [t for t in _pin_attempts.get(client_ip, []) if now - t < _PIN_WINDOW_SECONDS]
+    _pin_attempts[client_ip] = attempts
+    if len(attempts) >= _PIN_MAX_ATTEMPTS:
+        raise HTTPException(429, "Too many attempts. Try again later.")
+
+
+def _record_attempt(client_ip: str) -> None:
+    _pin_attempts.setdefault(client_ip, []).append(time.time())
+
+
+def _pin_matches(candidate: str) -> bool:
+    """Constant-time PIN comparison (never `==`: a short-circuiting compare
+    leaks the shared secret's prefix through response timing). Compared as
+    bytes so a non-ASCII header can't raise TypeError out of compare_digest."""
+    if not DASHBOARD_PIN:
+        return False
+    return secrets.compare_digest(
+        (candidate or "").encode("utf-8"), DASHBOARD_PIN.encode("utf-8")
+    )
+
+
+async def require_admin(request: Request) -> None:
+    """Dependency: verify the X-Admin-Pin header matches DASHBOARD_PIN.
+
+    The brute-force throttle and the constant-time compare live HERE so every
+    route carrying this dependency is protected, not just one verify endpoint.
+    Only FAILED attempts consume the budget, so a dashboard polling with the
+    correct PIN is never locked out.
+    """
+    if not DASHBOARD_PIN:
+        raise HTTPException(503, "Admin access not configured")
+    client_ip = request.client.host if request.client else "unknown"
+    _check_rate_limit(client_ip)
+    if not _pin_matches(request.headers.get("X-Admin-Pin", "")):
+        _record_attempt(client_ip)
+        raise HTTPException(401, "Unauthorized")
 
 # ============================================================================
 # Request/Response Models
@@ -722,7 +787,7 @@ async def get_instructions():
         "version": "1.0.0"
     }
 
-@app.get("/conversation/{user_id}", tags=["Conversation"])
+@app.get("/conversation/{user_id}", tags=["Conversation"], dependencies=[Depends(require_admin)])
 async def get_conversation_history(user_id: str):
     """Get conversation history for a user."""
     history = chatbot.conversation_history.get(user_id, [])
@@ -732,7 +797,7 @@ async def get_conversation_history(user_id: str):
         "conversation": history
     }
 
-@app.delete("/conversation/{user_id}", tags=["Conversation"])
+@app.delete("/conversation/{user_id}", tags=["Conversation"], dependencies=[Depends(require_admin)])
 async def clear_conversation(user_id: str):
     """Clear conversation history for a user."""
     if user_id in chatbot.conversation_history:
@@ -781,7 +846,7 @@ async def batch_chat(requests: List[ChatRequest]):
 # Logging Endpoints
 # ============================================================================
 
-@app.get("/logs/user/{user_id}", tags=["Logging"])
+@app.get("/logs/user/{user_id}", tags=["Logging"], dependencies=[Depends(require_admin)])
 async def get_user_logs(user_id: str, limit: int = 50):
     """Get chat history for a specific user"""
     history = chat_logger.get_user_history(user_id, limit)
@@ -791,7 +856,7 @@ async def get_user_logs(user_id: str, limit: int = 50):
         "messages": history
     }
 
-@app.get("/logs/session/{session_id}", tags=["Logging"])
+@app.get("/logs/session/{session_id}", tags=["Logging"], dependencies=[Depends(require_admin)])
 async def get_session_logs(session_id: str):
     """Get all messages in a specific session"""
     history = chat_logger.get_session_history(session_id)
@@ -801,7 +866,7 @@ async def get_session_logs(session_id: str):
         "messages": history
     }
 
-@app.get("/logs/intents", tags=["Logging"])
+@app.get("/logs/intents", tags=["Logging"], dependencies=[Depends(require_admin)])
 async def get_intent_logs():
     """Get statistics for all intents"""
     stats = chat_logger.get_intent_statistics()
@@ -810,7 +875,7 @@ async def get_intent_logs():
         "intents": stats
     }
 
-@app.get("/logs/sessions", tags=["Logging"])
+@app.get("/logs/sessions", tags=["Logging"], dependencies=[Depends(require_admin)])
 async def get_sessions_list(user_id: Optional[str] = None, limit: int = 20):
     """Get list of sessions"""
     sessions = chat_logger.get_session_list(user_id, limit)
@@ -820,13 +885,13 @@ async def get_sessions_list(user_id: Optional[str] = None, limit: int = 20):
         "sessions": sessions
     }
 
-@app.get("/logs/today", tags=["Logging"])
+@app.get("/logs/today", tags=["Logging"], dependencies=[Depends(require_admin)])
 async def get_today_statistics():
     """Get today's chat statistics"""
     stats = chat_logger.get_today_stats()
     return stats
 
-@app.get("/logs/search", tags=["Logging"])
+@app.get("/logs/search", tags=["Logging"], dependencies=[Depends(require_admin)])
 async def search_logs(query: str, limit: int = 20):
     """Search logs by message content"""
     results = chat_logger.search_logs(query, limit)
@@ -836,7 +901,7 @@ async def search_logs(query: str, limit: int = 20):
         "results": results
     }
 
-@app.get("/logs/fallbacks", tags=["Logging"])
+@app.get("/logs/fallbacks", tags=["Logging"], dependencies=[Depends(require_admin)])
 async def get_fallback_logs(limit: int = 100):
     """Get recent fallback user utterances for learning and analysis."""
     fallback_examples = chat_logger.get_fallback_examples(limit)
@@ -888,7 +953,7 @@ async def submit_feedback(request: FeedbackRequest):
     return {"status": "ok", "feedback_id": feedback_id}
 
 
-@app.get("/feedback/stats", tags=["Feedback"])
+@app.get("/feedback/stats", tags=["Feedback"], dependencies=[Depends(require_admin)])
 async def get_feedback_stats():
     """
     Aggregate feedback statistics.
@@ -904,7 +969,7 @@ async def get_feedback_stats():
     return chat_logger.get_feedback_stats()
 
 
-@app.get("/feedback", tags=["Feedback"])
+@app.get("/feedback", tags=["Feedback"], dependencies=[Depends(require_admin)])
 async def get_feedback(
     limit: int = 100,
     helpful: Optional[bool] = None,
@@ -930,7 +995,7 @@ async def get_feedback(
         "feedback": entries
     }
 
-@app.post("/logs/export/{user_id}", tags=["Logging"])
+@app.post("/logs/export/{user_id}", tags=["Logging"], dependencies=[Depends(require_admin)])
 async def export_user_logs(user_id: str):
     """Export all data for a user as JSON file"""
     filepath = chat_logger.export_user_data(user_id)
@@ -944,7 +1009,7 @@ async def export_user_logs(user_id: str):
     else:
         raise HTTPException(status_code=500, detail="Failed to export user data")
 
-@app.delete("/logs/cleanup", tags=["Logging"])
+@app.delete("/logs/cleanup", tags=["Logging"], dependencies=[Depends(require_admin)])
 async def cleanup_old_logs(days: int = 30):
     """Delete logs older than specified days"""
     deleted = chat_logger.cleanup_old_logs(days)

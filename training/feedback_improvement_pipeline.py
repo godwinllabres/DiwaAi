@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import subprocess
 import sys
@@ -22,7 +23,7 @@ import time
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import requests
 
@@ -216,7 +217,19 @@ def apply_feedback_to_dataset(feedback_entries: List[Dict], apply_changes: bool,
     return output
 
 
-def run_pipeline(base_url: str, total_requests: int, apply_changes: bool, retrain: bool) -> Path:
+def _make_session(admin_pin: Optional[str] = None) -> requests.Session:
+    """Session carrying the admin PIN so the gated reads this pipeline relies on
+    (GET /feedback, GET /feedback/stats) authenticate. Falls back to the
+    DASHBOARD_PIN env var. POST /chat and POST /feedback are public."""
+    s = requests.Session()
+    pin = admin_pin or os.getenv("DASHBOARD_PIN", "")
+    if pin:
+        s.headers["X-Admin-Pin"] = pin
+    return s
+
+
+def run_pipeline(base_url: str, total_requests: int, apply_changes: bool, retrain: bool,
+                 admin_pin: Optional[str] = None) -> Path:
     ensure_api_available(base_url)
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -228,7 +241,7 @@ def run_pipeline(base_url: str, total_requests: int, apply_changes: bool, retrai
     intents = load_intents()
     request_plan = build_request_plan(intents, total_requests)
 
-    session = requests.Session()
+    session = _make_session(admin_pin)
     stats = Counter()
     rating_counts = Counter()
     intent_mismatches = Counter()
@@ -375,6 +388,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Retrain the Naive Bayes model after applying dataset changes."
     )
+    parser.add_argument(
+        "--admin-pin",
+        default=os.getenv("DASHBOARD_PIN", ""),
+        help="X-Admin-Pin for gated /feedback and /feedback/stats reads (default: DASHBOARD_PIN env var)."
+    )
     return parser.parse_args()
 
 
@@ -385,7 +403,8 @@ def main() -> None:
         base_url=args.base_url.rstrip("/"),
         total_requests=args.requests,
         apply_changes=args.apply,
-        retrain=args.retrain
+        retrain=args.retrain,
+        admin_pin=args.admin_pin,
     )
     elapsed = time.time() - started
     print(f"Pipeline completed in {elapsed:.1f}s")

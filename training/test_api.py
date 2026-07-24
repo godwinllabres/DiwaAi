@@ -1,11 +1,17 @@
 """Quick test of the REST API endpoints"""
 
 import json
+import os
 import subprocess
 import time
 import requests
 import sys
 from multiprocessing import Process
+
+# /conversation/{user_id} is admin-gated (X-Admin-Pin). Set DASHBOARD_PIN in the
+# environment to exercise it; without it that one check returns 401/503.
+ADMIN_PIN = os.getenv("DASHBOARD_PIN", "")
+ADMIN_HEADERS = {"X-Admin-Pin": ADMIN_PIN} if ADMIN_PIN else {}
 
 def start_server():
     """Start the FastAPI server"""
@@ -109,9 +115,9 @@ def test_api():
     # Test 7: Conversation History
     print("\n\n[7] Conversation History")
     print("-" * 80)
-    response = requests.get(f"{BASE_URL}/conversation/test_user")
+    response = requests.get(f"{BASE_URL}/conversation/test_user", headers=ADMIN_HEADERS)
     history = response.json()
-    print(f"Messages for user 'test_user': {history['message_count']}")
+    print(f"Messages for user 'test_user': {history.get('message_count', 'N/A (admin PIN required)')}")
 
     print("\n" + "="*80)
     print("✓ All API endpoints working correctly!")

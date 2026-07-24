@@ -3,7 +3,7 @@ CvSU Chatbot REST API
 FastAPI-based endpoint for integration with web applications
 """
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from enum import Enum
@@ -319,7 +319,7 @@ app.add_middleware(
     allow_origins=_allowed_origins,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "X-Admin-Pin"],
+    allow_headers=["Content-Type", "X-Admin-Pin", "X-Sevi-Session"],
 )
 
 # ============================================================================
@@ -1799,11 +1799,26 @@ async def auth_logout(request: AuthLogoutRequest):
 
 
 @app.get("/auth/whoami", tags=["AIS Auth"])
-async def auth_whoami(session_id: str):
+async def auth_whoami(
+    x_sevi_session: Annotated[Optional[str], Header()] = None,
+    session_id: Optional[str] = None,
+):
     """Identity snapshot for an active session. Returns {"logged_in": false}
     when no session is cached so the frontend can decide whether to show
-    the login modal — no error, just a fact."""
-    snapshot = await _ais_auth.whoami(session_id)
+    the login modal — no error, just a fact.
+
+    The session id is read from the `X-Sevi-Session` HEADER, never the URL.
+    session_id is a bearer capability for the cached AIS token (possession of it
+    authorizes /ais/write financial actions), so it must not travel in the query
+    string, where the tunnel/nginx access log would persist it (CWE-598). The
+    `session_id` query param is a DEPRECATED fallback retained only so an
+    in-flight older web build doesn't spuriously log the user out mid-deploy;
+    current clients send the header.
+    """
+    sid = (x_sevi_session or session_id or "").strip()
+    if not sid:
+        return {"logged_in": False}
+    snapshot = await _ais_auth.whoami(sid)
     if snapshot is None:
         return {"logged_in": False}
     return {"logged_in": True, **snapshot}
@@ -2751,6 +2766,79 @@ async def global_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={"error": True, "message": "Internal server error"},
+    )
+
+
+# ============================================================================
+# Admin surface invariant
+# ============================================================================
+# ~30 routes carry `dependencies=[Depends(require_admin)]` one by one, which is
+# easy to forget on the next route someone adds. This audit runs at import time
+# and fails LOUDLY, so an ungated admin route breaks the boot (and CI) instead
+# of silently shipping an open endpoint that returns chat logs or PII.
+#
+# Each entry below is public BY DESIGN — a considered exception, not an
+# oversight. Anything else under the admin path policy must carry the gate.
+_PUBLIC_BY_DESIGN: set = {
+    ("POST", "/admin/verify"),      # the PIN check itself — can't require the PIN
+    ("GET", "/admin/logs"),         # static HTML shell, no secrets in it; a browser
+                                    # can't attach X-Admin-Pin on a plain navigation
+    ("POST", "/feedback"),          # users submit feedback anonymously
+    ("GET", "/feedback/reasons"),   # public reason taxonomy the chat UI renders
+}
+
+
+def _route_is_admin_gated(route) -> bool:
+    """True when `require_admin` appears anywhere in the route's dependency tree."""
+    dependant = getattr(route, "dependant", None)
+    if dependant is None:
+        return False
+    stack = [dependant]
+    while stack:
+        node = stack.pop()
+        if getattr(node, "call", None) is require_admin:
+            return True
+        stack.extend(getattr(node, "dependencies", []) or [])
+    return False
+
+
+def _requires_admin_by_policy(method: str, path: str) -> bool:
+    """Whether (method, path) is part of the protected admin surface."""
+    if (method, path) in _PUBLIC_BY_DESIGN:
+        return False
+    if path.startswith(("/admin", "/logs", "/conversation", "/feedback")):
+        return True
+    # Operator-only endpoints that don't share a common prefix. Listed so that
+    # REMOVING their gate also trips this audit, not just forgetting to add it.
+    if path in ("/ais_mcp_stats", "/connectors_mcp_stats", "/model/reload"):
+        return True
+    if path.startswith("/map"):
+        # Map reads are public (the chat renders the campus map); writes are not.
+        return method not in ("GET", "HEAD")
+    return False
+
+
+def _audit_admin_surface() -> list:
+    """Return 'METHOD /path' for every protected route missing require_admin."""
+    gaps = []
+    for route in app.routes:
+        path = getattr(route, "path", "")
+        for method in sorted(getattr(route, "methods", None) or ()):
+            if method in ("HEAD", "OPTIONS"):
+                continue
+            if _requires_admin_by_policy(method, path) and not _route_is_admin_gated(route):
+                gaps.append(f"{method} {path}")
+    return sorted(set(gaps))
+
+
+_ADMIN_SURFACE_GAPS = _audit_admin_surface()
+if _ADMIN_SURFACE_GAPS:
+    raise RuntimeError(
+        "Admin surface invariant violated — these routes expose or mutate "
+        "protected data but carry no require_admin dependency:\n  "
+        + "\n  ".join(_ADMIN_SURFACE_GAPS)
+        + "\n\nAdd `dependencies=[Depends(require_admin)]` to the route, or — if it "
+          "is intentionally public — add an explicit entry to _PUBLIC_BY_DESIGN."
     )
 
 # ============================================================================
