@@ -62,7 +62,13 @@ deletes nothing, and that a legitimate 30-day window still purges stale rows).
 - [ ] Read-only allowlist for `intent_hint` dispatch (`api/ais_mcp.py:1225`) — it can name
       any MCP tool incl. writes, bypassing the fenced `/ais/write`. Requires the shared
       `X-Internal-Key`, so lower urgency, but the hatch has no `_WRITE_DENYLIST` like the NL loop.
-- [ ] Retire or auth-gate the legacy root `app.py` (see caveat above).
+- [x] ~~Retire or auth-gate the legacy root `app.py`~~ — **DONE, retired.** It was first
+      auth-gated (require_admin on all 13 logger/conversation/feedback-read routes, plus
+      explicit CORS origins), then deleted outright along with `deployment/Dockerfile`
+      and `deployment/docker-compose.yml`, the only two things that built it. Nothing
+      imports it; the live paths are `Dockerfile.render` (Render) and `Dockerfile.local`
+      (compose + CI), both `uvicorn api.app:app`. `run_server.bat` now points at
+      `api.app` too. The ungated variant can no longer be built or run.
 - [ ] Bind `session_id` server-side — it's an unbound bearer capability on `/auth/whoami`
       + `/ais/write` (confused deputy; mitigated in practice by UUID minting).
 - [ ] (optional) Key the chat rate limiter on client IP, not the client-chosen `session_id`.
@@ -93,7 +99,12 @@ not committed because importing `api.app` loads the models.
 are all merged into `main` and can be deleted on the remote when convenient.
 The P1/P2 fixes live on `hardening/input-clamps`, not yet merged to `main`.
 
-Note for P3: the legacy root `app.py` imports the SAME `api.logger.ChatLogger`,
-so it already inherits the P1 limit clamps, the retention floor, and the export
-allowlist. What it still lacks is the auth layer — its logger routes and
-`/conversation` remain unauthenticated there.
+~~Note for P3: the legacy root `app.py` ...~~ — obsolete, the file is gone.
+
+Replacing that whole class of drift: `api/app.py` now runs an **admin-surface
+audit at import time**. It walks every route's dependency tree and raises if a
+protected path (`/admin`, `/logs`, `/conversation`, `/feedback`, non-GET `/map`,
+plus `/ais_mcp_stats`, `/connectors_mcp_stats`, `/model/reload`) is missing
+`require_admin`. 34 routes covered; four are public by design and listed
+explicitly in `_PUBLIC_BY_DESIGN`. Forgetting the gate on a new route now breaks
+the boot instead of silently shipping an open endpoint.
