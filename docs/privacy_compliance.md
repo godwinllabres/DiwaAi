@@ -20,6 +20,7 @@ item here is framed for review with the **CvSU Data Protection Officer**
 | Chat messages + bot replies, session_id/user_id, timings | `logs/chat_history.db` (SQLite, **gitignored — verified**) | PI; can contain volunteered SPI (student numbers, health disclosures) | No retention schedule yet |
 | Moderation trips incl. raw flagged text | in-memory ring (last 20) + chat log rows | **SPI when self-harm (health)** | `/admin/moderation` displays it — access control matters |
 | Feedback (thumbs, reasons, message text) | same DB | PI | |
+| `device_id` (opaque localStorage UUID) + `device_class` (form factor/orientation) | `chat_messages` columns, same DB | PI (persistent device identifier) | Counts distinct devices and phone/landscape usage. No fingerprinting — the id is client-generated, not derived from the device; the class is one of seven allowlisted slugs. Purged by the same retention sweep as the row it sits on. |
 | Campus/session context | in-memory, 30-min TTL | minimal | good minimization example |
 | AIS login pass-through (`/auth/login`) + server-side session tokens | memory, session-keyed | staff credentials/PI | deliberately not persisted client-side |
 | Connector outputs shown in chat | transient | staff names in ORPS ticket logs; DTS remarks; future: DV payees/amounts, **grades/admission status = SPI** | proportionality + source-system notice coverage |

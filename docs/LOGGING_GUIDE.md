@@ -83,13 +83,23 @@ CREATE TABLE chat_messages (
     timestamp TEXT,              -- ISO format timestamp
     user_id TEXT,               -- User identifier
     session_id TEXT,            -- Session identifier
-    user_message TEXT,          -- User's input
+    user_message TEXT,          -- User's input (PII-masked at write time)
     bot_response TEXT,          -- Bot's response
     intent TEXT,                -- Classified intent
     confidence REAL,            -- Confidence score (0-1)
-    response_time_ms REAL       -- Response time in milliseconds
+    response_time_ms REAL,      -- Response time in milliseconds
+    model_used TEXT,            -- Tier that answered (see api/model_registry.py)
+    model_version_id INTEGER,   -- -> model_version.id
+    device_id TEXT,             -- Opaque per-browser id; counts distinct devices
+    device_class TEXT           -- "<phone|tablet|desktop>/<portrait|landscape>"
 )
 ```
+
+`device_id` / `device_class` are optional and validated at the API door
+(`ChatRequest` in `api/app.py`): an id that does not match `[A-Za-z0-9_-]{8,64}`
+and a class outside the seven allowlisted slugs are both dropped to NULL rather
+than rejected, so a broken client loses a metric, not its answer. Roll them up
+with `ChatLogger.get_device_stats(days)` or `GET /logs/devices` (admin).
 
 ### sessions table
 ```sql
