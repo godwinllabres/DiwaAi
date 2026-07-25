@@ -33,6 +33,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Optional
@@ -203,6 +204,10 @@ class GroundingIndex:
 
 
 _index: Optional[GroundingIndex] = None
+# Guards the build/swap of _index. get_index is a check-then-set, so
+# without this the first concurrent burst after a restart has every
+# thread build its own copy inside one 2G container.
+_index_lock = threading.Lock()
 
 
 def get_index() -> Optional[GroundingIndex]:
@@ -211,15 +216,25 @@ def get_index() -> Optional[GroundingIndex]:
 	if not _ENABLED:
 		return None
 	if _index is None:
-		_index = GroundingIndex()
+		with _index_lock:
+			# Double-checked: another thread may have built it while we waited.
+			if _index is None:
+				_index = GroundingIndex()
 	return _index if _index.available else None
 
 
 def reload_index() -> Optional[GroundingIndex]:
-	"""Drop the singleton and rebuild from the bindings file."""
+	"""Rebuild from the bindings file and swap in."""
 	global _index
-	_index = None
-	return get_index()
+	if not _ENABLED:
+		return None
+	# Build first, swap second. The old `_index = None; return get_index()`
+	# left a window where every concurrent reader saw None and started its
+	# own build. Readers keep serving from the old index until the swap.
+	fresh = GroundingIndex()
+	with _index_lock:
+		_index = fresh
+	return fresh if fresh.available else None
 
 
 def citation_block(refs: list[SourceRef]) -> str:

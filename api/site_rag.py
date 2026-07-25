@@ -35,6 +35,7 @@ import html
 import json
 import logging
 import os
+import threading
 import re
 import time
 import urllib.parse
@@ -357,6 +358,10 @@ class SiteIndex:
 
 
 _index: Optional[SiteIndex] = None
+# Guards the build/swap of _index. get_index is a check-then-set, so
+# without this the first concurrent burst after a restart has every
+# thread build its own copy inside one 2G container.
+_index_lock = threading.Lock()
 
 
 def get_index() -> Optional[SiteIndex]:
@@ -365,15 +370,25 @@ def get_index() -> Optional[SiteIndex]:
 	if not _ENABLED:
 		return None
 	if _index is None:
-		_index = SiteIndex()
+		with _index_lock:
+			# Double-checked: another thread may have built it while we waited.
+			if _index is None:
+				_index = SiteIndex()
 	return _index if _index.available else None
 
 
 def reload_index() -> Optional[SiteIndex]:
-	"""Drop the singleton and rebuild from disk (used after sync_corpus)."""
+	"""Rebuild from disk and swap in (used after sync_corpus)."""
 	global _index
-	_index = None
-	return get_index()
+	if not _ENABLED:
+		return None
+	# Build first, swap second. The old `_index = None; return get_index()`
+	# left a window where every concurrent reader saw None and started its
+	# own build. Readers keep serving from the old index until the swap.
+	fresh = SiteIndex()
+	with _index_lock:
+		_index = fresh
+	return fresh if fresh.available else None
 
 
 def verbatim_reply(passage: Passage) -> str:
