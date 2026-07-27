@@ -571,6 +571,32 @@ def circuit_status() -> dict:
 	}
 
 
+# ── Write tools — the canonical list ─────────────────────────────────────────
+# Single source of truth for "this tool mutates AIS/HR state". Writes are only
+# ever legitimate through /ais/write, which requires an authenticated session,
+# a UI confirm, and a per-user OAuth token. Every other path — the agentic loop
+# and the intent_hint bypass — refuses these by name, so a write can never be
+# reached by natural language or by a caller naming a tool directly.
+# agentic_loop.py aliases this as _WRITE_DENYLIST.
+WRITE_TOOLS = frozenset({
+    # AIS writes
+    "create_dv", "approve_dv", "post_dv", "cancel_dv", "set_dv_status",
+    "draft_bir_2307", "issue_bir_2307", "submit_dv", "amend_dv",
+    # HR / DTR — render_dtr produces an official CSC form (DPA-sensitive) and
+    # draft_dtr writes a record; both go through the preview/confirm flow.
+    # get_attendance stays a READ (allowed).
+    "render_dtr", "draft_dtr",
+    # HR / COE + Service Record — official signed documents, rendered behind the
+    # confirm flow. Profile reads (get_employee_profile) stay READ.
+    "render_coe", "render_service_record",
+})
+
+# Args a caller must never be able to supply themselves: `__auth_token` is the
+# user's OAuth bearer (injected server-side by /ais/write only) and `confirm` is
+# the write-confirmation flag. Stripped from any caller-provided intent_args so a
+# hinted call cannot self-authorize a mutation even if a name slips the denylist.
+_CALLER_FORBIDDEN_ARGS = ("__auth_token", "confirm")
+
 # Keys redacted when logging tool args — anything that could carry user
 # credentials, OAuth tokens, or PII. Match by suffix/substring so future
 # additions (e.g. `password`, `api_key`) are caught without code change.
@@ -1225,8 +1251,25 @@ async def try_handle(
 		return None
 
 	# 1. Explicit hint from external client — skip routing entirely.
+	#
+	# READ-ONLY. This hatch names a tool directly, so without this check a caller
+	# holding X-Internal-Key could invoke approve_dv/post_dv/cancel_dv here and
+	# skip /ais/write entirely — no UI confirm, and no per-user OAuth token
+	# (the shared bot credential would act on behalf of nobody in particular).
+	# Refuse writes by name, and strip the args a caller must never supply, so
+	# the hatch cannot self-authorize a mutation even if an unlisted write tool
+	# is added later.
 	if intent_hint:
-		tool_name, args = intent_hint, intent_args or {}
+		if intent_hint in WRITE_TOOLS:
+			_logger.warning(
+				"ais_mcp intent_hint=%s refused reason=write_tool_via_hint", intent_hint,
+			)
+			return None
+		args = {
+			k: v for k, v in (intent_args or {}).items()
+			if k not in _CALLER_FORBIDDEN_ARGS
+		}
+		tool_name = intent_hint
 	else:
 		# 2. Regex — pronoun resolution + known patterns. Aggregation queries
 		#    are detected here too and route to dv_totals with an optional

@@ -278,6 +278,13 @@ class NeuralNetworkModel:
     MAX_LEN = 20
     EMBEDDING_DIM = 64
 
+    # Keras/TF inference is not guaranteed thread-safe, and one process holds a
+    # single loaded model, so serialize the call itself. Class-level on purpose:
+    # the constraint belongs to the framework, not to any one instance. The
+    # critical section is a single predict on a batch of one — microseconds of
+    # contention, versus a segfault-class failure if two threads enter together.
+    _predict_lock = threading.Lock()
+
     def __init__(self, model_dir: str):
         if not TF_AVAILABLE:
             raise ImportError("TensorFlow required for Neural Network model")
@@ -327,7 +334,8 @@ class NeuralNetworkModel:
         seq = self.tokenizer.texts_to_sequences([clean_text])
         padded = pad_sequences(seq, maxlen=self.MAX_LEN, padding="post")
 
-        proba = self.model.predict(padded, verbose=0)[0]
+        with self._predict_lock:
+            proba = self.model.predict(padded, verbose=0)[0]
         if abs(self.temperature - 1.0) > 1e-6:
             scaled = np.power(np.clip(proba, 1e-7, 1.0), 1.0 / self.temperature)
             proba = scaled / scaled.sum()
@@ -838,7 +846,7 @@ class ScopeGate:
 
     REFUSAL_MESSAGES = [
         "I can only help with questions about Cavite State University — programs, admissions, fees, scholarships, campus services, and policies. Is there something CvSU-related I can help with?",
-        "That's outside my scope. I'm Sevi, the CvSU virtual assistant — I focus on Cavite State University topics like enrollment, courses, scholarships, and campus information. What would you like to know about CvSU?",
+        "That's not something I can help with. I'm Sevi, the CvSU virtual assistant — I stick to Cavite State University topics like enrollment, courses, scholarships, and campus information. What would you like to know about CvSU?",
         "I'm not able to answer that — I'm built to help with CvSU-related questions only (admissions, programs, fees, campus services). Please ask me something about Cavite State University.",
     ]
 
@@ -910,6 +918,12 @@ class ClaudeLLM:
         try:
             self.client = anthropic.Anthropic(
                 api_key=self.api_key,
+                # TIMEOUT_SECONDS is PER ATTEMPT, and the SDK's default is 2
+                # retries — so one generate() can occupy its caller for ~3x the
+                # timeout plus backoff, not the 12s the constant suggests. That
+                # is the difference between shedding load and stalling behind a
+                # provider brownout, so bound the attempts explicitly.
+                max_retries=1,
                 timeout=self.TIMEOUT_SECONDS,
             )
             self.available = True
@@ -1018,6 +1032,15 @@ class HybridChatbot:
     Strategy: Use fast NB first, fallback to accurate NN if uncertain
     """
 
+    # Class-level fallbacks for the two state locks. __init__ replaces these
+    # with per-instance locks; they exist because __init__ loads pickled models,
+    # so callers that only want the pure helpers build instances via
+    # HybridChatbot.__new__ and never run it (see test_conversation_recap.py,
+    # test_place_resolver.py). Sharing one lock across such instances is
+    # strictly more conservative than per-instance, never less.
+    _history_lock = threading.Lock()
+    _stats_lock = threading.Lock()
+
     NB_CONFIDENCE_THRESHOLD = 0.65  # If NB confidence >= 65%, use it; otherwise defer to NN.
     # Raised from 0.55: with the NLU boost no longer inflating confidence, borderline
     # NB force-fits (e.g. an off-topic query landing in courses_offered at ~0.63) now
@@ -1124,6 +1147,22 @@ class HybridChatbot:
             "fallback_used": 0,
             "nlu_enhanced": 0
         }
+
+        # Two narrow locks rather than one coarse one. Chat turns now run
+        # concurrently in worker threads (see the turn gate in api/app.py), and
+        # both structures above are written on every turn.
+        #
+        # _history_lock is the load-bearing one: conversation_history is an
+        # OrderedDict, and concurrent popitem/move_to_end/insert from DIFFERENT
+        # sessions corrupt its internal linked list. That is real corruption,
+        # not a stale read — which is also why a per-session lock cannot cover
+        # it; the structure is shared even when the sessions are not.
+        #
+        # _stats_lock is separate because the counters are touched far more
+        # often and held far more briefly. Sharing one lock would serialize
+        # every turn behind bookkeeping for no benefit.
+        self._history_lock = threading.Lock()
+        self._stats_lock = threading.Lock()
 
         # Initialize NLU engine for advanced understanding
         if NLU_AVAILABLE:
@@ -1414,7 +1453,7 @@ class HybridChatbot:
             intent = result["intent"]
             confidence = result["confidence"]
             nlu_data = result
-            self.model_usage_stats["nlu_enhanced"] += 1
+            self._bump("nlu_enhanced")
         return intent, confidence, nlu_data
 
     def _nn_result(self, user_input: str) -> Tuple[Optional[str], float]:
@@ -1425,10 +1464,15 @@ class HybridChatbot:
 
     def _llm_context(self, user_id: Optional[str]) -> list:
         """Build the last-3-turns conversation context for the LLM."""
-        if not user_id or user_id not in self.conversation_history:
+        if not user_id:
             return []
+        # Copy the slice under the lock, then build the message list outside it.
+        # Slicing a list another thread is appending to (or deleting from, when
+        # a session ages past _MAX_HISTORY_TURNS) can otherwise read a torn view.
+        with self._history_lock:
+            turns = list(self.conversation_history.get(user_id, [])[-3:])
         context = []
-        for turn in self.conversation_history[user_id][-3:]:
+        for turn in turns:
             context.append({"role": "user", "content": turn["user_message"]})
             context.append({"role": "assistant", "content": turn["bot_response"]})
         return context
@@ -1499,9 +1543,7 @@ class HybridChatbot:
         agrees = match.score >= intent_retrieval.MATCH_MIN_SCORE and match.intent == nb_intent
         if match.score < intent_retrieval.HIGH_MATCH_SCORE and not agrees:
             return None
-        self.model_usage_stats["intent_retrieval_used"] = (
-            self.model_usage_stats.get("intent_retrieval_used", 0) + 1
-        )
+        self._bump("intent_retrieval_used")
         return match.intent, self._select_response(match.intent, user_input), match.score
 
     @staticmethod
@@ -1608,7 +1650,7 @@ class HybridChatbot:
         if best is None:
             return None
         _, score, tag, reply, label, stat = best
-        self.model_usage_stats[stat] = self.model_usage_stats.get(stat, 0) + 1
+        self._bump(stat)
         return tag, reply, score, label
 
     def _place_resolver_result(self, user_input: str, campus: Optional[str] = None):
@@ -1656,15 +1698,18 @@ class HybridChatbot:
         match = _ORDINAL_REF_RE.match(user_input or "")
         if not match:
             return None
-        history = self.conversation_history.get(user_id) or []
         # Walk back to the most recent turn that actually printed a list: the
         # reply to the user's first pick sits in between, so history[-1] alone
-        # cannot answer "I mean 3".
+        # cannot answer "I mean 3". Done entirely under the lock — a concurrent
+        # turn both appends to this list and blanks the list_items of the entry
+        # aging out of the pointable window.
         items = []
-        for turn in reversed(history[-_LIST_REF_LOOKBACK:]):
-            if turn.get("list_items"):
-                items = turn["list_items"]
-                break
+        with self._history_lock:
+            history = self.conversation_history.get(user_id) or []
+            for turn in reversed(history[-_LIST_REF_LOOKBACK:]):
+                if turn.get("list_items"):
+                    items = list(turn["list_items"])
+                    break
         index = int(match.group(1))
         if not 1 <= index <= len(items):
             return None
@@ -1692,7 +1737,9 @@ class HybridChatbot:
         except ImportError:
             from pii import mask_pii
 
-        history = self.conversation_history.get(user_id, []) if user_id else []
+        # Copy under the lock: this list-comprehends over the session's turns
+        # while a concurrent turn may be appending to or truncating them.
+        history = self.snapshot_history(user_id) if user_id else []
         # Skip prior recaps (they would recurse into "1. can you summarize…"
         # noise) and anything a gate refused. Echoing a refused turn would put
         # attacker-controlled text into a bot_response that _llm_context later
@@ -1751,14 +1798,14 @@ class HybridChatbot:
         # _conversation_recap_result for why neither tier below can own this.
         recap = self._conversation_recap_result(user_input, user_id)
         if recap is not None:
-            self.model_usage_stats["conversation_recap_used"] += 1
+            self._bump("conversation_recap_used")
             return self.RECAP_INTENT, recap, 1.0, "Conversation Recap", nlu_data
 
         # Step 0.6: Benign small talk — states the scope boundary and still
         # answers. Curated content only; see api/smalltalk.py for the GAD screen.
         small = _smalltalk_reply(user_input, filipino=_is_filipino(user_input))
         if small is not None:
-            self.model_usage_stats["smalltalk_used"] += 1
+            self._bump("smalltalk_used")
             return self.SMALLTALK_INTENT, small, 1.0, "Small Talk", nlu_data
 
         # Step 0.7: College Programs — naming any college and asking about
@@ -1767,14 +1814,14 @@ class HybridChatbot:
         # with the generic all-colleges blurb, so it would win every time.
         programs = _college_program_reply(user_input, filipino=_is_filipino(user_input))
         if programs is not None:
-            self.model_usage_stats["college_programs_used"] += 1
+            self._bump("college_programs_used")
             return self.PROGRAMS_INTENT, programs, 1.0, "College Programs", nlu_data
 
         if not skip_intents:
             # Step 1: Naive Bayes (+ optional NLU enhancement)
             nb_intent, nb_confidence, nlu_data = self._nb_result(user_input, user_id)
             if nb_intent and nb_confidence >= self.NB_CONFIDENCE_THRESHOLD:
-                self.model_usage_stats["naive_bayes_used"] += 1
+                self._bump("naive_bayes_used")
                 return nb_intent, self._select_response(nb_intent, user_input), nb_confidence, "Naive Bayes (NLU Enhanced)", nlu_data
 
             # Step 2: Neural Network with adaptive per-intent threshold, gated
@@ -1788,7 +1835,7 @@ class HybridChatbot:
             if (nn_intent and nn_confidence >= self.nn_model.get_threshold(nn_intent)
                     and nn_intent == nb_intent):
                 response = self._select_response(nn_intent, user_input)
-                self.model_usage_stats["neural_network_used"] += 1
+                self._bump("neural_network_used")
                 return nn_intent, response, nn_confidence, "Neural Network", nlu_data
 
             # Step 2.5: Intent retrieval — soft lexical match over the intent
@@ -1809,7 +1856,7 @@ class HybridChatbot:
             placed = self._place_resolver_result(user_input, campus)
             if placed is not None:
                 place_id, response = placed
-                self.model_usage_stats["place_resolver_used"] += 1
+                self._bump("place_resolver_used")
                 nlu_data = {**nlu_data, "place_id": place_id}
                 return self.FIND_PLACE_INTENT, response, 1.0, "Place Resolver", nlu_data
 
@@ -1825,13 +1872,13 @@ class HybridChatbot:
             # "Ang turon ay X") before ScopeGate's off-topic check.
             ns_allowed, ns_reason = self.nonsense_gate.allows(user_input)
             if not ns_allowed:
-                self.model_usage_stats["scope_gate_blocked"] += 1
+                self._bump("scope_gate_blocked")
                 return self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, f"NonsenseGate ({ns_reason})", nlu_data
 
             allowed, reason = self.scope_gate.allows(user_input)
             if not allowed:
                 # Pre-filter blocked the query — don't even call the API
-                self.model_usage_stats["scope_gate_blocked"] += 1
+                self._bump("scope_gate_blocked")
                 return self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, f"ScopeGate ({reason})", nlu_data
 
             # Official-source grounding — gather the best passages from BOTH
@@ -1845,12 +1892,12 @@ class HybridChatbot:
             llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id))
             # LLM emitted the refusal token → out of scope per the model's own judgment
             if llm_reply and LLM_REFUSAL_TOKEN in llm_reply:
-                self.model_usage_stats["scope_gate_blocked"] += 1
+                self._bump("scope_gate_blocked")
                 provider_label = "Claude" if isinstance(self.llm, ClaudeLLM) else "Ollama"
                 return self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, f"{provider_label} (out-of-scope)", nlu_data
 
             if llm_reply:
-                self.model_usage_stats["llm_fallback_used"] += 1
+                self._bump("llm_fallback_used")
                 provider_label = "Claude LLM" if isinstance(self.llm, ClaudeLLM) else "Local LLM"
                 return self.FALLBACK_INTENT, llm_reply, 0.0, f"{provider_label}{charter_suffix}", nlu_data
 
@@ -1877,14 +1924,14 @@ class HybridChatbot:
         # wording) — under its own intent so the anti-pattern miner and the
         # fallback log don't count an outage as an unanswered question.
         if llm_unavailable:
-            self.model_usage_stats["llm_unavailable"] += 1
+            self._bump("llm_unavailable")
             return (self.LLM_UNAVAILABLE_INTENT,
                     self._select_response(self.LLM_UNAVAILABLE_INTENT, user_input),
                     0.0, "LLM Unavailable", nlu_data)
 
         # Step 4b: Static fallback — a genuine no-match (or the LLM was
         # intentionally disabled via LLM_PROVIDER=none).
-        self.model_usage_stats["fallback_used"] += 1
+        self._bump("fallback_used")
         return (self.FALLBACK_INTENT, self._select_response(self.FALLBACK_INTENT, user_input),
                 0.0, "Fallback", nlu_data)
 
@@ -1921,6 +1968,40 @@ class HybridChatbot:
 
         # Track conversation (bounded LRU — see __init__).
         if user_id:
+            self.record_turn(
+                user_id,
+                user_input=user_input,
+                response=response,
+                intent=intent,
+                confidence=confidence,
+                model_used=model_used,
+                session_id=session_id,
+                nlu_data=nlu_data,
+            )
+
+        return intent, response, confidence, model_used, nlu_data
+
+    def record_turn(
+        self,
+        user_id: str,
+        *,
+        user_input: str,
+        response: str,
+        intent: str,
+        confidence: float,
+        model_used: str,
+        session_id: Optional[str] = None,
+        nlu_data: Optional[dict] = None,
+    ) -> None:
+        """Append one turn to a session's history — the only writer.
+
+        Extracted from chat() so every mutation of conversation_history goes
+        through one lock-holding place. popitem/move_to_end/insert each rewrite
+        the OrderedDict's internal linked list, so two turns from DIFFERENT
+        sessions interleaving here corrupt it outright — not a stale read.
+        """
+        nlu_data = nlu_data or {}
+        with self._history_lock:
             if user_id not in self.conversation_history:
                 # Evict the least-recently-used session when at capacity.
                 while len(self.conversation_history) >= self._MAX_HISTORY_SESSIONS:
@@ -1951,44 +2032,80 @@ class HybridChatbot:
             if len(turns) > self._MAX_HISTORY_TURNS:
                 del turns[: -self._MAX_HISTORY_TURNS]
 
-        return intent, response, confidence, model_used, nlu_data
+    def _bump(self, key: str, n: int = 1) -> None:
+        """Increment a usage counter — the only writer to model_usage_stats.
+
+        `d[k] += 1` is a read-modify-write spanning several bytecodes, so with
+        concurrent turns it silently drops increments. Routing every write
+        through here keeps the counters accurate rather than approximate.
+        """
+        with self._stats_lock:
+            self.model_usage_stats[key] = self.model_usage_stats.get(key, 0) + n
 
     def get_usage_stats(self) -> dict:
         """Get model usage statistics"""
-        total = sum(self.model_usage_stats.values())
+        # Snapshot once under the lock. Computing percentages directly against
+        # a dict that is still being written yields parts that don't sum to the
+        # total the caller was shown.
+        with self._stats_lock:
+            stats = self.model_usage_stats.copy()
+
+        total = sum(stats.values())
         if total == 0:
-            return self.model_usage_stats.copy()
+            return stats
 
         def pct(key: str) -> float:
-            return self.model_usage_stats[key] / total * 100
+            return stats.get(key, 0) / total * 100
 
         return {
             "total_predictions": total,
-            "naive_bayes_used": self.model_usage_stats["naive_bayes_used"],
+            "naive_bayes_used": stats.get("naive_bayes_used", 0),
             "naive_bayes_percentage": pct("naive_bayes_used"),
-            "neural_network_used": self.model_usage_stats["neural_network_used"],
+            "neural_network_used": stats.get("neural_network_used", 0),
             "neural_network_percentage": pct("neural_network_used"),
-            "place_resolver_used": self.model_usage_stats["place_resolver_used"],
+            "place_resolver_used": stats.get("place_resolver_used", 0),
             "place_resolver_percentage": pct("place_resolver_used"),
-            "llm_fallback_used": self.model_usage_stats["llm_fallback_used"],
+            "llm_fallback_used": stats.get("llm_fallback_used", 0),
             "llm_fallback_percentage": pct("llm_fallback_used"),
-            "llm_unavailable": self.model_usage_stats["llm_unavailable"],
+            "llm_unavailable": stats.get("llm_unavailable", 0),
             "llm_unavailable_percentage": pct("llm_unavailable"),
-            "fallback_used": self.model_usage_stats["fallback_used"],
+            "fallback_used": stats.get("fallback_used", 0),
             "fallback_percentage": pct("fallback_used"),
-            "nlu_enhanced": self.model_usage_stats["nlu_enhanced"],
+            "nlu_enhanced": stats.get("nlu_enhanced", 0),
         }
 
     def get_history(self) -> dict:
-        """Get conversation history"""
-        return self.conversation_history.copy()
+        """Get conversation history, with each session's turns copied.
+
+        The old shallow `.copy()` handed out the live per-session lists, which
+        a caller would then serialize while a worker thread appended to and
+        truncated them.
+        """
+        with self._history_lock:
+            return {uid: list(turns) for uid, turns in self.conversation_history.items()}
+
+    def snapshot_history(self, user_id: str) -> list:
+        """One session's turns, copied under the lock.
+
+        Callers that used to reach into conversation_history[user_id] directly
+        should use this: it is the difference between serializing a stable list
+        and serializing one a worker is mutating underneath them.
+        """
+        with self._history_lock:
+            return list(self.conversation_history.get(user_id) or [])
+
+    def drop_history(self, user_id: str) -> bool:
+        """Forget one session. Returns whether anything was actually removed."""
+        with self._history_lock:
+            return self.conversation_history.pop(user_id, None) is not None
 
     def clear_history(self, user_id: Optional[str] = None):
         """Clear conversation history"""
-        if user_id and user_id in self.conversation_history:
-            del self.conversation_history[user_id]
-        elif not user_id:
-            self.conversation_history.clear()
+        with self._history_lock:
+            if user_id:
+                self.conversation_history.pop(user_id, None)
+            else:
+                self.conversation_history.clear()
 
     def get_all_intents(self) -> list:
         """Get list of all available intents"""

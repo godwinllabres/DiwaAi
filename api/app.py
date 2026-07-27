@@ -3,7 +3,7 @@ CvSU Chatbot REST API
 FastAPI-based endpoint for integration with web applications
 """
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from enum import Enum
@@ -14,9 +14,12 @@ import json
 import os
 import random
 import re
+import ipaddress
 import secrets
 import time
 import sys
+import functools
+from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict, deque
 from datetime import datetime
 from pathlib import Path
@@ -29,6 +32,9 @@ from nltk.stem import WordNetLemmatizer
 from .logger import ChatLogger, is_safe_user_id as _is_safe_user_id
 # Import hybrid chatbot
 from .hybrid_chatbot import HybridChatbot
+# The module itself, not just the class: the startup warm-up touches its
+# module-level NLTK lemmatizer (see _warm_lazy_singletons).
+from . import hybrid_chatbot as _hybrid_chatbot
 from . import intent_retrieval as _intent_retrieval
 from . import site_rag as _site_rag
 # Seasonal topic recommender + intent-onboarding sanitation checks
@@ -265,9 +271,86 @@ async def _corpus_sync_loop(hours: float):
                             exc_info=False)
 
 
+def _warm_lazy_singletons() -> None:
+    """Materialize the retrieval indexes and NLTK's lazy loaders before traffic.
+
+    Every one of these is a check-then-set singleton that today first builds
+    inside a chat worker thread. While a single global lock serialized every
+    chat turn that was safe by accident — only one thread could ever be in the
+    build. Once turns run concurrently, the first burst after a restart fans N
+    threads into the same unguarded `if _index is None` (see site_rag.get_index),
+    each constructing its own index inside a 2G container.
+
+    Warming here closes the window rather than reasoning about it. Nothing in
+    this function may raise: a cold index degrades an answer, a failed boot
+    takes the service down.
+    """
+    started = time.time()
+    for name, get_index in (
+        ("charter_rag", _charter_rag.get_index),
+        ("site_rag", _site_rag.get_index),
+        ("intent_retrieval", _intent_retrieval.get_index),
+        ("intent_grounding", _intent_grounding.get_index),
+    ):
+        try:
+            get_index()
+        except Exception:  # noqa: BLE001 — a cold index must never block boot
+            _logger.warning("warm-up: %s index failed to build", name, exc_info=False)
+
+    # WordNetLemmatizer is constructed at hybrid_chatbot import but never
+    # called, so the WordNet corpus behind it is still an unloaded
+    # LazyCorpusLoader — and that first load is the known NLTK thread race.
+    # Both helpers run on every turn (hybrid_chatbot._preprocess), so touching
+    # them once here is enough.
+    try:
+        _hybrid_chatbot.lemmatizer.lemmatize("tests")
+        nltk.word_tokenize("warm up")
+    except Exception:  # noqa: BLE001
+        _logger.warning("warm-up: NLTK lazy loaders failed", exc_info=False)
+
+    _logger.info("warm-up finished in %.1fs", time.time() - started)
+
+
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
     tasks = []
+
+    # Size the default thread pool explicitly. asyncio.to_thread uses the
+    # loop's default executor, which is sized min(32, os.cpu_count() + 4) — and
+    # under Docker `cpus: '2.0'` is a CFS quota, not a cpuset, so os.cpu_count()
+    # reports the HOST's core count. The default is therefore both unpredictable
+    # across machines and unrelated to the container's actual CPU budget.
+    # Headroom over the turn limit matters: index reloads, admin snapshots and
+    # the retention sweep all borrow from this pool, and a pool sized at exactly
+    # _TURN_LIMIT would let in-flight turns starve them.
+    _executor = ThreadPoolExecutor(
+        max_workers=_TURN_LIMIT + 8, thread_name_prefix="sevi",
+    )
+    asyncio.get_running_loop().set_default_executor(_executor)
+    _logger.info(
+        "turn gate: %d concurrent, %d queued, %.0fs queue timeout; worker pool %d",
+        _TURN_LIMIT, _TURN_QUEUE_MAX, _TURN_QUEUE_TIMEOUT, _TURN_LIMIT + 8,
+    )
+
+    # Off the event loop: these are blocking disk reads and TF-IDF builds, and
+    # /health must stay answerable while they run (compose gives the container
+    # a 30s start_period before the healthcheck counts against it).
+    await asyncio.to_thread(_warm_lazy_singletons)
+
+    # The per-IP tier is the only chat limit a client cannot rotate, but it can
+    # only see a real client address when a trusted proxy header is configured.
+    # Left unset, _client_ip falls back to the peer address — which behind a
+    # reverse proxy is ONE address for every user, quietly turning a per-client
+    # limit into a single global ceiling. Too easy to miss to stay silent.
+    if not _CLIENT_IP_HEADER:
+        _logger.warning(
+            "TRUSTED_CLIENT_IP_HEADER is unset — per-IP chat throttling keys on "
+            "the peer address. Behind a reverse proxy that is one address for "
+            "ALL traffic, so CHAT_RATE_LIMIT_IP_MAX (%d per %.0fs) acts as a "
+            "server-wide ceiling, not a per-client limit.",
+            _CHAT_IP_MAX_REQUESTS, _CHAT_WINDOW_SECONDS,
+        )
+
     retention_days = int(os.getenv("LOG_RETENTION_DAYS", "365"))
     if retention_days > 0:
         tasks.append(asyncio.create_task(_retention_loop(retention_days)))
@@ -290,6 +373,11 @@ async def _lifespan(_app: FastAPI):
             except asyncio.CancelledError:
                 pass
         await _ais_close_pool()
+        # Let queued log writes finish before the process goes away — losing an
+        # audit row on shutdown is avoidable. The turn pool is drained without
+        # waiting: anything still in it is a turn whose client is already gone.
+        _log_pool.shutdown(wait=True)
+        _executor.shutdown(wait=False)
 
 
 # Deployed version, set by compose (SEVI_VERSION in the api service's
@@ -319,8 +407,84 @@ app.add_middleware(
     allow_origins=_allowed_origins,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "X-Admin-Pin"],
+    allow_headers=["Content-Type", "X-Admin-Pin", "X-Sevi-Session"],
 )
+
+# ============================================================================
+# Client IP resolution (trusted proxy)
+# ============================================================================
+# Every throttle here is keyed by "who is calling". Behind the production
+# ingress (Cloudflare tunnel -> nginx -> api) `request.client.host` is the NGINX
+# CONTAINER's IP, identical for every visitor, so keying on it would put the
+# whole university in one bucket: one abusive client would rate-limit everyone,
+# and the PIN throttle would lock out real admins after five failures by anyone.
+#
+# Reading a forwarded header instead is only safe if something we control sets
+# it — otherwise a caller just sends their own and picks their bucket (or
+# poisons someone else's). So trust is OPT-IN and off by default.
+#
+#   TRUSTED_CLIENT_IP_HEADER  unset (default) -> use the peer address. Correct
+#                             when the API is exposed directly, and safe
+#                             everywhere else because a spoofed header is ignored.
+#                             Production (behind the tunnel): CF-Connecting-IP,
+#                             which Cloudflare sets and strips from client input.
+#                             A plain reverse proxy: X-Forwarded-For.
+#   TRUSTED_PROXY_HOPS        position of the real client from the RIGHT of a
+#                             comma-chained header, 1 = rightmost. Single-valued
+#                             headers (CF-Connecting-IP, X-Real-IP) use 1.
+#                             For this stack's X-Forwarded-For, nginx appends the
+#                             cloudflared peer, giving "<client>, <cloudflared>",
+#                             so the client sits at position 2.
+#
+# Counting from the right matters: the left end is attacker-controlled (a client
+# can send "X-Forwarded-For: 1.2.3.4" and everything we append lands to its
+# right), while each entry on the right was added by a hop we actually run.
+_CLIENT_IP_HEADER = os.getenv("TRUSTED_CLIENT_IP_HEADER", "").strip()
+_TRUSTED_PROXY_HOPS = max(1, int(os.getenv("TRUSTED_PROXY_HOPS", "1")))
+
+
+def _parse_ip(value: str) -> Optional[str]:
+    """Return `value` if it is a valid IP address, else None.
+
+    Rejecting non-IPs keeps a hostile header from becoming a throttle key:
+    unbounded distinct values would both evade the limit and grow the in-memory
+    buckets without bound.
+    """
+    candidate = (value or "").strip()
+    if not candidate:
+        return None
+    # "[2001:db8::1]:443" / "203.0.113.5:1234" -> bare address
+    if candidate.startswith("["):
+        candidate = candidate[1:].split("]", 1)[0]
+    elif candidate.count(":") == 1:
+        candidate = candidate.split(":", 1)[0]
+    try:
+        return str(ipaddress.ip_address(candidate))
+    except ValueError:
+        return None
+
+
+def _client_ip(request: Request) -> str:
+    """Best available identity for the caller, honouring a trusted proxy header.
+
+    Falls back to the peer address whenever the header is absent, malformed, or
+    not configured — never trusts a value we cannot attribute to our own ingress.
+    """
+    peer = request.client.host if request.client else "unknown"
+    if not _CLIENT_IP_HEADER:
+        return peer
+    raw = request.headers.get(_CLIENT_IP_HEADER, "")
+    parts = [p.strip() for p in raw.split(",") if p.strip()]
+    if not parts:
+        return peer
+    index = len(parts) - _TRUSTED_PROXY_HOPS
+    if not 0 <= index < len(parts):
+        # Chain shorter than configured: someone bypassed a hop, or the config is
+        # wrong. Use the leftmost entry (closest to the client) rather than an
+        # arbitrary one, then let validation decide.
+        index = 0
+    return _parse_ip(parts[index]) or peer
+
 
 # ============================================================================
 # Admin Authentication
@@ -347,24 +511,99 @@ def _record_attempt(client_ip: str) -> None:
     _pin_attempts.setdefault(client_ip, []).append(time.time())
 
 
-# Per-session rate limiter for /chat. Cloudflare Access protects Desk but
-# Diwa's /chat is intentionally anonymous, so defense-in-depth here matters.
-# Keyed by session_id when present, else by client IP, so a single browser
-# tab can't burst-query indefinitely. In-memory only — single-worker uvicorn
-# is assumed; multi-worker deploys need Redis.
+# Rate limiter for /chat. Diwa's /chat is intentionally anonymous, so this is
+# the only thing standing between one script and the LLM bill.
+#
+# TWO tiers, because either one alone fails:
+#   per-session  session_id is CHOSEN BY THE CLIENT, so a caller that rotates it
+#                every request sees an empty bucket each time — on its own this
+#                limit is advisory, it only stops an honest tab from bursting.
+#   per-IP       closes that hole, since the address is not client-chosen (given
+#                TRUSTED_CLIENT_IP_HEADER is configured). Deliberately much
+#                looser: a campus behind one NAT address shares it, so this is a
+#                ceiling on abuse, not a per-person quota.
+#
+# In-memory only — single-worker uvicorn is assumed; multi-worker needs Redis.
+#
+# The per-IP default is deliberately generous because it is a ceiling on abuse,
+# not a capacity limit: the turn gate (CHAT_MAX_CONCURRENT_TURNS) is what bounds
+# how much work the server actually accepts. Raising this without that gate in
+# place would remove the only backpressure in the stack — the two settings are
+# a pair. A whole campus can sit behind one NAT address, so a limit tight enough
+# to be a per-person quota just throttles the campus.
 _CHAT_MAX_REQUESTS  = int(os.getenv("CHAT_RATE_LIMIT_MAX", "30"))
+_CHAT_IP_MAX_REQUESTS = int(os.getenv("CHAT_RATE_LIMIT_IP_MAX", "1200"))
 _CHAT_WINDOW_SECONDS = float(os.getenv("CHAT_RATE_LIMIT_WINDOW", "60"))
 _chat_hits: Dict[str, list] = {}
 
 
-def _check_chat_rate_limit(key: str) -> None:
-    """Raise 429 if `key` has exceeded the chat-call budget for the window."""
+def _check_chat_rate_limit(key: str, limit: Optional[int] = None) -> None:
+    """Raise 429 if `key` has exceeded its budget for the window."""
+    ceiling = _CHAT_MAX_REQUESTS if limit is None else limit
     now = time.time()
     hits = [t for t in _chat_hits.get(key, []) if now - t < _CHAT_WINDOW_SECONDS]
-    if len(hits) >= _CHAT_MAX_REQUESTS:
-        raise HTTPException(429, "Too many chat requests. Slow down for a moment.")
+    if len(hits) >= ceiling:
+        # Retry-After so the client can back off for a real interval instead of
+        # guessing. The window is the honest answer: that is when a slot frees.
+        raise HTTPException(
+            429,
+            "Too many chat requests. Slow down for a moment.",
+            headers={"Retry-After": str(int(_CHAT_WINDOW_SECONDS))},
+        )
     hits.append(now)
     _chat_hits[key] = hits
+
+
+def _enforce_chat_limits(request_session_id: Optional[str], http_request: Request) -> None:
+    """Apply both chat tiers. IP first: it is the one a client cannot rotate."""
+    _check_chat_rate_limit(f"chat:ip:{_client_ip(http_request)}", _CHAT_IP_MAX_REQUESTS)
+    if request_session_id:
+        _check_chat_rate_limit(f"chat:sid:{request_session_id}")
+
+
+# ── Admin session cookie ─────────────────────────────────────────────────────
+# The PIN used to be kept in sessionStorage and re-attached by JavaScript on
+# every admin call, so a single XSS anywhere on the admin origin could lift the
+# shared secret itself. Instead /admin/verify exchanges the PIN once for an
+# opaque, expiring, httpOnly session token: JS can never read it, it is scoped
+# to this browser, and revoking it does not require rotating the PIN.
+#
+# Server-side store (not a signed token) so /admin/logout can revoke instantly.
+# In-memory, consistent with the throttles above — single-worker uvicorn is
+# assumed; a multi-worker deploy needs Redis for both.
+_ADMIN_COOKIE = "sevi_admin"
+_ADMIN_SESSION_TTL = float(os.getenv("ADMIN_SESSION_TTL_SECONDS", "3600"))
+_admin_sessions: Dict[str, float] = {}     # token -> expiry (epoch seconds)
+# Secure flag for BOTH cookies this app sets (admin session and AIS session).
+# Dropped for local http:// development, where the browser would otherwise
+# refuse to store them and the dashboard would look like it never unlocks.
+# COOKIE_SECURE is the accurate name; ADMIN_COOKIE_SECURE is kept as an alias
+# because it shipped first and is referenced in the deploy examples.
+_COOKIE_SECURE_RAW = os.getenv("COOKIE_SECURE", os.getenv("ADMIN_COOKIE_SECURE", "1"))
+_ADMIN_COOKIE_SECURE = _COOKIE_SECURE_RAW.strip().lower() not in ("0", "false", "no", "off", "")
+
+
+def _admin_session_new() -> str:
+    """Mint a session token, sweeping expired ones so the dict can't grow."""
+    now = time.time()
+    for token, expiry in list(_admin_sessions.items()):
+        if expiry <= now:
+            _admin_sessions.pop(token, None)
+    token = secrets.token_urlsafe(32)
+    _admin_sessions[token] = now + _ADMIN_SESSION_TTL
+    return token
+
+
+def _admin_session_valid(token: str) -> bool:
+    if not token:
+        return False
+    expiry = _admin_sessions.get(token)
+    if expiry is None:
+        return False
+    if expiry <= time.time():
+        _admin_sessions.pop(token, None)
+        return False
+    return True
 
 
 def _pin_matches(candidate: str) -> bool:
@@ -389,9 +628,24 @@ async def require_admin(request: Request) -> None:
     """
     if not DASHBOARD_PIN:
         raise HTTPException(503, "Admin access not configured")
-    client_ip = request.client.host if request.client else "unknown"
+    # 1. Browser path — the httpOnly session cookie minted by /admin/verify.
+    # Checked first and NOT throttled: it is an unguessable 256-bit token, and
+    # a dashboard polling with a valid session must never consume the PIN
+    # budget or it would lock itself out.
+    if _admin_session_valid(request.cookies.get(_ADMIN_COOKIE, "")):
+        return
+    # 2. Script path — the raw PIN. Kept for CI, curl, and the training
+    # scripts, which have no cookie jar.
+    pin_header = request.headers.get("X-Admin-Pin", "")
+    if not pin_header:
+        # No credential presented at all. This is NOT a PIN guess, so it must
+        # not spend the brute-force budget: a browser whose admin cookie has
+        # expired sends exactly this, and counting it would 429 the operator
+        # out of the unlock screen after five ordinary page loads.
+        raise HTTPException(401, "Unauthorized")
+    client_ip = _client_ip(request)
     _check_rate_limit(client_ip)
-    if not _pin_matches(request.headers.get("X-Admin-Pin", "")):
+    if not _pin_matches(pin_header):
         _record_attempt(client_ip)
         raise HTTPException(401, "Unauthorized")
 
@@ -461,16 +715,58 @@ def _jwt_identity(http_request: Request) -> Optional[str]:
 # any of those. Pairs with the per-session rate limiter (_check_chat_rate_limit).
 _CHAT_MAX_MESSAGE_CHARS = int(os.getenv("CHAT_MAX_MESSAGE_CHARS", "4000"))
 
+# Device telemetry, validated at the door (see ChatRequest below). The id is
+# whatever opaque token the client minted — a UUID today — so the shape is
+# bounded rather than parsed. The classes are an allowlist mirroring
+# `DeviceClass` in sevi-web app/lib/ids.ts; keep the two in step.
+_DEVICE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
+_DEVICE_CLASSES = frozenset({
+    "phone/portrait", "phone/landscape",
+    "tablet/portrait", "tablet/landscape",
+    "desktop/portrait", "desktop/landscape",
+    "unknown/unknown",
+})
+
 
 class ChatRequest(BaseModel):
     message: str
     user_id: Optional[str] = None
     session_id: Optional[str] = None
+    # How Sevi is actually being reached. `device_id` is a stable opaque id the
+    # browser keeps in localStorage, so usage can be counted per DEVICE rather
+    # than per session (a student who asks three questions over three days is
+    # one device, three sessions); `device_class` is the form factor and
+    # orientation of the turn. Both are optional — every client that predates
+    # them keeps working, they just do not appear in the device rollup.
+    device_id: Optional[str] = None
+    device_class: Optional[str] = None
     # Optional escape hatch for external clients (e.g. an admin tool or another
     # service) to call a specific AIS MCP tool without going through the
     # router. When set, `message` is still logged but `intent_hint` wins.
     intent_hint: Optional[str] = None
     intent_args: Optional[Dict[str, Any]] = None
+
+    @field_validator("device_id")
+    @classmethod
+    def _clean_device_id(cls, v: Optional[str]) -> Optional[str]:
+        """Keep the column to opaque client-generated ids.
+
+        Dropped rather than rejected: a malformed id is a broken metric, not a
+        reason to fail a student's question. The bound also stops the field
+        being used as a smuggling channel for free text into the logs.
+        """
+        if v is None:
+            return None
+        return v if _DEVICE_ID_RE.match(v) else None
+
+    @field_validator("device_class")
+    @classmethod
+    def _clean_device_class(cls, v: Optional[str]) -> Optional[str]:
+        """Allowlisted, so the rollup below can group on it without first
+        having to defend against whatever a caller felt like sending."""
+        if v is None:
+            return None
+        return v if v in _DEVICE_CLASSES else None
 
     @field_validator("message")
     @classmethod
@@ -978,6 +1274,29 @@ chatbot = HybridChatbot(
 # Initialize chat logger
 chat_logger = ChatLogger(log_dir="logs", db_path="logs/chat_history.db")
 
+# Chat-log writes get their own single-thread executor.
+#
+# They were being made synchronously from async handlers, so every turn blocked
+# the event loop on a disk write — which also stalls /health, and a healthcheck
+# that fails under load gets the container restarted by compose exactly when it
+# is busiest. One thread, not several: ChatLogger already serializes writers
+# behind its own lock, so more threads would only add contention. Separate from
+# the default pool so a burst of log writes can never starve chat turns of
+# worker threads.
+_log_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="sevi-log")
+
+
+async def _log_chat(**kwargs):
+    """Write one chat-log row off the event loop, returning its message id.
+
+    The id goes into the reply, so this is awaited rather than fire-and-forget;
+    the point is to stop blocking the loop, not to drop the write.
+    """
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(
+        _log_pool, functools.partial(chat_logger.log_chat, **kwargs)
+    )
+
 # ============================================================================
 # API Endpoints
 # ============================================================================
@@ -1011,6 +1330,15 @@ async def health_check():
         "llm_base_url": status["base_url"],
         "llm_known_provider": status["known_provider"],
         "llm_error": status["error"],
+        # Turn-gate state. Without this a saturated gate — or a leaked waiter
+        # counter wedging it shut — is completely invisible: the container keeps
+        # reporting healthy while shedding every chat request with a 503.
+        "turn_gate": {
+            "limit": _chat_runner.limit,
+            "in_flight": _chat_runner.in_flight,
+            "waiting": _chat_runner.waiting,
+            "queue_max": _chat_runner.queue_max,
+        },
     }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1205,7 +1533,7 @@ def _build_attachments(
     return cards, _context_from_ais(ais_context_set), hint
 
 
-def _short_circuit_response(
+async def _short_circuit_response(
     request: "ChatRequest",
     log_message: str,
     start_time: float,
@@ -1222,7 +1550,7 @@ def _short_circuit_response(
     cascade (safety refusal, campus clarify, campus directory). `log_message`
     is the user's ORIGINAL text — request.message may have been mutated by a
     gate."""
-    message_id = chat_logger.log_chat(
+    message_id = await _log_chat(
         user_id=request.user_id or "anonymous",
         user_message=log_message,
         bot_response=text,
@@ -1231,6 +1559,8 @@ def _short_circuit_response(
         model_used=model_used,
         session_id=request.session_id,
         response_time_ms=(time.time() - start_time) * 1000,
+        device_id=request.device_id,
+        device_class=request.device_class,
     )
     return ChatResponse(
         message_id=message_id,
@@ -1320,19 +1650,103 @@ async def _safety_screen(message: str, session_id: Optional[str]):
     return None, message
 
 
-# chatbot.chat() is synchronous and can block for the full LLM inference
-# (45s+ on CPU localai). Run it in a worker thread so the single-worker event
-# loop keeps serving /health and other endpoints, but keep turns single-flight
-# with a lock: the chatbot's in-memory state (conversation history, usage
-# stats, TF predict) assumes one chat at a time, and two concurrent localai
-# inferences would double its memory spike on a small host.
-_chat_turn_lock = asyncio.Lock()
+# How many chat turns may run at once, how many may queue behind them, and how
+# long a queued turn waits before we give up on it. A turn is mostly network
+# wait (the Claude call), so the ceiling is about bounding memory and provider
+# concurrency, not CPU. Local providers are the exception: llama.cpp-class
+# backends spike memory per inference, so keep this at 1 for ollama/localai.
+_TURN_LIMIT = max(1, int(os.getenv("CHAT_MAX_CONCURRENT_TURNS", "4")))
+_TURN_QUEUE_MAX = max(0, int(os.getenv("CHAT_QUEUE_MAX", "16")))
+_TURN_QUEUE_TIMEOUT = float(os.getenv("CHAT_QUEUE_TIMEOUT", "25"))
+
+
+class ChatTurnRunner:
+    """Admission control for chat turns.
+
+    Replaces the single global lock that allowed exactly one turn server-wide —
+    which meant one student's 12s LLM question stalled every other student's
+    50ms FAQ answer. Two things it provides:
+
+      run()        bounded concurrency: N turns in flight, a bounded queue
+                   behind them, and a fast 503 past that rather than a wait
+                   that outlives the client's patience (and nginx's timeout).
+      exclusive()  a drain — no turn in flight — for the admin paths that swap
+                   the chatbot or its LLM out from under a running turn.
+
+    Deliberately an object rather than loose module state: changing the
+    concurrency model (or later moving admission control into Redis for a
+    multi-worker deploy) becomes a swap here instead of edits at five call
+    sites. chatbot.chat is passed in per call, never captured, so /model/reload
+    rebinding the global still takes effect on the next turn.
+    """
+
+    def __init__(self, limit: int, queue_max: int, queue_timeout: float):
+        self.limit = limit
+        self.queue_max = queue_max
+        self.queue_timeout = queue_timeout
+        self._sem = asyncio.Semaphore(limit)
+        # Serializes drains against each other. Without it two concurrent
+        # drains can each hold a subset of the permits and wait forever for the
+        # rest — a deadlock that no timeout would clear.
+        self._drain_lock = asyncio.Lock()
+        self.waiting = 0
+        self.in_flight = 0
+
+    def _busy(self) -> HTTPException:
+        return HTTPException(
+            status_code=503,
+            detail="Sevi is helping a lot of students right now. Please try again in a moment.",
+            headers={"Retry-After": "5"},
+        )
+
+    @asynccontextmanager
+    async def slot(self):
+        """Hold one turn permit, or raise 503 rather than queue unboundedly."""
+        if self.waiting >= self.queue_max:
+            raise self._busy()
+        self.waiting += 1
+        try:
+            await asyncio.wait_for(self._sem.acquire(), self.queue_timeout)
+        except (asyncio.TimeoutError, TimeoutError):
+            raise self._busy()
+        finally:
+            # Unconditional: this also covers the timeout path and a client
+            # that disconnected while queued. Leaking this counter would wedge
+            # the gate shut for every later request.
+            self.waiting -= 1
+        self.in_flight += 1
+        try:
+            yield
+        finally:
+            self.in_flight -= 1
+            self._sem.release()
+
+    async def run(self, fn, *args, **kwargs):
+        """Run a blocking turn off the event loop, under the gate."""
+        async with self.slot():
+            return await asyncio.to_thread(fn, *args, **kwargs)
+
+    @asynccontextmanager
+    async def exclusive(self):
+        """Drain every permit so no chat turn is in flight."""
+        async with self._drain_lock:
+            acquired = 0
+            try:
+                for _ in range(self.limit):
+                    await self._sem.acquire()
+                    acquired += 1
+                yield
+            finally:
+                for _ in range(acquired):
+                    self._sem.release()
+
+
+_chat_runner = ChatTurnRunner(_TURN_LIMIT, _TURN_QUEUE_MAX, _TURN_QUEUE_TIMEOUT)
 
 
 async def _chat_turn(*args, **kwargs):
-    """Run chatbot.chat off the event loop, one turn at a time."""
-    async with _chat_turn_lock:
-        return await asyncio.to_thread(chatbot.chat, *args, **kwargs)
+    """Run chatbot.chat off the event loop, under the turn gate."""
+    return await _chat_runner.run(chatbot.chat, *args, **kwargs)
 
 
 @app.post("/chat", response_model=ChatResponse, tags=["Chat"],
@@ -1358,8 +1772,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
 
     # Rate-limit by session_id (so a single tab can't hammer us) with a
     # client-IP fallback for sessionless callers. Raises 429 when exceeded.
-    rl_key = request.session_id or (http_request.client.host if http_request.client else "anon")
-    _check_chat_rate_limit(f"chat:{rl_key}")
+    _enforce_chat_limits(request.session_id, http_request)
 
     if request.intent_hint is not None or request.intent_args is not None:
         internal_key = os.getenv("INTERNAL_KEY", "")
@@ -1381,7 +1794,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     # Scope gates only guard the LLM tier). See docs/moderation_plan.md.
     block, request.message = await _safety_screen(request.message, request.session_id)
     if block:
-        return _short_circuit_response(request, original_message, start_time, **block)
+        return await _short_circuit_response(request, original_message, start_time, **block)
 
     # Agentic workflow tier (Tier 5.5) — stateful, tool-executing conversations
     # (e.g. booking an advising appointment). Runs AFTER safety (so an abusive
@@ -1392,7 +1805,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     wf_key = request.session_id or request.user_id
     wf_turn = await _workflows.dispatch(wf_key, request.message)
     if wf_turn is not None:
-        return _short_circuit_response(
+        return await _short_circuit_response(
             request, original_message, start_time,
             text=wf_turn.text,
             intent="action_book_advising",
@@ -1409,7 +1822,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         request.session_id or request.user_id, request.message
     )
     if campus_routing.action == "clarify":
-        return _short_circuit_response(
+        return await _short_circuit_response(
             request, original_message, start_time,
             text=_campus.CLARIFY_TEXT,
             intent="campus_disambiguation",
@@ -1431,7 +1844,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     # intent has the richer answer plus the map card.
     if _campus_directory.is_directory_turn(request.message, campus_routing.campus):
         text, info = _campus_directory.build_answer(campus_routing.campus)
-        return _short_circuit_response(
+        return await _short_circuit_response(
             request, original_message, start_time,
             text=text,
             intent="campus_location",
@@ -1525,7 +1938,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     # Log the chat — record the user's ORIGINAL text, not the gate-rewritten
     # message (sanitized profanity / campus-grounded), so the moderation and
     # audit trail reflects what was actually sent.
-    message_id = chat_logger.log_chat(
+    message_id = await _log_chat(
         user_id=request.user_id or "anonymous",
         user_message=original_message,
         bot_response=response,
@@ -1533,7 +1946,9 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         confidence=confidence,
         model_used=model_used,
         session_id=request.session_id,
-        response_time_ms=response_time_ms
+        response_time_ms=response_time_ms,
+        device_id=request.device_id,
+        device_class=request.device_class,
     )
 
     # Logged verbatim above (audit trail); redacted for display. The summary
@@ -1728,7 +2143,7 @@ async def set_llm_config(request: LlmToggleRequest):
     # and take the turn lock so a toggle can't swap/None self.llm out from
     # under a chat turn running in another worker thread (mid-turn swap →
     # AttributeError → 500). Preserves the docstring's next-turn semantics.
-    async with _chat_turn_lock:
+    async with _chat_runner.exclusive():
         status = await asyncio.to_thread(chatbot.set_llm, request.provider, request.model)
     _logger.info(
         "admin llm toggle: provider=%s model=%s available=%s",
@@ -1768,13 +2183,20 @@ async def get_log_tail(lines: int = 200, grep: Optional[str] = None):
 # evaporate on uvicorn restart.
 
 class AuthLoginRequest(BaseModel):
-    session_id: str
+    # Accepted but IGNORED. The server mints the session id itself and returns
+    # it as an httpOnly cookie, so a client no longer supplies one — but an
+    # older web build still sends it, and a required field would 422 every
+    # login attempt during a rolling deploy.
+    session_id: Optional[str] = None
     username: str
     password: str
 
 
 class AuthLogoutRequest(BaseModel):
-    session_id: str
+    # Optional for the same reason as the login/write models: the cookie is the
+    # authority, so a browser has no session_id to send and a required field
+    # would make signing out impossible for exactly the callers we now expect.
+    session_id: Optional[str] = None
 
 
 def _auth_handle(handler):
@@ -1788,30 +2210,75 @@ def _auth_handle(handler):
     return wrapper
 
 
+# The AIS session id is a bearer for the user's OAuth token, so it lives in an
+# httpOnly cookie: minted server-side at login, never readable by JavaScript,
+# and never echoed in a response body or a URL.
+_AIS_COOKIE = "sevi_ais"
+
+
+def _ais_sid(request: Request, fallback: Optional[str] = None) -> str:
+    """Resolve the AIS session: cookie first, then an explicit value.
+
+    The fallback keeps non-browser callers (and any web build still in flight
+    during a deploy) working; browsers send the cookie and never see the value.
+    """
+    return (request.cookies.get(_AIS_COOKIE, "") or (fallback or "")).strip()
+
+
 @app.post("/auth/login", tags=["AIS Auth"])
-async def auth_login(request: AuthLoginRequest):
-    """Exchange CvSU credentials for an AIS OAuth token cached under
-    session_id. Subsequent /ais/write calls with the same session_id will
-    act as this user. Returns the user's identity claims (NOT the token)."""
-    return await _auth_handle(_ais_auth.login)(
-        request.session_id, request.username, request.password,
+async def auth_login(request: AuthLoginRequest, http_request: Request):
+    """Exchange CvSU credentials for an AIS OAuth session.
+
+    Returns the user's identity claims only. The session id is minted
+    server-side and returned as an httpOnly cookie — never in the body, so it
+    cannot be read by script or captured from a log.
+    """
+    sid, identity = await _auth_handle(_ais_auth.login)(
+        request.username, request.password,
     )
+    response = JSONResponse(identity)
+    response.set_cookie(
+        _AIS_COOKIE, sid,
+        httponly=True,
+        secure=_ADMIN_COOKIE_SECURE,
+        samesite="strict",
+        path="/",
+    )
+    return response
 
 
 @app.post("/auth/logout", tags=["AIS Auth"])
-async def auth_logout(request: AuthLogoutRequest):
+async def auth_logout(request: AuthLogoutRequest, http_request: Request):
     """Drop the cached AIS token for this session. Idempotent — succeeds
     even if there was no session to begin with."""
-    await _ais_auth.logout(request.session_id)
-    return {"ok": True}
+    await _ais_auth.logout(_ais_sid(http_request, request.session_id))
+    response = JSONResponse({"ok": True})
+    response.delete_cookie(_AIS_COOKIE, path="/")
+    return response
 
 
 @app.get("/auth/whoami", tags=["AIS Auth"])
-async def auth_whoami(session_id: str):
+async def auth_whoami(
+    http_request: Request,
+    x_sevi_session: Annotated[Optional[str], Header()] = None,
+    session_id: Optional[str] = None,
+):
     """Identity snapshot for an active session. Returns {"logged_in": false}
     when no session is cached so the frontend can decide whether to show
-    the login modal — no error, just a fact."""
-    snapshot = await _ais_auth.whoami(session_id)
+    the login modal — no error, just a fact.
+
+    The session id is read from the `X-Sevi-Session` HEADER, never the URL.
+    session_id is a bearer capability for the cached AIS token (possession of it
+    authorizes /ais/write financial actions), so it must not travel in the query
+    string, where the tunnel/nginx access log would persist it (CWE-598). The
+    `session_id` query param is a DEPRECATED fallback retained only so an
+    in-flight older web build doesn't spuriously log the user out mid-deploy;
+    current clients send the header.
+    """
+    sid = _ais_sid(http_request, x_sevi_session or session_id)
+    if not sid:
+        return {"logged_in": False}
+    snapshot = await _ais_auth.whoami(sid)
     if snapshot is None:
         return {"logged_in": False}
     return {"logged_in": True, **snapshot}
@@ -1835,7 +2302,10 @@ _WRITE_ACTION_TOOL_MAP: Dict[str, str] = {
 
 
 class AisWriteRequest(BaseModel):
-    session_id: str
+    # Optional: the httpOnly cookie is the authority now (_ais_sid resolves it
+    # first). Still accepted so non-browser callers, and any web build that
+    # predates the cookie, keep working.
+    session_id: Optional[str] = None
     action: str                          # one of _WRITE_ACTION_TOOL_MAP keys
     name: str                            # DV name
     idempotency_key: str
@@ -1845,7 +2315,7 @@ class AisWriteRequest(BaseModel):
 
 
 @app.post("/ais/write", tags=["AIS Write"])
-async def ais_write(request: AisWriteRequest):
+async def ais_write(request: AisWriteRequest, http_request: Request):
     """Invoke an AIS write tool as the end user behind `session_id`.
 
     Steps:
@@ -1862,9 +2332,11 @@ async def ais_write(request: AisWriteRequest):
     if request.action not in _WRITE_ACTION_TOOL_MAP:
         raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}")
 
-    # 1. Token resolution (may refresh).
+    # 1. Token resolution (may refresh). The session comes from the httpOnly
+    # cookie, so the value that authorizes a financial write is one the page's
+    # JavaScript never held and the client never chose.
     try:
-        token = await _ais_auth.get_user_token(request.session_id)
+        token = await _ais_auth.get_user_token(_ais_sid(http_request, request.session_id))
     except _ais_auth.AuthError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
 
@@ -2067,7 +2539,7 @@ async def reload_model():
         _intent_grounding.reload_index()
         return new_bot
 
-    async with _chat_turn_lock:
+    async with _chat_runner.exclusive():
         chatbot = await asyncio.to_thread(_rebuild)
     return {"status": "reloaded"}
 
@@ -2083,7 +2555,10 @@ async def sync_site_corpus():
         stats = await asyncio.to_thread(_site_rag.sync_corpus)
     except Exception as exc:
         raise HTTPException(502, f"Site corpus sync failed: {exc}")
-    index = _site_rag.reload_index()
+    # Off the loop like the sync above it: reload_index now builds the whole
+    # index before swapping it in, so on the event loop it would stall every
+    # other request for the duration of the build.
+    index = await asyncio.to_thread(_site_rag.reload_index)
     stats["index_available"] = index is not None
     return stats
 
@@ -2091,12 +2566,13 @@ async def sync_site_corpus():
          dependencies=[Depends(require_admin)])
 async def get_conversation_history(user_id: str):
     """Get conversation history for a user."""
-    # Turn lock: chat turns now mutate conversation_history from a worker
-    # thread; snapshot under the lock so we never serialize a list the worker
-    # is appending to/truncating. (Pre-thread-offload these handlers waited
-    # behind turns anyway — the loop was blocked — so semantics are unchanged.)
-    async with _chat_turn_lock:
-        history = list(chatbot.conversation_history.get(user_id, []))
+    # Snapshot under the chatbot's own history lock rather than the turn gate.
+    # The requirement was never "no turn may run" — it was "don't serialize a
+    # list a worker is appending to". Blocking every turn to read one session's
+    # history was collateral damage from having a single lock; the narrow lock
+    # gives the same guarantee without stalling chat. Off the event loop so a
+    # contended lock can't stall the loop itself.
+    history = await asyncio.to_thread(chatbot.snapshot_history, user_id)
     return {
         "user_id": user_id,
         "message_count": len(history),
@@ -2107,12 +2583,12 @@ async def get_conversation_history(user_id: str):
             dependencies=[Depends(require_admin)])
 async def clear_conversation(user_id: str):
     """Clear conversation history for a user."""
-    # Turn lock: deleting the key mid-turn would KeyError the worker thread
-    # between its move_to_end and read — serialize with turns instead.
-    async with _chat_turn_lock:
-        if user_id in chatbot.conversation_history:
-            del chatbot.conversation_history[user_id]
-            return {"status": "cleared", "user_id": user_id}
+    # drop_history pops under the history lock, so it cannot land between a
+    # worker's move_to_end and its read — the KeyError this used to guard
+    # against. Check-and-delete is one atomic step there, not two here.
+    removed = await asyncio.to_thread(chatbot.drop_history, user_id)
+    if removed:
+        return {"status": "cleared", "user_id": user_id}
     return {"status": "no_history", "user_id": user_id}
 
 _BATCH_MAX = int(os.getenv("BATCH_MAX", "20"))
@@ -2131,17 +2607,18 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
     """
     if len(requests) > _BATCH_MAX:
         raise HTTPException(status_code=413, detail=f"Batch too large (max {_BATCH_MAX})")
-    client_host = http_request.client.host if http_request.client else "anon"
     results = []
     for request in requests:
-        _check_chat_rate_limit(f"chat:{request.session_id or client_host}")
+        # Same two tiers as /chat, so a batch cannot buy extra budget by varying
+        # session_id across its sub-requests.
+        _enforce_chat_limits(request.session_id, http_request)
         start_time = time.time()
         # Same front-door SafetyGate as /chat — /batch must not be an
         # unscreened second entrance for abusive/self-harm messages.
         original_message = request.message
         block, request.message = await _safety_screen(request.message, request.session_id)
         if block:
-            results.append(_short_circuit_response(request, original_message, start_time, **block))
+            results.append(await _short_circuit_response(request, original_message, start_time, **block))
             continue
         intent, response, confidence, model_used, nlu_data = await _chat_turn(
             request.message,
@@ -2151,7 +2628,7 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
         response_time_ms = (time.time() - start_time) * 1000
 
         # Log each message (original text — request.message may be sanitized)
-        message_id = chat_logger.log_chat(
+        message_id = await _log_chat(
             user_id=request.user_id or "anonymous",
             user_message=original_message,
             bot_response=response,
@@ -2159,7 +2636,9 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
             confidence=confidence,
             model_used=model_used,
             session_id=request.session_id,
-            response_time_ms=response_time_ms
+            response_time_ms=response_time_ms,
+            device_id=request.device_id,
+            device_class=request.device_class,
         )
 
         # Logged verbatim above (audit trail); redacted for display. The summary
@@ -2259,6 +2738,15 @@ async def get_today_statistics():
     """Get today's chat statistics"""
     stats = chat_logger.get_today_stats()
     return stats
+
+@app.get("/logs/devices", tags=["Logging"], dependencies=[Depends(require_admin)])
+async def get_device_statistics(days: Annotated[int, Query(ge=1, le=365)] = 30):
+    """Device-usage rollup: distinct devices, form factor, and orientation.
+
+    Admin-gated like the rest of /logs — device_id is a persistent identifier
+    and the breakdown is operational data, not a public metric.
+    """
+    return chat_logger.get_device_stats(days)
 
 @app.get("/logs/search", tags=["Logging"], dependencies=[Depends(require_admin)])
 async def search_logs(query: str, limit: Annotated[int, Query(ge=1, le=200)] = 20):
@@ -2592,15 +3080,40 @@ class PinRequest(BaseModel):
 
 @app.post("/admin/verify", tags=["Admin"])
 async def verify_admin_pin(body: PinRequest, request: Request):
-    """Verify dashboard access PIN (rate-limited)."""
-    client_ip = request.client.host if request.client else "unknown"
+    """Exchange the dashboard PIN for an httpOnly admin session (rate-limited).
+
+    The PIN is presented ONCE, here. Everything after this rides the cookie, so
+    the shared secret never has to live in JavaScript-readable storage or be
+    re-sent on each admin call.
+    """
+    client_ip = _client_ip(request)
     _check_rate_limit(client_ip)
     if not DASHBOARD_PIN:
         raise HTTPException(503, "Admin access not configured")
     if not _pin_matches(body.pin):
         _record_attempt(client_ip)
         raise HTTPException(401, "Invalid PIN")
-    return {"status": "ok"}
+    token = _admin_session_new()
+    response = JSONResponse({"status": "ok", "expires_in": int(_ADMIN_SESSION_TTL)})
+    response.set_cookie(
+        _ADMIN_COOKIE, token,
+        max_age=int(_ADMIN_SESSION_TTL),
+        httponly=True,           # unreadable from JS — the whole point
+        secure=_ADMIN_COOKIE_SECURE,
+        samesite="strict",       # never sent on a cross-site request
+        path="/",
+    )
+    return response
+
+
+@app.post("/admin/logout", tags=["Admin"])
+async def admin_logout(request: Request):
+    """Revoke this browser's admin session. Idempotent."""
+    token = request.cookies.get(_ADMIN_COOKIE, "")
+    _admin_sessions.pop(token, None)
+    response = JSONResponse({"status": "ok"})
+    response.delete_cookie(_ADMIN_COOKIE, path="/")
+    return response
 
 
 @app.post("/admin/intents/sanitize", tags=["Admin"], dependencies=[Depends(require_admin)])
@@ -2759,6 +3272,82 @@ async def global_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={"error": True, "message": "Internal server error"},
+    )
+
+
+# ============================================================================
+# Admin surface invariant
+# ============================================================================
+# ~30 routes carry `dependencies=[Depends(require_admin)]` one by one, which is
+# easy to forget on the next route someone adds. This audit runs at import time
+# and fails LOUDLY, so an ungated admin route breaks the boot (and CI) instead
+# of silently shipping an open endpoint that returns chat logs or PII.
+#
+# Each entry below is public BY DESIGN — a considered exception, not an
+# oversight. Anything else under the admin path policy must carry the gate.
+_PUBLIC_BY_DESIGN: set = {
+    ("POST", "/admin/verify"),      # the PIN check itself — can't require the PIN
+    ("POST", "/admin/logout"),      # revokes the caller's own cookie; must stay
+                                    # callable with an expired/absent session so
+                                    # signing out never dead-ends
+    ("GET", "/admin/logs"),         # static HTML shell, no secrets in it; a browser
+                                    # can't attach X-Admin-Pin on a plain navigation
+    ("POST", "/feedback"),          # users submit feedback anonymously
+    ("GET", "/feedback/reasons"),   # public reason taxonomy the chat UI renders
+}
+
+
+def _route_is_admin_gated(route) -> bool:
+    """True when `require_admin` appears anywhere in the route's dependency tree."""
+    dependant = getattr(route, "dependant", None)
+    if dependant is None:
+        return False
+    stack = [dependant]
+    while stack:
+        node = stack.pop()
+        if getattr(node, "call", None) is require_admin:
+            return True
+        stack.extend(getattr(node, "dependencies", []) or [])
+    return False
+
+
+def _requires_admin_by_policy(method: str, path: str) -> bool:
+    """Whether (method, path) is part of the protected admin surface."""
+    if (method, path) in _PUBLIC_BY_DESIGN:
+        return False
+    if path.startswith(("/admin", "/logs", "/conversation", "/feedback")):
+        return True
+    # Operator-only endpoints that don't share a common prefix. Listed so that
+    # REMOVING their gate also trips this audit, not just forgetting to add it.
+    if path in ("/ais_mcp_stats", "/connectors_mcp_stats", "/model/reload"):
+        return True
+    if path.startswith("/map"):
+        # Map reads are public (the chat renders the campus map); writes are not.
+        return method not in ("GET", "HEAD")
+    return False
+
+
+def _audit_admin_surface() -> list:
+    """Return 'METHOD /path' for every protected route missing require_admin."""
+    gaps = []
+    for route in app.routes:
+        path = getattr(route, "path", "")
+        for method in sorted(getattr(route, "methods", None) or ()):
+            if method in ("HEAD", "OPTIONS"):
+                continue
+            if _requires_admin_by_policy(method, path) and not _route_is_admin_gated(route):
+                gaps.append(f"{method} {path}")
+    return sorted(set(gaps))
+
+
+_ADMIN_SURFACE_GAPS = _audit_admin_surface()
+if _ADMIN_SURFACE_GAPS:
+    raise RuntimeError(
+        "Admin surface invariant violated — these routes expose or mutate "
+        "protected data but carry no require_admin dependency:\n  "
+        + "\n  ".join(_ADMIN_SURFACE_GAPS)
+        + "\n\nAdd `dependencies=[Depends(require_admin)]` to the route, or — if it "
+          "is intentionally public — add an explicit entry to _PUBLIC_BY_DESIGN."
     )
 
 # ============================================================================

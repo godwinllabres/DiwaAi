@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 import re
 from dataclasses import dataclass
 from typing import Optional
@@ -175,6 +176,10 @@ class CharterIndex:
 
 
 _index: Optional[CharterIndex] = None
+# Guards the build/swap of _index. get_index is a check-then-set, so
+# without this the first concurrent burst after a restart has every
+# thread build its own copy inside one 2G container.
+_index_lock = threading.Lock()
 
 
 def get_index() -> Optional[CharterIndex]:
@@ -183,7 +188,10 @@ def get_index() -> Optional[CharterIndex]:
 	if not _ENABLED:
 		return None
 	if _index is None:
-		_index = CharterIndex()
+		with _index_lock:
+			# Double-checked: another thread may have built it while we waited.
+			if _index is None:
+				_index = CharterIndex()
 	return _index if _index.available else None
 
 

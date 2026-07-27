@@ -45,7 +45,7 @@ Leave `DATABASE_URL` unset. Everything behaves exactly as before.
 > safe (the Postgres transaction rolls back and nothing is written) — and
 > rows written after the copy simply won't be in Postgres.
 
-### deployment/docker-compose.yml stack
+### sevi-deploy compose stack
 The compose file now includes a `postgres:17-alpine` service (published on
 `127.0.0.1:5432` for the migration) and sets `DATABASE_URL` on the app.
 Note this legacy compose has a pre-existing defect unrelated to Postgres:
@@ -53,11 +53,11 @@ its build context is `deployment/` only, so the image contains no app code —
 the sevi-deploy stack is the working deployment. For the DB service itself:
 
 ```bash
-docker compose -f deployment/docker-compose.yml up -d postgres
+cd ../sevi-deploy && COMPOSE_PROFILES=postgres docker compose up -d db
 # one-time copy of existing SQLite data (runs on the host via 127.0.0.1):
 python scripts/migrate_chat_history_to_postgres.py \
   --dsn postgresql://sevi:sevi@127.0.0.1:5432/sevi
-docker compose -f deployment/docker-compose.yml up -d
+cd ../sevi-deploy && docker compose up -d --wait
 ```
 
 Set `POSTGRES_PASSWORD` in `.env` before exposing anything beyond localhost.
