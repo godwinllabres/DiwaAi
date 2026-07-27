@@ -29,7 +29,10 @@ ADMISSIONS = (
     "\n"
     "For the current cycle's exact requirements, see https://cvsu.edu.ph.\n"
     "\n"
-    "\U0001F4D6 Source: CvSU Citizens' Charter, FY 2026 edition, p. 1694"
+    "\U0001F4D6 Source: CvSU Citizens' Charter, FY 2026 edition, p. 1645 — "
+    "“Application Procedure for Admission of Incoming First Year” "
+    "(Office of Student Affairs and Services) · "
+    "[open this page](https://api.example/sources/citizens-charter.pdf#page=1694)"
 )
 
 
@@ -55,6 +58,11 @@ def test_parses_the_admissions_reply_into_typed_blocks():
     assert isinstance(note, NoteBlock)
     assert note.icon == "\U0001F4D6"
     assert note.text.startswith("Source: CvSU Citizens' Charter")
+    # The citation's page-deep link must survive block parsing intact — it is
+    # the only way the reader can go and check the page.
+    assert note.text.endswith(
+        "[open this page](https://api.example/sources/citizens-charter.pdf#page=1694)"
+    )
 
 
 def test_recognises_a_short_all_caps_line_as_a_heading():
@@ -95,6 +103,18 @@ def test_display_formatter_leaves_an_authored_numbered_list_intact():
     from api.app import _format_display_text
 
     assert _format_display_text(ADMISSIONS) == ADMISSIONS
+
+
+def test_display_formatter_never_reflows_a_provenance_footnote():
+    """A full citation (document, edition, page, service, office, link) is past
+    the 240-char reflow threshold and comma-separated, so the enumeration
+    heuristics used to shred it into "- CvSU Citizens' Charter / - FY 2026
+    edition / - p". The one line that exists to be checkable must survive."""
+    from api.app import _format_display_text
+
+    note = ADMISSIONS.rsplit("\n\n", 1)[1]
+    assert note.startswith("\U0001F4D6") and len(note) > 240  # else the path is untested
+    assert _format_display_text(note) == note
 
 
 def test_display_formatter_still_bulletizes_a_dense_paragraph():

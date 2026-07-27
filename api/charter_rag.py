@@ -13,6 +13,11 @@ marked OCR text). Two consumers in HybridChatbot.predict():
 Deliberately dependency-free beyond scikit-learn, which the chatbot already
 requires. The index builds once, lazily, in a few hundred ms.
 
+Page splitting and everything a *reader* needs from a page number — the service
+documented there, the owning office, the number printed on the page, the deep
+link into the PDF — live in charter_pages, which is also what makes this tier
+and the per-intent bindings cite a page identically.
+
 Env:
     CHARTER_RAG_ENABLED  — "0" disables both consumers (default "1")
     CHARTER_RAG_PATH     — override the charter text location
@@ -22,20 +27,17 @@ from __future__ import annotations
 import logging
 import os
 import threading
-import re
 from dataclasses import dataclass
 from typing import Optional
+
+from . import charter_pages
+from .charter_pages import split_pages
 
 _logger = logging.getLogger("diwa.charter_rag")
 
 _ENABLED = os.environ.get("CHARTER_RAG_ENABLED", "1") == "1"
-_DEFAULT_PATH = os.path.join(
-	os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-	"docs", "citizens_charter_text.txt",
-)
-_PATH = os.environ.get("CHARTER_RAG_PATH", _DEFAULT_PATH)
+_PATH = charter_pages.TEXT_PATH
 
-_PAGE_MARKER_RE = re.compile(r"^----- PAGE (\d+) -----\s*$", re.MULTILINE)
 # Line-window chunking (the OCR text has no reliable paragraph breaks):
 # accumulate lines to ~_CHUNK_CHARS per chunk with a few lines of overlap so
 # a procedure that straddles a boundary is still retrievable as one hit.
@@ -62,30 +64,14 @@ class Passage:
 	bigram_hits: int = 0
 
 	def citation(self) -> str:
-		return f"CvSU Citizens' Charter, FY 2026 edition, p. {self.page}"
+		"""Names the service and the printed page, not just the PDF index —
+		see charter_pages, which renders this for every charter citation."""
+		return charter_pages.cite_page(self.page)
 
-
-def _clean(text: str) -> str:
-	text = text.replace("’", "'").replace("‘", "'")
-	text = re.sub(r"[ \t]+", " ", text)
-	text = re.sub(r"\n{3,}", "\n\n", text)
-	return text.strip()
-
-
-def _split_pages(raw: str) -> list[tuple[int, str]]:
-	"""Return (page_number, page_text) pairs from the page-marked OCR text."""
-	pages: list[tuple[int, str]] = []
-	matches = list(_PAGE_MARKER_RE.finditer(raw))
-	for i, m in enumerate(matches):
-		end = matches[i + 1].start() if i + 1 < len(matches) else len(raw)
-		body = _clean(raw[m.end():end])
-		if body:
-			pages.append((int(m.group(1)), body))
-	if not pages:  # no markers — treat the whole file as one page
-		body = _clean(raw)
-		if body:
-			pages.append((1, body))
-	return pages
+	@property
+	def url(self) -> Optional[str]:
+		"""Deep link opening the charter PDF at this page, when one is published."""
+		return charter_pages.page_url(self.page)
 
 
 def _chunk_pages(pages: list[tuple[int, str]]) -> list[tuple[int, str]]:
@@ -122,7 +108,7 @@ class CharterIndex:
 		except OSError as exc:
 			_logger.warning("charter text not readable (%s) — RAG tier disabled", exc)
 			return
-		self._chunks = _chunk_pages(_split_pages(raw))
+		self._chunks = _chunk_pages(split_pages(raw))
 		if not self._chunks:
 			return
 		from sklearn.feature_extraction.text import TfidfVectorizer
@@ -213,8 +199,15 @@ def verbatim_reply(passage: Passage) -> str:
 	text = passage.text
 	if len(text) > 900:
 		text = text[:900].rsplit(" ", 1)[0] + " …"
+	# The quote is an excerpt of one page — point the reader at that exact page
+	# so they can read the fees and processing times we had to cut.
+	url = passage.url
+	tail = (
+		f"[Open this page of the charter]({url})"
+		if url else "see the full document"
+	)
 	return (
 		f"From the {passage.citation()}:\n\n{text}\n\n"
 		"(Quoted directly from the official charter — for the complete "
-		"procedure, fees, and processing times, see the full document.)"
+		f"procedure, fees, and processing times, {tail}.)"
 	)

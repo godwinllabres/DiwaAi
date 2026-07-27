@@ -35,11 +35,41 @@ def test_index_loads_and_renders():
     assert refs[0].score >= refs[1].score
     kinds = {r.kind for r in refs}
     assert kinds == {"charter", "site"}
-    # Charter citation shape mirrors charter_rag.Passage.citation().
+    # Charter citations render through charter_pages, the same path
+    # charter_rag.Passage.citation() takes. about_cvsu is bound to p. 2 —
+    # unnumbered front matter with no service heading, so it degrades to the
+    # bare document reference rather than inventing a section.
     charter = next(r for r in refs if r.kind == "charter")
-    assert charter.citation() == f"CvSU Citizens' Charter, FY 2026 edition, p. {charter.locator}"
+    assert charter.citation() == "CvSU Citizens' Charter, FY 2026 edition, p. 2"
     site = next(r for r in refs if r.kind == "site")
     assert site.locator.startswith("http") and site.locator in site.citation()
+
+
+def test_charter_citation_names_the_page_and_the_service():
+    """The reader-facing fix: a citation must say what is on the page, and give
+    the number PRINTED there — not the PDF index, which is 49 pages off."""
+    idx = ig.get_index()
+    ref = idx.refs_for("enrollment_procedure")[0]
+    assert ref.kind == "charter" and ref.locator == "997"
+    cite = ref.citation()
+    assert "Registration of Continuing Students" in cite
+    assert "Office of the Campus Registrar" in cite
+    assert "p. 948" in cite and "p. 997" not in cite
+
+
+def test_charter_link_is_opt_in_and_deep(monkeypatch):
+    """No CHARTER_PDF_URL -> text-only citation (never a link that 404s).
+    Configured -> a deep link on the PDF page index, not the printed one."""
+    from api import charter_pages
+
+    ref = ig.get_index().refs_for("enrollment_procedure")[0]
+    monkeypatch.setattr(charter_pages, "PDF_URL", "")
+    assert ref.url is None
+    assert "](" not in ig.citation_block([ref])
+
+    monkeypatch.setattr(charter_pages, "PDF_URL", "https://api.example/sources/citizens-charter.pdf")
+    assert ref.url == "https://api.example/sources/citizens-charter.pdf#page=997"
+    assert f"[open this page]({ref.url})" in ig.citation_block([ref])
 
 
 def test_unbound_intents_have_no_citation():
@@ -90,11 +120,33 @@ if __name__ == "__main__":
     _check({r.kind for r in refs} == {"charter", "site"}, "about_cvsu covers both kinds", fails)
 
     fsa = idx.refs_for("foreign_student_admission")
-    _check(len(fsa) == 1 and fsa[0].citation().endswith("p. 581"),
-           "foreign_student_admission -> charter p. 581", fails)
+    _check(len(fsa) == 1 and fsa[0].locator == "581", "foreign_student_admission -> charter p. 581", fails)
     _check("Source:" in ig.citation_block(fsa) and "Sources:" not in ig.citation_block(fsa),
            "single ref -> 'Source:' block", fails)
     _check("Sources:" in ig.citation_block(refs), "two refs -> 'Sources:' block", fails)
+
+    # The reader-facing citation: printed page (not the PDF index) + what the
+    # page actually documents.
+    cite = idx.refs_for("enrollment_procedure")[0].citation()
+    _check("p. 948" in cite and "p. 997" not in cite, f"cites the PRINTED page — {cite!r}", fails)
+    _check("Registration of Continuing Students" in cite and "Office of the Campus Registrar" in cite,
+           "citation names the service and the owning office", fails)
+
+    # Deep link is opt-in via CHARTER_PDF_URL, and keyed on the PDF page index.
+    from api import charter_pages
+    ref = idx.refs_for("enrollment_procedure")[0]
+    _saved = charter_pages.PDF_URL
+    try:
+        charter_pages.PDF_URL = ""
+        _check(ref.url is None and "](" not in ig.citation_block([ref]),
+               "no CHARTER_PDF_URL -> citation carries no link", fails)
+        charter_pages.PDF_URL = "https://api.example/sources/citizens-charter.pdf"
+        _check(ref.url == "https://api.example/sources/citizens-charter.pdf#page=997",
+               "CHARTER_PDF_URL -> deep link on the PDF page index", fails)
+        _check(f"[open this page]({ref.url})" in ig.citation_block([ref]),
+               "citation block renders the link as markdown", fails)
+    finally:
+        charter_pages.PDF_URL = _saved
 
     for tag in ("greeting", "diploma_request", "courses_offered", "not_a_real_intent"):
         _check(idx.refs_for(tag) == [], f"{tag} is unbound (no citation)", fails)

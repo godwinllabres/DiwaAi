@@ -23,6 +23,7 @@ from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict, deque
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import joblib
 import nltk
@@ -57,8 +58,9 @@ from . import workflows as _workflows
 from . import campus_context as _campus
 from . import campus_directory as _campus_directory
 from . import charter_rag as _charter_rag
+from . import charter_pages as _charter_pages
 from . import intent_grounding as _intent_grounding
-from .response_blocks import ContentBlock, parse_blocks as _parse_blocks
+from .response_blocks import ContentBlock, NOTE_PREFIX_RE, parse_blocks as _parse_blocks
 # Phase 2A Wave 2 — per-user AIS authentication for write actions.
 from . import auth_ais as _ais_auth
 
@@ -288,6 +290,9 @@ def _warm_lazy_singletons() -> None:
     started = time.time()
     for name, get_index in (
         ("charter_rag", _charter_rag.get_index),
+        # Built on the chat path by every charter citation, so it has the same
+        # first-burst race as the retrieval indexes.
+        ("charter_pages", _charter_pages.get_index),
         ("site_rag", _site_rag.get_index),
         ("intent_retrieval", _intent_retrieval.get_index),
         ("intent_grounding", _intent_grounding.get_index),
@@ -990,6 +995,13 @@ _STRUCTURED_LINE_RE = re.compile(r"^\s*(?:\d{1,3}[.)]|[-*•])\s+\S", re.MULTILI
 def _format_paragraph(paragraph: str) -> str:
     if len(paragraph) < 240 or _STRUCTURED_LINE_RE.search(paragraph):
         return paragraph
+    # A provenance footnote is a citation, not prose to reflow. It is long
+    # (document, edition, page, service, office, link) and comma-separated, so
+    # the enumeration heuristics below shred it into "- CvSU Citizens' Charter
+    # / - FY 2026 edition / - p" — turning the one line that exists to be
+    # checkable into nonsense. Same prefixes response_blocks calls a NoteBlock.
+    if NOTE_PREFIX_RE.match(paragraph):
+        return paragraph
     sentences = _split_outside_parens(paragraph, ". ")
     return "\n\n".join(
         _bulletize(s) or _bulletize_semicolons(s) or s for s in sentences
@@ -1155,9 +1167,17 @@ class SourceCitation(BaseModel):
     Populated from data/intent_sources.json for intent-tier replies; the RAG
     and LLM tiers already carry citations inside their prose."""
     kind: Literal["charter", "site"]
-    locator: str                 # charter page number, or site URL
+    locator: str                 # charter PDF page number, or site URL
     label: Optional[str] = None  # doc title for site refs
     citation: str                # rendered one-line citation
+    # Where the reader can go and check it themselves: a "#page=N" deep link
+    # into the charter PDF, or the site URL. None when no PDF is published
+    # (CHARTER_PDF_URL unset) — a renderer should then show text only.
+    url: Optional[str] = None
+    # Charter refs only — the service documented on that page and the office
+    # that owns it, so a client can render a chip without parsing `citation`.
+    section: Optional[str] = None
+    office: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -1423,13 +1443,15 @@ def _intent_grounding_for(
     refs = index.refs_for(intent)
     if not refs:
         return "", []
-    cards = [
-        SourceCitation(
+    cards = []
+    for r in refs:
+        page = _charter_pages.describe(int(r.locator)) if r.kind == "charter" and r.locator.isdigit() else None
+        cards.append(SourceCitation(
             kind=r.kind, locator=r.locator,
-            label=r.label or None, citation=r.citation(),
-        )
-        for r in refs
-    ]
+            label=r.label or None, citation=r.citation(), url=r.url,
+            section=page.title if page else None,
+            office=page.office if page else None,
+        ))
     return _intent_grounding.citation_block(refs), cards
 
 
@@ -2061,6 +2083,86 @@ async def logs_dashboard():
     return FileResponse(_LOGS_DASHBOARD_HTML, media_type="text/html")
 
 
+# Conservative shapes for values taken from proxy headers — a scheme we will
+# put in a link, and a host[:port]. Anything else is ignored in favour of what
+# the ASGI scope reports.
+_FWD_SCHEME_RE = re.compile(r"^https?$")
+_FWD_HOST_RE = re.compile(r"^[A-Za-z0-9.\-]+(:\d{1,5})?$")
+
+
+def _public_origin(request: Request) -> str:
+    """The origin a browser would use to reach this API.
+
+    `request.base_url` is not enough behind a TLS-terminating proxy: uvicorn
+    only honours X-Forwarded-* from `forwarded_allow_ips` (default 127.0.0.1),
+    and in a container the proxy is never 127.0.0.1 — so base_url reports
+    `http` while the page is served over `https`, and the browser blocks the
+    citation link as mixed content. Reading the headers here fixes the link
+    without loosening uvicorn's proxy trust globally, which would also change
+    which IP the rate limiter throttles on.
+
+    Trusting a client header is safe *here* specifically because the origin is
+    request-scoped: a forged X-Forwarded-Proto only alters the links in the
+    reply to that same request.
+    """
+    base = urlsplit(str(request.base_url))
+    scheme = request.headers.get("x-forwarded-proto", "").split(",")[0].strip().lower()
+    host = request.headers.get("x-forwarded-host", "").split(",")[0].strip()
+    if not _FWD_SCHEME_RE.match(scheme):
+        scheme = base.scheme
+    if not _FWD_HOST_RE.match(host):
+        host = base.netloc
+    # base.path carries root_path, so a sub-path mount keeps working.
+    return f"{scheme}://{host}{base.path}"
+
+
+@app.middleware("http")
+async def _bind_charter_origin(request: Request, call_next):
+    """Tell charter_pages which origin is serving this request, so a charter
+    citation deep-links this API's own copy of the PDF with no configuration.
+
+    Set before `call_next` so the downstream task inherits it (contexts are
+    copied when a task is spawned, so it propagates down but not back up), and
+    `asyncio.to_thread` carries it into the worker thread that renders the
+    reply. Request-scoped on purpose — see charter_pages._request_origin.
+    """
+    _charter_pages.set_request_origin(_public_origin(request))
+    return await call_next(request)
+
+
+# HEAD is declared explicitly: FastAPI's @app.get registers GET alone (plain
+# Starlette would add HEAD for you), and link checkers, proxies and uptime
+# monitors HEAD a document URL before fetching it — a 405 there reads as a
+# broken citation.
+@app.api_route("/sources/citizens-charter.pdf", methods=["GET", "HEAD"], tags=["Sources"])
+async def citizens_charter_pdf():
+    """The Citizens' Charter itself, so a citation can be checked.
+
+    Every charter citation names a page; without the document behind it the
+    reader has nowhere to go. Served from this origin (rather than linked off
+    to a third party) so the page a citation points at is the exact edition the
+    answer was drawn from, and so the deep link `…/citizens-charter.pdf#page=N`
+    lands on that page.
+
+    Public and unauthenticated on purpose — it is a published government
+    transparency document (RA 11032), identical to the copy on cvsu.edu.ph.
+    `inline` so browsers open it at the fragment instead of downloading it.
+    """
+    if not _charter_pages.pdf_available():
+        # Ships via .dockerignore's allow-list; a 404 here means the build
+        # dropped it, which is also why CHARTER_PDF_URL is opt-in.
+        raise HTTPException(status_code=404, detail="Charter PDF not available")
+    return FileResponse(
+        _charter_pages.PDF_PATH,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'inline; filename="cvsu-citizens-charter.pdf"',
+            # Immutable for a given edition; a new edition changes the file.
+            "Cache-Control": "public, max-age=604800",
+        },
+    )
+
+
 @app.get("/admin/moderation", tags=["Admin"], dependencies=[Depends(require_admin)])
 async def moderation_stats():
     """SafetyGate counters per category + the last 20 flagged messages
@@ -2116,6 +2218,11 @@ async def admin_status():
             }, {}),
             "intent_grounding": _safe(lambda: (
                 gi.snapshot() if (gi := _intent_grounding.get_index()) else {"available": False}
+            ), {}),
+            # Whether citations can name a page's service and link to it —
+            # `pdf_present` false or `pdf_url` null means text-only citations.
+            "charter_pages": _safe(lambda: (
+                cp.snapshot() if (cp := _charter_pages.get_index()) else {"available": False}
             ), {}),
             "usage": _safe(chatbot.get_usage_stats, {}),
         },
@@ -2537,6 +2644,10 @@ async def reload_model():
         _intent_retrieval.reload_index()
         _site_rag.reload_index()
         _intent_grounding.reload_index()
+        # data/charter_structure.json is meant to be hand-edited when the OCR
+        # mangled a heading — picking it up here is what makes that a one-call
+        # fix instead of a redeploy.
+        _charter_pages.reload_index()
         return new_bot
 
     async with _chat_runner.exclusive():

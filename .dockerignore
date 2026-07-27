@@ -35,6 +35,11 @@ docs/
 # then answers ungrounded and over-refuses). See docs/eval/redesign_report.md.
 !docs/site_corpus.txt
 !docs/citizens_charter_text.txt
+# …and the charter PDF itself (~13 MB), served at
+# GET /sources/citizens-charter.pdf so a "p. 948" citation is a link the reader
+# can open at that page instead of a number they cannot check. Dropping it does
+# not break replies — citations just lose their link. See api/charter_pages.py.
+!docs/citizens-charter-2026-edition.pdf
 
 # Static demo site (api.app does not serve it)
 web/

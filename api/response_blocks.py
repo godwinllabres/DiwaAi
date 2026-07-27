@@ -78,7 +78,10 @@ _UL_LINE_RE = re.compile(r"^\s*[-*•]\s+(.*)$")
 # heading, "CvSU offers …" is not. Digits, punctuation and the acronym-friendly
 # mixed case in the corpus ("CvSU") are tolerated via the explicit char class.
 _HEADING_RE = re.compile(r"^[A-Z0-9][A-Z0-9 ,()/&'’.:–—-]{2,}$")
-_NOTE_PREFIX_RE = re.compile(r"^(📖|ℹ️|⚠️|📌)\s*")
+# Public: app._format_paragraph reads it too, so "what counts as a footnote"
+# has one definition — the prettifier must leave alone exactly what this
+# module calls a NoteBlock.
+NOTE_PREFIX_RE = re.compile(r"^(📖|ℹ️|⚠️|📌)\s*")
 
 _HEADING_MAX_CHARS = 80
 
@@ -90,7 +93,7 @@ def _is_heading(text: str) -> bool:
 
 
 def _paragraph_block(text: str) -> ContentBlock:
-    note = _NOTE_PREFIX_RE.match(text)
+    note = NOTE_PREFIX_RE.match(text)
     if note:
         return NoteBlock(text=text[note.end():].strip(), icon=note.group(1))
     if _is_heading(text):
