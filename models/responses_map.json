@@ -350,6 +350,10 @@
     "I'm not sure I understand. Try asking about CvSU admissions, programs, tuition fees, or campus services!",
     "I'm here to help with CvSU-related questions. Try asking about: admissions, programs offered, tuition fees, scholarships, campus locations, or how to contact CvSU."
   ],
+  "llm_unavailable": [
+    "Sorry, I'm having trouble reaching my knowledge base right now — this is on my end, not your question. Please try again in a moment.",
+    "Pasensya na po, may problema ako sa pagkuha ng impormasyon sa ngayon — wala pong mali sa tanong ninyo. Pakisubukang muli mamaya."
+  ],
   "nstp": [
     "NATIONAL SERVICE TRAINING PROGRAM (NSTP) AT CvSU:\n\nNSTP is MANDATORY for all first-year college students — 2 semesters (NSTP 1 & NSTP 2).\n\nTHREE COMPONENTS (choose one):\n- ROTC: Reserve Officers' Training Corps — military/AFP training\n- CWTS: Civic Welfare Training Service — community development projects\n- LTS: Literacy Training Service — teaching literacy in communities\n\nENROLLMENT:\n- Register during first-year enrollment\n- Coordinate with your college/department for available components\n- Some campuses may offer limited components — check with OSAS\n\nCOMPLETION:\n- NSTP certificate is REQUIRED for graduation\n- Must complete both NSTP 1 and NSTP 2\n\nCONTACT: Office of Student Affairs & Services (OSAS) or your department adviser.",
     "Ang NSTP (National Service Training Program) ay sapilitan para sa lahat ng unang taon na estudyante sa CvSU. Pumili ng isa sa tatlong component: ROTC, CWTS, o LTS. Dapat makumpleto ang NSTP 1 at NSTP 2 para sa sertipiko na kailangan sa graduation. Makipag-ugnayan sa OSAS o sa iyong departamento para sa detalye."

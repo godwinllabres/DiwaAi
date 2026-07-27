@@ -60,7 +60,11 @@ _LLM_ROUTER_ENABLED = os.environ.get("AIS_MCP_LLM_ROUTER", "0") == "1"
 # Ollama config — uses the OpenAI-compatible /v1/chat/completions endpoint
 # so we get structured tool_calls back. Any chat model that supports tool
 # calling works (qwen2.5+, qwen3, llama3.1+, etc.).
-_OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+try:  # single source for the Ollama endpoint default (see api/llm_defaults.py)
+	from .llm_defaults import ollama_base_url
+except ImportError:  # standalone/direct import
+	from llm_defaults import ollama_base_url
+_OLLAMA_BASE_URL = ollama_base_url()
 
 
 # Router models are read PER CALL so the admin LLM toggle (which rewrites

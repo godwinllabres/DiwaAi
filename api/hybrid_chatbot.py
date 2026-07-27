@@ -11,6 +11,7 @@ import re
 import pickle
 import hashlib
 import threading
+import time
 from collections import OrderedDict
 import urllib.request
 import urllib.error
@@ -88,6 +89,9 @@ except ImportError:
 
 # Citizens' Charter retrieval tier (document tier of the hybrid brain)
 from . import charter_rag, intent_retrieval, site_rag
+# Single source for the Ollama endpoint default (shared with the MCP routers,
+# safety second-opinion, and /health warm-up).
+from .llm_defaults import ollama_base_url
 
 try:
     from .smalltalk import smalltalk_reply as _smalltalk_reply
@@ -343,6 +347,32 @@ class NeuralNetworkModel:
         return " ".join([lemmatizer.lemmatize(t) for t in tokens])
 
 
+# Re-probe cadence for a previously-unreachable LLM server. Env-configurable so
+# an operator can tune how aggressively a down local server is retried.
+_PROBE_COOLDOWN_SECONDS = float(os.getenv("LLM_PROBE_COOLDOWN_SECONDS", "30"))
+
+
+def _reprobe(wrapper) -> bool:
+    """Cooldown-gated availability check shared by the network-backed LLM
+    wrappers (LocalLLM / OpenAICompatLLM).
+
+    Returns True when the server is reachable, re-probing a previously-down
+    server at most once per _PROBE_COOLDOWN_SECONDS. This lets a transient
+    outage self-heal without a container restart, while never stalling every
+    turn on the probe timeout for as long as the server stays down. (The old
+    `self.llm.available` guard read a flag fixed at boot, so a server that was
+    down at startup — or that briefly blipped — latched the whole tier off.)
+    """
+    if wrapper.available:
+        return True
+    now = time.monotonic()
+    if now - getattr(wrapper, "_last_probe", 0.0) < _PROBE_COOLDOWN_SECONDS:
+        return False
+    wrapper._last_probe = now
+    wrapper.available = wrapper._probe()
+    return wrapper.available
+
+
 class LocalLLM:
     """
     Thin wrapper around a locally-hosted LLM served via Ollama
@@ -356,9 +386,10 @@ class LocalLLM:
     rest of the chatbot pipeline is unaffected.
     """
 
-    # Override with env vars: OLLAMA_BASE_URL, OLLAMA_MODEL
-    DEFAULT_BASE_URL = "http://localhost:11434"
-    DEFAULT_MODEL = "llama3.1"
+    # Endpoint + model both come from the environment (OLLAMA_BASE_URL,
+    # OLLAMA_MODEL). The base-url default lives once in llm_defaults; the model
+    # has NO baked-in default — an unset OLLAMA_MODEL disables the tier loudly
+    # rather than guessing a model that may not be pulled.
     # 8B models on CPU can take 60-120s on first call (cold start loads weights into RAM);
     # subsequent calls are 2-15s. Set generously so cold start doesn't fail.
     TIMEOUT_SECONDS = 180
@@ -369,10 +400,12 @@ class LocalLLM:
         model: str = None,
         system_prompt: str = "",
     ):
-        self.base_url = (base_url or os.getenv("OLLAMA_BASE_URL", self.DEFAULT_BASE_URL)).rstrip("/")
-        self.model = model or os.getenv("OLLAMA_MODEL", self.DEFAULT_MODEL)
+        self.base_url = (base_url or ollama_base_url()).rstrip("/")
+        self.model = (model or os.getenv("OLLAMA_MODEL", "")).strip()
         self.system_prompt = system_prompt
-        self.available = self._probe()
+        # No model configured → tier stays down (the caller surfaces the reason);
+        # otherwise availability is the live reachability probe.
+        self.available = bool(self.model) and self._probe()
 
     def _probe(self) -> bool:
         """Return True if the Ollama server is reachable.
@@ -388,6 +421,11 @@ class LocalLLM:
         except Exception as e:
             print(f"[WARNING] Ollama probe failed: {type(e).__name__}: {e}  url={self.base_url}")
             return False
+
+    def ensure_available(self) -> bool:
+        """Reachable now? Re-probes a previously-down Ollama server on a cooldown
+        so a transient outage self-heals without a container restart."""
+        return _reprobe(self)
 
     def generate(self, user_message: str, conversation_context: list = None) -> Optional[str]:
         """
@@ -462,9 +500,9 @@ class OpenAICompatLLM:
     the pipeline is unaffected.
     """
 
-    # Override with env vars: OPENAI_BASE_URL, OPENAI_MODEL, OPENAI_API_KEY
+    # Override with env vars: OPENAI_BASE_URL, OPENAI_MODEL, OPENAI_API_KEY.
+    # OPENAI_MODEL has NO baked-in default — unset disables the tier loudly.
     DEFAULT_BASE_URL = "http://localhost:8080/v1"
-    DEFAULT_MODEL = "gpt-3.5-turbo"
     # Local CPU inference has the same cold-start cost as Ollama — be generous.
     TIMEOUT_SECONDS = 180
 
@@ -476,12 +514,13 @@ class OpenAICompatLLM:
         system_prompt: str = "",
     ):
         self.base_url = (base_url or os.getenv("OPENAI_BASE_URL", self.DEFAULT_BASE_URL)).rstrip("/")
-        self.model = model or os.getenv("OPENAI_MODEL", self.DEFAULT_MODEL)
+        self.model = (model or os.getenv("OPENAI_MODEL", "")).strip()
         # Optional — LocalAI usually needs no key; a hosted OpenAI-compatible
         # endpoint (or a LocalAI configured with API_KEY) does.
         self.api_key = (api_key or os.getenv("OPENAI_API_KEY", "")).strip()
         self.system_prompt = system_prompt
-        self.available = self._probe()
+        # No model configured → tier stays down; else it's the reachability probe.
+        self.available = bool(self.model) and self._probe()
 
     def _headers(self) -> dict:
         headers = {"Content-Type": "application/json", "User-Agent": "DIWA/1.0"}
@@ -499,6 +538,11 @@ class OpenAICompatLLM:
         except Exception as e:
             print(f"[WARNING] OpenAI-compat probe failed: {type(e).__name__}: {e}  url={self.base_url}")
             return False
+
+    def ensure_available(self) -> bool:
+        """Reachable now? Re-probes a previously-down server on a cooldown so a
+        transient outage self-heals without a container restart."""
+        return _reprobe(self)
 
     def generate(self, user_message: str, conversation_context: list = None) -> Optional[str]:
         """Send a message and return the reply, or None on error. Re-probes if
@@ -834,7 +878,6 @@ class ClaudeLLM:
     fallback gracefully.
     """
 
-    DEFAULT_MODEL = "claude-haiku-4-5"
     MAX_TOKENS = 400
     TIMEOUT_SECONDS = 12
 
@@ -845,7 +888,7 @@ class ClaudeLLM:
         system_prompt: str = "",
     ):
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY", "").strip()
-        self.model = model or os.getenv("CLAUDE_MODEL", self.DEFAULT_MODEL)
+        self.model = (model or os.getenv("CLAUDE_MODEL", "")).strip()
         # Single cached block — system prompt is stable, served at ~0.1x cost after first call
         self.system_blocks = [
             {
@@ -861,6 +904,9 @@ class ClaudeLLM:
             return
         if not self.api_key:
             return
+        if not self.model:
+            # Claude requires an explicit model id — no baked-in default.
+            return
         try:
             self.client = anthropic.Anthropic(
                 api_key=self.api_key,
@@ -870,6 +916,11 @@ class ClaudeLLM:
         except Exception as e:
             print(f"[WARNING] Claude client init failed: {e}")
             self.available = False
+
+    def ensure_available(self) -> bool:
+        # Claude availability is static (SDK + key present at init); there is no
+        # server to re-probe. Transient API errors are handled per-call in generate().
+        return self.available
 
     def generate(
         self,
@@ -989,6 +1040,12 @@ class HybridChatbot:
     # Complete per-college program list from data/college_programs.json.
     PROGRAMS_INTENT = "college_programs"
 
+    # Emitted when an LLM IS configured but its server was unreachable or
+    # errored on this turn. Distinct from FALLBACK_INTENT (a genuine no-match)
+    # so the reply reads as "try again in a moment" instead of "I didn't
+    # understand", and so an outage is not logged/mined as an unanswered ask.
+    LLM_UNAVAILABLE_INTENT = "llm_unavailable"
+
     # Meta-questions about the conversation itself. Every alternative requires
     # a conversation word or a we/I-asked construction so content asks like
     # "summarize the admission requirements" never match. Swept against all
@@ -1063,6 +1120,7 @@ class HybridChatbot:
             "conversation_recap_used": 0,
             "smalltalk_used": 0,
             "college_programs_used": 0,
+            "llm_unavailable": 0,
             "fallback_used": 0,
             "nlu_enhanced": 0
         }
@@ -1075,8 +1133,13 @@ class HybridChatbot:
             self.nlu_engine = None
             print("[WARNING] Advanced NLU Engine not available")
 
-        # Initialize LLM fallback (Claude API by default, Ollama optional)
-        provider = os.getenv("LLM_PROVIDER", "claude").strip().lower()
+        # Initialize LLM fallback. Default to the local LLM (Ollama) — that is
+        # what every deployment actually serves (Claude is off on-prem: no key,
+        # and RA 10173 keeps data local). A missing LLM_PROVIDER must degrade to
+        # the deployed local LLM, never to an unavailable Claude that silently
+        # disables the whole tier and drops every unmatched turn to the static
+        # "I didn't quite understand" card.
+        provider = os.getenv("LLM_PROVIDER", "ollama").strip().lower()
         self.scope_gate = ScopeGate()
         self.nonsense_gate = NonsenseGate()
         self.llm = None
@@ -1104,13 +1167,13 @@ class HybridChatbot:
         print(f"       known providers: {', '.join(sorted(KNOWN_LLM_PROVIDERS))}")
         if provider in ("openai", "localai"):
             print(f"       OPENAI_BASE_URL={os.getenv('OPENAI_BASE_URL', OpenAICompatLLM.DEFAULT_BASE_URL)}")
-            print(f"       OPENAI_MODEL={os.getenv('OPENAI_MODEL', OpenAICompatLLM.DEFAULT_MODEL)}")
+            print(f"       OPENAI_MODEL={os.getenv('OPENAI_MODEL', '(unset)')}")
             print(f"       OPENAI_API_KEY={'set' if os.getenv('OPENAI_API_KEY') else 'unset'}")
         elif provider == "ollama":
-            print(f"       OLLAMA_BASE_URL={os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}")
-            print(f"       OLLAMA_MODEL={os.getenv('OLLAMA_MODEL', 'llama3.2:3b')}")
+            print(f"       OLLAMA_BASE_URL={ollama_base_url()}")
+            print(f"       OLLAMA_MODEL={os.getenv('OLLAMA_MODEL', '(unset)')}")
         elif provider == "claude":
-            print(f"       CLAUDE_MODEL={os.getenv('CLAUDE_MODEL', '(default)')}")
+            print(f"       CLAUDE_MODEL={os.getenv('CLAUDE_MODEL', '(unset)')}")
             print(f"       ANTHROPIC_API_KEY={'set' if os.getenv('ANTHROPIC_API_KEY') else 'unset'}")
 
         if provider == "claude":
@@ -1121,8 +1184,10 @@ class HybridChatbot:
             else:
                 if not ANTHROPIC_AVAILABLE:
                     self.llm_last_error = "anthropic package not installed (pip install anthropic)"
-                else:
+                elif not self.llm.api_key:
                     self.llm_last_error = "ANTHROPIC_API_KEY not set or invalid"
+                else:
+                    self.llm_last_error = "CLAUDE_MODEL not set — set it to the Claude model id"
                 print(f"[WARNING] Claude fallback disabled — {self.llm_last_error}")
         elif provider == "ollama":
             print("       initialising local LLM fallback (Ollama)...")
@@ -1133,12 +1198,15 @@ class HybridChatbot:
                 # the 60-120s cold-start cost on CPU-only machines.
                 self._warm_up_llm_async()
             else:
-                self.llm_last_error = (
-                    f"Ollama not reachable at {getattr(self.llm, 'base_url', '?')} "
-                    f"(model={getattr(self.llm, 'model', '?')})"
-                )
-                print(f"[WARNING] {self.llm_last_error} — deep-fallback disabled")
-                print("          Start Ollama and run: ollama pull llama3.1")
+                if not self.llm.model:
+                    self.llm_last_error = "OLLAMA_MODEL not set — set it to the pulled model name in sevi.env"
+                    print(f"[WARNING] {self.llm_last_error} — deep-fallback disabled")
+                else:
+                    self.llm_last_error = (
+                        f"Ollama not reachable at {self.llm.base_url} (model={self.llm.model})"
+                    )
+                    print(f"[WARNING] {self.llm_last_error} — deep-fallback disabled")
+                    print("          Start Ollama and pull the model named in OLLAMA_MODEL")
         elif provider in ("openai", "localai"):
             print(f"       initialising OpenAI-compatible LLM fallback ({provider})...")
             self.llm = OpenAICompatLLM(system_prompt=scope_locked_prompt)
@@ -1146,10 +1214,13 @@ class HybridChatbot:
                 print(f"[OK] OpenAI-compat LLM ready  model={self.llm.model}  url={self.llm.base_url}")
                 self._warm_up_llm_async()
             else:
-                self.llm_last_error = (
-                    f"OpenAI-compat server not reachable at {self.llm.base_url} "
-                    f"(model={self.llm.model})"
-                )
+                if not self.llm.model:
+                    self.llm_last_error = "OPENAI_MODEL not set — set it to the served model name"
+                else:
+                    self.llm_last_error = (
+                        f"OpenAI-compat server not reachable at {self.llm.base_url} "
+                        f"(model={self.llm.model})"
+                    )
                 print(f"[WARNING] {self.llm_last_error} — deep-fallback disabled")
                 print("          Check OPENAI_BASE_URL / OPENAI_MODEL and that the model is loaded")
         elif provider == "none":
@@ -1189,7 +1260,9 @@ class HybridChatbot:
             "provider": self.llm_provider,
             "model": getattr(self.llm, "model", None),
             "base_url": getattr(self.llm, "base_url", None),
-            "available": bool(self.llm and self.llm.available),
+            # ensure_available() re-probes (on a cooldown) so /health reflects a
+            # server that has since recovered, not the flag frozen at boot.
+            "available": bool(self.llm and self.llm.ensure_available()),
             "known_provider": self.llm_provider in KNOWN_LLM_PROVIDERS,
             "error": self.llm_last_error,
         }
@@ -1669,7 +1742,7 @@ class HybridChatbot:
         Returns:
             (intent, response, confidence, model_used, nlu_data)
         """
-        if skip_intents and not (self.llm and self.llm.available):
+        if skip_intents and not (self.llm and self.llm.ensure_available()):
             skip_intents = False
 
         nlu_data = {}
@@ -1740,8 +1813,13 @@ class HybridChatbot:
                 nlu_data = {**nlu_data, "place_id": place_id}
                 return self.FIND_PLACE_INTENT, response, 1.0, "Place Resolver", nlu_data
 
-        # Step 3: LLM fallback — fires only when NB+NN are both below threshold
-        if self.llm and self.llm.available:
+        # Step 3: LLM fallback — fires only when NB+NN are both below threshold.
+        # ensure_available() re-probes a previously-unreachable local server on
+        # a cooldown, so a transient Ollama outage self-heals without a restart
+        # instead of latching the whole tier off until the container is recreated.
+        llm_configured = self.llm is not None and self.llm_provider != "none"
+        llm_unavailable = False
+        if llm_configured and self.llm.ensure_available():
             # NonsenseGate first: catches gibberish, profanity, and
             # fact-injection attempts ("the correct answer is...",
             # "Ang turon ay X") before ScopeGate's off-topic check.
@@ -1776,16 +1854,36 @@ class HybridChatbot:
                 provider_label = "Claude LLM" if isinstance(self.llm, ClaudeLLM) else "Local LLM"
                 return self.FALLBACK_INTENT, llm_reply, 0.0, f"{provider_label}{charter_suffix}", nlu_data
 
+            # Reached the model but it returned nothing (timeout / API error /
+            # empty) — the assistant is degraded, not the user's phrasing.
+            llm_unavailable = True
+        elif llm_configured:
+            # A provider is configured but its server is unreachable right now
+            # (e.g. Ollama down). Same degraded state — not a genuine no-match.
+            llm_unavailable = True
+
         # Step 3.5: Verbatim document tier — no LLM (or it returned nothing),
         # but the Citizens' Charter or the official website has a strongly-
         # matching passage. Quote the best one with a citation instead of
-        # shrugging.
+        # shrugging. Beats both fallbacks, so it runs before them.
         served = self._verbatim_document_reply(user_input)
         if served is not None:
             tag, reply, score, label = served
             return tag, reply, score, label, nlu_data
 
-        # Step 4: Static fallback
+        # Step 4a: LLM-unavailable degrade. An LLM was configured but could not
+        # answer this turn (down or errored). Return a distinct "try again"
+        # reply — NOT the "I didn't understand" card (which blames the user's
+        # wording) — under its own intent so the anti-pattern miner and the
+        # fallback log don't count an outage as an unanswered question.
+        if llm_unavailable:
+            self.model_usage_stats["llm_unavailable"] += 1
+            return (self.LLM_UNAVAILABLE_INTENT,
+                    self._select_response(self.LLM_UNAVAILABLE_INTENT, user_input),
+                    0.0, "LLM Unavailable", nlu_data)
+
+        # Step 4b: Static fallback — a genuine no-match (or the LLM was
+        # intentionally disabled via LLM_PROVIDER=none).
         self.model_usage_stats["fallback_used"] += 1
         return (self.FALLBACK_INTENT, self._select_response(self.FALLBACK_INTENT, user_input),
                 0.0, "Fallback", nlu_data)
@@ -1874,6 +1972,8 @@ class HybridChatbot:
             "place_resolver_percentage": pct("place_resolver_used"),
             "llm_fallback_used": self.model_usage_stats["llm_fallback_used"],
             "llm_fallback_percentage": pct("llm_fallback_used"),
+            "llm_unavailable": self.model_usage_stats["llm_unavailable"],
+            "llm_unavailable_percentage": pct("llm_unavailable"),
             "fallback_used": self.model_usage_stats["fallback_used"],
             "fallback_percentage": pct("fallback_used"),
             "nlu_enhanced": self.model_usage_stats["nlu_enhanced"],

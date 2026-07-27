@@ -403,7 +403,11 @@ SUGGESTIONS = {
 # ─────────────────────────────────────────────────────────────────────────────
 
 _LLM_SECOND_OPINION = os.environ.get("SAFETY_LLM_SECOND_OPINION", "0") == "1"
-_OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+try:  # single source for the Ollama endpoint default (see api/llm_defaults.py)
+    from .llm_defaults import ollama_base_url
+except ImportError:  # standalone/direct import
+    from llm_defaults import ollama_base_url
+_OLLAMA_BASE_URL = ollama_base_url()
 
 # Soft cues that the explicit gate does NOT already catch. Deliberately broad —
 # a match only TRIGGERS the LLM (which makes the real call), it never blocks on

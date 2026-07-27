@@ -746,6 +746,7 @@ class ResponseSource(str, Enum):
     NEURAL_NETWORK  = "neural_network"
     LLM_LOCAL       = "llm_local"
     LLM_CLAUDE      = "llm_claude"
+    LLM_UNAVAILABLE = "llm_unavailable"    # a provider was configured but down/errored this turn
     AIS_MCP         = "ais_mcp"
     CONNECTORS_MCP  = "connectors_mcp"
     WORKFLOW        = "workflow"            # Tier 5.5 — stateful agentic workflow
@@ -1061,6 +1062,11 @@ def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optiona
         return ResponseSource.LLM_CLAUDE, None
     if m.startswith("Local LLM") or m.startswith("Ollama"):
         return ResponseSource.LLM_LOCAL, None
+    if m == "LLM Unavailable":
+        # A provider was configured but unreachable/errored — render as a normal
+        # "try again" message, not the nlu-fallback "rephrase" UI (which keys off
+        # source == "fallback" on the frontend).
+        return ResponseSource.LLM_UNAVAILABLE, None
     return ResponseSource.FALLBACK, None
 
 
@@ -1611,7 +1617,9 @@ async def _ollama_local_models() -> List[str]:
     """Best-effort list of locally pulled Ollama models (for a UI dropdown)."""
     import httpx
 
-    base = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+    from .llm_defaults import ollama_base_url
+
+    base = ollama_base_url()
     try:
         async with httpx.AsyncClient(timeout=3.0) as http:
             resp = await http.get(f"{base}/api/tags")
