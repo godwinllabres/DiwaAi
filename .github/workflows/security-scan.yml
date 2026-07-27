@@ -31,7 +31,7 @@ jobs:
     name: SonarQube (quality + SAST)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0   # blame data for accurate new-code detection
 
@@ -62,10 +62,10 @@ jobs:
     name: Checkmarx KICS (IaC + secrets)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: KICS scan (Dockerfiles, compose, workflows)
-        uses: checkmarx/kics-github-action@v2.1.13
+        uses: checkmarx/kics-github-action@v2.1.20
         with:
           path: deployment,.github/workflows
           output_path: kics-results
@@ -91,7 +91,7 @@ jobs:
     name: Checkmarx One (SAST)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check for credentials
         id: gate
@@ -105,7 +105,7 @@ jobs:
 
       - name: Checkmarx One scan
         if: steps.gate.outputs.enabled == 'true'
-        uses: checkmarx/ast-github-action@v.2.3.19
+        uses: checkmarx/ast-github-action@2.3.39
         with:
           base_uri: ${{ secrets.CX_BASE_URI }}
           cx_tenant: ${{ secrets.CX_TENANT }}
@@ -118,7 +118,7 @@ jobs:
     name: Snyk (dependency SCA)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check for token
         id: gate
