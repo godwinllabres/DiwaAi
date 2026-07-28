@@ -6,27 +6,37 @@ services:
     plan: free
     healthCheckPath: /health
     envVars:
-      # DRIFT — this file no longer describes what is running. Verified against
-      # the live service on 2026-07-28 (GET https://seviai-api.onrender.com/health):
-      #   llm_provider = ollama
-      #   llm_model    = llama3.2:3b
-      #   llm_base_url = https://ollama.godwincreates.net
-      # The two values below were overridden in the Render dashboard, and the
-      # live service is healthy on Ollama. They are left UNCHANGED on purpose:
-      # editing them risks flipping production LLM routing on the next blueprint
-      # sync, and which provider is intended is a human decision. Reconcile
-      # deliberately — either update these to match Ollama, or re-point the
-      # dashboard at Claude — but knowingly, not as a side effect.
+      # Ollama is the intended provider for this deployment (confirmed
+      # 2026-07-28). This file previously declared claude/claude-haiku-4-5 while
+      # the running service was on Ollama, because the dashboard had been
+      # overridden by hand. That drift was not harmless: on a redeploy the
+      # blueprint values won, the service came back on LLM_PROVIDER=claude with
+      # no ANTHROPIC_API_KEY, and /health reported
+      #     llm_ready=False, llm_error="ANTHROPIC_API_KEY not set or invalid"
+      # The deterministic tiers kept answering curated questions, so the outage
+      # was silent — only the LLM fallback died, which is exactly the tier that
+      # handles everything the curated intents do not.
       #
-      # Also note `plan: free` above: the service spins down when idle, so the
-      # first request after a quiet period takes ~72s (measured 2026-07-28;
-      # warm requests are ~0.5s). That cold start reads as "the API is down".
+      # Declared here so the blueprint and the running service agree, and a
+      # future redeploy restores this instead of breaking it again.
       - key: LLM_PROVIDER
-        value: claude
-      - key: CLAUDE_MODEL
-        value: claude-haiku-4-5
+        value: ollama
+      - key: OLLAMA_BASE_URL
+        value: https://ollama.godwincreates.net
+      # Required. api/llm_defaults.py deliberately does NOT default a model
+      # name — each wrapper "disables itself loudly when unset" rather than
+      # baking one deployment's model into the source. Omit this and the LLM
+      # tier silently switches off.
+      - key: OLLAMA_MODEL
+        value: llama3.2:3b
+      # Unused while LLM_PROVIDER=ollama. Kept declared (sync: false carries no
+      # value from this file) so switching back to Claude only needs the two
+      # provider lines changed and the key set in the dashboard.
       - key: ANTHROPIC_API_KEY
         sync: false  # set manually in Render dashboard
+      # `plan: free` above means the service spins down when idle: the first
+      # request after a quiet period took 72s on 2026-07-28, against ~0.5s warm.
+      # That cold start is indistinguishable from an outage to a user.
       - key: PYTHONUNBUFFERED
         value: "1"
       - key: CORS_ORIGINS
