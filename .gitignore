@@ -56,3 +56,19 @@ archive/models_backups/
 # Root-anchored so stray copies dropped at the repo root stay out; the
 # canonical decks under docs/presentations/ are unaffected.
 /*.pptx
+
+# Joint slot-filling model artifacts and eval outputs — regenerable, and nothing
+# at runtime loads them (the shadow integration was measured and not merged, see
+# docs/SLOT_FILLING.md on feat/slot-filling-slu-port). Kept out of git so 2.3 MB
+# of dead weight does not ride `COPY . .` into the deploy image. Rebuild with:
+#   python scripts/build_slot_corpus.py && python training/train_joint_nlu.py
+# Training is deterministic under the fixed seed, so the committed corpus plus
+# these two commands reproduce the reported numbers exactly.
+# Ported to main 2026-07-28: the rule was authored on the feature branch, so a
+# main-line checkout showed all seven artifacts as untracked and one `git add -A`
+# from committing them. See also .dockerignore — .gitignore alone does NOT keep
+# these out of the image, and they were verified present inside a built image.
+models/joint_*
+models/eval_joint*.json
+data/eval/slot_preds*.json
+data/eval/slot_failures*.json
