@@ -6,6 +6,21 @@ services:
     plan: free
     healthCheckPath: /health
     envVars:
+      # DRIFT — this file no longer describes what is running. Verified against
+      # the live service on 2026-07-28 (GET https://seviai-api.onrender.com/health):
+      #   llm_provider = ollama
+      #   llm_model    = llama3.2:3b
+      #   llm_base_url = https://ollama.godwincreates.net
+      # The two values below were overridden in the Render dashboard, and the
+      # live service is healthy on Ollama. They are left UNCHANGED on purpose:
+      # editing them risks flipping production LLM routing on the next blueprint
+      # sync, and which provider is intended is a human decision. Reconcile
+      # deliberately — either update these to match Ollama, or re-point the
+      # dashboard at Claude — but knowingly, not as a side effect.
+      #
+      # Also note `plan: free` above: the service spins down when idle, so the
+      # first request after a quiet period takes ~72s (measured 2026-07-28;
+      # warm requests are ~0.5s). That cold start reads as "the API is down".
       - key: LLM_PROVIDER
         value: claude
       - key: CLAUDE_MODEL
