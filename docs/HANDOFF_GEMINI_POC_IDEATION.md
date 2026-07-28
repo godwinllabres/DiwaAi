@@ -103,7 +103,14 @@ per-campus specifics) is not in the corpus yet.
 - **Trust & safety controls** — moderation, privacy/consent, crisis copy. Built
   and tested; **blocked on human governance sign-off** (`docs/governance_signoff.md`).
 - **Slot filling / joint NLU** — `api/joint_nlu.py`, `api/slot_schema.py`,
-  `api/slot_metrics.py`, corpus under `data/slots/`.
+  `api/slot_metrics.py`, corpus under `data/slots/`. **Not on `main`.** All of
+  it lives on the unmerged branch `feat/slot-filling-slu-port`, and its own
+  `docs/SLOT_FILLING.md` states the integration was measured and deliberately
+  not merged — `api/nlu_engine.py` is untouched, so nothing at runtime loads
+  the joint model. The trained artifacts (`models/joint_*`) are gitignored as
+  regenerable; rebuild with `scripts/build_slot_corpus.py` then
+  `training/train_joint_nlu.py`. Note that branch is 32 commits behind `main`
+  and deletes tests that now exist there, so it needs a rebase before use.
 - **Topic recommender** — `api/topic_recommender.py`.
 - **Anti-pattern mining** — `api/anti_patterns.py`, `scripts/mine_anti_patterns.py`,
   mines real fallbacks out of the Postgres chat log.
