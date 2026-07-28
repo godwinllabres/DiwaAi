@@ -89,6 +89,19 @@ jobs:
 
       - name: Upload SARIF to GitHub Security tab
         if: always()
+        # Tolerated on purpose: whether this can succeed depends on the REPO,
+        # not on the code. The Security tab needs code scanning, which private
+        # repos only get with GitHub Advanced Security. This repo has two
+        # remotes — public godwinllabres/DiwaAi (upload works) and private
+        # Cavite-State-University-Official/sevi-api (upload fails with
+        # "Resource not accessible by integration", verified 2026-07-28). The
+        # same commit therefore passes on one and fails on the other.
+        #
+        # This does NOT re-hide the class of bug fixed above: engine errors now
+        # fail the scan step itself via ignore_on_exit, and the raw findings are
+        # always attached by the next step, so nothing is lost where GHAS is
+        # absent — the results are in the artifact instead of the tab.
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: kics-results/results.sarif
