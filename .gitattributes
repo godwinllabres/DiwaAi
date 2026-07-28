@@ -1,0 +1,16 @@
+# Shell scripts MUST check out with LF, on every platform.
+#
+# deployment/docker-entrypoint.sh is the image ENTRYPOINT. With core.autocrlf=true
+# — the default on Git for Windows — a fresh clone rewrites it to CRLF, the
+# shebang becomes `#!/bin/sh\r`, and the container dies at startup with the
+# famously misleading:
+#
+#   exec /app/deployment/docker-entrypoint.sh: no such file or directory
+#
+# Reproduced 2026-07-28 in a clean worktree on Windows. CI never catches this
+# because it runs on ubuntu-latest, and an existing working tree never shows it
+# because the file is already LF on disk — only new clones break.
+*.sh text eol=lf
+
+# Same reasoning for anything else the image execs directly.
+*.bash text eol=lf
