@@ -416,16 +416,32 @@ class LocalLLM:
         self.available = bool(self.model) and self._probe()
 
     def _probe(self) -> bool:
-        """Return True if the Ollama server is reachable.
+        """Return True if the Ollama server is reachable AND actually answered.
 
-        Uses a generous timeout to accommodate Cloudflare Tunnel latency
-        when Ollama is exposed via a remote URL.
+        Uses a generous timeout to accommodate Cloudflare Tunnel latency when
+        Ollama is exposed via a remote URL.
+
+        The response is parsed, not merely fetched. urlopen() follows redirects,
+        so an auth gateway in front of Ollama turns a 302 into a perfectly happy
+        HTTP 200 — and "the fetch worked" then means "I reached a login page".
+        Observed 2026-07-28: the Render deployment reported llm_ready=True while
+        this probe was landing on a Cloudflare Access sign-in page
+        (text/html, final URL godwincreates.cloudflareaccess.com/cdn-cgi/access/
+        login/...), and every real generate() call failed with llm_unavailable.
+        /health lied about a tier that was down. Requiring Ollama's own JSON
+        shape makes a captive portal fail the probe, which is the truth.
         """
         try:
             req = urllib.request.Request(f"{self.base_url}/api/tags", method="GET",
                                          headers={"User-Agent": "DIWA/1.0"})
-            with urllib.request.urlopen(req, timeout=15):
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                payload = json.loads(resp.read())
+            if isinstance(payload, dict) and "models" in payload:
                 return True
+            print(f"[WARNING] Ollama probe reached {self.base_url}/api/tags but the "
+                  f"reply was not Ollama's tag list — an auth gateway or proxy is "
+                  f"likely intercepting it")
+            return False
         except Exception as e:
             print(f"[WARNING] Ollama probe failed: {type(e).__name__}: {e}  url={self.base_url}")
             return False
@@ -537,12 +553,24 @@ class OpenAICompatLLM:
         return headers
 
     def _probe(self) -> bool:
-        """Return True if the OpenAI-compatible server is reachable (GET /models)."""
+        """Return True if the OpenAI-compatible server is reachable (GET /models).
+
+        Parses the reply rather than trusting that the fetch succeeded — same
+        auth-gateway trap documented on OllamaLLM._probe above: urlopen()
+        follows redirects, so a sign-in page returns HTTP 200 and would
+        otherwise read as a healthy server. Only the JSON shape is required,
+        not a specific key, since OpenAI-compatible implementations vary.
+        """
         try:
             req = urllib.request.Request(f"{self.base_url}/models", method="GET",
                                          headers=self._headers())
-            with urllib.request.urlopen(req, timeout=15):
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                payload = json.loads(resp.read())
+            if isinstance(payload, dict):
                 return True
+            print(f"[WARNING] OpenAI-compat probe reached {self.base_url}/models but the "
+                  f"reply was not JSON — an auth gateway or proxy is likely intercepting it")
+            return False
         except Exception as e:
             print(f"[WARNING] OpenAI-compat probe failed: {type(e).__name__}: {e}  url={self.base_url}")
             return False
