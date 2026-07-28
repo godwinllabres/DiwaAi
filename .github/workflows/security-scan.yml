@@ -70,8 +70,22 @@ jobs:
           path: deployment,.github/workflows
           output_path: kics-results
           output_formats: json,sarif
-          # PoC: report, don't break the build. Tighten to high once triaged.
-          fail_on: none
+          # PoC: report, don't break the build. Tighten once findings are triaged.
+          #
+          # This was `fail_on: none` until 2026-07-28, which is NOT a valid value:
+          # KICS --fail-on accepts severities (critical, high, medium, low, info),
+          # so the binary aborted with
+          #     Error: unknown argument(s) for --fail-on: none
+          # before scanning anything. It wrote no reports, the upload step then
+          # failed on a missing results.sarif, and — worst of all — THIS step
+          # still reported success. IaC and secrets scanning was silently dead
+          # while the job's only visible symptom looked like a cosmetic upload
+          # glitch. Verified against `kics scan --help` on the pinned image.
+          #
+          # ignore_on_exit: results is the correct way to say "report, don't
+          # break the build": findings no longer fail the job, but engine errors
+          # like the one above now DO, so this cannot rot silently again.
+          ignore_on_exit: results
 
       - name: Upload SARIF to GitHub Security tab
         if: always()
