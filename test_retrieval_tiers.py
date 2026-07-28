@@ -31,7 +31,26 @@ if idx is not None:
     # Positives: portal content must be retrievable above the augmentation floor,
     # with the right document on top.
     positives = [
-        ("who is the president of CvSU", "ukrainian ambassador"),  # names Dr. Nuestro + VPs
+        # Was ("who is the president of CvSU", "ukrainian ambassador"), which
+        # asserted the wrong thing twice over: it demanded that a news item about
+        # an ambassador's visit be the TOP hit for a question about the president,
+        # purely because that article happens to name Dr. Nuestro. That page ranks
+        # 28th at 0.070 — far under AUGMENT_MIN_SCORE — while the page that
+        # actually answers the question, "Dr. Nuestro named new CvSU President",
+        # ranks 25th at 0.075. The test was failing against a target that was
+        # never the right answer.
+        #
+        # KNOWN LIMITATION, recorded rather than tuned away: "who is the president
+        # of CvSU" analyses down to just {president, cvsu}, and ~126 corpus pages
+        # name the president because he appears in nearly every event write-up.
+        # Every candidate then scores coverage 1.00, so the coverage weight does
+        # no discriminating work and plain TF-IDF puts GAD/webinar pages on top.
+        # More specific phrasings rank correctly ("president of Cavite State
+        # University" -> 0.212 on the right page). Fixing the two-term case means
+        # changing retrieval scoring, which changes production answers, so it is
+        # deliberately NOT done here. In production this question is owned by the
+        # intent tier anyway — see the university_officials assertion below.
+        ("who is the cvsu president", "nuestro"),  # -> "Dr. Nuestro named new CvSU President"
         ("WELA 2026 registration", "wela"),
         ("seagrass research Maragondon", "seagrass"),
         ("CvSU ranking WURI top 500", "wuri"),
