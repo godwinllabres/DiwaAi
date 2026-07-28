@@ -11,6 +11,7 @@ import re
 import pickle
 import hashlib
 import threading
+import time
 from collections import OrderedDict
 import urllib.request
 import urllib.error
@@ -88,6 +89,21 @@ except ImportError:
 
 # Citizens' Charter retrieval tier (document tier of the hybrid brain)
 from . import charter_rag, intent_retrieval, site_rag
+# Single source for the Ollama endpoint default (shared with the MCP routers,
+# safety second-opinion, and /health warm-up).
+from .llm_defaults import ollama_base_url
+
+try:
+    from .smalltalk import smalltalk_reply as _smalltalk_reply
+except ImportError:  # pragma: no cover - smalltalk is optional, never fatal
+    def _smalltalk_reply(text, filipino=False):  # type: ignore[misc]
+        return None
+
+try:
+    from .college_programs import college_program_reply as _college_program_reply
+except ImportError:  # pragma: no cover - registry is optional, never fatal
+    def _college_program_reply(text, filipino=False):  # type: ignore[misc]
+        return None
 
 # TensorFlow imports (optional - graceful fallback if not available)
 try:
@@ -262,6 +278,13 @@ class NeuralNetworkModel:
     MAX_LEN = 20
     EMBEDDING_DIM = 64
 
+    # Keras/TF inference is not guaranteed thread-safe, and one process holds a
+    # single loaded model, so serialize the call itself. Class-level on purpose:
+    # the constraint belongs to the framework, not to any one instance. The
+    # critical section is a single predict on a batch of one — microseconds of
+    # contention, versus a segfault-class failure if two threads enter together.
+    _predict_lock = threading.Lock()
+
     def __init__(self, model_dir: str):
         if not TF_AVAILABLE:
             raise ImportError("TensorFlow required for Neural Network model")
@@ -311,7 +334,8 @@ class NeuralNetworkModel:
         seq = self.tokenizer.texts_to_sequences([clean_text])
         padded = pad_sequences(seq, maxlen=self.MAX_LEN, padding="post")
 
-        proba = self.model.predict(padded, verbose=0)[0]
+        with self._predict_lock:
+            proba = self.model.predict(padded, verbose=0)[0]
         if abs(self.temperature - 1.0) > 1e-6:
             scaled = np.power(np.clip(proba, 1e-7, 1.0), 1.0 / self.temperature)
             proba = scaled / scaled.sum()
@@ -331,6 +355,32 @@ class NeuralNetworkModel:
         return " ".join([lemmatizer.lemmatize(t) for t in tokens])
 
 
+# Re-probe cadence for a previously-unreachable LLM server. Env-configurable so
+# an operator can tune how aggressively a down local server is retried.
+_PROBE_COOLDOWN_SECONDS = float(os.getenv("LLM_PROBE_COOLDOWN_SECONDS", "30"))
+
+
+def _reprobe(wrapper) -> bool:
+    """Cooldown-gated availability check shared by the network-backed LLM
+    wrappers (LocalLLM / OpenAICompatLLM).
+
+    Returns True when the server is reachable, re-probing a previously-down
+    server at most once per _PROBE_COOLDOWN_SECONDS. This lets a transient
+    outage self-heal without a container restart, while never stalling every
+    turn on the probe timeout for as long as the server stays down. (The old
+    `self.llm.available` guard read a flag fixed at boot, so a server that was
+    down at startup — or that briefly blipped — latched the whole tier off.)
+    """
+    if wrapper.available:
+        return True
+    now = time.monotonic()
+    if now - getattr(wrapper, "_last_probe", 0.0) < _PROBE_COOLDOWN_SECONDS:
+        return False
+    wrapper._last_probe = now
+    wrapper.available = wrapper._probe()
+    return wrapper.available
+
+
 class LocalLLM:
     """
     Thin wrapper around a locally-hosted LLM served via Ollama
@@ -344,9 +394,10 @@ class LocalLLM:
     rest of the chatbot pipeline is unaffected.
     """
 
-    # Override with env vars: OLLAMA_BASE_URL, OLLAMA_MODEL
-    DEFAULT_BASE_URL = "http://localhost:11434"
-    DEFAULT_MODEL = "llama3.1"
+    # Endpoint + model both come from the environment (OLLAMA_BASE_URL,
+    # OLLAMA_MODEL). The base-url default lives once in llm_defaults; the model
+    # has NO baked-in default — an unset OLLAMA_MODEL disables the tier loudly
+    # rather than guessing a model that may not be pulled.
     # 8B models on CPU can take 60-120s on first call (cold start loads weights into RAM);
     # subsequent calls are 2-15s. Set generously so cold start doesn't fail.
     TIMEOUT_SECONDS = 180
@@ -357,10 +408,12 @@ class LocalLLM:
         model: str = None,
         system_prompt: str = "",
     ):
-        self.base_url = (base_url or os.getenv("OLLAMA_BASE_URL", self.DEFAULT_BASE_URL)).rstrip("/")
-        self.model = model or os.getenv("OLLAMA_MODEL", self.DEFAULT_MODEL)
+        self.base_url = (base_url or ollama_base_url()).rstrip("/")
+        self.model = (model or os.getenv("OLLAMA_MODEL", "")).strip()
         self.system_prompt = system_prompt
-        self.available = self._probe()
+        # No model configured → tier stays down (the caller surfaces the reason);
+        # otherwise availability is the live reachability probe.
+        self.available = bool(self.model) and self._probe()
 
     def _probe(self) -> bool:
         """Return True if the Ollama server is reachable.
@@ -376,6 +429,11 @@ class LocalLLM:
         except Exception as e:
             print(f"[WARNING] Ollama probe failed: {type(e).__name__}: {e}  url={self.base_url}")
             return False
+
+    def ensure_available(self) -> bool:
+        """Reachable now? Re-probes a previously-down Ollama server on a cooldown
+        so a transient outage self-heals without a container restart."""
+        return _reprobe(self)
 
     def generate(self, user_message: str, conversation_context: list = None) -> Optional[str]:
         """
@@ -450,9 +508,9 @@ class OpenAICompatLLM:
     the pipeline is unaffected.
     """
 
-    # Override with env vars: OPENAI_BASE_URL, OPENAI_MODEL, OPENAI_API_KEY
+    # Override with env vars: OPENAI_BASE_URL, OPENAI_MODEL, OPENAI_API_KEY.
+    # OPENAI_MODEL has NO baked-in default — unset disables the tier loudly.
     DEFAULT_BASE_URL = "http://localhost:8080/v1"
-    DEFAULT_MODEL = "gpt-3.5-turbo"
     # Local CPU inference has the same cold-start cost as Ollama — be generous.
     TIMEOUT_SECONDS = 180
 
@@ -464,12 +522,13 @@ class OpenAICompatLLM:
         system_prompt: str = "",
     ):
         self.base_url = (base_url or os.getenv("OPENAI_BASE_URL", self.DEFAULT_BASE_URL)).rstrip("/")
-        self.model = model or os.getenv("OPENAI_MODEL", self.DEFAULT_MODEL)
+        self.model = (model or os.getenv("OPENAI_MODEL", "")).strip()
         # Optional — LocalAI usually needs no key; a hosted OpenAI-compatible
         # endpoint (or a LocalAI configured with API_KEY) does.
         self.api_key = (api_key or os.getenv("OPENAI_API_KEY", "")).strip()
         self.system_prompt = system_prompt
-        self.available = self._probe()
+        # No model configured → tier stays down; else it's the reachability probe.
+        self.available = bool(self.model) and self._probe()
 
     def _headers(self) -> dict:
         headers = {"Content-Type": "application/json", "User-Agent": "DIWA/1.0"}
@@ -487,6 +546,11 @@ class OpenAICompatLLM:
         except Exception as e:
             print(f"[WARNING] OpenAI-compat probe failed: {type(e).__name__}: {e}  url={self.base_url}")
             return False
+
+    def ensure_available(self) -> bool:
+        """Reachable now? Re-probes a previously-down server on a cooldown so a
+        transient outage self-heals without a container restart."""
+        return _reprobe(self)
 
     def generate(self, user_message: str, conversation_context: list = None) -> Optional[str]:
         """Send a message and return the reply, or None on error. Re-probes if
@@ -549,10 +613,24 @@ class NonsenseGate:
     MIN_VOWEL_RATIO = 0.18  # below this on length-5+ tokens = keysmash
 
     # Short words we accept on their own (whole-message equality).
+    # The second row is conversational Filipino/English particles observed
+    # refused in production testing (2026-07): "po"/"opo" answered with a
+    # CvSU-scope refusal reads as a non-sequitur to a Filipino user.
     _ALLOW_SHORT = {
         "hi", "hello", "hey", "yes", "no", "ok", "okay",
+        "po", "opo", "oo", "ty", "thx", "tnx", "sup", "yo",
+        "gm", "gn", "bye", "lol", "wow", "yep", "yup", "nah", "thanks", "k",
         "cvsu", "ceit", "con", "cas", "cafenr", "cemds",
-        "ojt", "tor", "cat", "map", "fee", "fees",
+        "ojt", "tor", "cor", "cav", "cat", "map", "fee", "fees",
+    }
+
+    # Vowel-free-but-real tokens the keysmash heuristic must not score:
+    # campus acronyms ("CWTS CvSU" is 1 vowel in 8 letters) and connectors.
+    _KNOWN_TOKENS = _ALLOW_SHORT | {
+        "cwts", "lts", "rotc", "nstp", "gwa", "dtr", "coe", "cog",
+        "mdl", "lms", "gmc", "ssg", "lgbtq", "vs",
+        "bsit", "bscs", "bsba", "bsn", "dvm", "bshm", "bstm", "bsbm",
+        "bsed", "beed", "bsa", "bsp",
     }
 
     # Profanity / pure venting — no information to act on.
@@ -630,12 +708,21 @@ class NonsenseGate:
             return False, "empty"
         t = text.strip()
         t_lower = t.lower()
+        # Allowlist comparisons ignore trailing punctuation: "TOR?" and "po!"
+        # are the allowlisted word, asked — curated patterns "TOR?"/"COR?"/
+        # "Hey?" were refused as too_short before this strip (2026-07).
+        t_bare = t_lower.strip("?!.,")
+        # An exact allowlisted token is conversational, not junk — accept it
+        # before the length rules ("k" is a curated acknowledgement pattern
+        # that MIN_ALPHAS would refuse).
+        if t_bare in self._ALLOW_SHORT:
+            return True, "ok"
         alphas = sum(c.isalpha() for c in t)
 
         # Single-word / very short input — only allow well-known short tokens.
         if alphas < self.MIN_ALPHAS:
             return False, "too_short"
-        if " " not in t and t_lower not in self._ALLOW_SHORT and alphas < 4:
+        if " " not in t and alphas < 4:
             return False, "too_short"
 
         if self._PROFANITY.search(t):
@@ -649,10 +736,25 @@ class NonsenseGate:
         if self._PROMPT_INJECTION.search(t):
             return False, "prompt_injection"
 
-        # Vowel-starved token = keyboard noise (e.g. "fgbhnj", "tnsmnsl")
+        # Vowel-starved text = keyboard noise (e.g. "fgbhnj", "tnsmnsl") —
+        # but score only the tokens we don't recognize: acronym asks like
+        # "CWTS CvSU" (1 vowel / 8 letters) and "thanks" (1/6, < 0.18) are
+        # real messages the raw ratio refused (2026-07). Recognizing tokens
+        # is the whole exemption — do NOT also exempt on _CVSU_CONTEXT, or
+        # "tnsmnsl bcdfg cvsu" walks straight through the keysmash guard.
         if alphas >= 5:
-            vowels = sum(c.lower() in "aeiou" for c in t if c.isalpha())
-            if vowels / alphas < self.MIN_VOWEL_RATIO:
+            unknown = "".join(
+                w for w in re.split(r"[^a-z]+", t_lower)
+                if w and w not in self._KNOWN_TOKENS
+            )
+            u_alphas = len(unknown)
+            vowels = sum(c in "aeiou" for c in unknown)
+            # A single vowel-light English word ("sports", "sprint", "stars")
+            # sits at 1/6 = 0.167, under the ratio — so the ratio alone only
+            # judges longer spans, and short spans must be vowel-FREE to count
+            # as keysmash ("jkjkjk", "fgbhnjk").
+            if (u_alphas >= 5 and vowels == 0) or (
+                    u_alphas >= 8 and vowels / u_alphas < self.MIN_VOWEL_RATIO):
                 return False, "low_vowel_ratio"
 
         # Off-topic food / non-CvSU noun without any CvSU context.
@@ -683,26 +785,60 @@ class ScopeGate:
     MAX_LENGTH = 800  # chars — anything longer is suspicious
 
     # Math / computation patterns (lowercased input)
+    # Tuned 2026-07 against all 3135 intent patterns + the 268-Q mirror eval;
+    # the previous form refused real CvSU questions as math:
+    #   "how much is the tuition fee for BSIT"   (bare "how much is")
+    #   "how to compute GWA" / "calculate my GWA" (bare "compute|calculate")
+    #   "what is 1.0 in CvSU"                     ("what is \d" — a grades ask)
+    # calculate/compute/evaluate/simplify fire only on a MATH OBJECT, not on
+    # the bare verb: an allowlist beats a blocklist here because those verbs
+    # are ordinary CvSU vocabulary ("how to compute GWA", "paano mag-compute
+    # ng GWA", "criteria used to evaluate PSR candidates") while the objects
+    # ("two plus two", "the square root of", "the area of") are not. Homework
+    # asks that slip ("compute this") have their own curated intent,
+    # off_topic_homework, which refuses them properly.
+    # (?<!-)integrate: Tagalog "na-integrate sa CvSU" is school history, not
+    # calculus. "integrated" never matched (the trailing \b sees the 'd').
     _MATH_KEYWORDS = re.compile(
-        r"\b(solve|calculate|compute|evaluate|simplify|integrate|"
+        r"\b(solve|(?<!-)integrate|"
         r"differentiate|derivative|integral|equation|factorial|"
         r"logarithm|sine|cosine|tangent|matrix|determinant|"
-        r"probability of|how much is|what is \d|whats \d)\b",
+        r"probability of|(?:calculate|compute|evaluate|simplify)\s+"
+        r"(?:the\s+|this\s+|that\s+|a\s+)?"
+        r"(?:\d|one|two|three|four|five|six|seven|eight|nine|ten|"
+        r"hundred|thousand|square\s+root|fraction|area|volume|perimeter|"
+        r"circumference|sum|product|quotient|expression))\b",
         re.IGNORECASE,
     )
-    _MATH_EXPRESSION = re.compile(r"\d+\s*[\+\-\*/\^x×÷]\s*\d+")
-    _EQUATION_LIKE = re.compile(r"[a-z]\s*[\+\-\*/=]\s*\d+", re.IGNORECASE)
+    _MATH_EXPRESSION = re.compile(r"\d+\s*[\+\*/\^x×÷]\s*\d")
+    # Subtraction needs its own rule: "500-125" is arithmetic but "2025-2028",
+    # "AY 2025-2026", "10:00-12:00", "K-12" and "F-137" are ranges/compounds.
+    # The lookbehind rejects a digit/colon/dot/hyphen on the left, so only the
+    # first number of a run can start a match; the lookahead spares year pairs.
+    _SUBTRACTION = re.compile(
+        r"(?<![\d:.\-])(?!(?:19|20)\d{2}\s*-\s*(?:19|20)\d{2})\d{1,4}\s*-\s*\d{1,4}(?![\d:])"
+    )
+    # No bare '-' here either (it would eat "K-12"); "x-3 = 7" is caught by the
+    # '=' arm, which accepts a digit or a letter on its left.
+    _EQUATION_LIKE = re.compile(r"[a-z]\s*[\+\*/]\s*\d+|[a-z0-9]\s*=\s*\d", re.IGNORECASE)
 
     # Off-topic keyword list (each must match as a whole phrase/word)
     _OFFTOPIC = re.compile(
         r"\b(capital of|weather in|recipe|cook|bake|"
         r"celebrity|movie|netflix|tiktok|"
-        r"sports score|football|basketball game|nba|fifa|"
+        # Bare "football|basketball game" blocked sports_athletics asks
+        # ("football team CvSU" is intramurals, not the NFL).
+        r"sports score|nba|fifa|nfl|premier league|world cup|"
         r"write code|debug|python|javascript|java code|c\+\+|"
         r"write a poem|write a story|write a song|write me a|"
         r"translate to|translate this|translation of|"
-        r"tell a joke|tell me a joke|funny joke|"
-        r"president of|prime minister|election|"
+        # Joke asks are handled by api/smalltalk.py (Step 0.6) rather than
+        # refused: a flat "outside my scope" reads as cold from a campus
+        # assistant. They never reach here, so the alternatives are gone.
+        r"write a joke about|"
+        # "president of CvSU / Cavite State" is a university_officials ask;
+        # only the national-politics form is off-topic.
+        r"president of (?!cvsu|cavite)|prime minister|election|"
         r"bitcoin|crypto|stock price|forex|"
         r"horoscope|zodiac|tarot)\b",
         re.IGNORECASE,
@@ -710,7 +846,7 @@ class ScopeGate:
 
     REFUSAL_MESSAGES = [
         "I can only help with questions about Cavite State University — programs, admissions, fees, scholarships, campus services, and policies. Is there something CvSU-related I can help with?",
-        "That's outside my scope. I'm Sevi, the CvSU virtual assistant — I focus on Cavite State University topics like enrollment, courses, scholarships, and campus information. What would you like to know about CvSU?",
+        "That's not something I can help with. I'm Sevi, the CvSU virtual assistant — I stick to Cavite State University topics like enrollment, courses, scholarships, and campus information. What would you like to know about CvSU?",
         "I'm not able to answer that — I'm built to help with CvSU-related questions only (admissions, programs, fees, campus services). Please ask me something about Cavite State University.",
     ]
 
@@ -724,7 +860,7 @@ class ScopeGate:
             return False, "too_long"
         if self._MATH_KEYWORDS.search(text):
             return False, "math_keyword"
-        if self._MATH_EXPRESSION.search(text):
+        if self._MATH_EXPRESSION.search(text) or self._SUBTRACTION.search(text):
             return False, "math_expression"
         if self._EQUATION_LIKE.search(text):
             return False, "equation"
@@ -750,7 +886,6 @@ class ClaudeLLM:
     fallback gracefully.
     """
 
-    DEFAULT_MODEL = "claude-haiku-4-5"
     MAX_TOKENS = 400
     TIMEOUT_SECONDS = 12
 
@@ -761,7 +896,7 @@ class ClaudeLLM:
         system_prompt: str = "",
     ):
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY", "").strip()
-        self.model = model or os.getenv("CLAUDE_MODEL", self.DEFAULT_MODEL)
+        self.model = (model or os.getenv("CLAUDE_MODEL", "")).strip()
         # Single cached block — system prompt is stable, served at ~0.1x cost after first call
         self.system_blocks = [
             {
@@ -777,15 +912,29 @@ class ClaudeLLM:
             return
         if not self.api_key:
             return
+        if not self.model:
+            # Claude requires an explicit model id — no baked-in default.
+            return
         try:
             self.client = anthropic.Anthropic(
                 api_key=self.api_key,
+                # TIMEOUT_SECONDS is PER ATTEMPT, and the SDK's default is 2
+                # retries — so one generate() can occupy its caller for ~3x the
+                # timeout plus backoff, not the 12s the constant suggests. That
+                # is the difference between shedding load and stalling behind a
+                # provider brownout, so bound the attempts explicitly.
+                max_retries=1,
                 timeout=self.TIMEOUT_SECONDS,
             )
             self.available = True
         except Exception as e:
             print(f"[WARNING] Claude client init failed: {e}")
             self.available = False
+
+    def ensure_available(self) -> bool:
+        # Claude availability is static (SDK + key present at init); there is no
+        # server to re-probe. Transient API errors are handled per-call in generate().
+        return self.available
 
     def generate(
         self,
@@ -828,11 +977,69 @@ class ClaudeLLM:
             return None
 
 
+# "1. College deans" / "2) Tuition" — an enumerated item in a bot reply.
+_NUMBERED_ITEM_RE = re.compile(r"^[ \t]*(\d{1,2})[.)]\s+(\S.*?)[ \t]*$", re.MULTILINE)
+
+# A whole message that is nothing but a pointer at a list position: "10",
+# "#10", "no. 10", "number 10", "the 10th one", "ika-10". Anchored end to end
+# so it can never fire on a real question, and \d{1,2} with no decimal part
+# keeps CvSU grade values ("1.0", "2.75") out of it.
+# The optional lead-in covers corrections and second attempts — "I mean 3",
+# "sorry, 3", "actually 3", "no 3", "yung 3" — which are the commonest way a
+# user re-points at the list after the first pick answered something else.
+_ORDINAL_REF_RE = re.compile(
+    r"^\s*(?:(?:i\s+)?mean(?:t)?|sorry|oops|actually|no|nope|wait|"
+    r"make\s+it|let'?s\s+do|give\s+me|show\s+me|yung|ay|hindi)?[\s,:-]*"
+    r"(?:the\s+)?(?:#|no\.?|nr\.?|number|item|option|choice|ika-)?\s*"
+    r"(\d{1,2})(?:st|nd|rd|th)?\s*(?:one|item|option|po|please|pls|nga|naman)?"
+    r"\s*[.?!]*\s*$",
+    re.IGNORECASE,
+)
+
+# How far back a printed list stays pointable. The answer to the user's first
+# pick sits between the menu and their correction, so looking only at the
+# previous turn misses "I mean 3" entirely.
+_LIST_REF_LOOKBACK = 6
+
+
+# Retention bounds. Parsing costs ~22 microseconds on the largest curated
+# reply, so the cost is storage, not CPU: without caps, 2000 sessions x 50
+# turns each holding a long enumeration is ~191 MB, against a 2 GB container.
+# A pointer only needs enough text to re-run as a query, and _ORDINAL_REF_RE
+# reads at most two digits, so anything past 20 items is unreachable anyway.
+_MAX_LIST_ITEMS = 20
+_MAX_LIST_ITEM_CHARS = 120
+
+
+def _numbered_items(text: str) -> list:
+    """Ordered list items in a bot reply, so a later turn can dereference them."""
+    if not text or len(text) > 20000:
+        return []
+    items = _NUMBERED_ITEM_RE.findall(text)
+    # Require a real enumeration starting at 1 — a lone "1. step" or a stray
+    # "2024." in prose is not a menu the user can point at.
+    if len(items) < 2 or items[0][0] != "1":
+        return []
+    return [
+        body.strip()[:_MAX_LIST_ITEM_CHARS]
+        for _, body in items[:_MAX_LIST_ITEMS]
+    ]
+
+
 class HybridChatbot:
     """
     Hierarchical Hybrid Chatbot
     Strategy: Use fast NB first, fallback to accurate NN if uncertain
     """
+
+    # Class-level fallbacks for the two state locks. __init__ replaces these
+    # with per-instance locks; they exist because __init__ loads pickled models,
+    # so callers that only want the pure helpers build instances via
+    # HybridChatbot.__new__ and never run it (see test_conversation_recap.py,
+    # test_place_resolver.py). Sharing one lock across such instances is
+    # strictly more conservative than per-instance, never less.
+    _history_lock = threading.Lock()
+    _stats_lock = threading.Lock()
 
     NB_CONFIDENCE_THRESHOLD = 0.65  # If NB confidence >= 65%, use it; otherwise defer to NN.
     # Raised from 0.55: with the NLU boost no longer inflating confidence, borderline
@@ -844,6 +1051,39 @@ class HybridChatbot:
     # regexes on both ends (api/app.py _MAP_FIRST_INTENT_RE and the frontend),
     # so the map card renders open above the text.
     FIND_PLACE_INTENT = "find_place"
+    # Session-recap replies from the Conversation Recap tier. Not in the
+    # trained taxonomy: the tier answers deterministically from this session's
+    # history, so the classifiers must never own it ("chitchat" captures
+    # "summarize our conversation" at 0.65 and answers with a greeting, and
+    # the grounded LLM invents a recap from corpus passages instead).
+    RECAP_INTENT = "conversation_recap"
+    # Benign small talk answered from curated content (api/smalltalk.py).
+    # Not in the trained taxonomy for the same reason as RECAP_INTENT.
+    SMALLTALK_INTENT = "smalltalk"
+    # Complete per-college program list from data/college_programs.json.
+    PROGRAMS_INTENT = "college_programs"
+
+    # Emitted when an LLM IS configured but its server was unreachable or
+    # errored on this turn. Distinct from FALLBACK_INTENT (a genuine no-match)
+    # so the reply reads as "try again in a moment" instead of "I didn't
+    # understand", and so an outage is not logged/mined as an unanswered ask.
+    LLM_UNAVAILABLE_INTENT = "llm_unavailable"
+
+    # Meta-questions about the conversation itself. Every alternative requires
+    # a conversation word or a we/I-asked construction so content asks like
+    # "summarize the admission requirements" never match. Swept against all
+    # 3135 intent patterns and the 268-question mirror eval: 0 hits.
+    _RECAP_RE = re.compile(
+        r"(?:\b(?:summarize|summarise|recap)\b.{0,24}?"
+        r"\b(?:our|this|the)\s+(?:conversation|convo|chat|discussion|usapan)\b)"
+        r"|(?:\b(?:summarize|summarise|recap)\s+what\s+(?:i|we)\b)"
+        r"|(?:\bwhat\s+(?:did|have|had)\s+(?:we|i)\s+"
+        r"(?:talk(?:ed)?|discuss(?:ed)?|ask(?:ed)?|say|said|cover(?:ed)?)\b)"
+        r"|(?:\bwhat\s+(?:did|do)\s+(?:we|i)\s+(?:talk|speak)\s+about\b)"
+        r"|(?:\b(?:ano|anong)\b.{0,16}?\b(?:napag|pinag)-?usapan\b)"
+        r"|(?:\bbuod\s+ng\s+(?:usapan|pinag-?usapan)\b)",
+        re.IGNORECASE,
+    )
 
     def __init__(self, model_dir: str, responses_path: str):
         """
@@ -900,9 +1140,29 @@ class HybridChatbot:
             "naive_bayes_used": 0,
             "neural_network_used": 0,
             "place_resolver_used": 0,
+            "conversation_recap_used": 0,
+            "smalltalk_used": 0,
+            "college_programs_used": 0,
+            "llm_unavailable": 0,
             "fallback_used": 0,
             "nlu_enhanced": 0
         }
+
+        # Two narrow locks rather than one coarse one. Chat turns now run
+        # concurrently in worker threads (see the turn gate in api/app.py), and
+        # both structures above are written on every turn.
+        #
+        # _history_lock is the load-bearing one: conversation_history is an
+        # OrderedDict, and concurrent popitem/move_to_end/insert from DIFFERENT
+        # sessions corrupt its internal linked list. That is real corruption,
+        # not a stale read — which is also why a per-session lock cannot cover
+        # it; the structure is shared even when the sessions are not.
+        #
+        # _stats_lock is separate because the counters are touched far more
+        # often and held far more briefly. Sharing one lock would serialize
+        # every turn behind bookkeeping for no benefit.
+        self._history_lock = threading.Lock()
+        self._stats_lock = threading.Lock()
 
         # Initialize NLU engine for advanced understanding
         if NLU_AVAILABLE:
@@ -912,8 +1172,13 @@ class HybridChatbot:
             self.nlu_engine = None
             print("[WARNING] Advanced NLU Engine not available")
 
-        # Initialize LLM fallback (Claude API by default, Ollama optional)
-        provider = os.getenv("LLM_PROVIDER", "claude").strip().lower()
+        # Initialize LLM fallback. Default to the local LLM (Ollama) — that is
+        # what every deployment actually serves (Claude is off on-prem: no key,
+        # and RA 10173 keeps data local). A missing LLM_PROVIDER must degrade to
+        # the deployed local LLM, never to an unavailable Claude that silently
+        # disables the whole tier and drops every unmatched turn to the static
+        # "I didn't quite understand" card.
+        provider = os.getenv("LLM_PROVIDER", "ollama").strip().lower()
         self.scope_gate = ScopeGate()
         self.nonsense_gate = NonsenseGate()
         self.llm = None
@@ -941,13 +1206,13 @@ class HybridChatbot:
         print(f"       known providers: {', '.join(sorted(KNOWN_LLM_PROVIDERS))}")
         if provider in ("openai", "localai"):
             print(f"       OPENAI_BASE_URL={os.getenv('OPENAI_BASE_URL', OpenAICompatLLM.DEFAULT_BASE_URL)}")
-            print(f"       OPENAI_MODEL={os.getenv('OPENAI_MODEL', OpenAICompatLLM.DEFAULT_MODEL)}")
+            print(f"       OPENAI_MODEL={os.getenv('OPENAI_MODEL', '(unset)')}")
             print(f"       OPENAI_API_KEY={'set' if os.getenv('OPENAI_API_KEY') else 'unset'}")
         elif provider == "ollama":
-            print(f"       OLLAMA_BASE_URL={os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}")
-            print(f"       OLLAMA_MODEL={os.getenv('OLLAMA_MODEL', 'llama3.2:3b')}")
+            print(f"       OLLAMA_BASE_URL={ollama_base_url()}")
+            print(f"       OLLAMA_MODEL={os.getenv('OLLAMA_MODEL', '(unset)')}")
         elif provider == "claude":
-            print(f"       CLAUDE_MODEL={os.getenv('CLAUDE_MODEL', '(default)')}")
+            print(f"       CLAUDE_MODEL={os.getenv('CLAUDE_MODEL', '(unset)')}")
             print(f"       ANTHROPIC_API_KEY={'set' if os.getenv('ANTHROPIC_API_KEY') else 'unset'}")
 
         if provider == "claude":
@@ -958,8 +1223,10 @@ class HybridChatbot:
             else:
                 if not ANTHROPIC_AVAILABLE:
                     self.llm_last_error = "anthropic package not installed (pip install anthropic)"
-                else:
+                elif not self.llm.api_key:
                     self.llm_last_error = "ANTHROPIC_API_KEY not set or invalid"
+                else:
+                    self.llm_last_error = "CLAUDE_MODEL not set — set it to the Claude model id"
                 print(f"[WARNING] Claude fallback disabled — {self.llm_last_error}")
         elif provider == "ollama":
             print("       initialising local LLM fallback (Ollama)...")
@@ -970,12 +1237,15 @@ class HybridChatbot:
                 # the 60-120s cold-start cost on CPU-only machines.
                 self._warm_up_llm_async()
             else:
-                self.llm_last_error = (
-                    f"Ollama not reachable at {getattr(self.llm, 'base_url', '?')} "
-                    f"(model={getattr(self.llm, 'model', '?')})"
-                )
-                print(f"[WARNING] {self.llm_last_error} — deep-fallback disabled")
-                print("          Start Ollama and run: ollama pull llama3.1")
+                if not self.llm.model:
+                    self.llm_last_error = "OLLAMA_MODEL not set — set it to the pulled model name in sevi.env"
+                    print(f"[WARNING] {self.llm_last_error} — deep-fallback disabled")
+                else:
+                    self.llm_last_error = (
+                        f"Ollama not reachable at {self.llm.base_url} (model={self.llm.model})"
+                    )
+                    print(f"[WARNING] {self.llm_last_error} — deep-fallback disabled")
+                    print("          Start Ollama and pull the model named in OLLAMA_MODEL")
         elif provider in ("openai", "localai"):
             print(f"       initialising OpenAI-compatible LLM fallback ({provider})...")
             self.llm = OpenAICompatLLM(system_prompt=scope_locked_prompt)
@@ -983,10 +1253,13 @@ class HybridChatbot:
                 print(f"[OK] OpenAI-compat LLM ready  model={self.llm.model}  url={self.llm.base_url}")
                 self._warm_up_llm_async()
             else:
-                self.llm_last_error = (
-                    f"OpenAI-compat server not reachable at {self.llm.base_url} "
-                    f"(model={self.llm.model})"
-                )
+                if not self.llm.model:
+                    self.llm_last_error = "OPENAI_MODEL not set — set it to the served model name"
+                else:
+                    self.llm_last_error = (
+                        f"OpenAI-compat server not reachable at {self.llm.base_url} "
+                        f"(model={self.llm.model})"
+                    )
                 print(f"[WARNING] {self.llm_last_error} — deep-fallback disabled")
                 print("          Check OPENAI_BASE_URL / OPENAI_MODEL and that the model is loaded")
         elif provider == "none":
@@ -1026,7 +1299,9 @@ class HybridChatbot:
             "provider": self.llm_provider,
             "model": getattr(self.llm, "model", None),
             "base_url": getattr(self.llm, "base_url", None),
-            "available": bool(self.llm and self.llm.available),
+            # ensure_available() re-probes (on a cooldown) so /health reflects a
+            # server that has since recovered, not the flag frozen at boot.
+            "available": bool(self.llm and self.llm.ensure_available()),
             "known_provider": self.llm_provider in KNOWN_LLM_PROVIDERS,
             "error": self.llm_last_error,
         }
@@ -1178,7 +1453,7 @@ class HybridChatbot:
             intent = result["intent"]
             confidence = result["confidence"]
             nlu_data = result
-            self.model_usage_stats["nlu_enhanced"] += 1
+            self._bump("nlu_enhanced")
         return intent, confidence, nlu_data
 
     def _nn_result(self, user_input: str) -> Tuple[Optional[str], float]:
@@ -1189,10 +1464,15 @@ class HybridChatbot:
 
     def _llm_context(self, user_id: Optional[str]) -> list:
         """Build the last-3-turns conversation context for the LLM."""
-        if not user_id or user_id not in self.conversation_history:
+        if not user_id:
             return []
+        # Copy the slice under the lock, then build the message list outside it.
+        # Slicing a list another thread is appending to (or deleting from, when
+        # a session ages past _MAX_HISTORY_TURNS) can otherwise read a torn view.
+        with self._history_lock:
+            turns = list(self.conversation_history.get(user_id, [])[-3:])
         context = []
-        for turn in self.conversation_history[user_id][-3:]:
+        for turn in turns:
             context.append({"role": "user", "content": turn["user_message"]})
             context.append({"role": "assistant", "content": turn["bot_response"]})
         return context
@@ -1263,9 +1543,7 @@ class HybridChatbot:
         agrees = match.score >= intent_retrieval.MATCH_MIN_SCORE and match.intent == nb_intent
         if match.score < intent_retrieval.HIGH_MATCH_SCORE and not agrees:
             return None
-        self.model_usage_stats["intent_retrieval_used"] = (
-            self.model_usage_stats.get("intent_retrieval_used", 0) + 1
-        )
+        self._bump("intent_retrieval_used")
         return match.intent, self._select_response(match.intent, user_input), match.score
 
     @staticmethod
@@ -1372,7 +1650,7 @@ class HybridChatbot:
         if best is None:
             return None
         _, score, tag, reply, label, stat = best
-        self.model_usage_stats[stat] = self.model_usage_stats.get(stat, 0) + 1
+        self._bump(stat)
         return tag, reply, score, label
 
     def _place_resolver_result(self, user_input: str, campus: Optional[str] = None):
@@ -1402,6 +1680,100 @@ class HybridChatbot:
             return None
         return pq.place_id, place_answer(pq)
 
+    def _resolve_list_reference(self, user_input: str, user_id: Optional[str]) -> Optional[str]:
+        """Turn a bare "10" into the text of item 10 of the list just shown.
+
+        When the previous reply was an enumeration, a lone number is a pointer
+        into it, not a question. The classifiers cannot know that: "10" scores
+        0.72 on retention_policy_grades (its patterns are full of "1.0"/"5.0"),
+        so the bot confidently answers about GWA and Latin honors instead of
+        the item the user picked. Observed in UAT, 2026-07.
+
+        This is coreference resolution, but it needs no model: the bot wrote
+        the list itself one turn ago, so the mapping is a lookup. Returns the
+        rewritten query, or None to leave the message alone.
+        """
+        if not user_id:
+            return None
+        match = _ORDINAL_REF_RE.match(user_input or "")
+        if not match:
+            return None
+        # Walk back to the most recent turn that actually printed a list: the
+        # reply to the user's first pick sits in between, so history[-1] alone
+        # cannot answer "I mean 3". Done entirely under the lock — a concurrent
+        # turn both appends to this list and blanks the list_items of the entry
+        # aging out of the pointable window.
+        items = []
+        with self._history_lock:
+            history = self.conversation_history.get(user_id) or []
+            for turn in reversed(history[-_LIST_REF_LOOKBACK:]):
+                if turn.get("list_items"):
+                    items = list(turn["list_items"])
+                    break
+        index = int(match.group(1))
+        if not 1 <= index <= len(items):
+            return None
+        return items[index - 1]
+
+    def _conversation_recap_result(self, user_input: str, user_id: Optional[str]) -> Optional[str]:
+        """Step 0.5: deterministic session recap for meta-questions about the
+        conversation itself ("what did we talk about", "summarize our chat").
+
+        Runs before the classifiers because chitchat captures these phrasings
+        at ~0.65-0.70 and answers with a greeting, and the grounded LLM tier
+        summarizes retrieved corpus passages instead of the conversation —
+        a confident fabrication (observed 2026-07: it "recapped" campus
+        locations in a session that discussed admissions and scholarships).
+
+        Answers only from this session's history: it lists the user's own
+        prior questions verbatim (PII-masked) and never involves the LLM,
+        so it cannot invent topics. Returns the reply text, or None when the
+        message is not a recap ask.
+        """
+        if not self._RECAP_RE.search(user_input):
+            return None
+        try:
+            from .pii import mask_pii
+        except ImportError:
+            from pii import mask_pii
+
+        # Copy under the lock: this list-comprehends over the session's turns
+        # while a concurrent turn may be appending to or truncating them.
+        history = self.snapshot_history(user_id) if user_id else []
+        # Skip prior recaps (they would recurse into "1. can you summarize…"
+        # noise) and anything a gate refused. Echoing a refused turn would put
+        # attacker-controlled text into a bot_response that _llm_context later
+        # replays in the ASSISTANT role — the one role prompt-injection
+        # defenses treat as the model's own prior words.
+        asked = [
+            t["user_message"] for t in history
+            if t.get("intent") != self.RECAP_INTENT
+            and not str(t.get("model_used", "")).startswith(("NonsenseGate", "ScopeGate", "SafetyGate"))
+        ]
+
+        filipino = _is_filipino(user_input)
+        if not asked:
+            return ("Wala pa tayong napag-uusapan sa session na ito. Magtanong ka lang "
+                    "tungkol sa CvSU — admissions, enrollment, tuition, scholarships, o campus services."
+                    if filipino else
+                    "We haven't discussed anything yet this session. Ask me anything about "
+                    "CvSU — admissions, enrollment, tuition, scholarships, or campus services.")
+
+        recent = asked[-10:]
+        header = ("Narito ang mga natanong mo sa session na ito:" if filipino
+                  else "Here's what you've asked so far this session:")
+        # Collapse whitespace and cap length: the echoed text is replayed to
+        # the LLM as assistant content, so it must stay a short quoted line
+        # and cannot carry multi-line structure of its own.
+        lines = [f"{i}. {mask_pii(' '.join(q.split()))[:160]}"
+                 for i, q in enumerate(recent, 1)]
+        if len(asked) > len(recent):
+            lines.append("… (earlier questions omitted)" if not filipino
+                         else "… (may mga naunang tanong na hindi na isinama)")
+        footer = ("Gusto mo bang balikan ang alinman sa mga ito?" if filipino
+                  else "Want me to go over any of these again?")
+        return "\n".join([header, *lines, footer])
+
     def predict(self, user_input: str, user_id: str = None, skip_intents: bool = False,
                 campus: Optional[str] = None) -> Tuple[str, str, float, str, dict]:
         """
@@ -1417,15 +1789,39 @@ class HybridChatbot:
         Returns:
             (intent, response, confidence, model_used, nlu_data)
         """
-        if skip_intents and not (self.llm and self.llm.available):
+        if skip_intents and not (self.llm and self.llm.ensure_available()):
             skip_intents = False
 
         nlu_data = {}
+
+        # Step 0.5: Conversation Recap — must precede the classifiers; see
+        # _conversation_recap_result for why neither tier below can own this.
+        recap = self._conversation_recap_result(user_input, user_id)
+        if recap is not None:
+            self._bump("conversation_recap_used")
+            return self.RECAP_INTENT, recap, 1.0, "Conversation Recap", nlu_data
+
+        # Step 0.6: Benign small talk — states the scope boundary and still
+        # answers. Curated content only; see api/smalltalk.py for the GAD screen.
+        small = _smalltalk_reply(user_input, filipino=_is_filipino(user_input))
+        if small is not None:
+            self._bump("smalltalk_used")
+            return self.SMALLTALK_INTENT, small, 1.0, "Small Talk", nlu_data
+
+        # Step 0.7: College Programs — naming any college and asking about
+        # programs returns that college's COMPLETE list. Must precede the
+        # classifiers: `courses_offered` owns the CEIT patterns and answers
+        # with the generic all-colleges blurb, so it would win every time.
+        programs = _college_program_reply(user_input, filipino=_is_filipino(user_input))
+        if programs is not None:
+            self._bump("college_programs_used")
+            return self.PROGRAMS_INTENT, programs, 1.0, "College Programs", nlu_data
+
         if not skip_intents:
             # Step 1: Naive Bayes (+ optional NLU enhancement)
             nb_intent, nb_confidence, nlu_data = self._nb_result(user_input, user_id)
             if nb_intent and nb_confidence >= self.NB_CONFIDENCE_THRESHOLD:
-                self.model_usage_stats["naive_bayes_used"] += 1
+                self._bump("naive_bayes_used")
                 return nb_intent, self._select_response(nb_intent, user_input), nb_confidence, "Naive Bayes (NLU Enhanced)", nlu_data
 
             # Step 2: Neural Network with adaptive per-intent threshold, gated
@@ -1439,7 +1835,7 @@ class HybridChatbot:
             if (nn_intent and nn_confidence >= self.nn_model.get_threshold(nn_intent)
                     and nn_intent == nb_intent):
                 response = self._select_response(nn_intent, user_input)
-                self.model_usage_stats["neural_network_used"] += 1
+                self._bump("neural_network_used")
                 return nn_intent, response, nn_confidence, "Neural Network", nlu_data
 
             # Step 2.5: Intent retrieval — soft lexical match over the intent
@@ -1460,24 +1856,29 @@ class HybridChatbot:
             placed = self._place_resolver_result(user_input, campus)
             if placed is not None:
                 place_id, response = placed
-                self.model_usage_stats["place_resolver_used"] += 1
+                self._bump("place_resolver_used")
                 nlu_data = {**nlu_data, "place_id": place_id}
                 return self.FIND_PLACE_INTENT, response, 1.0, "Place Resolver", nlu_data
 
-        # Step 3: LLM fallback — fires only when NB+NN are both below threshold
-        if self.llm and self.llm.available:
+        # Step 3: LLM fallback — fires only when NB+NN are both below threshold.
+        # ensure_available() re-probes a previously-unreachable local server on
+        # a cooldown, so a transient Ollama outage self-heals without a restart
+        # instead of latching the whole tier off until the container is recreated.
+        llm_configured = self.llm is not None and self.llm_provider != "none"
+        llm_unavailable = False
+        if llm_configured and self.llm.ensure_available():
             # NonsenseGate first: catches gibberish, profanity, and
             # fact-injection attempts ("the correct answer is...",
             # "Ang turon ay X") before ScopeGate's off-topic check.
             ns_allowed, ns_reason = self.nonsense_gate.allows(user_input)
             if not ns_allowed:
-                self.model_usage_stats["scope_gate_blocked"] += 1
+                self._bump("scope_gate_blocked")
                 return self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, f"NonsenseGate ({ns_reason})", nlu_data
 
             allowed, reason = self.scope_gate.allows(user_input)
             if not allowed:
                 # Pre-filter blocked the query — don't even call the API
-                self.model_usage_stats["scope_gate_blocked"] += 1
+                self._bump("scope_gate_blocked")
                 return self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, f"ScopeGate ({reason})", nlu_data
 
             # Official-source grounding — gather the best passages from BOTH
@@ -1491,26 +1892,46 @@ class HybridChatbot:
             llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id))
             # LLM emitted the refusal token → out of scope per the model's own judgment
             if llm_reply and LLM_REFUSAL_TOKEN in llm_reply:
-                self.model_usage_stats["scope_gate_blocked"] += 1
+                self._bump("scope_gate_blocked")
                 provider_label = "Claude" if isinstance(self.llm, ClaudeLLM) else "Ollama"
                 return self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, f"{provider_label} (out-of-scope)", nlu_data
 
             if llm_reply:
-                self.model_usage_stats["llm_fallback_used"] += 1
+                self._bump("llm_fallback_used")
                 provider_label = "Claude LLM" if isinstance(self.llm, ClaudeLLM) else "Local LLM"
                 return self.FALLBACK_INTENT, llm_reply, 0.0, f"{provider_label}{charter_suffix}", nlu_data
+
+            # Reached the model but it returned nothing (timeout / API error /
+            # empty) — the assistant is degraded, not the user's phrasing.
+            llm_unavailable = True
+        elif llm_configured:
+            # A provider is configured but its server is unreachable right now
+            # (e.g. Ollama down). Same degraded state — not a genuine no-match.
+            llm_unavailable = True
 
         # Step 3.5: Verbatim document tier — no LLM (or it returned nothing),
         # but the Citizens' Charter or the official website has a strongly-
         # matching passage. Quote the best one with a citation instead of
-        # shrugging.
+        # shrugging. Beats both fallbacks, so it runs before them.
         served = self._verbatim_document_reply(user_input)
         if served is not None:
             tag, reply, score, label = served
             return tag, reply, score, label, nlu_data
 
-        # Step 4: Static fallback
-        self.model_usage_stats["fallback_used"] += 1
+        # Step 4a: LLM-unavailable degrade. An LLM was configured but could not
+        # answer this turn (down or errored). Return a distinct "try again"
+        # reply — NOT the "I didn't understand" card (which blames the user's
+        # wording) — under its own intent so the anti-pattern miner and the
+        # fallback log don't count an outage as an unanswered question.
+        if llm_unavailable:
+            self._bump("llm_unavailable")
+            return (self.LLM_UNAVAILABLE_INTENT,
+                    self._select_response(self.LLM_UNAVAILABLE_INTENT, user_input),
+                    0.0, "LLM Unavailable", nlu_data)
+
+        # Step 4b: Static fallback — a genuine no-match (or the LLM was
+        # intentionally disabled via LLM_PROVIDER=none).
+        self._bump("fallback_used")
         return (self.FALLBACK_INTENT, self._select_response(self.FALLBACK_INTENT, user_input),
                 0.0, "Fallback", nlu_data)
 
@@ -1533,11 +1954,54 @@ class HybridChatbot:
         # for them too.
         user_id = user_id or session_id
 
+        # Resolve "10" against a list the bot itself just printed, BEFORE the
+        # classifiers see it (see _resolve_list_reference).
+        resolved = self._resolve_list_reference(user_input, user_id)
+        if resolved:
+            user_input, nlu_extra = resolved, {"resolved_from": user_input}
+        else:
+            nlu_extra = {}
+
         intent, response, confidence, model_used, nlu_data = self.predict(
             user_input, user_id, skip_intents=skip_intents, campus=campus)
+        nlu_data = {**nlu_data, **nlu_extra}
 
         # Track conversation (bounded LRU — see __init__).
         if user_id:
+            self.record_turn(
+                user_id,
+                user_input=user_input,
+                response=response,
+                intent=intent,
+                confidence=confidence,
+                model_used=model_used,
+                session_id=session_id,
+                nlu_data=nlu_data,
+            )
+
+        return intent, response, confidence, model_used, nlu_data
+
+    def record_turn(
+        self,
+        user_id: str,
+        *,
+        user_input: str,
+        response: str,
+        intent: str,
+        confidence: float,
+        model_used: str,
+        session_id: Optional[str] = None,
+        nlu_data: Optional[dict] = None,
+    ) -> None:
+        """Append one turn to a session's history — the only writer.
+
+        Extracted from chat() so every mutation of conversation_history goes
+        through one lock-holding place. popitem/move_to_end/insert each rewrite
+        the OrderedDict's internal linked list, so two turns from DIFFERENT
+        sessions interleaving here corrupt it outright — not a stale read.
+        """
+        nlu_data = nlu_data or {}
+        with self._history_lock:
             if user_id not in self.conversation_history:
                 # Evict the least-recently-used session when at capacity.
                 while len(self.conversation_history) >= self._MAX_HISTORY_SESSIONS:
@@ -1556,46 +2020,92 @@ class HybridChatbot:
                 "session_id": session_id,
                 "entities": nlu_data.get("entities", {}),
                 "is_follow_up": nlu_data.get("is_follow_up", False),
+                # Lets the NEXT turn resolve a bare "10" against this reply.
+                "list_items": _numbered_items(response),
             })
+            # Drop the enumeration from the turn that just aged out of the
+            # pointable window — _resolve_list_reference will never read it
+            # again, and holding it is what makes retention grow with history.
+            if len(turns) > _LIST_REF_LOOKBACK:
+                turns[-(_LIST_REF_LOOKBACK + 1)]["list_items"] = []
+
             if len(turns) > self._MAX_HISTORY_TURNS:
                 del turns[: -self._MAX_HISTORY_TURNS]
 
-        return intent, response, confidence, model_used, nlu_data
+    def _bump(self, key: str, n: int = 1) -> None:
+        """Increment a usage counter — the only writer to model_usage_stats.
+
+        `d[k] += 1` is a read-modify-write spanning several bytecodes, so with
+        concurrent turns it silently drops increments. Routing every write
+        through here keeps the counters accurate rather than approximate.
+        """
+        with self._stats_lock:
+            self.model_usage_stats[key] = self.model_usage_stats.get(key, 0) + n
 
     def get_usage_stats(self) -> dict:
         """Get model usage statistics"""
-        total = sum(self.model_usage_stats.values())
+        # Snapshot once under the lock. Computing percentages directly against
+        # a dict that is still being written yields parts that don't sum to the
+        # total the caller was shown.
+        with self._stats_lock:
+            stats = self.model_usage_stats.copy()
+
+        total = sum(stats.values())
         if total == 0:
-            return self.model_usage_stats.copy()
+            return stats
 
         def pct(key: str) -> float:
-            return self.model_usage_stats[key] / total * 100
+            return stats.get(key, 0) / total * 100
 
         return {
             "total_predictions": total,
-            "naive_bayes_used": self.model_usage_stats["naive_bayes_used"],
+            "naive_bayes_used": stats.get("naive_bayes_used", 0),
             "naive_bayes_percentage": pct("naive_bayes_used"),
-            "neural_network_used": self.model_usage_stats["neural_network_used"],
+            "neural_network_used": stats.get("neural_network_used", 0),
             "neural_network_percentage": pct("neural_network_used"),
-            "place_resolver_used": self.model_usage_stats["place_resolver_used"],
+            "place_resolver_used": stats.get("place_resolver_used", 0),
             "place_resolver_percentage": pct("place_resolver_used"),
-            "llm_fallback_used": self.model_usage_stats["llm_fallback_used"],
+            "llm_fallback_used": stats.get("llm_fallback_used", 0),
             "llm_fallback_percentage": pct("llm_fallback_used"),
-            "fallback_used": self.model_usage_stats["fallback_used"],
+            "llm_unavailable": stats.get("llm_unavailable", 0),
+            "llm_unavailable_percentage": pct("llm_unavailable"),
+            "fallback_used": stats.get("fallback_used", 0),
             "fallback_percentage": pct("fallback_used"),
-            "nlu_enhanced": self.model_usage_stats["nlu_enhanced"],
+            "nlu_enhanced": stats.get("nlu_enhanced", 0),
         }
 
     def get_history(self) -> dict:
-        """Get conversation history"""
-        return self.conversation_history.copy()
+        """Get conversation history, with each session's turns copied.
+
+        The old shallow `.copy()` handed out the live per-session lists, which
+        a caller would then serialize while a worker thread appended to and
+        truncated them.
+        """
+        with self._history_lock:
+            return {uid: list(turns) for uid, turns in self.conversation_history.items()}
+
+    def snapshot_history(self, user_id: str) -> list:
+        """One session's turns, copied under the lock.
+
+        Callers that used to reach into conversation_history[user_id] directly
+        should use this: it is the difference between serializing a stable list
+        and serializing one a worker is mutating underneath them.
+        """
+        with self._history_lock:
+            return list(self.conversation_history.get(user_id) or [])
+
+    def drop_history(self, user_id: str) -> bool:
+        """Forget one session. Returns whether anything was actually removed."""
+        with self._history_lock:
+            return self.conversation_history.pop(user_id, None) is not None
 
     def clear_history(self, user_id: Optional[str] = None):
         """Clear conversation history"""
-        if user_id and user_id in self.conversation_history:
-            del self.conversation_history[user_id]
-        elif not user_id:
-            self.conversation_history.clear()
+        with self._history_lock:
+            if user_id:
+                self.conversation_history.pop(user_id, None)
+            else:
+                self.conversation_history.clear()
 
     def get_all_intents(self) -> list:
         """Get list of all available intents"""

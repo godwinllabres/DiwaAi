@@ -42,13 +42,32 @@ ba*.json
 models_old/
 archive/models_backups/
 
+# Chat-history exports pulled from the Postgres chat log. These carry
+# user_id, session_id and verbatim user_message for real CvSU users, which
+# makes them personal data under RA 10173 — and this repo feeds a public
+# build pipeline, so a stray `git add -A` would publish them. A 2,187-row
+# export sat untracked at repo root until 2026-07-28, matched by no rule.
+# Anchored to root ON PURPOSE: a bare *.csv would swallow the data assets
+# we deliberately track (data/intents_cleanup/intents_summary.csv,
+# data/profanities/ph_profanity_lexicon.csv). Keep exports outside the tree.
+/data-*.csv
+
+# Presentation decks belong in docs/presentations/, which is tracked.
+# Root-anchored so stray copies dropped at the repo root stay out; the
+# canonical decks under docs/presentations/ are unaffected.
+/*.pptx
+
 # Joint slot-filling model artifacts and eval outputs — regenerable, and nothing
 # at runtime loads them (the shadow integration was measured and not merged, see
-# docs/SLOT_FILLING.md). Kept out of git so 2.3 MB of dead weight does not ride
-# `COPY . .` into the deploy image. Rebuild with:
+# docs/SLOT_FILLING.md on feat/slot-filling-slu-port). Kept out of git so 2.3 MB
+# of dead weight does not ride `COPY . .` into the deploy image. Rebuild with:
 #   python scripts/build_slot_corpus.py && python training/train_joint_nlu.py
 # Training is deterministic under the fixed seed, so the committed corpus plus
 # these two commands reproduce the reported numbers exactly.
+# Ported to main 2026-07-28: the rule was authored on the feature branch, so a
+# main-line checkout showed all seven artifacts as untracked and one `git add -A`
+# from committing them. See also .dockerignore — .gitignore alone does NOT keep
+# these out of the image, and they were verified present inside a built image.
 models/joint_*
 models/eval_joint*.json
 data/eval/slot_preds*.json

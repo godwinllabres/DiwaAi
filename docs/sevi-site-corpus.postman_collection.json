@@ -1,0 +1,101 @@
+{
+  "info": {
+    "name": "Sevi — Site Corpus Sync",
+    "_postman_id": "b7f2c1a4-9d3e-4a21-8c6f-0e1a2b3c4d5e",
+    "description": "Trigger and verify the site-RAG corpus sync for the SeviAI API, plus inspect the WordPress mirror it pulls from.\n\n## Setup\nSet these collection variables (Collections ▸ this collection ▸ Variables):\n- `base_url` — the SeviAI API base.\n  - Host-run API directly:     http://localhost:8000\n  - Via the compose web proxy: http://localhost:8090/api   (main stack)\n  - sevi-local stack:          http://localhost:8091/api\n  - Public tunnel:             https://<your-domain>/api\n- `corpus_url` — the internal WordPress mirror (must be LAN-reachable from wherever you run Postman AND from the API host). Default: http://192.168.10.130:9090\n- `admin_pin` — your DASHBOARD_PIN (leave blank here; set it as a secret and never commit it).\n\n## Important\nThe sync runs SERVER-SIDE: the API host itself must be able to reach `corpus_url`. Postman only triggers it. The endpoint takes no body — it reads SITE_CORPUS_URL from the API's env.\n\n## Order to run\n1. Health — confirm the API is up.\n2. Sync Site Corpus — pulls pages+posts, rewrites docs/site_corpus.txt, reindexes. Returns {docs, skipped, path, index_available}.\n3. Admin Status — confirm site_rag is ready / doc count.\n\nThe two 'Source (mirror)' requests are optional — they hit the WordPress REST API directly so you can see exactly what content the sync will ingest.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "corpus_url", "value": "http://192.168.10.130:9090", "type": "string" },
+    { "key": "admin_pin", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Health (no auth)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] },
+        "description": "Sanity check the API is up and the classifier is loaded before syncing."
+      }
+    },
+    {
+      "name": "2. Sync Site Corpus  (POST, admin)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('sync succeeded (200)', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "console.log('docs=' + b.docs + ' skipped=' + b.skipped + ' index_available=' + b.index_available);",
+              "pm.test('corpus has documents', () => pm.expect(b.docs).to.be.above(0));",
+              "pm.test('index rebuilt', () => pm.expect(b.index_available).to.eql(true));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-Admin-Pin", "value": "{{admin_pin}}", "type": "text" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/site_corpus/sync",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "site_corpus", "sync"]
+        },
+        "description": "Re-pull the official website into docs/site_corpus.txt and rebuild the TF-IDF index. No body — the server reads SITE_CORPUS_URL from its env. Gated by X-Admin-Pin.\n\nErrors:\n- 403 -> admin_pin doesn't match the API's DASHBOARD_PIN.\n- 502 'Site corpus sync failed: ...' -> the API host cannot reach SITE_CORPUS_URL (portal down / not on the LAN / unset)."
+      }
+    },
+    {
+      "name": "3. Admin Status  (GET, admin)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Admin-Pin", "value": "{{admin_pin}}", "type": "text" }
+        ],
+        "url": { "raw": "{{base_url}}/admin/status", "host": ["{{base_url}}"], "path": ["admin", "status"] },
+        "description": "Single-pane subsystem status. Check the brain.site_rag block to confirm the corpus is loaded after a sync."
+      }
+    },
+    {
+      "name": "Source (mirror) — WP Pages",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{corpus_url}}/wp-json/wp/v2/pages?per_page=100&page=1&_fields=title,link,date,content",
+          "host": ["{{corpus_url}}"],
+          "path": ["wp-json", "wp", "v2", "pages"],
+          "query": [
+            { "key": "per_page", "value": "100" },
+            { "key": "page", "value": "1" },
+            { "key": "_fields", "value": "title,link,date,content" }
+          ]
+        },
+        "description": "Exactly what _fetch_collection(base_url, 'pages') pulls. Inspect this to see the source pages the sync ingests. Increment `page` to walk further. Requires LAN access to corpus_url from your Postman machine."
+      }
+    },
+    {
+      "name": "Source (mirror) — WP Posts",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{corpus_url}}/wp-json/wp/v2/posts?per_page=100&page=1&_fields=title,link,date,content",
+          "host": ["{{corpus_url}}"],
+          "path": ["wp-json", "wp", "v2", "posts"],
+          "query": [
+            { "key": "per_page", "value": "100" },
+            { "key": "page", "value": "1" },
+            { "key": "_fields", "value": "title,link,date,content" }
+          ]
+        },
+        "description": "Exactly what _fetch_collection(base_url, 'posts') pulls (news/announcements). Requires LAN access to corpus_url."
+      }
+    }
+  ]
+}

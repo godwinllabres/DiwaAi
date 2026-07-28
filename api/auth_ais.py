@@ -25,6 +25,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import secrets
 import time
 from typing import Optional
 
@@ -91,6 +92,21 @@ class _SessionToken:
 
 # session_id -> _SessionToken. Process-local; vanishes on uvicorn restart.
 _sessions: dict[str, _SessionToken] = {}
+
+# A session id is now MINTED PER LOGIN rather than supplied by the caller, so
+# re-logging in no longer overwrites the same key — without this, every login
+# would leave its predecessor behind and the map would grow for the life of the
+# process, holding live OAuth tokens long after anyone could use them.
+# Dropped once the refresh token is far past expiry and the session is
+# unrecoverable anyway.
+_SESSION_GRACE_SECONDS = 24 * 3600
+
+
+def _sweep_sessions() -> None:
+	cutoff = time.time() - _SESSION_GRACE_SECONDS
+	for sid, tok in list(_sessions.items()):
+		if tok.expires_at < cutoff:
+			_sessions.pop(sid, None)
 
 
 def _frappe_headers() -> dict[str, str]:
@@ -169,6 +185,7 @@ def _store_session(session_id: str, payload: dict, previous_refresh: str | None 
 		full_name=identity.get("full_name") or claims.get("name") or "",
 		roles=list(identity.get("roles") or claims.get("roles") or []),
 	)
+	_sweep_sessions()
 	_sessions[session_id] = tok
 	return tok
 
@@ -233,14 +250,25 @@ async def _fetch_identity(access_token: str) -> dict:
 
 # ── public API ───────────────────────────────────────────────────────────
 
-async def login(session_id: str, username: str, password: str) -> dict:
-	"""Exchange CvSU credentials for an AIS token. Caches under session_id.
+async def login(username: str, password: str) -> tuple[str, dict]:
+	"""Exchange CvSU credentials for an AIS token. Returns (sid, identity).
 
-	Returns the public identity snapshot (user, full_name, roles, expires_in).
+	The session id is MINTED HERE, server-side, and is deliberately NOT the
+	caller's chat session_id.
+
+	Holding this value is equivalent to being the user: it resolves to their
+	cached OAuth token, so /ais/write will approve, post, or cancel a
+	disbursement voucher as them. A chat session_id is not a credential — it is
+	echoed in feedback payloads, carried in logs, and chosen by the client, so
+	binding financial authority to one made it a bearer token that the client
+	picked and that leaks through ordinary telemetry. A server-minted 256-bit
+	value that the caller cannot influence, returned only in an httpOnly cookie,
+	removes both problems.
+
 	Raises AuthError on bad credentials / transport failure.
 	"""
-	if not session_id or not username or not password:
-		raise AuthError(400, "session_id, username, and password are all required.")
+	if not username or not password:
+		raise AuthError(400, "username and password are both required.")
 	payload = await _request_token({
 		"grant_type": "password",
 		"username": username,
@@ -250,10 +278,11 @@ async def login(session_id: str, username: str, password: str) -> dict:
 	# Password grant doesn't include id_token — fetch identity explicitly
 	# using the newly-minted access token so whoami / role-gated UI works.
 	identity = await _fetch_identity(payload["access_token"])
-	tok = _store_session(session_id, payload, identity=identity)
-	_logger.info("auth_ais login session=%s user=%s roles=%d",
-	             session_id, tok.user, len(tok.roles))
-	return tok.public()
+	sid = secrets.token_urlsafe(32)
+	tok = _store_session(sid, payload, identity=identity)
+	# Never log the sid — it IS the bearer. The user is the useful identifier.
+	_logger.info("auth_ais login user=%s roles=%d", tok.user, len(tok.roles))
+	return sid, tok.public()
 
 
 async def logout(session_id: str) -> None:

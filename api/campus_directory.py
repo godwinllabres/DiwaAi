@@ -9,9 +9,10 @@ Location questions about a known campus should never reach retrieval at all.
 
 Grounding: every address/phone/email below is copied from the official
 contact table in the CvSU Citizens' Charter, FY 2026 edition, "Cavite State
-University's Contact Information", pp. 2024–2026 (docs/citizens_charter_text.txt
-— the same document the RAG tier serves). Strings are kept as printed there;
-update this table only from an official source, and cite it.
+University's Contact Information" — PDF pages 2024–2026 of
+docs/citizens_charter_text.txt, printed pp. 1975–1977 (the same document the
+RAG tier serves). Strings are kept as printed there; update this table only
+from an official source, and cite it.
 
 Keys match api/campus_context.py CAMPUSES canonical names, so the campus a
 session resolves to indexes straight into this table.
@@ -23,13 +24,33 @@ from typing import Optional
 
 try:
     from . import campus_context as _campus
+    from . import charter_pages as _charter_pages
 except ImportError:  # imported as a top-level module (scripts, tests)
     import campus_context as _campus
+    import charter_pages as _charter_pages
 
-SOURCE_CITATION = (
-    "CvSU Citizens' Charter, FY 2026 edition — Contact Information, "
-    "pp. 2024–2026"
-)
+# PDF pages of the contact table. The printed numbers (1975–1977) and the
+# edition label come from charter_pages, so this citation cannot drift from the
+# rest of the app's — but the section name stays authored here: these appendix
+# pages carry no service heading, so there is nothing for charter_pages to
+# derive it from.
+CONTACT_PDF_PAGES = (2024, 2026)
+CONTACT_SECTION = "Cavite State University's Contact Information"
+
+
+def source_citation() -> str:
+    """Citation for the contact table, with the page numbers as printed and a
+    link to the first of them when the charter PDF is published."""
+    first, last = CONTACT_PDF_PAGES
+    pages = [_charter_pages.describe(p) for p in (first, last)]
+    printed = [p.printed_page for p in pages]
+    span = printed if all(printed) else [first, last]
+    cite = (
+        f"{_charter_pages.DOC_NAME}, {_charter_pages.EDITION} edition — "
+        f"“{CONTACT_SECTION}”, pp. {span[0]}–{span[1]}"
+    )
+    url = pages[0].url
+    return f"{cite} · [open these pages]({url})" if url else cite
 
 MAIN_CAMPUS = "Indang (Main Campus)"
 
@@ -146,6 +167,6 @@ def build_answer(campus: str) -> tuple[str, CampusInfo]:
         parts.append("You can reach the campus at " + " or ".join(contact_bits) + ".")
     parts.append(
         "For office-level concerns, the campus can point you to the right "
-        f"unit. (Source: {SOURCE_CITATION}.)"
+        f"unit. (Source: {source_citation()}.)"
     )
     return " ".join(parts), info

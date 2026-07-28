@@ -90,7 +90,9 @@ _PG_SCHEMA = [
         confidence DOUBLE PRECISION NOT NULL,
         response_time_ms DOUBLE PRECISION,
         model_used TEXT,
-        model_version_id BIGINT
+        model_version_id BIGINT,
+        device_id TEXT,
+        device_class TEXT
     )
     """,
     """
@@ -137,6 +139,7 @@ _INDEX_DDL = [
     "CREATE INDEX IF NOT EXISTS idx_chat_messages_user_id ON chat_messages (user_id)",
     "CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages (session_id)",
     "CREATE INDEX IF NOT EXISTS idx_chat_messages_intent ON chat_messages (intent)",
+    "CREATE INDEX IF NOT EXISTS idx_chat_messages_device_id ON chat_messages (device_id)",
     "CREATE INDEX IF NOT EXISTS idx_feedback_timestamp ON feedback (timestamp)",
     "CREATE INDEX IF NOT EXISTS idx_feedback_message_id ON feedback (message_id)",
 ]
@@ -253,6 +256,8 @@ class ChatLogger:
             # Legacy-column migrations (same shape as the SQLite ALTERs below).
             cursor.execute("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS model_used TEXT")
             cursor.execute("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS model_version_id BIGINT")
+            cursor.execute("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS device_id TEXT")
+            cursor.execute("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS device_class TEXT")
             cursor.execute("ALTER TABLE feedback ADD COLUMN IF NOT EXISTS user_message TEXT")
             cursor.execute("ALTER TABLE feedback ADD COLUMN IF NOT EXISTS reason TEXT")
             for statement in _INDEX_DDL:
@@ -287,7 +292,9 @@ class ChatLogger:
                 intent TEXT NOT NULL,
                 confidence REAL NOT NULL,
                 response_time_ms REAL,
-                model_used TEXT
+                model_used TEXT,
+                device_id TEXT,
+                device_class TEXT
             )
         """)
 
@@ -301,6 +308,10 @@ class ChatLogger:
                 "ALTER TABLE chat_messages ADD COLUMN model_version_id INTEGER "
                 "REFERENCES model_version(id)"
             )
+        if "device_id" not in existing_columns:
+            cursor.execute("ALTER TABLE chat_messages ADD COLUMN device_id TEXT")
+        if "device_class" not in existing_columns:
+            cursor.execute("ALTER TABLE chat_messages ADD COLUMN device_class TEXT")
 
         # Onboard the model fixture: seed model_lookup and register the
         # current version of each model (new row when an artifact changed).
@@ -375,7 +386,9 @@ class ChatLogger:
         confidence: float,
         model_used: Optional[str] = None,
         session_id: Optional[str] = None,
-        response_time_ms: Optional[float] = None
+        response_time_ms: Optional[float] = None,
+        device_id: Optional[str] = None,
+        device_class: Optional[str] = None
     ) -> Optional[int]:
         """
         Log a single chat message to database and file
@@ -388,6 +401,8 @@ class ChatLogger:
             confidence: Confidence score (0-1)
             session_id: Optional session identifier
             response_time_ms: Optional response time in milliseconds
+            device_id: Optional stable per-browser id (see get_device_stats)
+            device_class: Optional "<form factor>/<orientation>" slug
 
         Returns:
             int: The new chat_messages row ID, or None on failure
@@ -406,13 +421,15 @@ class ChatLogger:
                 # Log to database
                 message_id = self._log_to_db(
                     timestamp, user_id, session_id, user_message,
-                    bot_response, intent, confidence, model_used, response_time_ms
+                    bot_response, intent, confidence, model_used, response_time_ms,
+                    device_id, device_class
                 )
 
                 # Log to file
                 self._log_to_file(
                     timestamp, user_id, session_id, user_message,
-                    bot_response, intent, confidence, model_used
+                    bot_response, intent, confidence, model_used,
+                    device_id, device_class
                 )
 
                 # Update intent statistics
@@ -428,7 +445,8 @@ class ChatLogger:
             return None
 
     def _log_to_db(
-        self, timestamp, user_id, session_id, user_msg, bot_resp, intent, conf, model_used, resp_time
+        self, timestamp, user_id, session_id, user_msg, bot_resp, intent, conf, model_used, resp_time,
+        device_id=None, device_class=None
     ) -> Optional[int]:
         """Log to the database, returns the new row ID."""
         try:
@@ -437,9 +455,9 @@ class ChatLogger:
             model_version_id = self.model_versions.get(model_registry.resolve(model_used))
             row_id = self._insert_returning_id(cursor, """
                 INSERT INTO chat_messages
-                (timestamp, user_id, session_id, user_message, bot_response, intent, confidence, model_used, model_version_id, response_time_ms)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (timestamp, user_id, session_id, user_msg, bot_resp, intent, conf, model_used, model_version_id, resp_time))
+                (timestamp, user_id, session_id, user_message, bot_response, intent, confidence, model_used, model_version_id, response_time_ms, device_id, device_class)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (timestamp, user_id, session_id, user_msg, bot_resp, intent, conf, model_used, model_version_id, resp_time, device_id, device_class))
 
             conn.commit()
             conn.close()
@@ -448,7 +466,8 @@ class ChatLogger:
             print(f"[ERROR] Database log error: {e}")
             return None
 
-    def _log_to_file(self, timestamp, user_id, session_id, user_msg, bot_resp, intent, conf, model_used=None):
+    def _log_to_file(self, timestamp, user_id, session_id, user_msg, bot_resp, intent, conf, model_used=None,
+                     device_id=None, device_class=None):
         """Log to JSON file"""
         try:
             # Create daily log file
@@ -463,7 +482,9 @@ class ChatLogger:
                 "bot_response": bot_resp,
                 "intent": intent,
                 "confidence": conf,
-                "model_used": model_used
+                "model_used": model_used,
+                "device_id": device_id,
+                "device_class": device_class
             }
 
             with open(log_file, "a", encoding="utf-8") as f:
@@ -675,6 +696,71 @@ class ChatLogger:
             }
         except Exception as e:
             print(f"[ERROR] Error getting daily stats: {e}")
+            return {}
+
+    def get_device_stats(self, days: int = 30) -> Dict:
+        """How Sevi is actually being reached, over the last `days`.
+
+        Answers three questions the session/user counts cannot: how many
+        distinct DEVICES are in play, what form factor they are, and how much
+        of the traffic arrives in landscape (which is what justifies carrying a
+        landscape layout at all).
+
+        `turns_without_device` is reported rather than hidden: turns predating
+        the field, and clients that do not send it, are real traffic and would
+        otherwise silently shrink every percentage below.
+        """
+        try:
+            days = _clamp_limit(days, 30, 3650)
+            cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+            conn, cursor = self._connect()
+
+            cursor.execute(self._sql("""
+                SELECT COUNT(*),
+                       COUNT(device_id),
+                       COUNT(DISTINCT device_id)
+                FROM chat_messages
+                WHERE timestamp >= ?
+            """), (cutoff,))
+            total_turns, turns_with_device, unique_devices = cursor.fetchone()
+
+            # One pass; the form-factor and orientation splits are derived from
+            # the same rows below rather than costing two more scans.
+            cursor.execute(self._sql("""
+                SELECT device_class,
+                       COUNT(*) AS turns,
+                       COUNT(DISTINCT device_id) AS devices
+                FROM chat_messages
+                WHERE timestamp >= ? AND device_class IS NOT NULL
+                GROUP BY device_class
+                ORDER BY turns DESC
+            """), (cutoff,))
+            rows = cursor.fetchall()
+            conn.close()
+
+            by_class = [
+                {"device_class": r[0], "turns": r[1], "devices": r[2]} for r in rows
+            ]
+
+            by_form: Dict[str, int] = {}
+            by_orientation: Dict[str, int] = {}
+            for r in rows:
+                form, _, orientation = (r[0] or "").partition("/")
+                by_form[form] = by_form.get(form, 0) + r[1]
+                by_orientation[orientation] = by_orientation.get(orientation, 0) + r[1]
+
+            return {
+                "days": days,
+                "total_turns": total_turns or 0,
+                "turns_with_device": turns_with_device or 0,
+                "turns_without_device": (total_turns or 0) - (turns_with_device or 0),
+                "unique_devices": unique_devices or 0,
+                "by_class": by_class,
+                "by_form_factor": by_form,
+                "by_orientation": by_orientation,
+            }
+        except Exception as e:
+            print(f"[ERROR] Error getting device stats: {e}")
             return {}
 
     def search_logs(self, query: str, limit: int = 20) -> List[Dict]:

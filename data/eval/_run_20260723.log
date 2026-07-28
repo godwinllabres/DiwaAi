@@ -1,0 +1,73 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1784796461.330977   35960 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1784796464.139468   35960 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1784796465.137604   35960 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE3 SSE4.1 SSE4.2 AVX AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+WARNING:absl:Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+Instantiating HybridChatbot (new models)...
+
+============================================================
+  HIERARCHICAL HYBRID CHATBOT INITIALIZATION
+============================================================
+
+[1/4] Loading Naive Bayes (Fast)...
+[OK] Naive Bayes loaded
+
+[2/4] Loading Neural Network (Accurate)...
+[OK] Loaded adaptive thresholds for 124 intents
+[OK] Temperature scaling T=2.8011
+[OK] Neural Network loaded
+
+[3/4] Loading responses...
+[OK] Loaded 127 intent responses
+[OK] Advanced NLU Engine loaded
+[OK] Campus glossary built — 41 entries injected into LLM prompt
+
+[4/5] LLM fallback — resolving provider (LLM_PROVIDER='ollama')
+       known providers: claude, localai, none, ollama, openai
+       OLLAMA_BASE_URL=http://localhost:11434
+       OLLAMA_MODEL=llama3.2:3b
+       initialising local LLM fallback (Ollama)...
+[OK] Local LLM ready  model=llama3.2:3b  url=http://localhost:11434
+[INFO] Warming up local LLM in background (first load can take 60-120s)...
+
+[5/5] Initialization complete
+============================================================
+Strategy: NB threshold = 65%
+         NN threshold = adaptive per-intent
+         LLM fallback = enabled (provider=ollama)
+============================================================
+
+Loaded 127 intents. Running 268 questions...
+
+[OK] Local LLM warm-up complete — ready for user queries
+  10/268
+  20/268
+  30/268
+  40/268
+  50/268
+  60/268
+  70/268
+  80/268
+  90/268
+  100/268
+  110/268
+  120/268
+  130/268
+  140/268
+  150/268
+  160/268
+  170/268
+  180/268
+  190/268
+  200/268
+  210/268
+  220/268
+  230/268
+  240/268
+  250/268
+  260/268
+
+done: 268 responses (0 errors) -> data/eval/responses_20260723.json

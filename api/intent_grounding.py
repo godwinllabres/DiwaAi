@@ -33,9 +33,12 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Optional
+
+from . import charter_pages
 
 _logger = logging.getLogger("diwa.intent_grounding")
 
@@ -139,10 +142,29 @@ class SourceRef:
 
 	def citation(self) -> str:
 		if self.kind == "charter":
-			# Mirrors charter_rag.Passage.citation() so both tiers cite alike.
-			return f"CvSU Citizens' Charter, FY 2026 edition, p. {self.locator}"
+			# Rendered by charter_pages — the same call charter_rag.Passage
+			# makes, so a page cites identically whichever tier answered.
+			return charter_pages.cite_page(self._page)
 		title = f"“{self.label}” — " if self.label else ""
 		return f"{title}official CvSU site ({self.locator})"
+
+	@property
+	def _page(self) -> int:
+		"""The charter locator as a page number. Bindings are hand-reviewed, so
+		a non-numeric one is a corrupt file, not user input — 0 makes it show up
+		as an unknown page rather than 500 a reply."""
+		try:
+			return int(self.locator)
+		except ValueError:
+			return 0
+
+	@property
+	def url(self) -> Optional[str]:
+		"""Where the reader can go to check this — a deep link into the charter
+		PDF, or the site page itself. None when no charter PDF is published."""
+		if self.kind == "charter":
+			return charter_pages.page_url(self._page)
+		return self.locator
 
 
 class GroundingIndex:
@@ -203,6 +225,10 @@ class GroundingIndex:
 
 
 _index: Optional[GroundingIndex] = None
+# Guards the build/swap of _index. get_index is a check-then-set, so
+# without this the first concurrent burst after a restart has every
+# thread build its own copy inside one 2G container.
+_index_lock = threading.Lock()
 
 
 def get_index() -> Optional[GroundingIndex]:
@@ -211,15 +237,36 @@ def get_index() -> Optional[GroundingIndex]:
 	if not _ENABLED:
 		return None
 	if _index is None:
-		_index = GroundingIndex()
+		with _index_lock:
+			# Double-checked: another thread may have built it while we waited.
+			if _index is None:
+				_index = GroundingIndex()
 	return _index if _index.available else None
 
 
 def reload_index() -> Optional[GroundingIndex]:
-	"""Drop the singleton and rebuild from the bindings file."""
+	"""Rebuild from the bindings file and swap in."""
 	global _index
-	_index = None
-	return get_index()
+	if not _ENABLED:
+		return None
+	# Build first, swap second. The old `_index = None; return get_index()`
+	# left a window where every concurrent reader saw None and started its
+	# own build. Readers keep serving from the old index until the swap.
+	fresh = GroundingIndex()
+	with _index_lock:
+		_index = fresh
+	return fresh if fresh.available else None
+
+
+def _cited(ref: SourceRef) -> str:
+	"""One citation, with a link to the exact page when we can publish one.
+
+	A charter ref links deep into the PDF ("#page=997"); a site ref already
+	carries its URL in the citation text, so it is not linked twice."""
+	text = ref.citation()
+	if ref.kind == "charter" and ref.url:
+		text += f" · [open this page]({ref.url})"
+	return text
 
 
 def citation_block(refs: list[SourceRef]) -> str:
@@ -227,8 +274,8 @@ def citation_block(refs: list[SourceRef]) -> str:
 	if not refs:
 		return ""
 	label = "Source" if len(refs) == 1 else "Sources"
-	lines = "\n".join(f"• {r.citation()}" for r in refs) if len(refs) > 1 \
-		else refs[0].citation()
+	lines = "\n".join(f"• {_cited(r)}" for r in refs) if len(refs) > 1 \
+		else _cited(refs[0])
 	sep = "\n" if len(refs) > 1 else " "
 	return f"\n\n📖 {label}:{sep}{lines}"
 

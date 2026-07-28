@@ -90,7 +90,9 @@ print("\n[answer] build_answer")
 text, info = campus_directory.build_answer("General Trias City Campus")
 check("address in answer", "Brgy. Vibora, General Trias City, Cavite" in text)
 check("phone in answer", "(046) 509-4148" in text)
-check("citation in answer", "Citizens' Charter" in text and "2024" in text)
+# Printed pages (1975–1977), not the PDF indexes (2024–2026) — the numbers a
+# reader sees on the page. See api/charter_pages.py.
+check("citation in answer", "Citizens' Charter" in text and "pp. 1975–1977" in text)
 check("display name", info.display_name == "CvSU General Trias City Campus")
 
 text, _ = campus_directory.build_answer("Naic Campus")

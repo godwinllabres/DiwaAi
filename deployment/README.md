@@ -7,8 +7,8 @@ Production-ready Docker configuration and deployment files.
 
 | File | Purpose |
 |------|---------|
-| `Dockerfile` | Python 3.11 container image definition |
-| `docker-compose.yml` | Multi-container orchestration |
+| `Dockerfile.local` | Image used by the sevi-deploy compose stack and CI (`uvicorn api.app:app`) |
+| `Dockerfile.render` | Slim image for Render (no TensorFlow, 512MB tier) |
 | `requirements.txt` | Full Python dependencies (with TensorFlow) |
 | `requirements_minimal.txt` | Minimal dependencies (NB only) |
 
@@ -24,7 +24,7 @@ Then access:
 
 ## Docker Architecture
 
-### Dockerfile
+### Dockerfile.local / Dockerfile.render
 - **Base**: Python 3.11-slim (lightweight)
 - **Installs**: Build tools, curl, Python deps
 - **Downloads**: NLTK resources
@@ -32,7 +32,7 @@ Then access:
 - **Port**: 8000
 - **Health Check**: Every 30s
 
-### docker-compose.yml
+### Removed: docker-compose.yml
 - **Service**: CvSU-chatbot
 - **Image**: Built from Dockerfile
 - **Ports**: 8000:8000
@@ -263,3 +263,11 @@ kompose convert -f docker-compose.yml
 - **Setup**: `docs/SETUP_GUIDE.md`
 - **API**: `docs/API_README.md`
 
+
+
+> **Note — removed files.** `Dockerfile` and `docker-compose.yml` were deleted
+> along with the legacy root `app.py` they started. That entrypoint exposed the
+> chat-log, conversation and feedback-read routes with no authentication, and
+> published them on host port 8000. The supported paths are
+> `Dockerfile.local` (the sevi-deploy compose stack, port 8090) and
+> `Dockerfile.render`, both running `uvicorn api.app:app`.

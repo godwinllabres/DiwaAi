@@ -35,6 +35,11 @@ docs/
 # then answers ungrounded and over-refuses). See docs/eval/redesign_report.md.
 !docs/site_corpus.txt
 !docs/citizens_charter_text.txt
+# …and the charter PDF itself (~13 MB), served at
+# GET /sources/citizens-charter.pdf so a "p. 948" citation is a link the reader
+# can open at that page instead of a number they cannot check. Dropping it does
+# not break replies — citations just lose their link. See api/charter_pages.py.
+!docs/citizens-charter-2026-edition.pdf
 
 # Static demo site (api.app does not serve it)
 web/
@@ -45,8 +50,27 @@ data/*.backup_*
 data/*.backup*.json
 data/*.before_snap
 data/intents_cleanup/
+# Eval harness inputs/outputs — dev-only, never read by api/ at runtime.
+# 5.9 MB, and the entrypoint's data.seed snapshot would double it.
+data/eval/
 data/*.db-shm
 data/*.db-wal
 models/*.bak_*
 models/nn_backup_*/
 models/cavsu_classifier.pkl
+# Joint slot-filling artifacts — dev-only, nothing in api/ loads them, and they
+# are not pinned in models/trusted_hashes.json so they only ever produced an
+# "unknown artifact" WARN at startup. .gitignore is not enough on its own: the
+# build context is the working tree, not the git index, so an untracked
+# joint_nlu.keras still rode `COPY . .` into the image (verified: 2,380,646
+# bytes present in a built sevi-api image on 2026-07-28).
+models/joint_*
+models/eval_joint*.json
+# Stray raw-SQL drops. schema_1.sql — a Laravel/MySQL AD-LDAP RBAC sample for an
+# unrelated "State University Academic Resource Portal" — sat in the repo root
+# and shipped inside the image at 15,136 bytes. This repo has no tracked .sql.
+/*.sql
+# Chat-history exports. No rule matched these before 2026-07-28, so a 2,187-row
+# export carrying user_id / session_id / verbatim user_message was baked into
+# every locally built image. Personal data under RA 10173 — keep it out.
+/data-*.csv

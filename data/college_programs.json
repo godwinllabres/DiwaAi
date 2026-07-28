@@ -1,0 +1,594 @@
+[
+  {
+    "key": "cafenr",
+    "abbr": "CAFENR",
+    "full_name": "College of Agriculture, Food, Environment and Natural Resources",
+    "aliases": [
+      "college of agriculture, forestry, environment and natural resources",
+      "college of agriculture, food, environment, and natural resources",
+      "college of agriculture, food, environment and natural resources",
+      "college of agriculture food environment and natural resources",
+      "college of agriculture",
+      "agriculture college",
+      "cafenr college",
+      "agri college",
+      "cafenr"
+    ],
+    "source_url": "https://cvsu.edu.ph/cafenr-curricular-programs/",
+    "source_date": "2020-10-19",
+    "programs": [
+      {
+        "name": "Doctor of Philosophy in Agriculture",
+        "majors": [
+          "Animal Science",
+          "Crop Science",
+          "Farming System"
+        ]
+      },
+      {
+        "name": "Doctor of Philosophy in Food Science",
+        "majors": []
+      },
+      {
+        "name": "Master of Science in Agriculture",
+        "majors": [
+          "Animal Science",
+          "Crop Science",
+          "Farming System",
+          "Crop Protection"
+        ]
+      },
+      {
+        "name": "Master of Science in Food Science",
+        "majors": []
+      },
+      {
+        "name": "BS Agriculture",
+        "majors": [
+          "Animal Science",
+          "Crop Science"
+        ]
+      },
+      {
+        "name": "BS in Environmental Science",
+        "majors": []
+      },
+      {
+        "name": "BS in Food Technology",
+        "majors": []
+      },
+      {
+        "name": "BS in Land Use Design and Management",
+        "majors": []
+      },
+      {
+        "name": "Bachelor in Agricultural Entrepreneurship",
+        "majors": []
+      },
+      {
+        "name": "Certificate in Agricultural Science",
+        "majors": []
+      }
+    ]
+  },
+  {
+    "key": "cas",
+    "abbr": "CAS",
+    "full_name": "College of Arts and Sciences",
+    "aliases": [
+      "college of arts and sciences",
+      "college of arts & sciences",
+      "arts and sciences college",
+      "arts and sciences",
+      "arts & sciences",
+      "cvsu cas",
+      "cas"
+    ],
+    "source_url": "https://cvsu.edu.ph/college-of-arts-and-sciences-programs-offered/",
+    "source_date": "2025-09-02",
+    "programs": [
+      {
+        "name": "Bachelor of Arts in Communication",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Science in Development Communication",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Science in Biology",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Arts in Journalism",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Arts in English Language Studies",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Science in Psychology",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Arts in Political Science",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Science in Social Work",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Science in Applied Mathematics",
+        "majors": []
+      }
+    ]
+  },
+  {
+    "key": "ccj",
+    "abbr": "CCJ",
+    "full_name": "College of Criminal Justice",
+    "aliases": [
+      "college of criminal justice (ccj)",
+      "college of criminal justice",
+      "criminal justice college",
+      "college of criminology",
+      "criminology college",
+      "cvsu ccj",
+      "ccj"
+    ],
+    "source_url": "https://cvsu.edu.ph/course-offerings/",
+    "source_date": "2020-01-28",
+    "programs": [
+      {
+        "name": "BS Criminology",
+        "majors": []
+      },
+      {
+        "name": "BS Industrial Security Management",
+        "majors": []
+      }
+    ]
+  },
+  {
+    "key": "ceit",
+    "abbr": "CEIT",
+    "full_name": "College of Engineering and Information Technology",
+    "aliases": [
+      "college of engineering and information technology",
+      "college of engineering & information technology",
+      "engineering and information technology",
+      "college of engineering and it",
+      "engineering and it college",
+      "college of engineering",
+      "engineering college",
+      "cvsu ceit",
+      "ceit"
+    ],
+    "source_url": "https://cvsu.edu.ph/2018/01/13/ceit-academic-programs/",
+    "source_date": "2018-01-13",
+    "programs": [
+      {
+        "name": "BS Agricultural and Biosystems Engineering (formerly BS Agricultural Engineering)",
+        "majors": []
+      },
+      {
+        "name": "BS Architecture",
+        "majors": []
+      },
+      {
+        "name": "BS Civil Engineering",
+        "majors": []
+      },
+      {
+        "name": "BS Computer Engineering",
+        "majors": []
+      },
+      {
+        "name": "BS Computer Science",
+        "majors": []
+      },
+      {
+        "name": "BS Electrical Engineering",
+        "majors": []
+      },
+      {
+        "name": "BS Electronics Engineering (formerly BS Electronics & Communications Engineering)",
+        "majors": []
+      },
+      {
+        "name": "BS Industrial Engineering",
+        "majors": []
+      },
+      {
+        "name": "BS Industrial Technology (formerly Bachelor of Industrial Technology)",
+        "majors": [
+          "Automotive Technology",
+          "Electrical Technology",
+          "Electronics Technology"
+        ]
+      },
+      {
+        "name": "BS Information Technology",
+        "majors": []
+      }
+    ]
+  },
+  {
+    "key": "cemds",
+    "abbr": "CEMDS",
+    "full_name": "College of Economics, Management and Development Studies",
+    "aliases": [
+      "college of economics, management, and development studies",
+      "college of economics, management and development studies",
+      "college of economics management and development studies",
+      "economics, management and development studies",
+      "economics management and development studies",
+      "college of economics",
+      "cemds college",
+      "cvsu cemds",
+      "cemds"
+    ],
+    "source_url": "https://cvsu.edu.ph/cemds/",
+    "source_date": "2019-09-16",
+    "programs": [
+      {
+        "name": "BS OFFICE ADMINISTRATION",
+        "majors": []
+      },
+      {
+        "name": "BS ACCOUNTANCY",
+        "majors": []
+      },
+      {
+        "name": "BS BUSINESS ADMINISTRATION",
+        "majors": [
+          "Financial Management",
+          "Human Resource Development Management",
+          "Marketing Management",
+          "Operations Management",
+          "Service Management Program"
+        ]
+      },
+      {
+        "name": "BS ECONOMICS",
+        "majors": []
+      },
+      {
+        "name": "BS DEVELOPMENT MANAGEMENT",
+        "majors": [
+          "Rural Development Management",
+          "Training Program Management"
+        ]
+      },
+      {
+        "name": "BS INTERNATIONAL STUDIES",
+        "majors": [
+          "Asian Studies",
+          "European Studies"
+        ]
+      },
+      {
+        "name": "Master in Business Administration",
+        "majors": []
+      },
+      {
+        "name": "Master in Management",
+        "majors": []
+      },
+      {
+        "name": "Master in Public Administration",
+        "majors": []
+      }
+    ]
+  },
+  {
+    "key": "ced",
+    "abbr": "CEd",
+    "full_name": "College of Education",
+    "aliases": [
+      "teacher education department",
+      "cvsu college of education",
+      "college of education",
+      "education college",
+      "cvsu ced",
+      "ced-ted",
+      "cedted",
+      "ced"
+    ],
+    "source_url": "https://cvsu.edu.ph/2018/01/ced-curricular-programs/",
+    "source_date": "2018-01-13",
+    "programs": [
+      {
+        "name": "Pre- Elementary",
+        "majors": []
+      },
+      {
+        "name": "Elementary",
+        "majors": []
+      },
+      {
+        "name": "Secondary (Science Curriculum)",
+        "majors": [
+          "Junior High School",
+          "Senior High School"
+        ]
+      },
+      {
+        "name": "Bachelor of Elementary Education",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Early Childhood Education",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Special Needs Education",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Technology and Livelihood Education",
+        "majors": [
+          "Home Economics"
+        ]
+      },
+      {
+        "name": "Bachelor of Secondary Education",
+        "majors": [
+          "English",
+          "Mathematics",
+          "Science",
+          "Filipino",
+          "Social Studies"
+        ]
+      },
+      {
+        "name": "Teacher Certificate Program",
+        "majors": []
+      }
+    ]
+  },
+  {
+    "key": "con",
+    "abbr": "CON",
+    "full_name": "College of Nursing",
+    "aliases": [
+      "college of nursing cvsu",
+      "cvsu college of nursing",
+      "college of nursing",
+      "nursing college",
+      "cvsu con",
+      "con"
+    ],
+    "source_url": "https://cvsu.edu.ph/con-academic-programs/",
+    "source_date": "2020-05-20",
+    "programs": [
+      {
+        "name": "Bachelor of Science in Nursing (4 years)",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Science in Medical Technology / Medical Laboratory Science (4 years)",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Science in Midwifery (Bridging program 2 years)",
+        "majors": []
+      },
+      {
+        "name": "Diploma in Midwifery (2 years)",
+        "majors": []
+      }
+    ]
+  },
+  {
+    "key": "cspear",
+    "abbr": "CSPEAR",
+    "full_name": "College of Sports, Physical Education and Recreation",
+    "aliases": [
+      "college of sports and physical education and recreation",
+      "college of sports, physical education, and recreation",
+      "college of sports, physical education and recreation",
+      "college of sports physical education and recreation",
+      "sports, physical education and recreation",
+      "college of physical education",
+      "sports and recreation college",
+      "physical education college",
+      "cspear college",
+      "cspear"
+    ],
+    "source_url": "https://cvsu.edu.ph/course-offerings/",
+    "source_date": "2020-01-28",
+    "programs": [
+      {
+        "name": "Bachelor of Physical Education",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Exercise and Sports Sciences (formerly Bachelor in Sports and Recreational Management)",
+        "majors": []
+      }
+    ]
+  },
+  {
+    "key": "cthm",
+    "abbr": "CTHM",
+    "full_name": "College of Tourism and Hospitality Management",
+    "aliases": [
+      "college of tourism and hospitality management",
+      "college of tourism and hospitality",
+      "tourism and hospitality management",
+      "tourism and hospitality",
+      "hospitality management",
+      "hospitality college",
+      "tourism management",
+      "tourism college",
+      "cthm"
+    ],
+    "source_url": "https://cvsu.edu.ph/college-of-tourism-and-hospitality-management/",
+    "source_date": "2025-05-27",
+    "programs": [
+      {
+        "name": "Bachelor of Science in Hospitality Management",
+        "majors": []
+      },
+      {
+        "name": "Bachelor of Science in Tourism Management",
+        "majors": []
+      }
+    ]
+  },
+  {
+    "key": "cvmbs",
+    "abbr": "CVMBS",
+    "full_name": "College of Veterinary Medicine and Biomedical Sciences",
+    "aliases": [
+      "college of veterinary medicine and biomedical sciences",
+      "veterinary medicine and biomedical sciences",
+      "college of veterinary medicine",
+      "biomedical sciences",
+      "veterinary medicine",
+      "college of vet med",
+      "veterinary college",
+      "cvsu cvmbs",
+      "vet med",
+      "vetmed",
+      "cvmbs"
+    ],
+    "source_url": "https://cvsu.edu.ph/cvmbs/",
+    "source_date": "2019-08-27",
+    "programs": [
+      {
+        "name": "Master in Veterinary Studies (open for non-vets)",
+        "majors": []
+      },
+      {
+        "name": "Master in Veterinary Science",
+        "majors": []
+      },
+      {
+        "name": "Doctor of Veterinary Medicine (6 years)",
+        "majors": []
+      },
+      {
+        "name": "BS Veterinary Technology (4 years)",
+        "majors": []
+      },
+      {
+        "name": "BS Animal Health and Management (4 years)",
+        "majors": []
+      },
+      {
+        "name": "BS Biomedical Science (4 years)",
+        "majors": []
+      }
+    ]
+  },
+  {
+    "key": "gsolc",
+    "abbr": "GS-OLC",
+    "full_name": "Graduate School and Open Learning College",
+    "aliases": [
+      "graduate school and open learning college",
+      "open learning college",
+      "cvsu graduate school",
+      "graduate studies",
+      "graduate school",
+      "ogs olc",
+      "ogs-olc",
+      "ogs/olc",
+      "gs olc",
+      "gs-olc",
+      "gsolc"
+    ],
+    "source_url": "https://cvsu.edu.ph/2018/01/13/ogs-olc-program-offerings/",
+    "source_date": "2018-01-13",
+    "programs": [
+      {
+        "name": "Doctor of Philosophy in Agriculture",
+        "majors": [
+          "Crop Science",
+          "Animal Science",
+          "Crop Protection"
+        ]
+      },
+      {
+        "name": "Doctor of Philosophy in Education",
+        "majors": [
+          "Education Management"
+        ]
+      },
+      {
+        "name": "Doctor of Philosophy in Management*",
+        "majors": []
+      },
+      {
+        "name": "Master of Arts in Education",
+        "majors": [
+          "Biology",
+          "Chemistry",
+          "Curriculum and Instruction",
+          "Educational Management",
+          "Mathematics",
+          "Elementary Education",
+          "Secondary Education"
+        ]
+      },
+      {
+        "name": "Master of Agriculture",
+        "majors": [
+          "Animal Science",
+          "Crop Science"
+        ]
+      },
+      {
+        "name": "Master of Engineering",
+        "majors": [
+          "Computer Engineering",
+          "Water Engineering and Management",
+          "General Civil Engineering",
+          "Construction Management",
+          "Structural Engineering"
+        ]
+      },
+      {
+        "name": "Master in Information Technology",
+        "majors": []
+      },
+      {
+        "name": "Master of Management",
+        "majors": []
+      },
+      {
+        "name": "Master of Business Administration",
+        "majors": [
+          "With Thesis",
+          "Non-Thesis"
+        ]
+      },
+      {
+        "name": "Master of Professional Studies",
+        "majors": [
+          "Public Administration"
+        ]
+      },
+      {
+        "name": "Master of Science in Agriculture",
+        "majors": [
+          "Animal Science",
+          "Crop Protection",
+          "Crop Science"
+        ]
+      },
+      {
+        "name": "Master of Science in Biology",
+        "majors": []
+      },
+      {
+        "name": "MASTER OF SCIENCE IN FOOD SCIENCE",
+        "majors": []
+      }
+    ]
+  }
+]

@@ -31,7 +31,7 @@ jobs:
     name: SonarQube (quality + SAST)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0   # blame data for accurate new-code detection
 
@@ -62,19 +62,46 @@ jobs:
     name: Checkmarx KICS (IaC + secrets)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: KICS scan (Dockerfiles, compose, workflows)
-        uses: checkmarx/kics-github-action@v2.1.13
+        uses: checkmarx/kics-github-action@v2.1.20
         with:
           path: deployment,.github/workflows
           output_path: kics-results
           output_formats: json,sarif
-          # PoC: report, don't break the build. Tighten to high once triaged.
-          fail_on: none
+          # PoC: report, don't break the build. Tighten once findings are triaged.
+          #
+          # This was `fail_on: none` until 2026-07-28, which is NOT a valid value:
+          # KICS --fail-on accepts severities (critical, high, medium, low, info),
+          # so the binary aborted with
+          #     Error: unknown argument(s) for --fail-on: none
+          # before scanning anything. It wrote no reports, the upload step then
+          # failed on a missing results.sarif, and — worst of all — THIS step
+          # still reported success. IaC and secrets scanning was silently dead
+          # while the job's only visible symptom looked like a cosmetic upload
+          # glitch. Verified against `kics scan --help` on the pinned image.
+          #
+          # ignore_on_exit: results is the correct way to say "report, don't
+          # break the build": findings no longer fail the job, but engine errors
+          # like the one above now DO, so this cannot rot silently again.
+          ignore_on_exit: results
 
       - name: Upload SARIF to GitHub Security tab
         if: always()
+        # Tolerated on purpose: whether this can succeed depends on the REPO,
+        # not on the code. The Security tab needs code scanning, which private
+        # repos only get with GitHub Advanced Security. This repo has two
+        # remotes — public godwinllabres/DiwaAi (upload works) and private
+        # Cavite-State-University-Official/sevi-api (upload fails with
+        # "Resource not accessible by integration", verified 2026-07-28). The
+        # same commit therefore passes on one and fails on the other.
+        #
+        # This does NOT re-hide the class of bug fixed above: engine errors now
+        # fail the scan step itself via ignore_on_exit, and the raw findings are
+        # always attached by the next step, so nothing is lost where GHAS is
+        # absent — the results are in the artifact instead of the tab.
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: kics-results/results.sarif
@@ -91,7 +118,7 @@ jobs:
     name: Checkmarx One (SAST)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check for credentials
         id: gate
@@ -105,7 +132,7 @@ jobs:
 
       - name: Checkmarx One scan
         if: steps.gate.outputs.enabled == 'true'
-        uses: checkmarx/ast-github-action@v.2.3.19
+        uses: checkmarx/ast-github-action@2.3.39
         with:
           base_uri: ${{ secrets.CX_BASE_URI }}
           cx_tenant: ${{ secrets.CX_TENANT }}
@@ -118,7 +145,7 @@ jobs:
     name: Snyk (dependency SCA)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check for token
         id: gate

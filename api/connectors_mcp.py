@@ -59,7 +59,11 @@ _CALL_TIMEOUT_SECONDS = float(os.environ.get("CONNECTORS_MCP_TIMEOUT_SECONDS", "
 # message (e.g. Filipino/Taglish phrasing), ask an LLM to extract
 # {tool, args}. Provider chosen like ais_mcp: LLM_PROVIDER env, else Ollama.
 _LLM_ROUTER_ENABLED = os.environ.get("CONNECTORS_MCP_LLM_ROUTER", "0") == "1"
-_OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+try:  # single source for the Ollama endpoint default (see api/llm_defaults.py)
+	from .llm_defaults import ollama_base_url
+except ImportError:  # standalone/direct import
+	from llm_defaults import ollama_base_url
+_OLLAMA_BASE_URL = ollama_base_url()
 
 
 # Router models are read PER CALL (not frozen at import) so the admin LLM
