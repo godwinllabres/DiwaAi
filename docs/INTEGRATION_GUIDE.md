@@ -88,7 +88,7 @@ curl http://localhost:8000/intents
 Response:
 ```json
 {
-  "total_intents": 23,
+  "total_intents": 128,
   "intents": [
     {"tag": "about_CvSU", "response_count": 1},
     {"tag": "academic_calendar", "response_count": 1},
@@ -115,17 +115,16 @@ Get trained model details.
 curl http://localhost:8000/model/info
 ```
 
-Response:
+Response (sanitized — internal model details are admin-only):
 ```json
 {
-  "model_name": "Naive Bayes Intent Classifier",
-  "accuracy": 0.9665,
-  "total_intents": 23,
-  "total_patterns": 179,
-  "model_size_kb": 68.3,
-  "system_instructions": "You are CvSU Virtual Assistant..."
+  "total_intents": 128
 }
 ```
+
+The count is 127 curated intents from the training store plus one code-owned
+system reply (`llm_unavailable`, the "LLM is down" degrade message) that lives
+only in `models/responses_map.json` and is never a classifier target.
 
 #### GET `/model/instructions`
 Get agent system instructions.

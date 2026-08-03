@@ -458,7 +458,14 @@ A: Yes! It's designed for production use. See Security Notes above.
 A: Edit `SYSTEM_INSTRUCTIONS` in `app.py`.
 
 **Q: Can I add new intents?**
-A: Yes! Update `CvSU_intents.json`, retrain with `test_chatbot.py`, and restart server.
+A: Yes — two ways. Preferred: `POST /admin/intents` (admin PIN required), which
+runs server-side sanitation first — tag format, pattern/response hygiene,
+collision detection, and a reserved-tag blocklist (system tags like
+`llm_unavailable` or `safety_*` are refused, even with `?force=true`). Or edit
+`data/cavsu_intents.json` directly and retrain with `py -3.11
+train_naive_bayes.py`. Either way, finish with
+`py -3.11 scripts/update_trusted_hashes.py` (the API refuses unpinned model
+artifacts) and restart or `POST /model/reload`.
 
 **Q: Is there a rate limit?**
 A: No built-in limit, but add one with slowapi for production.

@@ -141,8 +141,8 @@ Each requirement is identified `UR-<area>-<n>` and uses the form "The system sha
 
 - **UR-ADMIN-01** The system shall authenticate administrators using a server-side PIN supplied in the `X-Admin-Pin` header.
 - **UR-ADMIN-02** The system shall rate-limit PIN attempts per source IP (default: 5 attempts per 5 minutes) and return HTTP 429 when the budget is exhausted.
-- **UR-ADMIN-03** The system shall let an administrator sanitise a candidate intent (collision detection against existing intents, classifier-confidence pre-check) before persisting it.
-- **UR-ADMIN-04** The system shall let an administrator add a new intent (tag, patterns, responses) with optional `?force=true` to override non-fatal sanitation errors, and shall tell the caller to re-train and restart to activate it.
+- **UR-ADMIN-03** The system shall let an administrator sanitise a candidate intent (collision detection against existing intents, classifier-confidence pre-check, reserved-tag detection) before persisting it.
+- **UR-ADMIN-04** The system shall let an administrator add a new intent (tag, patterns, responses) with optional `?force=true` to override non-fatal sanitation errors, and shall tell the caller to re-train and restart to activate it. Tags reserved for code-owned tiers or system states (e.g. `llm_unavailable`, `safety_*`; canonical list in `api/intent_curation.py` `RESERVED_TAGS`) shall be refused unconditionally — `force` shall not override the refusal.
 - **UR-ADMIN-05** The system shall let an administrator reload the live classifier without restarting the process.
 - **UR-ADMIN-06** The system shall expose only sanitised model information to unauthenticated callers (intent count); detailed model internals shall be admin-only.
 

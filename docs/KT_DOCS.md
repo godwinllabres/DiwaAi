@@ -179,6 +179,22 @@ py -3.11 train_hybrid.py
 
 `intents_db.py` will auto-rebuild the SQLite DB from your edited JSON.
 
+Two things the retrain does for you:
+
+- The code-owned system reply (`llm_unavailable` — the "LLM is down, try again"
+  degrade message) is **not** a DB intent and is re-injected into
+  `models/responses_map.json` automatically after the rebuild
+  (`intents_db.inject_system_responses`). You never need to add it by hand.
+- The API pins model hashes (`models/trusted_hashes.json`) and will **refuse to
+  load the retrained classifier** until you re-pin:
+
+```powershell
+py -3.11 scripts\update_trusted_hashes.py
+```
+
+Skipping the re-pin is not a cosmetic miss: a hash mismatch disables the Naive
+Bayes tier, and the NN tier's agreement guard then disables the NN too.
+
 ### Step 3: Restart the server
 
 `Ctrl+C` the running server, then start it again. The old in-memory models won't reload by themselves.
@@ -196,6 +212,17 @@ Or use the browser UI and ask the new question.
 ## 7. ⚠️ Content rules (read this before editing intents)
 
 The bot must never train on **fabricated facts**. This was a real problem in this project — the dataset previously claimed "13 campuses" and "14 campuses" in different places, listed a Ternate campus that doesn't exist, invented student-population numbers, and quoted phone numbers that conflicted between files. All of that was sanitized.
+
+**Reserved tags.** Never name an intent after a code-owned tier or system state:
+`llm_unavailable`, `nlu_fallback`, `smalltalk`, `conversation_recap`,
+`find_place`, `college_programs`, `ais_mcp`, `connectors_mcp`, `hr_mcp`,
+`campus_disambiguation`, `action_book_advising`, or anything starting with
+`safety_`. Training the classifier on one of these would teach it to *predict*
+a system state (a safety refusal, the LLM-down degrade) from user text and
+shadow the real system reply. `POST /admin/intents` refuses them with a
+`tag_reserved` error — deliberately not overridable with `?force=true` — and
+the `/admin/intents/sanitize` preview flags them before you attempt the write.
+The full list lives in `api/intent_curation.py` (`RESERVED_TAGS`).
 
 ### What you can safely write
 - Verifiable legal/historical facts (RA 10931, RA 8468, founding year 1906, motto "Truth, Excellence, Service").
@@ -242,6 +269,7 @@ This is why both `train_naive_bayes.py` AND `train_hybrid.py` need to run after 
 | Edit what bot knows | [data/cavsu_intents.json](../data/cavsu_intents.json) |
 | Retrain Naive Bayes | `py -3.11 train_naive_bayes.py` |
 | Retrain Neural Net | `py -3.11 train_hybrid.py` |
+| Re-pin model hashes (required after any retrain) | `py -3.11 scripts\update_trusted_hashes.py` |
 | Run server | `.\run_server.bat` or `py -3.11 -m uvicorn api.app:app --port 8000` |
 | Test chatbot | `py -3.11 test_chatbot.py` |
 | Run intent tests | `py -3.11 training\test_intents.py 8000 5` |
