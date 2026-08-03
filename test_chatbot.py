@@ -23,14 +23,17 @@ from intents_db import load_intents, inject_system_responses
 import nltk
 from nltk.stem import WordNetLemmatizer
 
-# Download NLTK resources
-for resource in ['punkt_tab', 'wordnet', 'omw-1.4']:
+# Download NLTK resources — same pattern as api/app.py: correct category per
+# resource (wordnet/omw are corpora, not tokenizers), and OSError caught too
+# (a partially-installed punkt raises OSError, not LookupError).
+for resource, kind in [('punkt_tab', 'tokenizers'), ('wordnet', 'corpora'),
+                       ('omw-1.4', 'corpora')]:
     try:
-        nltk.data.find(f'tokenizers/{resource}')
-    except LookupError:
+        nltk.data.find(f'{kind}/{resource}')
+    except (LookupError, OSError):
         try:
             nltk.download(resource, quiet=True)
-        except:
+        except Exception:
             pass
 
 lemmatizer = WordNetLemmatizer()
