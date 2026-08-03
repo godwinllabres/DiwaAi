@@ -24,6 +24,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Response linter (P2-7)
+        # Gates NEW style/contact-detail violations in data/cavsu_intents.json
+        # against scripts/lint_responses_allowlist.json. Runs on the runner:
+        # training/ and the allowlist ship in the checkout, not the image.
+        run: |
+          python3 -m pip install --quiet pydantic
+          python3 scripts/lint_responses.py
+
       - name: Build image
         run: docker build -f deployment/Dockerfile.local -t sevi-api:ci .
 
@@ -50,7 +58,10 @@ jobs:
 
           health=$(curl -fsS http://localhost:8000/health)
           echo "health: $health"
-          echo "$health" | jq -e '.status == "healthy" and .classifier_ready == true'
+          # Public /health is deliberately minimal since P0-3 (classifier/LLM
+          # detail moved behind the admin PIN at /admin/status) — asserting
+          # more here would reintroduce the information leak the trim removed.
+          echo "$health" | jq -e '.status == "healthy"'
 
           chat=$(curl -fsS -X POST http://localhost:8000/chat \
             -H 'Content-Type: application/json' \
@@ -64,6 +75,17 @@ jobs:
             -H 'Content-Type: application/json' \
             -d '{"message":"How do I enroll at CvSU?"}')
           echo "$chat" | jq -e '.intent == "enrollment_procedure"'
+
+      - name: Gold eval (P1-4) — regression floor
+        # Full 100-item gold set against the running container. LLM_PROVIDER
+        # is none in CI, so this measures the deterministic tiers. The
+        # handoff's target thresholds are 0.85 / 0.10; the flags below are the
+        # floor measured 2026-08-04 (acc 0.569, OOS 0.000) — they gate against
+        # REGRESSION today. Ratchet them toward the targets as retrains land.
+        run: >
+          python3 training/run_gold_eval.py
+          --base-url http://localhost:8000
+          --min-accuracy 0.55 --max-oos-accept 0.05
 
       - name: Dump logs on failure
         if: failure()
