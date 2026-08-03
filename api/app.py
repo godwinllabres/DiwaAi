@@ -41,6 +41,7 @@ from . import site_rag as _site_rag
 # Seasonal topic recommender + intent-onboarding sanitation checks
 from .topic_recommender import recommend as _recommend_topics
 from .intent_curation import sanitize_candidate_intent as _sanitize_candidate_intent
+from .intent_curation import is_reserved_tag as _intent_curation_is_reserved
 # AIS MCP bridge — routes finance queries to the CvSU AIS MCP server
 from .ais_mcp import try_handle as _try_ais
 from .ais_mcp import metrics_snapshot as _ais_metrics_snapshot
@@ -3271,6 +3272,20 @@ async def create_intent(body: CandidateIntent, force: bool = False):
         from intents_db import load_intents as _load_intents
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Intent database unavailable")
+
+    # Reserved tags are refused UNCONDITIONALLY — ?force=true exists to ship a
+    # known pattern collision, never to shadow a code-owned tier or system
+    # state (the classifier must not learn to predict "llm_unavailable",
+    # "safety_*", the MCP bridge labels, …).
+    if _intent_curation_is_reserved(body.tag):
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": f"'{body.tag}' is a reserved system tag and cannot "
+                           "be onboarded, even with force=true.",
+                "code": "tag_reserved",
+            },
+        )
 
     existing = _load_intents()
     candidate = body.model_dump()

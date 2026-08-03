@@ -33,6 +33,29 @@ _PROFANITY = frozenset({
 
 _TAG_RE = re.compile(r"^[a-z][a-z0-9_]{2,39}$")
 
+# Tags emitted by CODE tiers, not by the intents store. Creating a DB intent
+# under one of these names would teach the classifier to PREDICT a system
+# state from user text (e.g. serve a curated reply labelled "llm_unavailable"
+# while the real degrade reply is shadowed) — so onboarding refuses them
+# outright, and the /admin/intents hard gate does NOT honour ?force=true for
+# them. Keep in sync with the intent constants in api/hybrid_chatbot.py and
+# the short-circuit sources in api/app.py.
+RESERVED_TAGS = frozenset({
+    # cascade tier outputs (api/hybrid_chatbot.py)
+    "llm_unavailable", "nlu_fallback", "smalltalk", "conversation_recap",
+    "find_place", "college_programs",
+    # endpoint short-circuit sources (api/app.py)
+    "ais_mcp", "connectors_mcp", "hr_mcp",
+    "campus_disambiguation", "action_book_advising",
+})
+RESERVED_PREFIXES = ("safety_",)
+
+
+def is_reserved_tag(tag: str) -> bool:
+    """True when `tag` names a code-owned tier or system state."""
+    tag = (tag or "").strip().lower()
+    return tag in RESERVED_TAGS or tag.startswith(RESERVED_PREFIXES)
+
 _PATTERN_MIN = 3
 _PATTERN_MAX = 200
 _RESPONSE_MIN = 10
@@ -141,6 +164,14 @@ def sanitize_candidate_intent(
         report.findings.append(SanitizationFinding(
             "error", "tag_format",
             "Tag must be lowercase snake_case, 3–40 chars, starting with a letter.",
+            {"received": tag},
+        ))
+    elif is_reserved_tag(tag):
+        report.findings.append(SanitizationFinding(
+            "error", "tag_reserved",
+            f"'{tag}' is reserved for a code-owned tier or system state "
+            "(safety gate, LLM-unavailable degrade, smalltalk, MCP bridges, …). "
+            "The classifier must never be trained to predict it. Pick another tag.",
             {"received": tag},
         ))
     else:
