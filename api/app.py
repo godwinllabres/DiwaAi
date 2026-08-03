@@ -1295,6 +1295,11 @@ chatbot = HybridChatbot(
 # Initialize chat logger
 chat_logger = ChatLogger(log_dir="logs", db_path="logs/chat_history.db")
 
+# P1-5: persist cross-tier arbitration disagreements — the weekly review queue
+# served at GET /admin/tier_disagreements. Wired here (and re-wired on
+# /model/reload) because the chatbot is constructed before the logger exists.
+chatbot.disagreement_logger = chat_logger.log_tier_disagreement
+
 # Chat-log writes get their own single-thread executor.
 #
 # They were being made synchronously from async handlers, so every turn blocked
@@ -1332,35 +1337,14 @@ async def root():
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """Health check endpoint. Reports model and LLM readiness.
+    """Liveness probe — deliberately minimal (P0-3, HANDOFF-QUALITY 2026-08-03).
 
-    When the LLM tier is down, `llm_error` says why (unreachable server, unknown
-    provider, missing key) and `llm_base_url`/`llm_model` show the config it
-    tried — enough to diagnose `llm_ready: false` from a browser, no shell
-    needed. None of these leak secrets (keys are reported only as set/unset in
-    the container log, never here)."""
-    status = chatbot.llm_status()
-    return {
-        "status": "healthy",
-        "version": APP_VERSION,
-        "build": APP_BUILD or None,
-        "classifier_ready": chatbot.nb_model is not None,
-        "llm_provider": status["provider"],
-        "llm_ready": status["available"],
-        "llm_model": status["model"],
-        "llm_base_url": status["base_url"],
-        "llm_known_provider": status["known_provider"],
-        "llm_error": status["error"],
-        # Turn-gate state. Without this a saturated gate — or a leaked waiter
-        # counter wedging it shut — is completely invisible: the container keeps
-        # reporting healthy while shedding every chat request with a 503.
-        "turn_gate": {
-            "limit": _chat_runner.limit,
-            "in_flight": _chat_runner.in_flight,
-            "waiting": _chat_runner.waiting,
-            "queue_max": _chat_runner.queue_max,
-        },
-    }
+    The compose healthcheck (`curl -fsS`) and the web frontend's online badge
+    only need `status`. Everything the old payload carried — build hash, LLM
+    provider + internal base URL, `llm_error`, turn-gate internals — described
+    internal infrastructure to unauthenticated callers. That full payload now
+    lives on the admin-gated GET /admin/status."""
+    return {"status": "healthy"}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Response-shape helpers (v2 envelope)
@@ -2008,7 +1992,10 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         refusal_reason=refusal_reason,
         cards=cards,
         context=context,
-        suggestions=ais_suggestions or [],
+        # NLU-tier suggestions (P2-8 disambiguation chips) share the slot the
+        # MCP bridges use; the bridges win when both are present since a
+        # bridge-handled turn never reaches the NLU cascade anyway.
+        suggestions=ais_suggestions or nlu_data.get("suggestions") or [],
         display_hint=hint,
         sources=sources,
     )
@@ -2164,6 +2151,19 @@ async def citizens_charter_pdf():
     )
 
 
+@app.get("/admin/tier_disagreements", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def tier_disagreements(
+    days: Annotated[int, Query(ge=1, le=365)] = 7,
+    limit: Annotated[int, Query(ge=1, le=5000)] = 500,
+):
+    """The P1-5 arbitration review queue: turns where a confident NB answer was
+    escalated (margin too thin / retrieval disagreed) or the NN would have
+    overridden NB. The weekly triage input for retraining and threshold tuning.
+    Gated by `X-Admin-Pin`."""
+    rows = await asyncio.to_thread(chat_logger.get_tier_disagreements, days, limit)
+    return {"count": len(rows), "window_days": days, "disagreements": rows}
+
+
 @app.get("/admin/moderation", tags=["Admin"], dependencies=[Depends(require_admin)])
 async def moderation_stats():
     """SafetyGate counters per category + the last 20 flagged messages
@@ -2209,6 +2209,17 @@ async def admin_status():
     llm = _safe(chatbot.llm_status, {})
     return {
         "service": "DIWA API",
+        # Deploy identity + gate state, formerly on the public /health payload —
+        # moved here (P0-3) so confirming "which build is this server running"
+        # still works from a browser, now with the PIN.
+        "version": APP_VERSION,
+        "build": APP_BUILD or None,
+        "turn_gate": {
+            "limit": _chat_runner.limit,
+            "in_flight": _chat_runner.in_flight,
+            "waiting": _chat_runner.waiting,
+            "queue_max": _chat_runner.queue_max,
+        },
         "uptime_seconds": int(time.time() - _START_TIME),
         "brain": {
             "classifier_ready": chatbot.nb_model is not None,
@@ -2649,6 +2660,10 @@ async def reload_model():
         # mangled a heading — picking it up here is what makes that a one-call
         # fix instead of a redeploy.
         _charter_pages.reload_index()
+        # Re-wire the P1-5 disagreement sink — a fresh HybridChatbot starts
+        # with disagreement_logger=None and would silently stop persisting
+        # the review queue after a hot reload.
+        new_bot.disagreement_logger = chat_logger.log_tier_disagreement
         return new_bot
 
     async with _chat_runner.exclusive():
@@ -2784,6 +2799,7 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
             refusal_reason=refusal_reason,
             cards=cards,
             context=context,
+            suggestions=nlu_data.get("suggestions") or [],
             display_hint=hint,
             sources=sources,
         ))

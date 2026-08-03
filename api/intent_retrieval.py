@@ -125,6 +125,35 @@ class IntentPatternIndex:
 			pattern=self._patterns[best],
 		)
 
+	def retrieve_topk(self, query: str, k: int = 5) -> list["Match"]:
+		"""Top-k DISTINCT intents by best-pattern score, best first.
+
+		The cross-tier arbitration check (P1-5) asks "does NB's winner appear
+		anywhere in the lexical top-k?" — so ranking is per intent, not per
+		pattern (one intent's many patterns must not crowd out the rest).
+		Zero-score intents are never returned; the list may be shorter than k.
+		"""
+		if not self.available or not query or not query.strip():
+			return []
+		from sklearn.metrics.pairwise import linear_kernel
+
+		q = self._vectorizer.transform([query])
+		scores = linear_kernel(q, self._matrix)[0]
+		out: list[Match] = []
+		seen: set[str] = set()
+		for idx in scores.argsort()[::-1]:
+			score = float(scores[idx])
+			if score <= 0.0:
+				break
+			tag = self._intents[idx]
+			if tag in seen:
+				continue
+			seen.add(tag)
+			out.append(Match(intent=tag, score=score, pattern=self._patterns[idx]))
+			if len(out) >= k:
+				break
+		return out
+
 
 _index: Optional[IntentPatternIndex] = None
 # Guards the build/swap of _index. get_index is a check-then-set, so

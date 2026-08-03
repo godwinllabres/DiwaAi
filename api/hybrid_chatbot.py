@@ -16,7 +16,7 @@ from collections import OrderedDict
 import urllib.request
 import urllib.error
 import numpy as np
-from typing import Tuple, Optional
+from typing import List, Optional, Tuple
 import joblib
 
 import nltk
@@ -134,6 +134,33 @@ _NON_ALPHA_RE = r"[^a-z0-9\s]"
 # judges a query out of scope. The orchestrator intercepts and returns
 # a canned refusal in its place.
 LLM_REFUSAL_TOKEN = "[OUT_OF_SCOPE]"
+
+# P1-6 post-generation output guard for the LLM tier. The prompt already
+# forbids invented specifics, but an 8B model answering in Taglish will still
+# occasionally emit a contact detail that is in its weights rather than in the
+# passages — and an invented email is worse than no answer. Replies failing
+# the guard are withheld and replaced with an honest can't-verify message.
+LLM_MAX_REPLY_CHARS = int(os.getenv("LLM_MAX_REPLY_CHARS", "2200"))
+_LLM_EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+_LLM_URL_RE = re.compile(r"https?://[^\s<>\)\]\"']+")
+# The one URL the grounded prompt itself tells the model to hand out.
+_LLM_SAFE_URL_PREFIXES = (
+    "https://cvsu.edu.ph", "http://cvsu.edu.ph", "https://www.cvsu.edu.ph",
+)
+
+# An LLM reply that IS a scope refusal, just without the [OUT_OF_SCOPE] token.
+# qwen3:8b frequently declines in prose ("I'm not able to answer that — I'm
+# built to help with CvSU-related questions only…") — correct behavior that,
+# unrecognized, gets logged/metered as a normal answer. Anchored to the reply's
+# OPENING so an actual answer that later hedges ("I don't have the exact fee,
+# but enrollment steps are…") is not swallowed.
+_LLM_PROSE_REFUSAL_RE = re.compile(
+    r"^(?:i['’]?m (?:not able|unable|sorry)|i can(?:no|')t (?:help|assist|answer)"
+    r"|i can (?:only )?help with cvsu|i can only help|that(?:['’]s| is) (?:not something|outside)"
+    r"|i don['’]?t have that (?:specific )?information"
+    r"|paumanhin|hindi ko (?:po )?(?:ka?yang?|ma))",
+    re.IGNORECASE,
+)
 
 # Every LLM_PROVIDER value the fallback tier understands. Adding a new backend
 # means adding its client class AND its name here (and to the admin toggle's
@@ -260,6 +287,30 @@ class NaiveBayesModel:
         proba = self.pipeline.predict_proba([clean_text])[0]
         confidence = float(np.max(proba))
         return intent, confidence
+
+    def predict_top2(self, text: str) -> Tuple[str, float, float]:
+        """Predict intent plus the top1−top2 probability margin.
+
+        NB's raw confidence is uncalibrated (temperature scaling exists only
+        on the NN), so a high top-1 alone can be confidently wrong. The margin
+        is the cheap second signal the arbitration gate (P1-5) requires: a
+        near-tie between the top two classes means "don't trust the winner".
+        """
+        clean_text = self._preprocess(text)
+        proba = self.pipeline.predict_proba([clean_text])[0]
+        order = np.argsort(proba)
+        top1 = float(proba[order[-1]])
+        top2 = float(proba[order[-2]]) if len(proba) > 1 else 0.0
+        intent = str(self.pipeline.classes_[order[-1]])
+        return intent, top1, top1 - top2
+
+    def predict_topk(self, text: str, k: int = 3) -> List[Tuple[str, float]]:
+        """Top-k (intent, probability) pairs, best first — the candidate set a
+        margin-triggered clarification (P2-8) offers the user to choose from."""
+        clean_text = self._preprocess(text)
+        proba = self.pipeline.predict_proba([clean_text])[0]
+        order = np.argsort(proba)[::-1][:k]
+        return [(str(self.pipeline.classes_[i]), float(proba[i])) for i in order]
 
     @staticmethod
     def _preprocess(text: str) -> str:
@@ -478,7 +529,10 @@ class LocalLLM:
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "options": {"temperature": 0.3, "num_predict": 512},
+            # temperature 0 (P1-6): the tier answers ONLY from retrieved
+            # passages, so sampling variety is pure fabrication risk for an
+            # 8B model answering in Taglish.
+            "options": {"temperature": 0.0, "num_predict": 512},
         }
         # Thinking models (qwen3, deepseek-r1, ...) reason before answering by
         # default — on CPU that multiplies latency and can spend the whole
@@ -600,7 +654,7 @@ class OpenAICompatLLM:
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "temperature": 0.3,
+            "temperature": 0.0,  # P1-6: evidence-gated tier — no sampling variety
             "max_tokens": 512,
         }
         payload = json.dumps(body).encode("utf-8")
@@ -859,7 +913,15 @@ class ScopeGate:
         r"sports score|nba|fifa|nfl|premier league|world cup|"
         r"write code|debug|python|javascript|java code|c\+\+|"
         r"write a poem|write a story|write a song|write me a|"
-        r"translate to|translate this|translation of|"
+        r"translate to|translate this|translation of|itranslate|i-translate mo|"
+        # Gold-eval OOS leaks (2026-08-04): investing, ride-hailing bookings,
+        # gadget repair. Phrase-level on purpose — "medicine" is NOT here
+        # (College of Medicine / Veterinary Medicine are real intents); the
+        # LLM's prose-refusal detector backstops what this list can't name.
+        r"stock market|what stock|stocks? to (?:buy|invest)|"
+        r"book(?:ing)? (?:a |ng )?(?:grab|angkas)|grab papunta|"
+        r"fix my (?:phone|laptop)|ayusin ang (?:phone|cellphone)|"
+        r"ayaw mag-?on ng (?:phone|cellphone)|"
         # Joke asks are handled by api/smalltalk.py (Step 0.6) rather than
         # refused: a flat "outside my scope" reads as cold from a campus
         # assistant. They never reach here, so the alternatives are gone.
@@ -988,6 +1050,7 @@ class ClaudeLLM:
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=self.MAX_TOKENS,
+                temperature=0.0,  # P1-6: evidence-gated tier — deterministic
                 system=self.system_blocks,
                 messages=messages,
             )
@@ -1068,11 +1131,28 @@ class HybridChatbot:
     # strictly more conservative than per-instance, never less.
     _history_lock = threading.Lock()
     _stats_lock = threading.Lock()
+    # Class-level fallback for the same __new__-built instances: the P1-5
+    # disagreement sink is optional everywhere, so None must be readable even
+    # when __init__ never ran.
+    disagreement_logger = None
 
     NB_CONFIDENCE_THRESHOLD = 0.65  # If NB confidence >= 65%, use it; otherwise defer to NN.
     # Raised from 0.55: with the NLU boost no longer inflating confidence, borderline
     # NB force-fits (e.g. an off-topic query landing in courses_offered at ~0.63) now
     # defer to the NN + scope/nonsense gates + LLM-grounded tiers instead of being served.
+
+    # P1-5 cross-tier arbitration (HANDOFF-QUALITY 2026-08-03). A confident
+    # NB answer is served only when BOTH hold:
+    #   margin     top1 − top2 ≥ NB_MARGIN_THRESHOLD — a near-tie means the
+    #              uncalibrated top-1 is not to be trusted;
+    #   agreement  NB's intent appears in the TF-IDF pattern index's top-k
+    #              distinct intents for the same query — a cheap independent
+    #              vote from a different representation (char n-grams).
+    # Failing either escalates to the NN (which carries its own NB-agreement
+    # guard) instead of answering, and logs the turn to the tier_disagreements
+    # review queue. Tune δ against training/run_gold_eval.py, not by feel.
+    NB_MARGIN_THRESHOLD = float(os.getenv("NB_MARGIN_THRESHOLD", "0.25"))
+    NB_AGREEMENT_TOPK = int(os.getenv("NB_AGREEMENT_TOPK", "5"))
     NN_CONFIDENCE_THRESHOLD = 0.50  # NN minimum confidence threshold
     FALLBACK_INTENT = "nlu_fallback"
     # Wayfinding replies from the Place Resolver tier. Matches the map-first
@@ -1090,6 +1170,15 @@ class HybridChatbot:
     SMALLTALK_INTENT = "smalltalk"
     # Complete per-college program list from data/college_programs.json.
     PROGRAMS_INTENT = "college_programs"
+    # P2-8: margin-triggered disambiguation. When NB clears the confidence bar
+    # but its top-2 are a near-tie ACROSS topic families, guessing answers one
+    # question and ignores the other — ask instead (2 chip options via
+    # `suggestions`). Same-family near-ties (enrollment_procedure vs
+    # enrollment_schedule) still fall through to the NN: either answer is
+    # on-topic. Code-owned tag, not in the trained taxonomy.
+    CLARIFY_INTENT = "intent_disambiguation"
+    # Minimum probability for the runner-up before it is worth asking about.
+    CLARIFY_MIN_RUNNERUP = float(os.getenv("CLARIFY_MIN_RUNNERUP", "0.15"))
 
     # Emitted when an LLM IS configured but its server was unreachable or
     # errored on this turn. Distinct from FALLBACK_INTENT (a genuine no-match)
@@ -1124,6 +1213,11 @@ class HybridChatbot:
         print("\n" + "=" * 60)
         print("  HIERARCHICAL HYBRID CHATBOT INITIALIZATION")
         print("=" * 60)
+
+        # P1-5: optional persistent sink for cross-tier disagreements. app.py
+        # wires this to ChatLogger.log_tier_disagreement; left None (e.g. in
+        # tests and training scripts) disagreements still print to the log tail.
+        self.disagreement_logger = None
 
         # Load both models
         print("\n[1/4] Loading Naive Bayes (Fast)...")
@@ -1311,7 +1405,9 @@ class HybridChatbot:
 
         print("\n[5/5] Initialization complete")
         print("=" * 60)
-        print(f"Strategy: NB threshold = {self.NB_CONFIDENCE_THRESHOLD:.0%}")
+        print(f"Strategy: NB threshold = {self.NB_CONFIDENCE_THRESHOLD:.0%}"
+              f" (margin >= {self.NB_MARGIN_THRESHOLD:.2f},"
+              f" retrieval top-{self.NB_AGREEMENT_TOPK} agreement)")
         print("         NN threshold = adaptive per-intent")
         llm_status = "enabled" if (self.llm and self.llm.available) else "disabled"
         print(f"         LLM fallback = {llm_status} (provider={self.llm_provider})")
@@ -1470,19 +1566,29 @@ class HybridChatbot:
             "Respond in the same language the user uses (English or Filipino/Taglish)."
         )
 
-    def _nb_result(self, user_input: str, user_id: str) -> Tuple[Optional[str], float, dict]:
-        """Run NB + optional NLU enhancement. Returns (intent, confidence, nlu_data) or (None, 0, {})."""
+    def _nb_result(self, user_input: str, user_id: str) -> Tuple[Optional[str], float, float, dict]:
+        """Run NB + optional NLU enhancement.
+
+        Returns (intent, confidence, margin, nlu_data) or (None, 0, 0, {}).
+        `margin` is NB's top1−top2 gap for the arbitration gate. When the NLU
+        engine overrides NB's winner (deterministic context logic — campus
+        follow-ups, entity carry-over), the margin is reported as 1.0: the
+        override IS the disambiguation, and NB's distribution no longer
+        describes the intent being served.
+        """
         if not self.nb_model:
-            return None, 0.0, {}
-        intent, confidence = self.nb_model.predict(user_input)
+            return None, 0.0, 0.0, {}
+        intent, confidence, margin = self.nb_model.predict_top2(user_input)
         nlu_data = {}
         if self.nlu_engine and user_id:
             result = self.nlu_engine.enhance_prediction(user_input, intent, confidence, user_id)
+            if result["intent"] != intent:
+                margin = 1.0
             intent = result["intent"]
             confidence = result["confidence"]
             nlu_data = result
             self._bump("nlu_enhanced")
-        return intent, confidence, nlu_data
+        return intent, confidence, margin, nlu_data
 
     def _nn_result(self, user_input: str) -> Tuple[Optional[str], float]:
         """Run NN. Returns (intent, confidence) or (None, 0)."""
@@ -1542,6 +1648,191 @@ class HybridChatbot:
             "5. Keep the answer concise and only cite a source you actually used."
             f"{hint}\n\n{excerpts}\n\nQuestion: {user_input}"
         )
+
+    # ── P2-8: disambiguation + stated-assumption helpers ─────────────────
+
+    # Human-readable topic labels (english, filipino) for clarification chips.
+    # Fallback is the tag with underscores replaced — always renderable.
+    _INTENT_TOPIC_LABELS = {
+        "tuition_fees":             ("tuition and fees", "matrikula at bayarin"),
+        "free_tuition_law_details": ("the RA 10931 free-tuition coverage", "ang libreng matrikula sa RA 10931"),
+        "scholarship":              ("scholarships", "scholarship"),
+        "admissions_requirements":  ("admission requirements", "requirements sa admission"),
+        "admissions_exam":          ("the entrance exam", "ang entrance exam"),
+        "enrollment_procedure":     ("how to enroll", "paano mag-enroll"),
+        "enrollment_schedule":      ("the enrollment schedule", "ang schedule ng enrollment"),
+        "graduation_requirements":  ("graduation requirements", "requirements sa pag-graduate"),
+        "transcript_request_details": ("getting your TOR", "pagkuha ng TOR"),
+        "shifting_program":         ("shifting to another program", "paglipat ng kurso"),
+        "transferee_admission":     ("transferring to CvSU", "paglipat sa CvSU"),
+        "registrar":                ("the Registrar's services", "mga serbisyo ng Registrar"),
+        "academic_calendar":        ("the academic calendar", "ang academic calendar"),
+        "courses_offered":          ("the programs offered", "mga programang inaalok"),
+    }
+
+    # Tags that share a family answer the same underlying question — a near-tie
+    # within a family is not worth a clarification round-trip.
+    _INTENT_FAMILY_OVERRIDES = {
+        "transferee_admission": "admissions", "als_admission": "admissions",
+        "homeschool_admission": "admissions", "foreign_student_admission": "admissions",
+        "senior_high_to_college": "admissions", "second_courser": "admissions",
+        "late_enrollment": "enrollment", "returning_student": "enrollment",
+        "tuition_fees": "money", "free_tuition_law_details": "money",
+        "student_refund": "money",
+    }
+
+    # Intents whose correct answer varies by {campus, program level}: when the
+    # question and the session pin down neither, the answer opens by stating
+    # the assumption instead of silently answering for Indang undergrad.
+    _ASSUMPTION_INTENTS = frozenset({
+        "tuition_fees", "admissions_requirements",
+        "enrollment_schedule", "academic_calendar",
+    })
+    _CAMPUS_TOKEN_RE = re.compile(
+        r"\b(indang|main campus|imus|bacoor|rosario|silang|naic|trece"
+        r"|tanza|carmona|cavite city|gen(?:eral)?\s*trias|ccat)\b", re.IGNORECASE)
+    _LEVEL_TOKEN_RE = re.compile(
+        r"\b(undergrad(?:uate)?|graduate|masteral|master'?s|doctoral|phd"
+        r"|senior high|shs|freshman|transferee)\b", re.IGNORECASE)
+
+    @classmethod
+    def _intent_family(cls, tag: str) -> str:
+        return cls._INTENT_FAMILY_OVERRIDES.get(tag, tag.split("_", 1)[0])
+
+    @classmethod
+    def _intent_topic_label(cls, tag: str, filipino: bool) -> str:
+        labels = cls._INTENT_TOPIC_LABELS.get(tag)
+        if labels is None:
+            return tag.replace("_", " ")
+        return labels[1] if filipino else labels[0]
+
+    def _clarification_reply(self, user_input: str, candidates: list) -> Tuple[str, list]:
+        """(text, chip_labels) asking the user to pick between candidate topics."""
+        filipino = _is_filipino(user_input)
+        labels = [self._intent_topic_label(tag, filipino) for tag, _ in candidates]
+        if filipino:
+            text = (f"Para masagot ko nang tama: ang tanong po ba ninyo ay tungkol sa "
+                    f"{labels[0]}, o sa {labels[1]}? Pindutin o i-type ang paksa.")
+        else:
+            text = (f"Happy to help — just so I answer the right thing: are you asking "
+                    f"about {labels[0]}, or about {labels[1]}? Tap or type the topic.")
+        return text, labels
+
+    def _maybe_state_assumption(self, response: str, intent: str,
+                                user_input: str, campus: Optional[str]) -> str:
+        """Prefix an explicit default-context line on answers that vary by
+        campus/level when the turn pinned down neither (P2-8 slot-filling,
+        stated-assumption branch)."""
+        if intent not in self._ASSUMPTION_INTENTS or campus:
+            return response
+        if self._CAMPUS_TOKEN_RE.search(user_input) or self._LEVEL_TOKEN_RE.search(user_input):
+            return response
+        if _is_filipino(user_input):
+            note = ("Ipagpalagay nating para sa Main Campus (Indang), undergraduate, "
+                    "ang tanong — sabihin lang (hal. \"Imus campus\" o \"graduate\") "
+                    "kung iba ang ibig ninyong sabihin.")
+        else:
+            note = ("Assuming the Main Campus (Indang) at undergraduate level — "
+                    "tell me if you mean another campus or level "
+                    "(e.g. \"Imus campus\", \"graduate school\").")
+        return f"{note}\n\n{response}"
+
+    # Served when the output guard withholds an LLM reply: honest, states
+    # scope (the handoff's refusal contract), and points at verification.
+    LLM_GUARD_MESSAGE = (
+        "I came across details I couldn't verify against the official CvSU "
+        "sources I have, so I'd rather not pass them along. Please check "
+        "https://cvsu.edu.ph or ask the relevant campus office directly. "
+        "I can help with admissions, enrollment, programs, tuition, "
+        "scholarships, campus directions, and other CvSU topics."
+    )
+
+    def _llm_output_guard(self, reply: str, grounding: list) -> Tuple[bool, str, str]:
+        """(ok, reason, reply_out) — enforce the evidence contract on LLM output.
+
+        Rejects (P1-6):
+          invented_email     an email address not present in the passages;
+          invented_url       a URL that is neither a passage URL nor the
+                             official portal the prompt itself points at;
+          invented_citation  a bracketed citation naming a source that was
+                             not among the retrieved passages.
+        Over-length replies are trimmed at a sentence boundary, not rejected.
+        """
+        evidence = " ".join(f"{cite} {text}" for _, cite, text, _ in grounding).lower()
+        for email in _LLM_EMAIL_RE.findall(reply):
+            if email.lower() not in evidence:
+                return False, f"invented_email:{email}", reply
+        for url in _LLM_URL_RE.findall(reply):
+            trimmed = url.rstrip(".,;:!?").lower()
+            if any(trimmed.startswith(p) for p in _LLM_SAFE_URL_PREFIXES):
+                continue
+            if trimmed not in evidence:
+                return False, "invented_url", reply
+        cites = [cite.lower() for _, cite, _, _ in grounding]
+        for span in re.findall(r"\[([^\[\]]{4,120})\]", reply):
+            span_l = " ".join(span.strip().lower().split())
+            # Only citation-shaped brackets — "[1]", "[emphasis mine]" pass.
+            if not ("p." in span_l or "charter" in span_l or "cvsu" in span_l):
+                continue
+            if not any(span_l in c or c in span_l for c in cites):
+                return False, "invented_citation", reply
+        if len(reply) > LLM_MAX_REPLY_CHARS:
+            cut = reply[:LLM_MAX_REPLY_CHARS]
+            for boundary in (". ", "! ", "? ", "\n"):
+                idx = cut.rfind(boundary)
+                if idx > LLM_MAX_REPLY_CHARS // 2:
+                    cut = cut[: idx + 1]
+                    break
+            reply = cut.rstrip() + " …"
+        return True, "", reply
+
+    def _retrieval_topk(self, user_input: str) -> Optional[list]:
+        """Top-k distinct intents from the TF-IDF pattern index, best first.
+
+        None means the index has no vote (disabled, DB unreadable, or an
+        internal error) — the arbitration gate treats that as an abstention,
+        never a veto.
+        """
+        try:
+            index = intent_retrieval.get_index()
+            if index is None:
+                return None
+            return index.retrieve_topk(user_input, self.NB_AGREEMENT_TOPK) or None
+        except Exception:  # noqa: BLE001 — an arbitration signal must never fail a turn
+            return None
+
+    def _log_disagreement(
+        self, *, query: str, nb_intent: Optional[str], nb_confidence: float,
+        nb_margin: float, reason: str, nn_intent: Optional[str] = None,
+        nn_confidence: Optional[float] = None, topk: Optional[list] = None,
+    ) -> None:
+        """Record a cross-tier disagreement (P1-5 weekly review queue).
+
+        Always prints (the /admin/logs tail captures stdout); additionally
+        persists via `disagreement_logger` when app.py has wired it to
+        ChatLogger.log_tier_disagreement. Best-effort on both paths.
+        """
+        top_str = ", ".join(f"{m.intent}:{m.score:.2f}" for m in (topk or [])[:5])
+        print(f"[ARBITRATION] {reason}: nb={nb_intent}@{nb_confidence:.2f} "
+              f"margin={nb_margin:.2f}"
+              + (f" nn={nn_intent}@{nn_confidence:.2f}" if nn_intent else "")
+              + (f" topk=[{top_str}]" if top_str else "")
+              + f" q={query[:80]!r}")
+        callback = self.disagreement_logger
+        if callback is None:
+            return
+        try:
+            callback(
+                query=query, nb_intent=nb_intent, nb_confidence=nb_confidence,
+                nb_margin=nb_margin, reason=reason, nn_intent=nn_intent,
+                nn_confidence=nn_confidence,
+                retrieval_topk=[
+                    {"intent": m.intent, "score": round(m.score, 3)}
+                    for m in (topk or [])
+                ],
+            )
+        except Exception:  # noqa: BLE001 — the review queue must never fail a turn
+            pass
 
     def _intent_retrieval_result(
         self, user_input: str, nb_intent: Optional[str]
@@ -1846,11 +2137,49 @@ class HybridChatbot:
             return self.PROGRAMS_INTENT, programs, 1.0, "College Programs", nlu_data
 
         if not skip_intents:
-            # Step 1: Naive Bayes (+ optional NLU enhancement)
-            nb_intent, nb_confidence, nlu_data = self._nb_result(user_input, user_id)
+            # Step 1: Naive Bayes (+ optional NLU enhancement), arbitrated.
+            # A confident-looking NB answer must also pass the margin check
+            # and the retrieval agreement vote (P1-5) — NB's raw confidence is
+            # uncalibrated, and before this gate a confidently-wrong NB
+            # suppressed every better tier below it.
+            nb_intent, nb_confidence, nb_margin, nlu_data = self._nb_result(user_input, user_id)
             if nb_intent and nb_confidence >= self.NB_CONFIDENCE_THRESHOLD:
-                self._bump("naive_bayes_used")
-                return nb_intent, self._select_response(nb_intent, user_input), nb_confidence, "Naive Bayes (NLU Enhanced)", nlu_data
+                margin_ok = nb_margin >= self.NB_MARGIN_THRESHOLD
+                topk = self._retrieval_topk(user_input)
+                # None = index unavailable/empty → abstain, don't veto: losing
+                # the intents DB must degrade to the old behavior, not take
+                # the whole NB tier down with it.
+                agrees = topk is None or any(m.intent == nb_intent for m in topk)
+                if margin_ok and agrees:
+                    self._bump("naive_bayes_used")
+                    response = self._maybe_state_assumption(
+                        self._select_response(nb_intent, user_input),
+                        nb_intent, user_input, campus)
+                    return nb_intent, response, nb_confidence, "Naive Bayes (NLU Enhanced)", nlu_data
+                reasons = []
+                if not margin_ok:
+                    reasons.append("margin_below")
+                if not agrees:
+                    reasons.append("retrieval_disagree")
+                self._bump("nb_arbitration_escalated")
+                self._log_disagreement(
+                    query=user_input, nb_intent=nb_intent,
+                    nb_confidence=nb_confidence, nb_margin=nb_margin,
+                    reason="+".join(reasons), topk=topk,
+                )
+                # P2-8: a thin margin ACROSS topic families means the student
+                # could be asking either question — ask which, instead of
+                # guessing. Same-family ties fall through to the NN as before.
+                if not margin_ok and self.nb_model:
+                    pair = self.nb_model.predict_topk(user_input, k=2)
+                    if (len(pair) == 2
+                            and pair[1][1] >= self.CLARIFY_MIN_RUNNERUP
+                            and self._intent_family(pair[0][0]) != self._intent_family(pair[1][0])):
+                        text, chips = self._clarification_reply(user_input, pair)
+                        self._bump("intent_clarify_asked")
+                        nlu_data = {**nlu_data, "suggestions": chips}
+                        return self.CLARIFY_INTENT, text, nb_confidence, "Disambiguation (margin)", nlu_data
+                # fall through to the NN and the deeper tiers
 
             # Step 2: Neural Network with adaptive per-intent threshold, gated
             # on agreement with NB's top (sub-threshold) guess — the same guard
@@ -1862,9 +2191,22 @@ class HybridChatbot:
             nn_intent, nn_confidence = self._nn_result(user_input)
             if (nn_intent and nn_confidence >= self.nn_model.get_threshold(nn_intent)
                     and nn_intent == nb_intent):
-                response = self._select_response(nn_intent, user_input)
+                response = self._maybe_state_assumption(
+                    self._select_response(nn_intent, user_input),
+                    nn_intent, user_input, campus)
                 self._bump("neural_network_used")
                 return nn_intent, response, nn_confidence, "Neural Network", nlu_data
+            if (nn_intent and nn_intent != nb_intent
+                    and nn_confidence >= self.nn_model.get_threshold(nn_intent)):
+                # NN would have answered differently and confidently — the
+                # classic NB-vs-NN disagreement the weekly review queue exists
+                # to surface. Not served (the agreement guard stands); logged.
+                self._log_disagreement(
+                    query=user_input, nb_intent=nb_intent,
+                    nb_confidence=nb_confidence, nb_margin=nb_margin,
+                    reason="nn_vs_nb", nn_intent=nn_intent,
+                    nn_confidence=nn_confidence,
+                )
 
             # Step 2.5: Intent retrieval — soft lexical match over the intent
             # patterns corpus. Catches phrasings the classifiers under-score
@@ -1873,6 +2215,7 @@ class HybridChatbot:
             served = self._intent_retrieval_result(user_input, nb_intent)
             if served is not None:
                 intent, response, score = served
+                response = self._maybe_state_assumption(response, intent, user_input, campus)
                 return intent, response, score, "Intent Retrieval", nlu_data
 
             # Step 2.7: Place Resolver — deterministic campus wayfinding.
@@ -1887,6 +2230,17 @@ class HybridChatbot:
                 self._bump("place_resolver_used")
                 nlu_data = {**nlu_data, "place_id": place_id}
                 return self.FIND_PLACE_INTENT, response, 1.0, "Place Resolver", nlu_data
+
+        # Other-school guard (P1-6): every deep tier below grounds on CvSU-only
+        # corpora, so a question about ANOTHER university can only be "answered"
+        # by dredging up an irrelevant CvSU passage that happens to name that
+        # school — both gold-eval OOS false-accepts were exactly this (site-RAG
+        # answering UP Diliman / De La Salle admission questions). The curated
+        # tiers above keep first claim on transfer/comparison intents that
+        # legitimately mention other schools.
+        if intent_retrieval.mentions_other_school(user_input):
+            self._bump("scope_gate_blocked")
+            return self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, "ScopeGate (other_school)", nlu_data
 
         # Step 3: LLM fallback — fires only when NB+NN are both below threshold.
         # ensure_available() re-probes a previously-unreachable local server on
@@ -1925,6 +2279,23 @@ class HybridChatbot:
                 return self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, f"{provider_label} (out-of-scope)", nlu_data
 
             if llm_reply:
+                # P1-6 output guard: withhold a reply carrying contact details
+                # or citations that are not in the retrieved passages.
+                guard_ok, guard_reason, llm_reply = self._llm_output_guard(llm_reply, grounding)
+                if not guard_ok:
+                    self._bump("llm_guard_rejected")
+                    print(f"[LLM GUARD] reply withheld ({guard_reason}) q={user_input[:80]!r}")
+                    return (self.FALLBACK_INTENT, self.LLM_GUARD_MESSAGE, 0.0,
+                            f"LLM Guard ({guard_reason.split(':', 1)[0]})", nlu_data)
+                if _LLM_PROSE_REFUSAL_RE.match(llm_reply.strip()):
+                    # The model declined in prose without the refusal token.
+                    # Keep its wording (often more helpful than the canned
+                    # refusal — e.g. redirecting a medical ask to the clinic)
+                    # but label the turn out-of-scope so provenance, the OOS
+                    # metrics, and the anti-pattern miner see a refusal.
+                    self._bump("scope_gate_blocked")
+                    provider_label = "Claude" if isinstance(self.llm, ClaudeLLM) else "Ollama"
+                    return self.FALLBACK_INTENT, llm_reply, 0.0, f"{provider_label} (out-of-scope)", nlu_data
                 self._bump("llm_fallback_used")
                 provider_label = "Claude LLM" if isinstance(self.llm, ClaudeLLM) else "Local LLM"
                 return self.FALLBACK_INTENT, llm_reply, 0.0, f"{provider_label}{charter_suffix}", nlu_data
