@@ -191,7 +191,7 @@ _PLACE_METADATA: Dict[str, Dict[str, Any]] = {
     "con":            {"num": 39, "short": "CON",           "full": "College of Nursing (CON)",
                        "walk_minutes_from_gate": 8, "direction_from_gate": "Walk north past Admin and the library; CON is in the north-central area near CAS.",
                        "x": 1211, "y": 1024},
-    "cvmbs":          {"num": 40, "short": "CVMBS",         "full": "College of Veterinary Medicine and Biological Sciences (CVMBS)",
+    "cvmbs":          {"num": 40, "short": "CVMBS",         "full": "College of Veterinary Medicine and Biomedical Sciences (CVMBS)",
                        "walk_minutes_from_gate": 11, "direction_from_gate": "Walk far north past CAS, the library, and ICON; CVMBS is in the upper-north section.",
                        "x": 1124, "y": 703},
     "star_farm":      {"num": 41, "short": "Star Farm",     "full": "CvSU Star Farm",
@@ -209,8 +209,8 @@ _PLACE_METADATA: Dict[str, Dict[str, Any]] = {
     "library":        {"num": 45, "short": "Library",       "full": "Ladislao N. Diwa Memorial Library",
                        "walk_minutes_from_gate": 6, "direction_from_gate": "Walk north from Gate 1 past the Administration Building and CAFENR; the library is central.",
                        "x": 1256, "y": 1225},
-    "gender_dev":     {"num": 46, "short": "GAD",           "full": "Gender and Development Research Center",
-                       "walk_minutes_from_gate": 6, "direction_from_gate": "Walk north past Admin and the library; the GAD Research Center is in the central area near CAS.",
+    "gender_dev":     {"num": 46, "short": "GAD",           "full": "Gender and Development Resource Center",
+                       "walk_minutes_from_gate": 6, "direction_from_gate": "Walk north past Admin and the library; the GAD Resource Center is in the central area near CAS.",
                        "x": 1174, "y": 1190},
     "grad":           {"num": 47, "short": "Grad School",   "full": "Graduate School",
                        "walk_minutes_from_gate": 5, "direction_from_gate": "Walk north from Gate 1 past Admin; Graduate School is in the central area near the library.",
@@ -493,7 +493,7 @@ _PLACE_KEYWORDS: List[Tuple[str, List[str]]] = [
     ("intl_house",      ["international house", "marketing house"]),
     ("processing",      ["fruits and vegetable processing", "vegetable processing", "processing center", "fruits and vegetable"]),
     ("demo_farm",       ["technology demonstration farm", "demonstration farm", "demo farm", "tech demo"]),
-    ("gender_dev",      ["gender and development", "gender development", "gad research", "gad center"]),
+    ("gender_dev",      ["gender and development", "gender development", "gad resource", "gad research", "gad center"]),
     ("agri_eco",        ["agri-eco", "agri eco", "eco park", "agri-eco park"]),
     ("bano_resort",     ["baño de señora", "bano de senora", "baño resort", "bano resort", "señora resort"]),
     ("research_center", ["research center"]),
@@ -511,7 +511,7 @@ _PLACE_KEYWORDS: List[Tuple[str, List[str]]] = [
     ("cafenr",          ["cafenr", "agriculture", "food technology", "environment and natural", "natural resources", "agri"]),
     ("cemds",           ["cemds", "economics", "management studies", "development studies", "business administration", "accountancy"]),
     ("coed",            ["coed", "ced", "college of education", "ceduc", "teacher education", "education building"]),
-    ("cvmbs",           ["cvmbs", "veterinary", "vet med", "biological sciences"]),
+    ("cvmbs",           ["cvmbs", "veterinary", "vet med", "biomedical sciences", "biological sciences"]),
     ("cthm",            ["cthm", "tourism", "hospitality"]),
     ("cas",             ["cas", "arts and sciences", "arts & sciences", "liberal arts"]),
     ("ccj",             ["ccj", "criminal justice"]),
@@ -618,10 +618,11 @@ _INTENT_TO_PLACE: Dict[str, str] = {
     "admissions_exam":         "admin",
     "enrollment_procedure":    "osas",
     "enrollment_schedule":     "osas",
-    "enrollment":              "osas",
+    "enrollment_problems":     "osas",
+    "late_enrollment":         "osas",
     "registrar":               "osas",
-    "shifting":                "osas",
-    "student_id":              "osas",
+    "shifting_program":        "osas",
+    "lost_id_replacement":     "osas",
     "academic_policies":       "osas",
     "academic_calendar":       "osas",
 
@@ -650,7 +651,6 @@ _INTENT_TO_PLACE: Dict[str, str] = {
     # Catch-all / generic
     "campus_facilities":       "main",
     "campus_specific":         "main",
-    "campus_branches":         "main",
     "about_cvsu":              "main",
     "vision_mission":          "main",
     "contact_info":            "admin",
@@ -671,7 +671,8 @@ _CVSU_TRUNK = "4839250"
 _REGISTRAR_PHONE = f"{_CVSU_TRUNK} loc. 1026"
 _OSAS_PHONE = f"{_CVSU_TRUNK} loc. 1025"
 _OSAS_BUILDING = "OSAS Building"
-_OSAS_EMAIL = "osasmain@cvsu.edu.ph"
+# Official address per cvsu.edu.ph Contact Us (data_accuracy_audit_20260710.md)
+_OSAS_EMAIL = "cvsuosasmain@cvsu.edu.ph"
 _ADMIN_BUILDING = "Administration Building"
 _INFO_EMAIL = "info@cvsu.edu.ph"
 _OFFICE_HOURS = "Mon–Fri, 8:00 AM – 5:00 PM"
@@ -701,7 +702,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         phone=_REGISTRAR_PHONE,
         hours=_OFFICE_HOURS,
     ),
-    "enrollment": Directory(
+    "enrollment_problems": Directory(
         office=_OUR_ENROLLMENT,
         location=_OSAS_BUILDING,
         place_id="osas",
@@ -709,14 +710,22 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         phone=_REGISTRAR_PHONE,
         hours=_OFFICE_HOURS,
     ),
-    "shifting": Directory(
+    "late_enrollment": Directory(
+        office=_OUR_ENROLLMENT,
+        location=_OSAS_BUILDING,
+        place_id="osas",
+        email=_REGISTRAR_EMAIL,
+        phone=_REGISTRAR_PHONE,
+        hours=_OFFICE_HOURS,
+    ),
+    "shifting_program": Directory(
         office="Office of the University Registrar (Shifting)",
         location=_OSAS_BUILDING,
         place_id="osas",
         email=_REGISTRAR_EMAIL,
         hours=_OFFICE_HOURS,
     ),
-    "student_id": Directory(
+    "lost_id_replacement": Directory(
         office="Office of Student Affairs and Services (OSAS)",
         location=_OSAS_BUILDING,
         place_id="osas",
@@ -791,7 +800,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         office="Ladislao N. Diwa Memorial Library",
         location="Central campus, north of Administration Building",
         place_id="library",
-        email="librarymain@cvsu.edu.ph",
+        email="cvsulibrary@cvsu.edu.ph",
         phone=f"{_CVSU_TRUNK} loc. 1038",
         hours="Mon–Fri, 8:00 AM – 7:00 PM; Sat 8:00 AM – 12:00 NN",
     ),
@@ -806,7 +815,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         office="CvSU Graduate School",
         location="Central campus, near the library",
         place_id="grad",
-        email="gradschoolmain@cvsu.edu.ph",
+        email="gs.olc@cvsu.edu.ph",
         phone=f"{_CVSU_TRUNK} loc. 1042",
         hours=_OFFICE_HOURS,
     ),
@@ -827,7 +836,7 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         office="Alumni Relations Office (Bahay Alumni)",
         location="Bahay Alumni, near the east dorm cluster",
         place_id="bahay_alumni",
-        email="alumnimain@cvsu.edu.ph",
+        email="alumniaffairs@cvsu.edu.ph",
         phone=f"{_CVSU_TRUNK} loc. 1049",
         hours=_OFFICE_HOURS,
     ),
