@@ -1626,7 +1626,8 @@ class HybridChatbot:
                 "No official CvSU excerpt matched this question. Answer only from the "
                 "conversation context and your CvSU scope; if you do not know the answer, "
                 "say you don't have that information and point the user to "
-                f"https://cvsu.edu.ph — do not guess.{hint}\n\nQuestion: {user_input}"
+                "https://cvsu.edu.ph — do not guess. You have no source excerpts, so do "
+                f"not use bracketed citations.{hint}\n\nQuestion: {user_input}"
             )
         excerpts = "\n\n".join(f"[{cite}]\n{text[:700]}" for _, cite, text, _ in grounding)
         return (
@@ -1645,7 +1646,9 @@ class HybridChatbot:
             "or fill the gap.\n"
             "4. Do NOT cite the Citizens' Charter as the source for news, licensure/board "
             "results, rankings, or awards; those come only from news excerpts.\n"
-            "5. Keep the answer concise and only cite a source you actually used."
+            "5. Keep the answer concise and only cite a source you actually used, "
+            "copying its bracketed label exactly as shown above — never alter the "
+            "source name, edition, or page number."
             f"{hint}\n\n{excerpts}\n\nQuestion: {user_input}"
         )
 
@@ -1754,8 +1757,12 @@ class HybridChatbot:
           invented_email     an email address not present in the passages;
           invented_url       a URL that is neither a passage URL nor the
                              official portal the prompt itself points at;
-          invented_citation  a bracketed citation naming a source that was
-                             not among the retrieved passages.
+          invented_citation  only when stripping (below) leaves no answer.
+        A bracketed citation naming a source that was not among the retrieved
+        passages is STRIPPED, not rejected: the guard can't verify facts, only
+        attributions, so an uncited answer is no worse than one the guard
+        already passes — while a fabricated citation lends false authority.
+        Invented emails/URLs stay hard rejections (actionable contact data).
         Over-length replies are trimmed at a sentence boundary, not rejected.
         """
         evidence = " ".join(f"{cite} {text}" for _, cite, text, _ in grounding).lower()
@@ -1769,12 +1776,22 @@ class HybridChatbot:
             if trimmed not in evidence:
                 return False, "invented_url", reply
         cites = [cite.lower() for _, cite, _, _ in grounding]
+        stripped = 0
         for span in re.findall(r"\[([^\[\]]{4,120})\]", reply):
             span_l = " ".join(span.strip().lower().split())
             # Only citation-shaped brackets — "[1]", "[emphasis mine]" pass.
             if not ("p." in span_l or "charter" in span_l or "cvsu" in span_l):
                 continue
             if not any(span_l in c or c in span_l for c in cites):
+                reply = reply.replace(f"[{span}]", "")
+                stripped += 1
+        if stripped:
+            reply = re.sub(r"[ \t]+([.,;:!?])", r"\1", reply)
+            reply = re.sub(r"[ \t]{2,}", " ", reply)
+            reply = re.sub(r"[ \t]+\n", "\n", reply).strip()
+            self._bump("llm_guard_citation_stripped")
+            print(f"[LLM GUARD] stripped {stripped} invented citation(s) from reply")
+            if not reply:
                 return False, "invented_citation", reply
         if len(reply) > LLM_MAX_REPLY_CHARS:
             cut = reply[:LLM_MAX_REPLY_CHARS]
@@ -2565,7 +2582,7 @@ class HybridChatbot:
 Before answering a factual question:
 - Classify the query: (a) general/stable, (b) time-sensitive, (c) campus-specific, (d) personal/transactional.
 - Time-sensitive items (deadlines, fees, schedules, CvSUAT dates) must be flagged for verification with the relevant office. Qualify with "as of [date], please verify with [office]."
-- For any specific number, date, name, or requirement, cite the source or qualify clearly.
+- For any specific number, date, name, or requirement, qualify clearly. Use a bracketed citation ONLY when a bracketed source excerpt was provided in the prompt, copying its label exactly; NEVER compose a citation (source name, edition, or page number) from memory. If no excerpts were provided, answer without bracketed citations.
 - Disambiguate campus before giving program-specific or fee-specific answers - CvSU Indang and CvSU Imus may have very different offerings.
 
 4. CONFIDENCE TIERS - never blur these
