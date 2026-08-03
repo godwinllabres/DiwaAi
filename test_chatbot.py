@@ -19,7 +19,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
-from intents_db import load_intents
+from intents_db import load_intents, inject_system_responses
 import nltk
 from nltk.stem import WordNetLemmatizer
 
@@ -100,6 +100,9 @@ MODEL_DIR = "models"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 joblib.dump(pipeline, os.path.join(MODEL_DIR, "CvSU_classifier.pkl"))
+# Carry code-owned replies (llm_unavailable) through the rebuild — this map is
+# regenerated from the intents store, which does not contain them.
+inject_system_responses(responses_map, os.path.join(MODEL_DIR, "responses_map.json"))
 with open(os.path.join(MODEL_DIR, "responses_map.json"), "w", encoding="utf-8") as f:
     json.dump(dict(responses_map), f, ensure_ascii=False, indent=2)
 

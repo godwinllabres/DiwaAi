@@ -22,6 +22,12 @@ import joblib
 import nltk
 from nltk.stem import WordNetLemmatizer
 
+# Repo root on sys.path so intents_db (shared store helpers, including the
+# code-owned system replies) resolves whether this script is run from the
+# repo root or from training/.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from intents_db import inject_system_responses
+
 # Download NLTK resources (idempotent — no-op if already present)
 for resource, kind in [('punkt_tab', 'tokenizers'), ('wordnet', 'corpora'), ('omw-1.4', 'corpora')]:
     try:
@@ -104,6 +110,9 @@ MODEL_DIR = "models"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 joblib.dump(pipeline, os.path.join(MODEL_DIR, "CvSU_classifier.pkl"))
+# Carry code-owned replies (llm_unavailable) through the rebuild — this map is
+# regenerated from the intents store, which does not contain them.
+inject_system_responses(responses_map, os.path.join(MODEL_DIR, "responses_map.json"))
 with open(os.path.join(MODEL_DIR, "responses_map.json"), "w", encoding="utf-8") as f:
     json.dump(dict(responses_map), f, ensure_ascii=False, indent=2)
 

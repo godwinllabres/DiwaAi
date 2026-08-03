@@ -17,7 +17,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import classification_report, accuracy_score
 import joblib
 
-from intents_db import load_intents
+from intents_db import load_intents, inject_system_responses
 
 import nltk
 from nltk.stem import WordNetLemmatizer
@@ -100,6 +100,7 @@ def train_naive_bayes():
     os.makedirs("models", exist_ok=True)
 
     joblib.dump(pipeline, "models/CvSU_classifier.pkl")
+    inject_system_responses(responses_map)
     with open("models/responses_map.json", "w", encoding="utf-8") as f:
         json.dump(dict(responses_map), f, ensure_ascii=False, indent=2)
 
@@ -107,6 +108,9 @@ def train_naive_bayes():
     print("[OK] Model saved to models/")
     print(f"     CvSU_classifier.pkl ({model_size:.1f} KB)")
     print("     responses_map.json")
+    print("\n[!] The API's integrity gate pins this artifact's hash and will")
+    print("    refuse the new classifier until you re-pin it:")
+    print("        python scripts/update_trusted_hashes.py")
 
     print("\n" + "=" * 70)
     print("  TRAINING COMPLETE")

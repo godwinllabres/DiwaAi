@@ -20,6 +20,12 @@ import joblib
 import nltk
 from nltk.stem import WordNetLemmatizer
 
+# Repo root on sys.path so intents_db (shared store helpers, including the
+# code-owned system replies) resolves whether this script is run from the
+# repo root or from training/.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from intents_db import inject_system_responses
+
 # Ensure NLTK resources are available (idempotent — no-op if already present)
 for resource, kind in [('punkt_tab', 'tokenizers'), ('wordnet', 'corpora')]:
     try:
@@ -110,6 +116,7 @@ def train_naive_bayes():
     os.makedirs("models", exist_ok=True)
 
     joblib.dump(pipeline, "models/CvSU_classifier.pkl")
+    inject_system_responses(responses_map)
     with open("models/responses_map.json", "w", encoding="utf-8") as f:
         json.dump(dict(responses_map), f, ensure_ascii=False, indent=2)
 
@@ -117,6 +124,9 @@ def train_naive_bayes():
     print(f"[OK] Model saved to models/")
     print(f"     CvSU_classifier.pkl ({model_size:.1f} KB)")
     print(f"     responses_map.json")
+    print("\n[!] The API's integrity gate pins this artifact's hash and will")
+    print("    refuse the new classifier until you re-pin it:")
+    print("        python scripts/update_trusted_hashes.py")
 
     print("\n" + "=" * 70)
     print("  TRAINING COMPLETE")

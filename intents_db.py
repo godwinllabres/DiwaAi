@@ -7,6 +7,56 @@ from typing import Dict, List, Optional
 DEFAULT_JSON_PATH = "data/cavsu_intents.json"
 DEFAULT_DB_PATH = "data/cavsu_intents.db"
 
+# ── Code-owned system replies ────────────────────────────────────────────────
+# "llm_unavailable" is served by the cascade's Step 4a (api/hybrid_chatbot.py,
+# LLM_UNAVAILABLE_INTENT) when a configured LLM cannot answer the turn. It is
+# deliberately NOT an intent in this store: the classifier must never learn to
+# PREDICT a degrade state from user text. Every script that REBUILDS
+# models/responses_map.json from this store must call inject_system_responses()
+# before writing, or the key is silently dropped — which is exactly how the
+# honest "LLM is down" reply was lost on 2026-07-30.
+SYSTEM_RESPONSES = {
+    "llm_unavailable": [
+        "Sorry, I'm having trouble reaching my knowledge base right now — "
+        "this is on my end, not your question. Please try again in a moment.",
+        "Pasensya na po, may problema ako sa pagkuha ng impormasyon sa ngayon "
+        "— wala pong mali sa tanong ninyo. Pakisubukang muli mamaya.",
+    ],
+}
+
+
+def _usable_variants(value) -> bool:
+    """A usable reply entry is a non-empty list of non-empty strings. A bare
+    string is NOT usable: _select_response treats the value as a sequence of
+    variants, so a string would be ranked and served character by character."""
+    return (isinstance(value, list) and len(value) > 0
+            and all(isinstance(v, str) and v.strip() for v in value))
+
+
+def inject_system_responses(responses_map, map_path="models/responses_map.json") -> None:
+    """Carry code-owned reply keys through a rebuild of the responses map.
+
+    Prefers the text already in the existing artifact when it has a usable
+    shape (so a hand-edit to the deployed copy survives), else seeds the
+    canonical default — including when the store produced an empty or
+    malformed entry. Tolerates a missing, corrupt, or non-dict previous
+    artifact."""
+    try:
+        with open(map_path, "r", encoding="utf-8") as f:
+            previous_map = json.load(f)
+    except (OSError, ValueError):
+        previous_map = {}
+    if not isinstance(previous_map, dict):
+        previous_map = {}
+    for key, default in SYSTEM_RESPONSES.items():
+        if _usable_variants(responses_map.get(key)):
+            continue  # the store provided real content — leave it alone
+        carried = previous_map.get(key)
+        use_carried = _usable_variants(carried)
+        responses_map[key] = carried if use_carried else list(default)
+        print(f"[OK] System reply '{key}' "
+              f"{'carried over from existing map' if use_carried else 'seeded from default'}")
+
 CREATE_SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
 
