@@ -270,7 +270,14 @@ def _cited(ref: SourceRef) -> str:
 
 
 def citation_block(refs: list[SourceRef]) -> str:
-	"""Text appended to a curated reply — one 'Source:' line per ref."""
+	"""One 'Source:' line per ref, as display text.
+
+	NOT on the chat path any more. Appending this to a reply printed the
+	citation twice — as a full-size paragraph in the bubble and again in the
+	chip the UI builds from ChatResponse.sources — and the structured field is
+	strictly richer (section, office, page-level deep link). Kept because it is
+	the canonical text rendering of a SourceRef for any caller that needs one.
+	"""
 	if not refs:
 		return ""
 	label = "Source" if len(refs) == 1 else "Sources"

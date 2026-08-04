@@ -1973,12 +1973,14 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     )
     source, refusal_reason = _classify_source(model_used)
 
-    # Per-intent grounding — append the official source line to the display
-    # text and surface it structurally. Summary/log stay citation-free.
-    cite_block, sources = _intent_grounding_for(intent, source)
+    # Per-intent grounding — surfaced structurally in `sources`, NOT appended to
+    # the display text. Appending it too printed the same citation twice in one
+    # reply: once as a full-size paragraph inside the bubble and again in the
+    # citation chip the UI renders from `sources`. `sources` is the better of
+    # the two — it carries the section, the office and a page-level deep link,
+    # and a renderer can style it as a footnote instead of as body prose.
+    _, sources = _intent_grounding_for(intent, source)
     display_text = _format_display_text(response)
-    if cite_block:
-        display_text += cite_block
 
     return ChatResponse(
         message_id=message_id,
@@ -2782,10 +2784,9 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
         )
         source, refusal_reason = _classify_source(model_used)
 
-        cite_block, sources = _intent_grounding_for(intent, source)
+        # Structural citation only — see the note on the single-turn path.
+        _, sources = _intent_grounding_for(intent, source)
         display_text = _format_display_text(response)
-        if cite_block:
-            display_text += cite_block
 
         results.append(ChatResponse(
             message_id=message_id,

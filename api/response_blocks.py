@@ -54,11 +54,14 @@ class BulletListBlock(BaseModel):
 
 
 class NoteBlock(BaseModel):
-    """A trailing aside the UI should de-emphasise — currently the appended
-    provenance line ("📖 Source: CvSU Citizens' Charter …"). The same
-    provenance is available structurally in `ChatResponse.sources`; this block
-    exists so a renderer working purely from `blocks` still shows it, and can
-    style it as a footnote instead of as body prose."""
+    """A trailing aside the UI should de-emphasise — a line the knowledge base
+    itself opens with 📖/ℹ️/⚠️/📌.
+
+    Grounding provenance no longer arrives this way: the chat path stopped
+    appending "📖 Source: …" to the reply text, because it duplicated the
+    citation the UI already renders from `ChatResponse.sources`. Read `sources`
+    for provenance — it carries the section, office and page deep link that a
+    parsed note block never had."""
     kind: Literal["note"] = "note"
     text: str
     icon: Optional[str] = None
