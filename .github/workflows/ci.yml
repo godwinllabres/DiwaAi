@@ -40,6 +40,14 @@ jobs:
           docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_safety_gate.py
           docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_campus_context.py
 
+      - name: Gate tests (lexical ranking + messenger gateway)
+        # poc/now-priorities: ADR-002 stage B pooling contracts and the
+        # Messenger webhook's signature/dedupe/disclosure/mapping contracts.
+        # Both run fully offline inside the image.
+        run: |
+          docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_lexical_rank.py
+          docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_messenger_gateway.py
+
       - name: Start API
         run: docker run -d --name api -p 8000:8000 -e LLM_PROVIDER=none sevi-api:ci
 
