@@ -3483,6 +3483,17 @@ def _audit_admin_surface() -> list:
     return sorted(set(gaps))
 
 
+# ── Channel gateways (poc) ──────────────────────────────────────────────────
+# Mounted BEFORE the admin-surface audit below runs, so gateway routes are
+# audited like every other route. Each gateway is env-gated: with its flag
+# unset the router is never mounted and the API surface is byte-for-byte
+# unchanged. See api/channels/ and docs/MESSENGER_GATEWAY.md.
+from .channels import messenger as _messenger_channel  # noqa: E402
+
+if _messenger_channel.enabled():
+    app.include_router(_messenger_channel.router)
+    _logger.info("Messenger channel gateway mounted at /channels/messenger")
+
 _ADMIN_SURFACE_GAPS = _audit_admin_surface()
 if _ADMIN_SURFACE_GAPS:
     raise RuntimeError(
