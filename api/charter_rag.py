@@ -32,6 +32,7 @@ from typing import Optional
 
 from . import charter_pages
 from .charter_pages import split_pages
+from . import lexical_rank
 
 _logger = logging.getLogger("diwa.charter_rag")
 
@@ -50,7 +51,27 @@ _OVERLAP_LINES = 3
 # LLM ignores an irrelevant excerpt); verbatim quoting cannot — and the
 # verbatim tier additionally sits behind the Nonsense/Scope gates.
 AUGMENT_MIN_SCORE = 0.08
-QUOTE_MIN_SCORE = 0.12
+# Raised 0.12 -> 0.15 (2026-08-12) to match site_rag, after UAT caught the
+# verbatim tier quoting "Issuance of School Identification Card (Replacement)"
+# at 0.1211 for "How do I process the payment for my OJT Fee?" — a confident
+# citation, page number and all, to an unrelated procedure. That is worse than
+# no answer: the reader has no way to tell a 0.12 quote from a 0.6 one.
+#
+# Measured on the 268-question gold set before moving it. The [0.12, 0.15) band
+# holds exactly 3 charter hits — seagrass research, a financial report, and the
+# university mission — none of which the Citizens' Charter is the right source
+# for. All 3 are already served by site_rag at HIGHER scores (0.164, 0.199,
+# 0.202) from the pages that actually contain them, so gold coverage is
+# unchanged at 172/268 and source selection improves.
+#
+# The floor is doing what it can, and no more: the same UAT round produced
+# "can i still be laude if i shift..." matching a 2021 course-list page at
+# 0.189 on the SITE corpus, and the [0.18, 0.20) site band holds 14 good gold
+# answers. Score does not separate those two — a distinctive-term (high-IDF)
+# filter was prototyped and rejected, because on this corpus the highest-IDF
+# tokens of a Taglish question are its interrogatives ("ano", "yung", "sino"),
+# so it cut 38 mostly-good quotes while keeping both bad ones.
+QUOTE_MIN_SCORE = 0.15
 
 
 @dataclass(frozen=True)
@@ -102,6 +123,7 @@ class CharterIndex:
 		self._chunks: list[tuple[int, str]] = []
 		self._vectorizer = None
 		self._matrix = None
+		self._bm25 = None
 		try:
 			with open(path, encoding="utf-8") as fh:
 				raw = fh.read()
@@ -118,6 +140,11 @@ class CharterIndex:
 			stop_words="english",
 		)
 		self._matrix = self._vectorizer.fit_transform(t for _, t in self._chunks)
+		# BM25 twin index over the same analyzer's tokens (ADR-002). Pool
+		# enrichment only — serving stays gated on the calibrated cosine
+		# thresholds above; see api/lexical_rank.py for the full rationale.
+		analyzer = self._vectorizer.build_analyzer()
+		self._bm25 = lexical_rank.BM25Index([analyzer(t) for _, t in self._chunks])
 		_logger.info("charter index ready: %d chunks", len(self._chunks))
 
 	@property
@@ -139,11 +166,14 @@ class CharterIndex:
 		query_terms = list(analyzer(query))
 		terms = {t for t in query_terms if " " not in t}
 		query_bigrams = {t for t in query_terms if " " in t}
-		order = scores.argsort()[::-1][: max(k * 4, 8)]
+		# Candidate pool: fused BM25+cosine order (LEXICAL_RANKER=fused,
+		# the default) or the legacy pure-cosine order (=tfidf). Only
+		# cosine-positive docs are admitted, so the calibrated serving
+		# score below keeps its meaning in both modes.
+		order = lexical_rank.candidate_order(
+			scores, self._bm25, query_terms, cap=max(k * 4, 8))
 		passages = []
 		for i in order:
-			if scores[i] <= 0.0:
-				break
 			text_lc = self._chunks[i][1].lower()
 			coverage = (
 				sum(1 for t in terms if t in text_lc) / len(terms) if terms else 0.0

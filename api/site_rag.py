@@ -43,6 +43,8 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Optional
 
+from . import lexical_rank
+
 _logger = logging.getLogger("diwa.site_rag")
 
 _ENABLED = os.environ.get("SITE_RAG_ENABLED", "1") == "1"
@@ -296,6 +298,7 @@ class SiteIndex:
 		self._chunks: list[tuple[str, str, str, str]] = []
 		self._vectorizer = None
 		self._matrix = None
+		self._bm25 = None
 		try:
 			with open(path, encoding="utf-8") as fh:
 				raw = fh.read()
@@ -312,6 +315,11 @@ class SiteIndex:
 			stop_words="english",
 		)
 		self._matrix = self._vectorizer.fit_transform(t for *_, t in self._chunks)
+		# BM25 twin index over the same analyzer's tokens (ADR-002). Pool
+		# enrichment only — serving stays gated on the calibrated cosine
+		# thresholds; see api/lexical_rank.py for the full rationale.
+		analyzer = self._vectorizer.build_analyzer()
+		self._bm25 = lexical_rank.BM25Index([analyzer(t) for *_, t in self._chunks])
 		_logger.info("site index ready: %d chunks", len(self._chunks))
 
 	@property
@@ -332,11 +340,14 @@ class SiteIndex:
 		query_terms = list(analyzer(query))
 		terms = {t for t in query_terms if " " not in t}
 		query_bigrams = {t for t in query_terms if " " in t}
-		order = scores.argsort()[::-1][: max(k * 4, 8)]
+		# Candidate pool: fused BM25+cosine order (LEXICAL_RANKER=fused,
+		# the default) or the legacy pure-cosine order (=tfidf). Only
+		# cosine-positive docs are admitted, so the calibrated serving
+		# score below keeps its meaning in both modes.
+		order = lexical_rank.candidate_order(
+			scores, self._bm25, query_terms, cap=max(k * 4, 8))
 		passages = []
 		for i in order:
-			if scores[i] <= 0.0:
-				break
 			title, url, date, text = self._chunks[i]
 			text_lc = text.lower()
 			coverage = (

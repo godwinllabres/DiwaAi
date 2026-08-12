@@ -33,7 +33,7 @@ that already holds the content and tells them nothing about staleness.
 import json
 import os
 import re
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 _PATH = os.path.join(os.path.dirname(__file__), "..", "data", "college_programs.json")
 
@@ -128,3 +128,54 @@ def college_program_reply(text: str, filipino: bool = False) -> Optional[str]:
     if not college or not college.get("programs"):
         return None
     return format_college(college, filipino=filipino)
+
+
+# A first-person possessive is the tell that the user believes they have
+# already identified the college. "What programs does CvSU offer" is a genuine
+# all-colleges question and `courses_offered` answers it correctly; "the
+# programs offered by OUR college" is the same sentence with the one word that
+# matters left implicit, and only the asker knows it. Requiring the possessive
+# keeps this tier off the general question — asking "which college?" in reply
+# to "what does CvSU offer" would be obtuse.
+_OWN_COLLEGE_RE = re.compile(
+    r"\b(?:my|our|his|her|their|this)\s+(?:college|department|dept|program|course)\b"
+    r"|\b(?:aming|akin(?:g)?|amin|kanilang)\s+(?:kolehiyo|college|departamento)\b"
+    r"|\bsa\s+amin(?:g)?\s+(?:kolehiyo|college)\b",
+    re.IGNORECASE,
+)
+
+
+def college_program_clarification(
+    text: str, filipino: bool = False
+) -> Optional[Tuple[str, List[str]]]:
+    """(text, chip_labels) asking WHICH college, or None.
+
+    Fires only when the message asks about programs, points at a college the
+    asker has not named, and names no college anywhere — so a message that
+    does name one is already served by college_program_reply above, and a
+    general "what does CvSU offer" is left to `courses_offered`.
+
+    Chip labels are "<ABBR> programs", not the bare abbreviation. The client
+    sends a tapped chip as the next message verbatim, and a bare "CEIT" carries
+    no program cue — _PROGRAM_CUE_RE rejects it, this whole tier returns None,
+    and the turn lands on `college_deans` (measured, not assumed). Appending
+    the cue makes the tap round-trip into the complete-list reply above, which
+    is the only reason to show the chips at all.
+    """
+    if not text or not _PROGRAM_CUE_RE.search(text):
+        return None
+    if not _OWN_COLLEGE_RE.search(text):
+        return None
+    if find_college(text):
+        return None
+    colleges = [c for c in _load() if c.get("programs")]
+    if not colleges:
+        return None
+    chips = [f"{c['abbr']} programs" for c in colleges]
+    if filipino:
+        body = ("Masasagot ko po iyan — pero hindi ko po alam kung aling kolehiyo "
+                "ang sa inyo. Alin po dito?")
+    else:
+        body = ("Happy to list them — I just need to know which college is yours. "
+                "Which one?")
+    return body, chips

@@ -18,6 +18,10 @@ from sklearn.metrics import classification_report, accuracy_score
 import joblib
 
 from intents_db import load_intents, inject_system_responses
+# Same shorthand map the runtime uses. This root script is the legacy duplicate
+# of training/train_naive_bayes.py (which api/app.py and the docs point at);
+# kept in step so retraining through either path produces the same features.
+from api.preprocessing import expand_abbreviations
 
 import nltk
 from nltk.stem import WordNetLemmatizer
@@ -35,6 +39,7 @@ def preprocess_text(text):
     """Preprocess text: lowercase, remove punctuation, tokenize, lemmatize"""
     text = text.lower()
     text = re.sub(r"[^a-z0-9\s]", "", text)
+    text = expand_abbreviations(text)
     tokens = nltk.word_tokenize(text)
     return " ".join([lemmatizer.lemmatize(t) for t in tokens])
 

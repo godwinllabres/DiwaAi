@@ -12,6 +12,7 @@ import pickle
 import hashlib
 import threading
 import time
+import weakref
 from collections import OrderedDict
 import urllib.request
 import urllib.error
@@ -92,6 +93,9 @@ from . import charter_rag, intent_retrieval, site_rag
 # Single source for the Ollama endpoint default (shared with the MCP routers,
 # safety second-opinion, and /health warm-up).
 from .llm_defaults import ollama_base_url
+# Shared by all three _preprocess copies below AND by both NB trainers, so the
+# shorthand map has one definition even though the tokenizers are duplicated.
+from .preprocessing import expand_abbreviations
 
 try:
     from .smalltalk import smalltalk_reply as _smalltalk_reply
@@ -100,9 +104,15 @@ except ImportError:  # pragma: no cover - smalltalk is optional, never fatal
         return None
 
 try:
-    from .college_programs import college_program_reply as _college_program_reply
+    from .college_programs import (
+        college_program_reply as _college_program_reply,
+        college_program_clarification as _college_program_clarification,
+    )
 except ImportError:  # pragma: no cover - registry is optional, never fatal
     def _college_program_reply(text, filipino=False):  # type: ignore[misc]
+        return None
+
+    def _college_program_clarification(text, filipino=False):  # type: ignore[misc]
         return None
 
 # TensorFlow imports (optional - graceful fallback if not available)
@@ -217,17 +227,57 @@ def _is_filipino(text: str, threshold: float = 0.10) -> bool:
     return _filipino_ratio(text) >= threshold
 
 
+# Values ChatRequest.language accepts. "auto" is the historical behaviour —
+# detect from the question — and is what every caller that omits the field gets.
+REPLY_LANGUAGES = frozenset({"en", "fil", "auto"})
+
+
+def _reply_in_filipino(user_input: str, language: Optional[str] = None) -> bool:
+    """Whether the REPLY should be Filipino. Preference first, detection second.
+
+    Detection reads the question, which is the right default but the wrong
+    answer for the case UAT actually surfaced: a parent inquiring on a
+    student's behalf types a few English words ("enrollment requirements po?")
+    and gets an English reply, when the whole point of asking was that they
+    read Filipino more comfortably. An explicit preference has to win outright
+    — a selector the detector can override is not a selector.
+
+    Only "en" and "fil" override. Anything else, including "auto", None, and a
+    value that slipped past validation, falls through to detection, so a bad
+    preference degrades to today's behaviour rather than pinning every reply
+    to one language.
+    """
+    if language == "fil":
+        return True
+    if language == "en":
+        return False
+    return _is_filipino(user_input)
+
+
 def build_scope_locked_prompt(
     base_persona: str,
-    intent_list: list,
+    intent_list: Optional[list] = None,
     campus_glossary: Optional[list] = None,
 ) -> str:
     """
-    Combine the DIWA persona with the strict-scope protocol and the list of
-    allowed intent topics. Used by both ClaudeLLM and LocalLLM so the model
-    can't be tricked into off-topic answers.
+    Combine the DIWA persona with the strict-scope protocol and (optionally)
+    the list of allowed intent topics. Used by both ClaudeLLM and LocalLLM so
+    the model can't be tricked into off-topic answers.
 
     Args:
+        intent_list: Allowed topic tags, or None to omit the topic-category
+            block. The local CPU providers omit it: the 128-tag list is ~1.1k
+            tokens of prefill on EVERY cold turn (~35% of the whole prompt),
+            duplicating a screen ScopeGate already applies before the LLM is
+            called — and prod's edge kills responses at ~50s, so cold-turn
+            prefill is the whole latency budget (measured 2026-08-12). Claude
+            keeps the list: its system prompt ships in a cache_control block
+            (ClaudeLLM.system_blocks) at ~0.1x input cost after the first
+            call, so the ~1.1k tokens are near-free insurance there rather
+            than per-turn prefill. Both providers sit behind the same
+            in-process gates (NonsenseGate + ScopeGate, Step 3 of the
+            cascade); the MCP connector routers never use this prompt — they
+            carry their own _LLM_SYSTEM.
         campus_glossary: Optional list of (acronym, full_name) tuples. When provided,
             injected as a glossary so the LLM doesn't have to guess at CvSU-specific
             acronyms like CAFENR, CEMDS, CEIT.
@@ -244,12 +294,34 @@ def build_scope_locked_prompt(
             + "\n\n"
         )
 
+    if intent_list:
+        topic_block = (
+            "Your knowledge surface is limited to these topic categories:\n\n"
+            + "\n".join(f"  - {tag}" for tag in intent_list)
+            + "\n\n"
+        )
+    else:
+        # Compact prose summary instead of the 128-tag dump (~70 tokens vs
+        # ~900). The list is not just refusal armor — without ANY scope
+        # description the model loses its in-scope RECOGNITION signal and
+        # over-refuses: first pre-ship smoke had gemma3:4b emit the refusal
+        # token for a plainly in-scope lost-tuition-receipt question
+        # ("Ollama (out-of-scope)", 2026-08-12). Keep this summary in sync
+        # with the intent taxonomy's broad domains, not its individual tags.
+        topic_block = (
+            "In-scope topics include: admissions and entrance exams, "
+            "enrollment and registration, academic programs and colleges, "
+            "tuition, fees and payments, scholarships and financial "
+            "assistance (including RA 10931 free tuition), registrar "
+            "documents and records, grades and academic policies, campus "
+            "offices, facilities and directions, student services and "
+            "organizations, dormitories, health and guidance services, "
+            "events and university news, and contact information.\n\n"
+        )
     scope_section = (
         "STRICT SCOPE — you can ONLY answer questions about Cavite State "
-        "University (CvSU). Your knowledge surface is limited to these "
-        "topic categories:\n\n"
-        + "\n".join(f"  - {tag}" for tag in intent_list)
-        + "\n\n"
+        "University (CvSU).\n\n"
+        + topic_block +
         "REFUSAL PROTOCOL:\n"
         f"- If the user asks ANYTHING outside CvSU scope (math, general "
         f"knowledge, programming, jokes, other universities, current events, "
@@ -317,6 +389,7 @@ class NaiveBayesModel:
         """Preprocess text"""
         text = text.lower()
         text = re.sub(_NON_ALPHA_RE, "", text)
+        text = expand_abbreviations(text)
         tokens = nltk.word_tokenize(text)
         return " ".join([lemmatizer.lemmatize(t) for t in tokens])
 
@@ -402,6 +475,7 @@ class NeuralNetworkModel:
         """Preprocess text"""
         text = text.lower()
         text = re.sub(_NON_ALPHA_RE, "", text)
+        text = expand_abbreviations(text)
         tokens = nltk.word_tokenize(text)
         return " ".join([lemmatizer.lemmatize(t) for t in tokens])
 
@@ -532,7 +606,11 @@ class LocalLLM:
             # temperature 0 (P1-6): the tier answers ONLY from retrieved
             # passages, so sampling variety is pure fabrication risk for an
             # 8B model answering in Taglish.
-            "options": {"temperature": 0.0, "num_predict": 512},
+            # num_predict 256, not 512: the system prompt demands <=4 sentences
+            # (typical answers run 60-90 tokens) and on CPU at ~4-5 tok/s the
+            # cap is the WORST-CASE latency bound — 512 allowed ~2 minutes of
+            # runaway decode, well past the ~50s edge timeout (2026-08-12).
+            "options": {"temperature": 0.0, "num_predict": 256},
         }
         # Thinking models (qwen3, deepseek-r1, ...) reason before answering by
         # default — on CPU that multiplies latency and can spend the whole
@@ -655,7 +733,9 @@ class OpenAICompatLLM:
             "messages": messages,
             "stream": False,
             "temperature": 0.0,  # P1-6: evidence-gated tier — no sampling variety
-            "max_tokens": 512,
+            # 256, not 512 — same worst-case-latency bound as LocalLLM (the
+            # prompt demands <=4 sentences; on CPU the cap is the tail budget).
+            "max_tokens": 256,
         }
         payload = json.dumps(body).encode("utf-8")
 
@@ -1159,6 +1239,10 @@ class HybridChatbot:
     # regexes on both ends (api/app.py _MAP_FIRST_INTENT_RE and the frontend),
     # so the map card renders open above the text.
     FIND_PLACE_INTENT = "find_place"
+    # The whole-campus answer ("the Don Severino delas Alas Campus, ~70 hectares,
+    # in Indang"). Correct for "where is CvSU", wrong for "where is <building>" —
+    # see the overreach guard in predict(), Step 2.5.
+    CAMPUS_LOCATION_INTENT = "campus_location"
     # Session-recap replies from the Conversation Recap tier. Not in the
     # trained taxonomy: the tier answers deterministically from this session's
     # history, so the classifiers must never own it ("chitchat" captures
@@ -1314,10 +1398,12 @@ class HybridChatbot:
         # canonical names from the campus_places module — single source of truth.
         campus_glossary = self._build_campus_glossary()
 
-        # Build the scope-locked system prompt once — used by whichever LLM provider runs.
+        # Build the scope-locked system prompt once — used by whichever LLM
+        # provider runs. The topic list rides only with Claude; for the local
+        # CPU providers it is pure prefill latency (see build_scope_locked_prompt).
         scope_locked_prompt = build_scope_locked_prompt(
             base_persona=self._system_prompt_text(),
-            intent_list=list(self.responses_map.keys()),
+            intent_list=list(self.responses_map.keys()) if provider == "claude" else None,
             campus_glossary=campus_glossary,
         )
 
@@ -1368,6 +1454,14 @@ class HybridChatbot:
                     )
                     print(f"[WARNING] {self.llm_last_error} — deep-fallback disabled")
                     print("          Start Ollama and pull the model named in OLLAMA_MODEL")
+                    # Arm the heartbeat anyway: on a shared compose bring-up the
+                    # api often probes before Ollama's server is listening, and
+                    # ensure_available() heals the tier minutes later — but
+                    # nothing else would ever seed the KV prefix cache, so the
+                    # first student turn after every such boot paid the full
+                    # cold cost. Each tick is at most one failed 15s probe
+                    # until the server appears; then it warms.
+                    self._warm_up_llm_async()
         elif provider in ("openai", "localai"):
             print(f"       initialising OpenAI-compatible LLM fallback ({provider})...")
             self.llm = OpenAICompatLLM(system_prompt=scope_locked_prompt)
@@ -1384,6 +1478,10 @@ class HybridChatbot:
                     )
                 print(f"[WARNING] {self.llm_last_error} — deep-fallback disabled")
                 print("          Check OPENAI_BASE_URL / OPENAI_MODEL and that the model is loaded")
+                if self.llm.model:
+                    # Same boot-race heal as the ollama branch above: arm the
+                    # heartbeat so a server that appears later gets warmed.
+                    self._warm_up_llm_async()
         elif provider == "none":
             print("       LLM fallback intentionally disabled (LLM_PROVIDER=none)")
         else:
@@ -1439,9 +1537,10 @@ class HybridChatbot:
         """
         provider = (provider or "none").strip().lower()
         self.llm_last_error = None
+        # Topic list only for Claude — same latency rationale as __init__.
         scope_locked_prompt = build_scope_locked_prompt(
             base_persona=self._system_prompt_text(),
-            intent_list=list(self.responses_map.keys()),
+            intent_list=list(self.responses_map.keys()) if provider == "claude" else None,
             campus_glossary=self._build_campus_glossary(),
         )
         if provider == "claude":
@@ -1474,8 +1573,13 @@ class HybridChatbot:
             )
         self.llm_provider = provider
         os.environ["LLM_PROVIDER"] = provider
-        if provider in ("ollama", "openai", "localai") and self.llm and self.llm.available:
+        if provider in ("ollama", "openai", "localai") and self.llm and self.llm.model:
             # Pay the model cold-load now, not on the next user's question.
+            # Gated on a configured MODEL, not on `available`: a hot-swap
+            # issued during a transient server blip must still arm the
+            # heartbeat (the tier self-heals via ensure_available, and the
+            # next tick warms it) — but a model-less tier can never succeed,
+            # so arming it would only burn failed probes.
             self._warm_up_llm_async()
         return self.llm_status()
 
@@ -1504,21 +1608,94 @@ class HybridChatbot:
         print(f"[OK] Campus glossary built — {len(glossary)} entries injected into LLM prompt")
         return glossary
 
+    def _warm_llm_once(self) -> Optional[str]:
+        """One warm call to the CURRENT local provider; None/no-op for Claude.
+
+        The prompt is a real _grounded_prompt with a stub excerpt — NOT a bare
+        "warmup ping" — so it walks the same static token prefix (system prompt
+        + strict-rules preamble) every real turn starts with. That seeds the
+        server's KV prefix cache, which is the difference between a ~65s cold
+        turn and a ~5s-prefill warm one on CPU (measured 2026-08-12, gemma3:4b);
+        loading the weights alone left the first real student turn paying full
+        prefill past the edge's ~50s timeout.
+        """
+        llm = self.llm
+        if llm is None or isinstance(llm, ClaudeLLM):
+            return None  # hosted API: nothing to load, and pings cost money
+        warm_grounding = [(1.0, "warm-up", "system warm-up, not a real source", "site")]
+        return llm.generate(self._grounded_prompt("Reply with only the word OK.", warm_grounding))
+
     def _warm_up_llm_async(self):
-        """Fire a dummy LLM call in a background thread to load the model into memory."""
+        """Warm the local LLM now, then keep it warm on a slow heartbeat.
+
+        The immediate pass pays the model cold-load + seeds the KV prefix
+        cache right after boot or a provider hot-swap. The heartbeat re-seeds
+        every LLM_KEEP_WARM_MINUTES (default 10, 0 disables): an Ollama
+        container restart silently drops both the resident model and the
+        prefix cache, and without the heartbeat the next student turn pays
+        the full cold cost — the "Sevi took too long" 504s of 2026-08-12.
+        Started once; re-invocations (set_llm hot-swaps) only fire the
+        immediate pass, and the loop re-reads self.llm each tick so it always
+        warms the current provider.
+        """
         def _warm():
             try:
                 print("[INFO] Warming up local LLM in background (first load can take 60-120s)...")
-                reply = self.llm.generate("warmup ping")
+                reply = self._warm_llm_once()
                 if reply:
-                    print("[OK] Local LLM warm-up complete — ready for user queries")
+                    print("[OK] Local LLM warm-up complete — model resident, prompt prefix cached")
                 else:
                     print("[WARNING] Local LLM warm-up returned no reply")
             except Exception as e:
                 print(f"[WARNING] Local LLM warm-up failed: {e}")
         threading.Thread(target=_warm, daemon=True).start()
 
-    def _select_response(self, intent: str, user_input: str) -> str:
+        if getattr(self, "_keep_warm_started", False):
+            return
+        try:
+            keep_warm_minutes = float(os.getenv("LLM_KEEP_WARM_MINUTES", "10"))
+        except ValueError:
+            # A typo in the env var must not take down chatbot init — warm-up
+            # is an optimization, never a dependency.
+            print("[WARNING] LLM_KEEP_WARM_MINUTES is not a number — keep-warm disabled")
+            return
+        if keep_warm_minutes <= 0:
+            return
+        self._keep_warm_started = True
+        # The loop must NOT capture `self`: /model/reload swaps the global
+        # chatbot, and a heartbeat closure holding the old instance would pin
+        # its TF/NB models in RAM forever (one full chatbot leaked per reload)
+        # while its zombie ticks contend for the single Ollama slot. The Event
+        # gives reload a deterministic stop (stop_keep_warm); the weakref makes
+        # the thread self-terminating even if a future rebind site forgets to
+        # call it — whichever comes first.
+        stop = self._keep_warm_stop = threading.Event()
+        ref = weakref.ref(self)
+
+        def _keep_warm():
+            while not stop.wait(keep_warm_minutes * 60):
+                bot = ref()
+                if bot is None:
+                    return  # instance replaced and collected — self-heal
+                try:
+                    bot._warm_llm_once()
+                except Exception:
+                    pass  # provider down/swapped mid-call — next tick retries
+                del bot  # never hold the strong ref across the next wait
+        threading.Thread(target=_keep_warm, daemon=True, name="llm-keep-warm").start()
+
+    def stop_keep_warm(self) -> None:
+        """Stop this instance's keep-warm heartbeat (no-op if never started).
+
+        Called by /model/reload on the replaced instance so its thread exits
+        immediately instead of firing one final warm generate through the
+        single Ollama slot up to LLM_KEEP_WARM_MINUTES later."""
+        ev = getattr(self, "_keep_warm_stop", None)
+        if ev is not None:
+            ev.set()
+
+    def _select_response(self, intent: str, user_input: str,
+                         language: Optional[str] = None) -> str:
         """Pick a curated response variant deterministically, in the user's language.
 
         This was random.choice, which is why an English question could come
@@ -1535,6 +1712,9 @@ class HybridChatbot:
              hours and caveats the short ones drop
         Ties break on the variant's own text so the choice is stable across
         processes (no dict/set ordering dependence).
+
+        `language` is the turn's explicit preference and outranks detection —
+        see _reply_in_filipino.
         """
         variants = self.responses_map.get(intent) or self.responses_map[self.FALLBACK_INTENT]
         if len(variants) == 1:
@@ -1545,7 +1725,7 @@ class HybridChatbot:
         # falls under any threshold and it reads as "English". Ranking the
         # variants against each other has no such failure mode: whichever is
         # the most Filipino IS the Filipino one, whatever its absolute ratio.
-        want_filipino = _is_filipino(user_input)
+        want_filipino = _reply_in_filipino(user_input, language)
         ratios = {id(v): _filipino_ratio(v) for v in variants}
         best = max(ratios.values()) if want_filipino else min(ratios.values())
         pool = [v for v in variants if ratios[id(v)] == best]
@@ -1612,15 +1792,31 @@ class HybridChatbot:
         return context
 
     @staticmethod
-    def _grounded_prompt(user_input: str, grounding: list, suggestion: Optional[str] = None) -> str:
+    def _grounded_prompt(user_input: str, grounding: list, suggestion: Optional[str] = None,
+                         language: Optional[str] = None) -> str:
         """Evidence-gated prompt for the LLM tier.
 
         grounding: [(score, citation, text, corpus_label), ...] best-first.
         With evidence, the LLM must answer from the excerpts and cite them;
         without, it must say it doesn't have the information instead of
         improvising — optionally pointing at the nearest intent topic.
+
+        `language` carries the turn's explicit preference. It matters most
+        here: the curated tiers pick between hand-written variants, but the
+        LLM tier writes the reply, and left to itself it mirrors the language
+        of the QUESTION — so without this directive a Filipino-preferring user
+        gets Filipino from the intent tiers and English from every deep-tier
+        answer, which reads as the assistant ignoring the setting. Only "en"
+        and "fil" say anything; "auto"/None leaves the model to mirror.
         """
         hint = f' If helpful, invite the user to ask about "{suggestion}".' if suggestion else ""
+        if language == "fil":
+            hint += (" Write the entire answer in Filipino (Tagalog), whatever "
+                     "language the question is in. Keep official names, office "
+                     "names, and bracketed source labels exactly as written.")
+        elif language == "en":
+            hint += (" Write the entire answer in English, whatever language "
+                     "the question is in.")
         if not grounding:
             return (
                 "No official CvSU excerpt matched this question. Answer only from the "
@@ -1709,9 +1905,10 @@ class HybridChatbot:
             return tag.replace("_", " ")
         return labels[1] if filipino else labels[0]
 
-    def _clarification_reply(self, user_input: str, candidates: list) -> Tuple[str, list]:
+    def _clarification_reply(self, user_input: str, candidates: list,
+                             language: Optional[str] = None) -> Tuple[str, list]:
         """(text, chip_labels) asking the user to pick between candidate topics."""
-        filipino = _is_filipino(user_input)
+        filipino = _reply_in_filipino(user_input, language)
         labels = [self._intent_topic_label(tag, filipino) for tag, _ in candidates]
         if filipino:
             text = (f"Para masagot ko nang tama: ang tanong po ba ninyo ay tungkol sa "
@@ -1722,7 +1919,8 @@ class HybridChatbot:
         return text, labels
 
     def _maybe_state_assumption(self, response: str, intent: str,
-                                user_input: str, campus: Optional[str]) -> str:
+                                user_input: str, campus: Optional[str],
+                                language: Optional[str] = None) -> str:
         """Prefix an explicit default-context line on answers that vary by
         campus/level when the turn pinned down neither (P2-8 slot-filling,
         stated-assumption branch)."""
@@ -1730,7 +1928,7 @@ class HybridChatbot:
             return response
         if self._CAMPUS_TOKEN_RE.search(user_input) or self._LEVEL_TOKEN_RE.search(user_input):
             return response
-        if _is_filipino(user_input):
+        if _reply_in_filipino(user_input, language):
             note = ("Ipagpalagay nating para sa Main Campus (Indang), undergraduate, "
                     "ang tanong — sabihin lang (hal. \"Imus campus\" o \"graduate\") "
                     "kung iba ang ibig ninyong sabihin.")
@@ -1852,7 +2050,7 @@ class HybridChatbot:
             pass
 
     def _intent_retrieval_result(
-        self, user_input: str, nb_intent: Optional[str]
+        self, user_input: str, nb_intent: Optional[str], language: Optional[str] = None
     ) -> Optional[Tuple[str, str, float]]:
         """Step 2.5 body — (intent, response, score) when a pattern match is
         strong enough to serve, else None.
@@ -1880,7 +2078,9 @@ class HybridChatbot:
         if match.score < intent_retrieval.HIGH_MATCH_SCORE and not agrees:
             return None
         self._bump("intent_retrieval_used")
-        return match.intent, self._select_response(match.intent, user_input), match.score
+        return (match.intent,
+                self._select_response(match.intent, user_input, language),
+                match.score)
 
     @staticmethod
     def _cross_corpus_rank_key(bigram_hits: int, score: float, floor: float) -> Tuple[int, float]:
@@ -2051,7 +2251,8 @@ class HybridChatbot:
             return None
         return items[index - 1]
 
-    def _conversation_recap_result(self, user_input: str, user_id: Optional[str]) -> Optional[str]:
+    def _conversation_recap_result(self, user_input: str, user_id: Optional[str],
+                                   language: Optional[str] = None) -> Optional[str]:
         """Step 0.5: deterministic session recap for meta-questions about the
         conversation itself ("what did we talk about", "summarize our chat").
 
@@ -2087,7 +2288,7 @@ class HybridChatbot:
             and not str(t.get("model_used", "")).startswith(("NonsenseGate", "ScopeGate", "SafetyGate"))
         ]
 
-        filipino = _is_filipino(user_input)
+        filipino = _reply_in_filipino(user_input, language)
         if not asked:
             return ("Wala pa tayong napag-uusapan sa session na ito. Magtanong ka lang "
                     "tungkol sa CvSU — admissions, enrollment, tuition, scholarships, o campus services."
@@ -2111,7 +2312,8 @@ class HybridChatbot:
         return "\n".join([header, *lines, footer])
 
     def predict(self, user_input: str, user_id: str = None, skip_intents: bool = False,
-                campus: Optional[str] = None) -> Tuple[str, str, float, str, dict]:
+                campus: Optional[str] = None,
+                language: Optional[str] = None) -> Tuple[str, str, float, str, dict]:
         """
         Hierarchical prediction: NB → NN → intent retrieval → Place Resolver
         → LLM (charter+site grounded) → verbatim documents → static fallback.
@@ -2121,6 +2323,13 @@ class HybridChatbot:
         campus-grounded follow-ups) where a canned intent answer would drop
         the context the rewrite added. Only honored when the LLM is
         available — otherwise a canned answer beats a static fallback.
+
+        language: "en" | "fil" | "auto" | None — the turn's reply-language
+        preference. Passed explicitly down every tier rather than held on the
+        instance because turns from different sessions run concurrently
+        through this one object (see the history lock); a per-instance field
+        would let one user's choice decide another user's reply. It only
+        selects the OUTPUT language — understanding the question is unchanged.
 
         Returns:
             (intent, response, confidence, model_used, nlu_data)
@@ -2132,14 +2341,15 @@ class HybridChatbot:
 
         # Step 0.5: Conversation Recap — must precede the classifiers; see
         # _conversation_recap_result for why neither tier below can own this.
-        recap = self._conversation_recap_result(user_input, user_id)
+        recap = self._conversation_recap_result(user_input, user_id, language)
         if recap is not None:
             self._bump("conversation_recap_used")
             return self.RECAP_INTENT, recap, 1.0, "Conversation Recap", nlu_data
 
         # Step 0.6: Benign small talk — states the scope boundary and still
         # answers. Curated content only; see api/smalltalk.py for the GAD screen.
-        small = _smalltalk_reply(user_input, filipino=_is_filipino(user_input))
+        filipino = _reply_in_filipino(user_input, language)
+        small = _smalltalk_reply(user_input, filipino=filipino)
         if small is not None:
             self._bump("smalltalk_used")
             return self.SMALLTALK_INTENT, small, 1.0, "Small Talk", nlu_data
@@ -2148,10 +2358,25 @@ class HybridChatbot:
         # programs returns that college's COMPLETE list. Must precede the
         # classifiers: `courses_offered` owns the CEIT patterns and answers
         # with the generic all-colleges blurb, so it would win every time.
-        programs = _college_program_reply(user_input, filipino=_is_filipino(user_input))
+        programs = _college_program_reply(user_input, filipino=filipino)
         if programs is not None:
             self._bump("college_programs_used")
             return self.PROGRAMS_INTENT, programs, 1.0, "College Programs", nlu_data
+
+        # Step 0.8: the same ask with no college named — "the programs offered
+        # by our college", verbatim from UAT. The cue is unambiguous and the
+        # only missing token is one the user can supply in a tap, but the tier
+        # above needs a named college and returns None, so this fell through to
+        # `courses_offered` and answered with the all-colleges blurb. Programs
+        # was the WEAKEST-rated task in the round (6/13 correct, 1 wrong, 1 no
+        # answer); asking which college converts that guess into an answer.
+        # Chips reuse the disambiguation channel the margin path already emits.
+        pick = _college_program_clarification(user_input, filipino=filipino)
+        if pick is not None:
+            text, chips = pick
+            self._bump("college_clarify_asked")
+            nlu_data = {**nlu_data, "suggestions": chips}
+            return self.CLARIFY_INTENT, text, 1.0, "College Programs (which college)", nlu_data
 
         if not skip_intents:
             # Step 1: Naive Bayes (+ optional NLU enhancement), arbitrated.
@@ -2170,8 +2395,8 @@ class HybridChatbot:
                 if margin_ok and agrees:
                     self._bump("naive_bayes_used")
                     response = self._maybe_state_assumption(
-                        self._select_response(nb_intent, user_input),
-                        nb_intent, user_input, campus)
+                        self._select_response(nb_intent, user_input, language),
+                        nb_intent, user_input, campus, language)
                     return nb_intent, response, nb_confidence, "Naive Bayes (NLU Enhanced)", nlu_data
                 reasons = []
                 if not margin_ok:
@@ -2192,7 +2417,7 @@ class HybridChatbot:
                     if (len(pair) == 2
                             and pair[1][1] >= self.CLARIFY_MIN_RUNNERUP
                             and self._intent_family(pair[0][0]) != self._intent_family(pair[1][0])):
-                        text, chips = self._clarification_reply(user_input, pair)
+                        text, chips = self._clarification_reply(user_input, pair, language)
                         self._bump("intent_clarify_asked")
                         nlu_data = {**nlu_data, "suggestions": chips}
                         return self.CLARIFY_INTENT, text, nb_confidence, "Disambiguation (margin)", nlu_data
@@ -2209,8 +2434,8 @@ class HybridChatbot:
             if (nn_intent and nn_confidence >= self.nn_model.get_threshold(nn_intent)
                     and nn_intent == nb_intent):
                 response = self._maybe_state_assumption(
-                    self._select_response(nn_intent, user_input),
-                    nn_intent, user_input, campus)
+                    self._select_response(nn_intent, user_input, language),
+                    nn_intent, user_input, campus, language)
                 self._bump("neural_network_used")
                 return nn_intent, response, nn_confidence, "Neural Network", nlu_data
             if (nn_intent and nn_intent != nb_intent
@@ -2229,10 +2454,28 @@ class HybridChatbot:
             # patterns corpus. Catches phrasings the classifiers under-score
             # ("complete list of courses": NB 0.28 / NN 0.37) and serves the
             # curated response with no LLM latency.
-            served = self._intent_retrieval_result(user_input, nb_intent)
+            # Resolved BEFORE Step 2.5 serves, though it is still Step 2.7's
+            # answer, because retrieval needs to know whether a specific place
+            # resolves — see the overreach guard below. Pure regex over the map
+            # lexicon, so computing it early costs nothing.
+            placed = self._place_resolver_result(user_input, campus)
+
+            served = self._intent_retrieval_result(user_input, nb_intent, language)
+            # campus_location overreach: it is the whole-campus answer, so on a
+            # question about ONE building it is wrong no matter how well it
+            # scores. "Where is DIT?" retrieved it at 0.83 and replied with the
+            # campus's hectares and distance from Manila (verbatim, UAT). Only
+            # yields when the Place Resolver actually has an answer to give —
+            # on a satellite-campus session it returns None, and there a
+            # whole-campus reply still beats dropping to the fallback.
+            if (served is not None and placed is not None
+                    and served[0] == self.CAMPUS_LOCATION_INTENT):
+                self._bump("campus_location_overreach_blocked")
+                served = None
             if served is not None:
                 intent, response, score = served
-                response = self._maybe_state_assumption(response, intent, user_input, campus)
+                response = self._maybe_state_assumption(response, intent, user_input,
+                                                        campus, language)
                 return intent, response, score, "Intent Retrieval", nlu_data
 
             # Step 2.7: Place Resolver — deterministic campus wayfinding.
@@ -2241,7 +2484,6 @@ class HybridChatbot:
             # map card uses. Runs after the curated intent tiers so richer
             # canned answers (registrar, library, ...) still win when the
             # classifiers are confident.
-            placed = self._place_resolver_result(user_input, campus)
             if placed is not None:
                 place_id, response = placed
                 self._bump("place_resolver_used")
@@ -2286,7 +2528,7 @@ class HybridChatbot:
             # the excerpts, cite the bracketed source, and say so when they
             # don't contain the answer instead of improvising.
             grounding, charter_suffix, suggestion = self._gather_grounding(user_input)
-            llm_input = self._grounded_prompt(user_input, grounding, suggestion)
+            llm_input = self._grounded_prompt(user_input, grounding, suggestion, language)
 
             llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id))
             # LLM emitted the refusal token → out of scope per the model's own judgment
@@ -2342,13 +2584,14 @@ class HybridChatbot:
         if llm_unavailable:
             self._bump("llm_unavailable")
             return (self.LLM_UNAVAILABLE_INTENT,
-                    self._select_response(self.LLM_UNAVAILABLE_INTENT, user_input),
+                    self._select_response(self.LLM_UNAVAILABLE_INTENT, user_input, language),
                     0.0, "LLM Unavailable", nlu_data)
 
         # Step 4b: Static fallback — a genuine no-match (or the LLM was
         # intentionally disabled via LLM_PROVIDER=none).
         self._bump("fallback_used")
-        return (self.FALLBACK_INTENT, self._select_response(self.FALLBACK_INTENT, user_input),
+        return (self.FALLBACK_INTENT,
+                self._select_response(self.FALLBACK_INTENT, user_input, language),
                 0.0, "Fallback", nlu_data)
 
     def chat(
@@ -2358,9 +2601,12 @@ class HybridChatbot:
         session_id: Optional[str] = None,
         skip_intents: bool = False,
         campus: Optional[str] = None,
+        language: Optional[str] = None,
     ) -> Tuple[str, str, float, str, dict]:
         """
         Chat with conversation tracking and NLU enhancements
+
+        language: reply-language preference for this turn — see predict().
 
         Returns:
             (intent, response, confidence, model_used, nlu_data)
@@ -2379,7 +2625,8 @@ class HybridChatbot:
             nlu_extra = {}
 
         intent, response, confidence, model_used, nlu_data = self.predict(
-            user_input, user_id, skip_intents=skip_intents, campus=campus)
+            user_input, user_id, skip_intents=skip_intents, campus=campus,
+            language=language)
         nlu_data = {**nlu_data, **nlu_extra}
 
         # Track conversation (bounded LRU — see __init__).
@@ -2830,6 +3077,7 @@ class NeuralNetworkTrainer:
         """Preprocess text."""
         text = text.lower()
         text = re.sub(_NON_ALPHA_RE, "", text)
+        text = expand_abbreviations(text)
         tokens = nltk.word_tokenize(text)
         return " ".join([lemmatizer.lemmatize(t) for t in tokens])
 

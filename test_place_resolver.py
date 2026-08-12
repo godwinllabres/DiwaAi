@@ -47,6 +47,12 @@ for text, expected in [
     ("nasaan ang baño resort", "bano_resort"),
     ("how do i get to the oval", "oval"),
     ("where is the registrar", "osas"),           # rescue if classifiers miss
+    # Department acronyms resolve to the college building that houses them.
+    # "Where is DIT?" (verbatim, UAT) used to return the whole-campus blurb.
+    ("Where is DIT?", "ceit"),
+    ("san yung DIT building", "ceit"),
+    ("where is dcom", "cas"),
+    ("where is medtech", "con"),
 ]:
     pq = resolve_place_query(text)
     check(f"place: {text!r} -> {expected}", pq is not None and pq.place_id == expected,
@@ -75,6 +81,19 @@ for text in [
     "tuition fees for BSIT",
     "the saluysoy area was beautiful during the fair last year",  # no ask
     "thank you!",
+    # "how to get A THING" is acquisition, not wayfinding. This one named the
+    # library and came back with walking directions to it (verbatim, UAT).
+    "How to get a sticker for library entrance",
+    "how to get a library card",
+    "how do i get a certificate from the registrar",
+    # "diet" and "ted" are ordinary words, deliberately left OUT of the
+    # department keywords — \bdiet\b would send a nutrition question to an
+    # engineering building. Phrased with a location cue so only the missing
+    # keyword can decide the outcome. (A short message naming a REAL place
+    # still resolves without a cue — that is the bare-entity rule above, and
+    # "ted talk about agriculture" resolves on "agriculture", by design.)
+    "what is a good diet",
+    "where is ted",
 ]:
     pq = resolve_place_query(text)
     check(f"none: {text!r}", pq is None, f"got={pq.place_id if pq else None}")
