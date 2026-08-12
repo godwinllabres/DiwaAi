@@ -32,7 +32,7 @@ from nltk.stem import WordNetLemmatizer
 # Import logger
 from .logger import ChatLogger, is_safe_user_id as _is_safe_user_id
 # Import hybrid chatbot
-from .hybrid_chatbot import HybridChatbot
+from .hybrid_chatbot import HybridChatbot, REPLY_LANGUAGES
 # The module itself, not just the class: the startup warm-up touches its
 # module-level NLTK lemmatizer (see _warm_lazy_singletons).
 from . import hybrid_chatbot as _hybrid_chatbot
@@ -751,6 +751,23 @@ class ChatRequest(BaseModel):
     # router. When set, `message` is still logged but `intent_hint` wins.
     intent_hint: Optional[str] = None
     intent_args: Optional[Dict[str, Any]] = None
+    # Reply-language preference: "en" | "fil" | "auto". Omitted or "auto" keeps
+    # the historical behaviour (detect from the question), so every client that
+    # predates the selector is unaffected. Asked for in UAT by staff handling
+    # walk-in inquiries, where the person asking and the person reading the
+    # answer are often not the same.
+    language: Optional[str] = None
+
+    @field_validator("language")
+    @classmethod
+    def _clean_language(cls, v: Optional[str]) -> Optional[str]:
+        """Allowlisted and dropped-not-rejected, like device_class above: an
+        unrecognised preference should cost the user their language setting for
+        that turn, not their answer."""
+        if v is None:
+            return None
+        v = v.strip().lower()
+        return v if v in REPLY_LANGUAGES else None
 
     @field_validator("device_id")
     @classmethod
@@ -1936,6 +1953,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
                     session_id=request.session_id,
                     skip_intents=campus_grounded,
                     campus=campus_routing.campus,
+                    language=request.language,
                 )
                 if ais_failure_note:
                     response = f"{ais_failure_note}\n\n{response}"
@@ -2669,7 +2687,15 @@ async def reload_model():
         return new_bot
 
     async with _chat_runner.exclusive():
+        old_bot = chatbot
         chatbot = await asyncio.to_thread(_rebuild)
+        # Stop the REPLACED bot's llm-keep-warm heartbeat, and only after the
+        # rebuild succeeded — stopping before _rebuild would leave a still-live
+        # old bot with a dead heartbeat if the rebuild throws. Without this the
+        # old thread's closure pins the entire previous chatbot (TF NN + NB
+        # pipeline + response maps) in RAM forever, one leaked instance per
+        # reload, while its zombie ticks contend for the single Ollama slot.
+        old_bot.stop_keep_warm()
     return {"status": "reloaded"}
 
 
@@ -2752,7 +2778,8 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
         intent, response, confidence, model_used, nlu_data = await _chat_turn(
             request.message,
             user_id=request.user_id,
-            session_id=request.session_id
+            session_id=request.session_id,
+            language=request.language,
         )
         response_time_ms = (time.time() - start_time) * 1000
 

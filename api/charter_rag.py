@@ -51,7 +51,27 @@ _OVERLAP_LINES = 3
 # LLM ignores an irrelevant excerpt); verbatim quoting cannot — and the
 # verbatim tier additionally sits behind the Nonsense/Scope gates.
 AUGMENT_MIN_SCORE = 0.08
-QUOTE_MIN_SCORE = 0.12
+# Raised 0.12 -> 0.15 (2026-08-12) to match site_rag, after UAT caught the
+# verbatim tier quoting "Issuance of School Identification Card (Replacement)"
+# at 0.1211 for "How do I process the payment for my OJT Fee?" — a confident
+# citation, page number and all, to an unrelated procedure. That is worse than
+# no answer: the reader has no way to tell a 0.12 quote from a 0.6 one.
+#
+# Measured on the 268-question gold set before moving it. The [0.12, 0.15) band
+# holds exactly 3 charter hits — seagrass research, a financial report, and the
+# university mission — none of which the Citizens' Charter is the right source
+# for. All 3 are already served by site_rag at HIGHER scores (0.164, 0.199,
+# 0.202) from the pages that actually contain them, so gold coverage is
+# unchanged at 172/268 and source selection improves.
+#
+# The floor is doing what it can, and no more: the same UAT round produced
+# "can i still be laude if i shift..." matching a 2021 course-list page at
+# 0.189 on the SITE corpus, and the [0.18, 0.20) site band holds 14 good gold
+# answers. Score does not separate those two — a distinctive-term (high-IDF)
+# filter was prototyped and rejected, because on this corpus the highest-IDF
+# tokens of a Taglish question are its interrogatives ("ano", "yung", "sino"),
+# so it cut 38 mostly-good quotes while keeping both bad ones.
+QUOTE_MIN_SCORE = 0.15
 
 
 @dataclass(frozen=True)

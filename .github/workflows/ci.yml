@@ -48,6 +48,22 @@ jobs:
           docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_lexical_rank.py
           docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_messenger_gateway.py
 
+      - name: Gate tests (reply language + which-college clarification)
+        # The two UAT-driven reply controls. Model-free, so they run in seconds:
+        # the language preference must beat detection in BOTH directions, and
+        # every "which college?" chip must route back into the program list.
+        run: |
+          docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_reply_language.py
+
+      - name: Gate tests (shorthand expansion + wayfinding)
+        # Chat-shorthand expansion must stay whole-token and idempotent (a
+        # substring pass makes "prerequisite" -> "prerequirementuisite"), the
+        # charter quote floor must stay above the measured 0.1211 false quote,
+        # and "how to get A THING" must not resolve as wayfinding.
+        run: |
+          docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_shorthand_expansion.py
+          docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_place_resolver.py
+
       - name: Start API
         run: docker run -d --name api -p 8000:8000 -e LLM_PROVIDER=none sevi-api:ci
 

@@ -25,6 +25,10 @@ from nltk.stem import WordNetLemmatizer
 # repo root or from training/.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from intents_db import inject_system_responses
+# Must match the shorthand expansion the runtime applies — see the module
+# docstring in api/preprocessing.py for why five copies of the tokenizer share
+# only this one map.
+from api.preprocessing import expand_abbreviations
 
 # Ensure NLTK resources are available (idempotent — no-op if already present)
 for resource, kind in [('punkt_tab', 'tokenizers'), ('wordnet', 'corpora')]:
@@ -39,6 +43,7 @@ def preprocess_text(text):
     """Preprocess text: lowercase, remove punctuation, tokenize, lemmatize"""
     text = text.lower()
     text = re.sub(r"[^a-z0-9\s]", "", text)
+    text = expand_abbreviations(text)
     tokens = nltk.word_tokenize(text)
     return " ".join([lemmatizer.lemmatize(t) for t in tokens])
 

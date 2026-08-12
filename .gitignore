@@ -52,6 +52,14 @@ archive/models_backups/
 # data/profanities/ph_profanity_lexicon.csv). Keep exports outside the tree.
 /data-*.csv
 
+# Raw tester-feedback exports. The Google Form collects an optional email
+# "stored only for follow-up, per the Data Privacy Act" — a promise a public
+# git history breaks permanently, since a later deletion commit does not
+# un-publish the blob. Root-anchored like the rule above so the tracked data
+# assets are unaffected. Work from these locally; commit only aggregates or an
+# email-stripped copy.
+/Sevi*Feedback*.csv
+
 # Presentation decks belong in docs/presentations/, which is tracked.
 # Root-anchored so stray copies dropped at the repo root stay out; the
 # canonical decks under docs/presentations/ are unaffected.

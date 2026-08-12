@@ -518,6 +518,26 @@ _PLACE_KEYWORDS: List[Tuple[str, List[str]]] = [
     ("con",             ["con", "nursing", "college of nursing"]),
     ("dcs",             ["dcs", "crop science", "department of crop"]),
     ("das",             ["das", "animal science", "department of animal"]),
+
+    # Department acronyms -> the college building that houses them. Students
+    # say the department, not the college: "Where is DIT?" (verbatim, UAT)
+    # returned the whole-campus blurb — 70 hectares, 60 km from Manila — because
+    # DIT appeared nowhere in this lexicon and `campus_location` won on lexical
+    # similarity instead. The mapping is the CvSU phone directory's own (DIT is
+    # "CEIT - DIT 1/2", loc. 1061-1062), so the pin matches where the office
+    # actually is. DCS/DAS already stand as places in their own right above.
+    ("ceit",            ["dit", "dcea", "dcee", "dafe",
+                         "department of information technology",
+                         "industrial engineering and technology"]),
+    ("cas",             ["dcom", "dhum", "dss", "biosci", "physci",
+                         "department of communication", "physical sciences"]),
+    ("con",             ["medtech", "medical technology", "midwifery"]),
+    ("cemds",           ["ofad", "office administration"]),
+    # Deliberately NOT listed: bare "diet" (CEIT's Department of Industrial
+    # Engineering and Technology) and bare "ted" (CEd's Teacher Education
+    # Department). Both are ordinary English words, and \bdiet\b would send
+    # "what is a good diet" to an engineering building. The spelled-out forms
+    # above cover the real asks without the collision.
     ("osas",            ["osas", "student affairs", "registrar", "university registrar"]),
     ("icon",            ["icon", "convention center", "international convention"]),
     ("grad",            ["graduate school", "grad school", "masteral", "doctoral", "post-graduate", "postgraduate"]),
@@ -552,7 +572,13 @@ _PLACE_KEYWORDS: List[Tuple[str, List[str]]] = [
 
 _LOCATION_KEYWORDS = {
     "where", "location", "direction", "directions",
-    "how to get", "how to find", "get to", "go to", "locate", "find",
+    # "how to get TO", not "how to get". Bare "how to get" is the English idiom
+    # for acquiring a thing, not for reaching a place, and it made every
+    # procedure question that happened to name a building resolve as wayfinding:
+    # "How to get a sticker for library entrance" (verbatim, UAT) answered with
+    # walking directions to the library. "get to" below still catches "how do i
+    # get to the oval", so nothing locational is lost.
+    "how to get to", "how to find", "get to", "go to", "locate", "find",
     "building", "place", "address",
     "saan", "nasaan", "paano pumunta", "paano makakapunta",
     "papunta", "papuntang", "pupunta", "pupuntang", "pumunta",
