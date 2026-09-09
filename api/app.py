@@ -1400,7 +1400,9 @@ def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optiona
         return ResponseSource.PLACE_RESOLVER, None
     if m == "Conversation Recap":
         return ResponseSource.CONVERSATION_RECAP, None
-    if m == "Small Talk":
+    if m.startswith("Small Talk"):
+        # "Small Talk" (curated jokes) and "Small Talk (conversational guard)"
+        # — a turn that asked for nothing, answered from curated content.
         return ResponseSource.SMALLTALK, None
     if m == "College Programs":
         return ResponseSource.COLLEGE_PROGRAMS, None

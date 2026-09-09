@@ -50,12 +50,21 @@ User message
    ▼
 4. Intent retrieval     api/intent_retrieval TF-IDF nearest-pattern match over intents
    ▼
-5. Charter / Site RAG   api/charter_rag.py   grounded retrieval over the Citizens'
-   │                    api/site_rag.py       Charter + official CvSU website
+4b. Conversational      api/grounding_gate   a turn that asks for nothing ("wow, you
+    guard                                    can answer that?", "nice", "are you a
+                                             bot") is answered from curated content
+                                             and never reaches retrieval or the LLM
    ▼
-6. LLM fallback         (optional)           augmented with retrieved passages,
-                                             cited; disabled → verbatim RAG or
-                                             graceful fallback
+5. Charter / Site RAG   api/charter_rag.py   retrieval over the Citizens' Charter +
+   │                    api/site_rag.py       official CvSU website; passages pass a
+   │                    api/grounding_gate   RELEVANCE gate (what the passage contains
+   │                                         of what was asked), not a cosine floor
+   ▼
+6. LLM fallback         (optional)           augmented with gated passages; the model
+                                             must open with EVIDENCE: yes|no, and a
+                                             "no" is never presented as grounded;
+                                             disabled → verbatim RAG (strict quote
+                                             rules) or graceful fallback
 ```
 
 Answers from the curated tiers are **source-grounded**: `api/intent_grounding.py`

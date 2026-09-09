@@ -89,7 +89,7 @@ except ImportError:
     NLU_AVAILABLE = False
 
 # Citizens' Charter retrieval tier (document tier of the hybrid brain)
-from . import charter_rag, intent_retrieval, site_rag
+from . import charter_rag, grounding_gate, intent_retrieval, site_rag
 # Single source for the Ollama endpoint default (shared with the MCP routers,
 # safety second-opinion, and /health warm-up).
 from .llm_defaults import ollama_base_url
@@ -171,6 +171,64 @@ _LLM_PROSE_REFUSAL_RE = re.compile(
     r"|paumanhin|hindi ko (?:po )?(?:ka?yang?|ma))",
     re.IGNORECASE,
 )
+
+# Evidence verdict (grounding-gate tranche, 2026-09-02). The grounded prompt
+# now makes the model open its reply with "EVIDENCE: yes" or "EVIDENCE: no"
+# BEFORE it writes anything else. Retrieval is keyword search, so the
+# excerpts handed over are sometimes about something else entirely — and a
+# 4B-8B model told to "answer from these excerpts" would rather summarize an
+# irrelevant excerpt than admit it does not apply. UAT 2026-09-02: "wow, you
+# can answer questions like that?" came back as a paragraph about a GAD
+# accomplishment-report workshop, citation and all. Forcing the relevance
+# decision into its own first token flips that: measured on the same
+# passages, qwen3:8b and gemma3:4b both answered "EVIDENCE: no" and replied
+# conversationally (20/20 replies carried a parseable verdict, no latency
+# cost). The line is stripped before the reply reaches the user or the
+# conversation history; a "no" also strips every citation the model emits
+# anyway and drops the "-grounded" provenance suffix, so an answer that did
+# not come from the excerpts is never presented as if it did.
+_LLM_EVIDENCE_RE = re.compile(
+    r"^\s*(?:\*\*|__)?\s*EVIDENCE\s*:\s*(?:\*\*|__)?\s*(yes|no)\b(?:\*\*|__)?[ \t]*[.:]?[ \t]*(?:\r?\n|$)",
+    re.IGNORECASE,
+)
+# A bracketed span shaped like one of our citations: the charter page form
+# ("p. 1187"), the word charter, or the official-site form. Same shape test
+# the output guard uses, so "[1]" or "[emphasis mine]" are left alone. The
+# lookahead spares markdown links — "[cvsu.edu.ph](https://cvsu.edu.ph)" is
+# a pointer the no-evidence reply is told to give, not a citation.
+_LLM_CITATION_SPAN_RE = re.compile(r"\[([^\[\]]{4,160})\](?!\()")
+
+
+def _split_evidence_verdict(reply: str) -> Tuple[Optional[str], str]:
+    """(verdict, body) — verdict is "yes" | "no" when the reply opens with the
+    EVIDENCE line the grounded prompt demands, None when it does not (a model
+    that ignored the format, or a reply to the no-excerpt prompt). `body` is
+    the reply with that line removed."""
+    text = reply or ""
+    m = _LLM_EVIDENCE_RE.match(text)
+    if not m:
+        return None, text.strip()
+    return m.group(1).lower(), text[m.end():].strip()
+
+
+def _strip_citation_spans(reply: str) -> Tuple[str, int]:
+    """Remove every citation-shaped bracketed span; returns (text, removed)."""
+    removed = 0
+
+    def _drop(m: "re.Match[str]") -> str:
+        nonlocal removed
+        span_l = " ".join(m.group(1).strip().lower().split())
+        if "p." in span_l or "charter" in span_l or "cvsu" in span_l or "http" in span_l:
+            removed += 1
+            return ""
+        return m.group(0)
+
+    out = _LLM_CITATION_SPAN_RE.sub(_drop, reply or "")
+    if removed:
+        out = re.sub(r"[ \t]+([.,;:!?])", r"\1", out)
+        out = re.sub(r"[ \t]{2,}", " ", out)
+        out = re.sub(r"[ \t]+\n", "\n", out).strip()
+    return out, removed
 
 # Every LLM_PROVIDER value the fallback tier understands. Adding a new backend
 # means adding its client class AND its name here (and to the admin toggle's
@@ -1826,26 +1884,40 @@ class HybridChatbot:
                 f"not use bracketed citations.{hint}\n\nQuestion: {user_input}"
             )
         excerpts = "\n\n".join(f"[{cite}]\n{text[:700]}" for _, cite, text, _ in grounding)
+        # The verdict line comes first on purpose — see _LLM_EVIDENCE_RE. The
+        # old preamble opened with "Answer the question using ONLY these
+        # excerpts", and a small model obeyed that imperative over the
+        # conditional "if the excerpts are about something else, say so".
         return (
-            "Excerpts from official CvSU sources are provided below. Answer the question "
-            "using ONLY these excerpts and the conversation context, and mention the "
-            "bracketed source you used.\n"
+            "Excerpts from official CvSU sources are provided below. They were found by "
+            "keyword search and MAY NOT be about the user's message.\n"
+            "The FIRST LINE of your reply must be exactly one of:\n"
+            "EVIDENCE: yes\n"
+            "EVIDENCE: no\n"
+            "Write 'EVIDENCE: yes' only if an excerpt directly answers the message. Write "
+            "'EVIDENCE: no' if the excerpts are about a different topic, event, year, person "
+            "or program, or if the message is a comment, greeting, thanks or small talk "
+            "rather than a question. The EVIDENCE line itself is always in English.\n"
+            "Then, on the next line, the reply:\n"
+            "- After 'EVIDENCE: no': do NOT use, summarize or cite the excerpts at all. If the "
+            "message is a question, say you don't have that specific information yet and point "
+            "the user to https://cvsu.edu.ph. If it is small talk or a comment, respond "
+            "naturally in one sentence and offer help with CvSU topics.\n"
+            "- After 'EVIDENCE: yes': answer using ONLY these excerpts and the conversation "
+            "context, and mention the bracketed source you used.\n"
             "STRICT RULES — follow exactly:\n"
             "1. State a specific figure, date, count, rank, name, or venue ONLY if it "
             "appears verbatim in an excerpt above. Never substitute a related, national, "
             "or approximate number for the one asked.\n"
-            "2. If the excerpts are about a DIFFERENT exam, event, year, or program than "
-            "the question asks about, do NOT answer from them — instead say you don't have "
-            "that specific information yet and point the user to https://cvsu.edu.ph.\n"
-            "3. If the exact detail asked for is not in the excerpts, say you don't have "
+            "2. If the exact detail asked for is not in the excerpts, say you don't have "
             "that specific information yet and point to https://cvsu.edu.ph — do not guess "
             "or fill the gap.\n"
-            "4. Do NOT cite the Citizens' Charter as the source for news, licensure/board "
+            "3. Do NOT cite the Citizens' Charter as the source for news, licensure/board "
             "results, rankings, or awards; those come only from news excerpts.\n"
-            "5. Keep the answer concise and only cite a source you actually used, "
+            "4. Keep the answer concise and only cite a source you actually used, "
             "copying its bracketed label exactly as shown above — never alter the "
             "source name, edition, or page number."
-            f"{hint}\n\n{excerpts}\n\nQuestion: {user_input}"
+            f"{hint}\n\n{excerpts}\n\nMessage: {user_input}"
         )
 
     # ── P2-8: disambiguation + stated-assumption helpers ─────────────────
@@ -2099,26 +2171,46 @@ class HybridChatbot:
         """
         return bigram_hits, (score / floor if floor else score)
 
+    # The two retrieval tiers, in the order their passages are ranked for a tie.
+    _RAG_TIERS = (("charter", charter_rag), ("site", site_rag))
+
     def _gather_grounding(self, user_input: str) -> Tuple[list, str, Optional[str]]:
         """Collect LLM grounding passages from the charter and site corpora.
 
         Returns (grounding, model_label_suffix, nearest_intent_suggestion)
-        where grounding is [(score, citation, text, corpus), ...] ranked
-        best-first via _cross_corpus_rank_key, capped at 3.
+        where grounding is [(score, citation, text, corpus), ...] best-first,
+        capped at 3.
+
+        GROUNDING_GATE=relevance (default): each corpus's candidates go
+        through api.grounding_gate.decide, which admits a passage on what it
+        contains of what was asked — not on an absolute cosine floor — and
+        returns a relevance value comparable across the two corpora, so the
+        merged list is ordered by that value directly. GROUNDING_GATE=legacy
+        keeps the pre-2026-09 floors and _cross_corpus_rank_key (roll-back).
         """
         ranked = []  # (rank_key, score, citation, text, corpus)
-        charter_index = charter_rag.get_index()
-        if charter_index is not None:
-            for p in charter_index.retrieve(user_input, k=3)[:2]:
-                if p.score >= charter_rag.AUGMENT_MIN_SCORE:
-                    key = self._cross_corpus_rank_key(p.bigram_hits, p.score, charter_rag.AUGMENT_MIN_SCORE)
-                    ranked.append((key, p.score, p.citation(), p.text, "charter"))
-        site_index = site_rag.get_index()
-        if site_index is not None:
-            for p in site_index.retrieve(user_input, k=3)[:2]:
-                if p.score >= site_rag.AUGMENT_MIN_SCORE:
-                    key = self._cross_corpus_rank_key(p.bigram_hits, p.score, site_rag.AUGMENT_MIN_SCORE)
-                    ranked.append((key, p.score, p.citation(), p.text, "site"))
+        if grounding_gate.mode() == "legacy":
+            charter_index = charter_rag.get_index()
+            if charter_index is not None:
+                for p in charter_index.retrieve(user_input, k=3)[:2]:
+                    if p.score >= charter_rag.AUGMENT_MIN_SCORE:
+                        key = self._cross_corpus_rank_key(p.bigram_hits, p.score, charter_rag.AUGMENT_MIN_SCORE)
+                        ranked.append((key, p.score, p.citation(), p.text, "charter"))
+            site_index = site_rag.get_index()
+            if site_index is not None:
+                for p in site_index.retrieve(user_input, k=3)[:2]:
+                    if p.score >= site_rag.AUGMENT_MIN_SCORE:
+                        key = self._cross_corpus_rank_key(p.bigram_hits, p.score, site_rag.AUGMENT_MIN_SCORE)
+                        ranked.append((key, p.score, p.citation(), p.text, "site"))
+        else:
+            for corpus, tier in self._RAG_TIERS:
+                index = tier.get_index()
+                if index is None:
+                    continue
+                verdict = grounding_gate.decide(
+                    user_input, index, index.retrieve(user_input, k=grounding_gate.RETRIEVE_K))
+                for p, rel in verdict.augment:
+                    ranked.append((rel, p.score, p.citation(), p.text, corpus))
         ranked.sort(key=lambda r: r[0], reverse=True)
         grounding = [(score, cite, text, corpus) for _, score, cite, text, corpus in ranked[:3]]
         corpora = {g[3] for g in grounding}
@@ -2149,6 +2241,8 @@ class HybridChatbot:
         """
         if not (self.nonsense_gate.allows(user_input)[0] and self.scope_gate.allows(user_input)[0]):
             return None
+        if grounding_gate.mode() != "legacy":
+            return self._verbatim_document_reply_gated(user_input)
         best = None  # (rank_key, score, intent_tag, reply, model_label, stat_key)
         charter_index = charter_rag.get_index()
         if charter_index is not None:
@@ -2188,6 +2282,75 @@ class HybridChatbot:
         _, score, tag, reply, label, stat = best
         self._bump(stat)
         return tag, reply, score, label
+
+    # Verbatim tier under the relevance gate: (intent_tag, verbatim_reply
+    # builder, model label, stat key) per corpus.
+    _VERBATIM_SHAPES = {
+        "charter": ("charter_info", charter_rag.verbatim_reply, "Charter RAG", "charter_rag_used"),
+        "site": ("site_info", site_rag.verbatim_reply, "Site RAG", "site_rag_used"),
+    }
+
+    def _verbatim_document_reply_gated(self, user_input: str) -> Optional[Tuple[str, str, float, str]]:
+        """Step 3.5 under GROUNDING_GATE=relevance: quote only what the gate
+        clears for QUOTE (a real question, >= 3 matched anchors, a literal
+        phrase, every date term present, a clear lead over every other
+        document — see api/grounding_gate.py), best corpus by relevance."""
+        best = None  # (rel, tag, reply, score, label, stat)
+        for corpus, tier in self._RAG_TIERS:
+            index = tier.get_index()
+            if index is None:
+                continue
+            verdict = grounding_gate.decide(
+                user_input, index, index.retrieve(user_input, k=grounding_gate.RETRIEVE_K))
+            if verdict.quote is None:
+                continue
+            passage, rel = verdict.quote
+            tag, build, label, stat = self._VERBATIM_SHAPES[corpus]
+            if best is None or rel > best[0]:
+                best = (rel, tag, build(passage), passage.score, label, stat)
+        if best is None:
+            return None
+        _, tag, reply, score, label, stat = best
+        self._bump(stat)
+        return tag, reply, score, label
+
+    # Curated intents that answer a turn which asks for nothing. The guard
+    # serves NB's pick when NB itself put the turn in this family with some
+    # conviction; otherwise the capabilities reply, which fits "you can answer
+    # that?", "nice", "are you a bot" alike and never blames the user.
+    _CONVERSATIONAL_INTENTS = frozenset({"greeting", "goodbye", "thanks", "acknowledgement", "chitchat"})
+    CONVERSATIONAL_NB_MIN = float(os.getenv("CONVERSATIONAL_NB_MIN", "0.30"))
+
+    def _conversational_guard_result(self, user_input: str, nb_intent: Optional[str],
+                                     nb_confidence: float, language: Optional[str]) -> Optional[Tuple[str, str]]:
+        """Step 2.9: (intent, reply) for a message with no information need,
+        else None.
+
+        "wow, you can answer questions like that?" fell through every curated
+        tier (NB goodbye@0.25, NN 0.64 under its 0.65 floor, no pattern
+        match) into the LLM tier, which retrieved a GAD-workshop page and
+        parroted it (UAT 2026-09-02) — and, for the three turns before that,
+        answered "trouble connecting" because Ollama was down. A turn that
+        asks for nothing must never reach retrieval or the LLM: it costs a
+        50-second cold call to produce a worse answer than a curated line.
+        The decision is api.grounding_gate.information_need, the same query
+        profile the RAG gate uses, computed without a corpus. Runs behind the
+        Nonsense/Scope gates so profanity and off-topic keywords keep their
+        refusals.
+        """
+        if grounding_gate.mode() == "legacy":
+            return None
+        if not (self.nonsense_gate.allows(user_input)[0] and self.scope_gate.allows(user_input)[0]):
+            return None
+        if grounding_gate.information_need(user_input):
+            return None
+        if nb_intent in self._CONVERSATIONAL_INTENTS and nb_confidence >= self.CONVERSATIONAL_NB_MIN:
+            intent = nb_intent
+        else:
+            intent = "chitchat"
+        if intent not in self.responses_map:
+            intent = self.FALLBACK_INTENT
+        return intent, self._select_response(intent, user_input, language)
 
     def _place_resolver_result(self, user_input: str, campus: Optional[str] = None):
         """Step 2.7: deterministic campus wayfinding from the map lexicon.
@@ -2338,6 +2501,9 @@ class HybridChatbot:
             skip_intents = False
 
         nlu_data = {}
+        # NB's view of the turn, read by the conversational guard (Step 2.9)
+        # even when the classifier tiers are skipped.
+        nb_intent, nb_confidence = None, 0.0
 
         # Step 0.5: Conversation Recap — must precede the classifiers; see
         # _conversation_recap_result for why neither tier below can own this.
@@ -2490,6 +2656,16 @@ class HybridChatbot:
                 nlu_data = {**nlu_data, "place_id": place_id}
                 return self.FIND_PLACE_INTENT, response, 1.0, "Place Resolver", nlu_data
 
+        # Step 2.9: Conversational guard — a turn with no information need
+        # ("wow, you can answer questions like that?", "nice", "are you a
+        # bot") is answered from curated content here and never reaches
+        # retrieval or the LLM. See _conversational_guard_result.
+        guarded = self._conversational_guard_result(user_input, nb_intent, nb_confidence, language)
+        if guarded is not None:
+            intent, response = guarded
+            self._bump("conversational_guard_used")
+            return intent, response, 0.0, "Small Talk (conversational guard)", nlu_data
+
         # Other-school guard (P1-6): every deep tier below grounds on CvSU-only
         # corpora, so a question about ANOTHER university can only be "answered"
         # by dredging up an irrelevant CvSU passage that happens to name that
@@ -2538,6 +2714,31 @@ class HybridChatbot:
                 return self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, f"{provider_label} (out-of-scope)", nlu_data
 
             if llm_reply:
+                # Evidence verdict (see _LLM_EVIDENCE_RE): the model's own
+                # first-token call on whether the excerpts apply. "no" means
+                # the reply must not lean on them — strip any citation it
+                # emitted anyway and drop the "-grounded" provenance suffix.
+                # A missing verdict is the pre-tranche behaviour, kept as-is
+                # and counted so an ignoring model shows up in the stats.
+                verdict, llm_reply = _split_evidence_verdict(llm_reply)
+                if verdict == "no":
+                    self._bump("llm_evidence_no")
+                    llm_reply, dropped = _strip_citation_spans(llm_reply)
+                    if dropped:
+                        self._bump("llm_evidence_no_citation_stripped")
+                    # `grounding` itself is kept for the output guard below:
+                    # an excerpt URL the model still pasted is a known page,
+                    # not an invented one — the guard must not withhold the
+                    # whole reply over it.
+                    charter_suffix = " (no-evidence)" if grounding else ""
+                elif verdict == "yes":
+                    self._bump("llm_evidence_yes")
+                else:
+                    self._bump("llm_verdict_missing")
+                if not llm_reply:
+                    # "EVIDENCE: no" and nothing else — the honest fallback
+                    # reply, not an empty bubble.
+                    llm_reply = self._select_response(self.FALLBACK_INTENT, user_input, language)
                 # P1-6 output guard: withhold a reply carrying contact details
                 # or citations that are not in the retrieved passages.
                 guard_ok, guard_reason, llm_reply = self._llm_output_guard(llm_reply, grounding)
