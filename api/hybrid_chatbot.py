@@ -1500,7 +1500,17 @@ class HybridChatbot:
         r"(?:talk(?:ed)?|discuss(?:ed)?|ask(?:ed)?|say|said|cover(?:ed)?)\b)"
         r"|(?:\bwhat\s+(?:did|do)\s+(?:we|i)\s+(?:talk|speak)\s+about\b)"
         r"|(?:\b(?:ano|anong)\b.{0,16}?\b(?:napag|pinag)-?usapan\b)"
-        r"|(?:\bbuod\s+ng\s+(?:usapan|pinag-?usapan)\b)",
+        r"|(?:\bbuod\s+ng\s+(?:usapan|pinag-?usapan)\b)"
+        # A bare summarize ask, whole message only ("can you summarize",
+        # "recap please", "pakibuod"): it has no object, so it can only mean
+        # the conversation. NB sent "can you summarize" to the greeting
+        # (production transcript, 2026-11-25).
+        r"|(?:^\s*(?:(?:can|could|would|will)\s+you\s+)?(?:please\s+|pls\s+)?"
+        r"(?:summarize|summarise|recap|sum\s+(?:it|that|this|everything)\s+up)"
+        r"(?:\s+(?:it|that|this|everything|all\s+of\s+(?:it|this|that)|so\s+far|for\s+me"
+        r"|please|pls|po|nga|naman))*\s*[?.!]*\s*$)"
+        r"|(?:^\s*(?:paki-?buod|paki-?summarize|pa-?summarize|i-?summarize\s+mo)"
+        r"(?:\s+(?:mo|naman|po|nga|lahat|ito|iyan|yan))*\s*[?.!]*\s*$)",
         re.IGNORECASE,
     )
 

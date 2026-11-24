@@ -101,9 +101,67 @@ def joke_reply(filipino: bool = False, rng: Optional[random.Random] = None) -> s
     return f"{_SCOPE_NOTE_EN}\n\n{picker.choice(JOKES_EN)}\n\n{_REDIRECT_EN}"
 
 
+# Frustration aimed at Sevi without profanity ("Reaklly? you;re so useless",
+# production transcript 2026-11-25). It asks for nothing, so the LLM only
+# burned a call on it, and the conversational guard's chitchat greeting
+# would read as tone-deaf. Profane or abusive versions ("bobo", "tanga") are
+# api/safety.py's, which runs first. Typos are normalised before matching:
+# ";" for the apostrophe, "youre"/"ur"/"u r".
+_YOU_ARE = r"(?:you\s*'?\s*re|you\s+are|u\s*'?\s*re|u\s+r|ur|this\s+(?:bot|chatbot|thing|app|ai)\s+is|sevi\s+is)"
+_DEGREE = r"(?:(?:so|really|very|truly|completely|totally|kinda|pretty|such\s+an?|the\s+most)\s+)*"
+_INSULT = (r"(?:useless|unhelpful|worthless|pointless|stupid|dumb|trash|garbage|terrible|"
+           r"annoying|no\s+help|not\s+(?:helpful|useful|helping)|of\s+no\s+use)")
+_FRUSTRATION_RE = re.compile(
+    rf"\b{_YOU_ARE}\s+{_DEGREE}{_INSULT}\b"
+    r"|\b(?:you|u)\s+(?:suck|don\s*'?\s*t\s+help|never\s+help|are\s+no\s+help)\b"
+    rf"|\b(?:what\s+an?|such\s+an?|so)\s+{_DEGREE}(?:useless|unhelpful|pointless)\b"
+    r"|\buseless\s+(?:bot|chatbot|ai|assistant|app)\b"
+    r"|\bwala(?:ng|\s+kang)\s+(?:kwenta|kuwenta|silbi|kwentang|silbing)\b"
+    r"|\b(?:hindi|di)\s+ka\s+(?:naman\s+)?(?:nakakatulong|nakatulong|makatulong)\b",
+    re.IGNORECASE,
+)
+# A complaint that also asks something ("you're useless, where is the
+# registrar?") is a question first: leave it to the cascade.
+_QUESTION_CUE_RE = re.compile(
+    r"\b(?:how|where|when|what|which|who|paano|saan|kailan|ano|sino|magkano)\b"
+    r"|\b(?:enroll|tuition|admission|scholarship|registrar|campus|program|course|fee)s?\b",
+    re.IGNORECASE,
+)
+
+_FRUSTRATION_EN = (
+    "Sorry that wasn't helpful. Tell me what you were trying to find — the campus, "
+    "college, or office it's about — and I'll try again. You can also check "
+    "https://cvsu.edu.ph for anything I don't have."
+)
+_FRUSTRATION_TL = (
+    "Pasensya na po kung hindi nakatulong ang sagot ko. Sabihin lang po kung ano ang "
+    "hinahanap ninyo — kung aling campus, kolehiyo, o opisina — at susubukan ko ulit. "
+    "Maaari ring tingnan ang https://cvsu.edu.ph para sa wala sa akin."
+)
+
+
+def is_frustration(text: str) -> bool:
+    """True when a short message is frustration at Sevi with no question in it."""
+    if not text:
+        return False
+    norm = text.replace(";", "'").replace("’", "'")
+    if len(re.findall(r"[\w']+", norm)) > 12 or not _FRUSTRATION_RE.search(norm):
+        return False
+    # Look for a question only in what is left once the complaint is removed,
+    # so "what a useless bot" is not read as a "what" question.
+    return not _QUESTION_CUE_RE.search(_FRUSTRATION_RE.sub(" ", norm))
+
+
+def frustration_reply(filipino: bool = False) -> str:
+    """Own it once, ask what they needed, point to the website. No CvSU facts."""
+    return _FRUSTRATION_TL if filipino else _FRUSTRATION_EN
+
+
 def smalltalk_reply(text: str, filipino: bool = False,
                     rng: Optional[random.Random] = None) -> Optional[str]:
     """Reply for a benign social ask, or None to let the cascade handle it."""
     if is_joke_request(text):
         return joke_reply(filipino=filipino, rng=rng)
+    if is_frustration(text):
+        return frustration_reply(filipino=filipino)
     return None
