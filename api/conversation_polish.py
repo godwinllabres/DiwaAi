@@ -286,9 +286,11 @@ _WEAK_OPENER_RE = re.compile(
 _CONTRAST_CUE_RE = re.compile(r"\b(?:lang|only|just|naman|instead)\b", re.IGNORECASE)
 # Closings and questions back at Sevi are not follow-ups: "no thanks" is
 # not pushback, and "how about you?" belongs to small talk.
+# A bare "no"/"hindi" declines an offer Sevi just made ("Want the deans of the
+# other colleges too?"); it is not pushback on the answer.
 _CLOSING_RE = re.compile(
-    r"^\s*(?:no,?\s*)?(?:thanks?|thank you|salamat|ok(?:ay)?|sige|never ?mind|nvm|"
-    r"just checking)\b",
+    r"^\s*(?:(?:no,?\s*)?(?:thanks?|thank you|salamat|ok(?:ay)?|sige|never ?mind|nvm|"
+    r"just checking)\b|(?:no(?:pe)?|hindi(?: na)?(?: po)?)\W*$)",
     re.IGNORECASE,
 )
 _SELF_REF_RE = re.compile(r"^\s*(?:(?:how|what) about you|and you|ikaw)\b", re.IGNORECASE)

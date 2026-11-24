@@ -228,12 +228,26 @@ _NEGATED_CAMPUS_RE = re.compile(
 )
 
 
+# Words a "why only <campus>?" complaint is made of. Anything else ("why does
+# only Imus offer psychology") is a real question about that campus.
+_COMPLAINT_WORDS = frozenset("""
+why bakit only just lang is it that this the a an in at sa for from campus campuses
+city cvsu ba po naman you your did does do was were answer answers said say mention
+mentioned show showed shown give gave list listed about there ang yung mo nyo ninyo
+""".split())
+
+
 def is_contrastive_campus_mention(text: str) -> bool:
     """A short message that names a campus only to object to it ("why only
     trece?", "bakit trece lang?", "not Imus"), not to ask about it."""
     if not text or len(re.findall(r"[\w'’]+", text)) > 8:
         return False
-    return bool(is_exclusive_complaint(text) or _NEGATED_CAMPUS_RE.search(text))
+    if _NEGATED_CAMPUS_RE.search(text):
+        return True
+    if not is_exclusive_complaint(text):
+        return False
+    rest = re.findall(r"[\w'’]+", strip_campus_mentions(text).lower())
+    return all(w in _COMPLAINT_WORDS for w in rest)
 
 
 def strip_campus_mentions(text: str) -> str:
@@ -264,7 +278,7 @@ def campus_key(canonical: Optional[str]) -> Optional[str]:
 
 def query_campus_key(text: str) -> Optional[str]:
     """Scope key of the campus a message names, if any."""
-    if not text or is_exclusive_complaint(text) or is_contrastive_campus_mention(text):
+    if not text or is_contrastive_campus_mention(text):
         return None
     key = campus_key(extract_campus(text))
     if key is None and _DASMA_RE.search(text):

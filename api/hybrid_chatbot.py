@@ -1131,9 +1131,12 @@ class ClaudeRequestLimiter:
                     user_q.popleft()
                 if len(user_q) >= self.per_user_max:
                     return f"per-user limit {self.per_user_max}/{self.window:.0f}s"
-                # Drop idle callers so the dict can't grow without bound.
+                # Drop idle callers so the dict can't grow without bound. Not
+                # this caller: its deque may be new (empty) and is appended to
+                # below, so popping it would leave the request uncounted.
                 if len(self._per_user) > 5000:
-                    for k in [k for k, q in self._per_user.items() if not q or q[-1] <= cutoff]:
+                    for k in [k for k, q in self._per_user.items()
+                              if k != caller and (not q or q[-1] <= cutoff)]:
                         self._per_user.pop(k, None)
 
             self._global.append(now)
@@ -1584,6 +1587,7 @@ class HybridChatbot:
         if provider == "claude":
             print("       initialising Claude API fallback...")
             self.llm = ClaudeLLM(system_prompt=scope_locked_prompt)
+            self._claude_limiter = self.llm.limiter
             if self.llm.available:
                 print(f"[OK] Claude LLM ready  model={self.llm.model}")
             else:
@@ -1703,6 +1707,11 @@ class HybridChatbot:
         )
         if provider == "claude":
             self.llm = ClaudeLLM(model=model, system_prompt=scope_locked_prompt)
+            # Keep the request budgets across admin toggles: a fresh limiter
+            # would reset the daily cap and the per-window counts.
+            if getattr(self, "_claude_limiter", None) is not None:
+                self.llm.limiter = self._claude_limiter
+            self._claude_limiter = self.llm.limiter
             if model:
                 os.environ["CLAUDE_MODEL"] = model
         elif provider == "ollama":
@@ -2595,14 +2604,14 @@ class HybridChatbot:
         ranked = []  # (rank_key, score, citation, text, corpus)
         charter_index = charter_rag.get_index()
         if charter_index is not None:
-            hits = charter_index.retrieve(user_input, k=2, campuses=scope)
+            hits = charter_index.retrieve(user_input, k=3, campuses=scope)[:2]
             for p in hits:
                 if p.score >= charter_rag.AUGMENT_MIN_SCORE:
                     key = self._cross_corpus_rank_key(p.topic_bigram_hits, p.score, charter_rag.AUGMENT_MIN_SCORE)
                     ranked.append((key, p.score, p.citation(), p.text, "charter"))
         site_index = site_rag.get_index()
         if site_index is not None:
-            hits = site_index.retrieve(user_input, k=2, campuses=scope)
+            hits = site_index.retrieve(user_input, k=3, campuses=scope)[:2]
             for p in hits:
                 if p.score >= site_rag.AUGMENT_MIN_SCORE:
                     key = self._cross_corpus_rank_key(p.topic_bigram_hits, p.score, site_rag.AUGMENT_MIN_SCORE)
@@ -3183,7 +3192,9 @@ class HybridChatbot:
         # to user_id. app.py's campus routing keys on the same value
         # (session_id or user_id); keying history on user_id instead mixed
         # two tabs' turns, so "there" in a Trece tab resolved to the Imus
-        # named in another tab (review 2026-11-24).
+        # named in another tab (review 2026-11-24). The account id is kept on
+        # each turn so /conversation/{user_id} still finds and clears it.
+        owner_id = user_id
         user_id = session_id or user_id
 
         # Resolve "10" against a list the bot itself just printed, BEFORE the
@@ -3213,7 +3224,10 @@ class HybridChatbot:
         # president" → "how about the vice presidents?" served the same roster
         # twice, live audit 2026-11-24). LLM replies have their own check in
         # predict(); this covers the curated tiers.
-        if (intent != self.FALLBACK_INTENT and intent in self.responses_map
+        # Not the outage reply: two different questions during one outage both
+        # get it, and "covered in my answer just above" would be false.
+        if (intent not in (self.FALLBACK_INTENT, self.LLM_UNAVAILABLE_INTENT)
+                and intent in self.responses_map
                 and previous_reply and response and response.strip() == previous_reply.strip()
                 and not wants_repeat(user_input)
                 and " ".join(user_input.lower().split()) != " ".join((previous_user or "").lower().split())):
@@ -3231,6 +3245,7 @@ class HybridChatbot:
                 model_used=model_used,
                 session_id=session_id,
                 nlu_data=nlu_data,
+                owner_id=owner_id,
             )
 
         return intent, response, confidence, model_used, nlu_data
@@ -3246,8 +3261,12 @@ class HybridChatbot:
         model_used: str,
         session_id: Optional[str] = None,
         nlu_data: Optional[dict] = None,
+        owner_id: Optional[str] = None,
     ) -> None:
         """Append one turn to a session's history — the only writer.
+
+        owner_id: the account (request user_id) the turn belongs to, when the
+        history key is a session id; snapshot_history/drop_history match it.
 
         Extracted from chat() so every mutation of conversation_history goes
         through one lock-holding place. popitem/move_to_end/insert each rewrite
@@ -3272,6 +3291,7 @@ class HybridChatbot:
                 "confidence": confidence,
                 "model_used": model_used,
                 "session_id": session_id,
+                "user_id": owner_id or user_id,
                 "entities": nlu_data.get("entities", {}),
                 "is_follow_up": nlu_data.get("is_follow_up", False),
                 # Lets the NEXT turn resolve a bare "10" against this reply.
@@ -3351,12 +3371,26 @@ class HybridChatbot:
         and serializing one a worker is mutating underneath them.
         """
         with self._history_lock:
-            return list(self.conversation_history.get(user_id) or [])
+            if user_id in self.conversation_history:
+                return list(self.conversation_history[user_id])
+            # History is keyed by session id; fall back to the account's sessions.
+            return [t for k in self._sessions_owned_by(user_id)
+                    for t in self.conversation_history[k]]
+
+    def _sessions_owned_by(self, user_id: str) -> list:
+        """History keys whose turns belong to account `user_id`. Lock held by caller."""
+        return [k for k, turns in self.conversation_history.items()
+                if any(t.get("user_id") == user_id for t in turns)]
 
     def drop_history(self, user_id: str) -> bool:
-        """Forget one session. Returns whether anything was actually removed."""
+        """Forget one session, or every session of an account. Returns whether
+        anything was actually removed."""
         with self._history_lock:
-            return self.conversation_history.pop(user_id, None) is not None
+            keys = ([user_id] if user_id in self.conversation_history
+                    else self._sessions_owned_by(user_id))
+            for k in keys:
+                self.conversation_history.pop(k, None)
+            return bool(keys)
 
     def clear_history(self, user_id: Optional[str] = None):
         """Clear conversation history"""

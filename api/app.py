@@ -1886,7 +1886,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
                 user_input=original_message, response=text,
                 intent="campus_location", confidence=1.0,
                 model_used="CampusDirectory (charter contact table)",
-                session_id=request.session_id,
+                session_id=request.session_id, owner_id=request.user_id,
             )
         return await _short_circuit_response(
             request, original_message, start_time,
