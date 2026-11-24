@@ -185,7 +185,15 @@ check("scope_text decides scope, not the concatenated query",
       not any("trece.cvsu.edu.ph" in g[2] for g in grounding), str([g[1] for g in grounding]))
 
 served = bot._verbatim_document_reply("admission requirements for incoming first year trece")
-check("verbatim Trece question quotes a page", served is not None)
+from api import grounding_gate
+if grounding_gate.mode() == "legacy":
+    check("verbatim Trece question quotes a page", served is not None)
+else:
+    # The relevance gate quotes only on a clear lead (api/grounding_gate.py);
+    # the Trece page must still be the LLM's top grounding.
+    grounding, _, _ = bot._gather_grounding("admission requirements for incoming first year trece")
+    check("gated: Trece question grounds on the Trece admission page (p.1883)",
+          bool(grounding) and "p. 1883" in grounding[0][1], [g[1] for g in grounding])
 if served is not None:
     check("verbatim Trece question quotes the Trece admission page (p.1883)",
           served[0] == "charter_info" and "p. 1883" in served[1], served[1][:200])

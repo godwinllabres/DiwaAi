@@ -1,0 +1,509 @@
+{
+  "_comment": "Grounding-gate probe set. Every item here must NEVER be answered from the site/charter corpora: no LLM augmentation passage, no verbatim quote. They are conversational, meta, feedback or pointer utterances that carry no CvSU information need, or asks that belong to another tier (map, recap). Sourced from the 2026-09-02 UAT screenshot ('wow, you can answer questions like that?' -> GAD workshop parroted), logs/chat_history.db site-served turns ('show me the map' -> map-making excerpt), and the dev probes in scripts/eval_grounding_gate.py. Add new live failures here with a 'note'. Items with allow_augment=true are UNDERSPECIFIED topical asks (bare entity, no predicate, or a question the corpora cannot answer) taken from the beta chat DB: the LLM may see excerpts (it is told to say when they do not answer), but a verbatim QUOTE with a citation is never acceptable — beta quoted the President's office page for 'Indang (Main Campus)' seven times and a scholarship-claiming procedure for 'Who is the head of cashiers office'.",
+  "items": [
+    {
+      "text": "wow, you can answer questions like that?",
+      "kind": "meta",
+      "lang": "en",
+      "note": "UAT 2026-09-02: LLM parroted GAD workshop page at 0.126"
+    },
+    {
+      "text": "can you answer questions?",
+      "kind": "meta",
+      "lang": "en",
+      "note": "no-LLM path quoted GAD page verbatim at 0.214 bg=1"
+    },
+    {
+      "text": "you can answer that?",
+      "kind": "meta",
+      "lang": "en"
+    },
+    {
+      "text": "what kind of questions can you answer",
+      "kind": "meta",
+      "lang": "en"
+    },
+    {
+      "text": "what can you do",
+      "kind": "meta",
+      "lang": "en"
+    },
+    {
+      "text": "what else can you do",
+      "kind": "meta",
+      "lang": "en"
+    },
+    {
+      "text": "can you help me",
+      "kind": "meta",
+      "lang": "en"
+    },
+    {
+      "text": "i have a question",
+      "kind": "meta",
+      "lang": "en"
+    },
+    {
+      "text": "may tanong ako",
+      "kind": "meta",
+      "lang": "fil"
+    },
+    {
+      "text": "pwede magtanong?",
+      "kind": "meta",
+      "lang": "fil"
+    },
+    {
+      "text": "hello po may itatanong lang ako",
+      "kind": "meta",
+      "lang": "taglish"
+    },
+    {
+      "text": "are you a bot",
+      "kind": "meta",
+      "lang": "en"
+    },
+    {
+      "text": "are you a real person",
+      "kind": "meta",
+      "lang": "en"
+    },
+    {
+      "text": "ikaw ba ay robot",
+      "kind": "meta",
+      "lang": "fil"
+    },
+    {
+      "text": "who made you",
+      "kind": "meta",
+      "lang": "en"
+    },
+    {
+      "text": "what is your name",
+      "kind": "meta",
+      "lang": "en"
+    },
+    {
+      "text": "are you sure?",
+      "kind": "feedback",
+      "lang": "en"
+    },
+    {
+      "text": "is that true?",
+      "kind": "feedback",
+      "lang": "en"
+    },
+    {
+      "text": "really?",
+      "kind": "feedback",
+      "lang": "en"
+    },
+    {
+      "text": "totoo ba yan",
+      "kind": "feedback",
+      "lang": "fil"
+    },
+    {
+      "text": "that's not what i asked",
+      "kind": "feedback",
+      "lang": "en"
+    },
+    {
+      "text": "wrong answer",
+      "kind": "feedback",
+      "lang": "en"
+    },
+    {
+      "text": "mali yata yun",
+      "kind": "feedback",
+      "lang": "fil"
+    },
+    {
+      "text": "you already said that",
+      "kind": "feedback",
+      "lang": "en"
+    },
+    {
+      "text": "that doesn't help",
+      "kind": "feedback",
+      "lang": "en"
+    },
+    {
+      "text": "that was helpful",
+      "kind": "feedback",
+      "lang": "en"
+    },
+    {
+      "text": "nice, very helpful",
+      "kind": "feedback",
+      "lang": "en"
+    },
+    {
+      "text": "good answer",
+      "kind": "feedback",
+      "lang": "en"
+    },
+    {
+      "text": "you're smart",
+      "kind": "feedback",
+      "lang": "en"
+    },
+    {
+      "text": "galing mo naman",
+      "kind": "feedback",
+      "lang": "fil"
+    },
+    {
+      "text": "ang galing",
+      "kind": "feedback",
+      "lang": "fil"
+    },
+    {
+      "text": "that's amazing",
+      "kind": "feedback",
+      "lang": "en"
+    },
+    {
+      "text": "cool",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "ok",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "ok thanks",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "okay got it",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "noted",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "sige",
+      "kind": "ack",
+      "lang": "fil"
+    },
+    {
+      "text": "sige po salamat",
+      "kind": "ack",
+      "lang": "fil"
+    },
+    {
+      "text": "thank you so much",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "thanks a lot",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "salamat po",
+      "kind": "ack",
+      "lang": "fil"
+    },
+    {
+      "text": "haha",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "lol",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "hmm",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "huh",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "what?",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "ano?",
+      "kind": "ack",
+      "lang": "fil"
+    },
+    {
+      "text": "yes",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "no",
+      "kind": "ack",
+      "lang": "en"
+    },
+    {
+      "text": "oo",
+      "kind": "ack",
+      "lang": "fil"
+    },
+    {
+      "text": "hindi",
+      "kind": "ack",
+      "lang": "fil"
+    },
+    {
+      "text": "hello",
+      "kind": "greeting",
+      "lang": "en"
+    },
+    {
+      "text": "hi sevi",
+      "kind": "greeting",
+      "lang": "en"
+    },
+    {
+      "text": "good morning po",
+      "kind": "greeting",
+      "lang": "taglish"
+    },
+    {
+      "text": "bye",
+      "kind": "greeting",
+      "lang": "en"
+    },
+    {
+      "text": "goodbye thank you",
+      "kind": "greeting",
+      "lang": "en"
+    },
+    {
+      "text": "show me the map",
+      "kind": "other_tier",
+      "lang": "en",
+      "note": "logs 2026-07-23: LLM (site-grounded) answered from a map-making workshop excerpt"
+    },
+    {
+      "text": "open the map",
+      "kind": "other_tier",
+      "lang": "en"
+    },
+    {
+      "text": "where am i",
+      "kind": "other_tier",
+      "lang": "en"
+    },
+    {
+      "text": "summarize our conversation",
+      "kind": "other_tier",
+      "lang": "en"
+    },
+    {
+      "text": "what did i ask you earlier",
+      "kind": "other_tier",
+      "lang": "en"
+    },
+    {
+      "text": "repeat that",
+      "kind": "other_tier",
+      "lang": "en"
+    },
+    {
+      "text": "say that again",
+      "kind": "other_tier",
+      "lang": "en"
+    },
+    {
+      "text": "ulitin mo",
+      "kind": "other_tier",
+      "lang": "fil"
+    },
+    {
+      "text": "can you explain more",
+      "kind": "pointer",
+      "lang": "en"
+    },
+    {
+      "text": "tell me more",
+      "kind": "pointer",
+      "lang": "en"
+    },
+    {
+      "text": "and then?",
+      "kind": "pointer",
+      "lang": "en"
+    },
+    {
+      "text": "what about the other one",
+      "kind": "pointer",
+      "lang": "en"
+    },
+    {
+      "text": "yung isa pa",
+      "kind": "pointer",
+      "lang": "fil"
+    },
+    {
+      "text": "give me an example",
+      "kind": "pointer",
+      "lang": "en"
+    },
+    {
+      "text": "in english please",
+      "kind": "pointer",
+      "lang": "en"
+    },
+    {
+      "text": "sa tagalog naman",
+      "kind": "pointer",
+      "lang": "fil"
+    },
+    {
+      "text": "the second one",
+      "kind": "pointer",
+      "lang": "en"
+    },
+    {
+      "text": "number 3",
+      "kind": "pointer",
+      "lang": "en"
+    },
+    {
+      "text": "Indang (Main Campus)",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: charter p.56/p.7 OFFICE OF THE UNIVERSITY PRESIDENT quoted x7"
+    },
+    {
+      "text": "Tell me about a specific CvSU campus",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: transferee procedure p.1700 quoted x7"
+    },
+    {
+      "text": "Carmona Campus",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: CAMPUS LIBRARY internal services quoted"
+    },
+    {
+      "text": "Naic Campus",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: CAMPUS LIBRARY internal services quoted"
+    },
+    {
+      "text": "Office hour",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: random procedure table quoted"
+    },
+    {
+      "text": "Registration form",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: Registration of Shiftees quoted"
+    },
+    {
+      "text": "Kmc director",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: IP Incentive Application quoted"
+    },
+    {
+      "text": "Who is the head of cashiers office",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: scholarship claiming procedure quoted; negative feedback"
+    },
+    {
+      "text": "who is the dean of CEIT",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: 2020 COVID dispenser article quoted"
+    },
+    {
+      "text": "he is not the current dean",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: PRAISE award article quoted"
+    },
+    {
+      "text": "Who is willie buclatin",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: child-labor webinar quoted"
+    },
+    {
+      "text": "my elligibility on free tuition",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: 2017 'Dear Students' quoted"
+    },
+    {
+      "text": "Address of CVSU MAIN",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: charter cover page quoted"
+    },
+    {
+      "text": "Where is the campus located?",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: transferee/president pages quoted"
+    },
+    {
+      "text": "Cvsu adresses",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: transferee procedure served"
+    },
+    {
+      "text": "Cvsu unit directors",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": ""
+    },
+    {
+      "text": "services in accounting",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": ""
+    },
+    {
+      "text": "Procurement office contact number",
+      "kind": "underspecified",
+      "lang": "en",
+      "allow_augment": true,
+      "note": "beta: cover page quoted"
+    }
+  ]
+}

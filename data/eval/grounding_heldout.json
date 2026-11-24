@@ -1,0 +1,6199 @@
+{
+ "_comment": "HELD-OUT grounding-gate set. Built 2026-09-02 from the four adversarial critics' fresh utterances in the gate-design workflow; none of these were seen by any gate designer and none may be used to tune thresholds. cls: never = conversational/meta/feedback (no augment, no quote); noquote = out-of-corpus, date-shifted, underspecified or mixed asks (a verbatim quote is always wrong; augment allowed); gold = answerable, expect_* names the answer document; must_augment = legitimate first questions that start with a follow-up opener (the answer page must still be admitted). Two date_shift items the critic itself retracted (Nov-2025 nurses, Oct-2025 CPA: the corpus HAS those editions) were removed 2026-09-02.",
+ "items": [
+  {
+   "text": "do you store my data?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "is my conversation private?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "what's your email address?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you have a phone number?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "what year is it?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you love me?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "are you better than chatgpt?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "are you smarter than google?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "what is your policy?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can I trust you?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "are you available 24/7?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "is this the official chatbot of the school?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you have a website?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you speak bisaya?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you do my homework?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "what's the meaning of life?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "who is your boss?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "are you the best chatbot?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "what version are you?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "were you trained on the website?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you remember what i said?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you read this pdf?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you call me?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "what data do you collect?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you have a privacy policy?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "is this secure?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you email me a copy of this chat?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you learn from our conversation?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "are you connected to the registrar's system?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you check my grades?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you see my student number?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you enroll me?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "what is your source?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you have an app?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "is there an app?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you work on mobile?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you show pictures?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you have a voice?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "what is your model?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "what's your accuracy?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "who is your developer?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "what's your rating?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "how many users do you have?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you have memory?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "are you a student?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "are you from the registrar?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "is this the library?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "is this the admission office?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "am i talking to the registrar?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "are you alive?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you sleep?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you dance?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "what's your favorite color?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you eat?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "are you happy?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you see me?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you have a family?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "what's your birthday?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "are you male or female?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "can you keep a secret?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "do you get tired?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c2"
+  },
+  {
+   "text": "Hi! I'm a first year student. Nice to meet you!",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "hello, student here from College of Nursing, can i ask something?",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "good evening! i'm a parent of an incoming freshman, just checking if this works",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "hey, just testing this out during my break, back to class later",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "hi sevi, my friend said you know everything about the campus, is that true?",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "lol my classmate thought you were a real person",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "sorry my english is not good, can we continue in tagalog?",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "i'm bored in the library right now haha",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "wow ang bilis mo sumagot",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "grabe, ang dami mong alam",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "buti na lang may ganitong chatbot",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "salamat, malaking tulong to sa research ko",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "cge salamat, balik ako mamaya after class",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "Good morning! I'm a graduate student from the College of Education. Thank you for your help earlier.",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "I'm an alumna, batch 2010, just curious how this chatbot works",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c2"
+  },
+  {
+   "text": "tnx",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "tnx po 🙏",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "pwde ba",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "san",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "ano po yun",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "k lang",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "ok lng",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "sry",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "ty!",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "ok noted po thank u",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "👍👍",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "😂😂😂 galing",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "hahaha oo nga",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "wat?",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "huh??",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "hmmm ok",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "gg",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "nyc",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "ohh gets ko na",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "aah okay",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "ic",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "sige po 🙂",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "thank u sevi 😊",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "gud pm",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "gud am po",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "helo",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "hi po, anyone?",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "pwde ba magtanong?",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "san po?",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "ano po yun?",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "gud am",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "gud eve",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "gm po",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "ok gets",
+   "cls": "never",
+   "kind": "short",
+   "src": "c2"
+  },
+  {
+   "text": "the one about the dorm",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "what about the dorm?",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "and the fee for that?",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "which one is it again?",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "can you repeat the requirements?",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "yung sinabi mo kanina",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "ano ulit yung una?",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "pwede pakibalik yung list",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "back to the first answer",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "the previous answer please",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "so what's the answer?",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "so?",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "eh?",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "then what happened?",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "the third option",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "yung pangalawa",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "the second link",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c2"
+  },
+  {
+   "text": "ano po yung pwede kong itanong dito?",
+   "cls": "never",
+   "kind": "fil_meta",
+   "src": "c2"
+  },
+  {
+   "text": "ikaw ba si sevi?",
+   "cls": "never",
+   "kind": "fil_meta",
+   "src": "c2"
+  },
+  {
+   "text": "may kausap ba akong tao?",
+   "cls": "never",
+   "kind": "fil_meta",
+   "src": "c2"
+  },
+  {
+   "text": "pwede ba akong makipag-usap sa tao?",
+   "cls": "never",
+   "kind": "fil_meta",
+   "src": "c2"
+  },
+  {
+   "text": "gawa ka ba ng ICTO?",
+   "cls": "never",
+   "kind": "fil_meta",
+   "src": "c2"
+  },
+  {
+   "text": "sinong nag-program sayo?",
+   "cls": "never",
+   "kind": "fil_meta",
+   "src": "c2"
+  },
+  {
+   "text": "nakakainis ka",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "hindi yan ang tinatanong ko",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "ang labo mo",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "di ko gets",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "ulit nga?",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "paki-explain po",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "ano ibig sabihin nun?",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "bakit ganun?",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "sigurado ka diyan?",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "hindi ba mali yun?",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "ayos, salamat po!",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "ang bait mo naman",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "nakakatuwa ka",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "wag ka nang magsalita",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "sagot mo ay mali",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "hindi ko naintindihan yung sagot mo",
+   "cls": "never",
+   "kind": "fil_fb",
+   "src": "c2"
+  },
+  {
+   "text": "marunong ka ba mag-english?",
+   "cls": "never",
+   "kind": "fil_meta",
+   "src": "c2"
+  },
+  {
+   "text": "nakakaintindi ka ba ng bisaya?",
+   "cls": "never",
+   "kind": "fil_meta",
+   "src": "c2"
+  },
+  {
+   "text": "who is the current SSG president of Bacoor campus?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "sino ang SSG president ngayong 2026?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "who is the current CSG president?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Sino ang kasalukuyang presidente ng Central Student Government?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "who are the CSG officers this year?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "does CvSU have a medical school in Bacoor?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "how much is the tuition for the MD program?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "is the Doctor of Medicine program accredited?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "what's the weather in Indang tomorrow?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "will classes be suspended tomorrow because of the typhoon?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Are classes suspended today at CvSU Indang?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Suspended classes today at CvSU Indang?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "is there class suspension today?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "suspended ba ang klase bukas?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "may pasok ba bukas?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "walang pasok ba ngayon sa CvSU?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "How do I apply to UP Los Baños?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Is CvSU better than UP Los Baños in agriculture?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Is CvSU better than UP Los Baños for agriculture and forestry?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "What's the passing rate of UP Los Baños in the agriculturist board exam?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "which is better, CvSU or UP Los Baños, for a BS Agriculture degree?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "How much is tuition at De La Salle University Dasmariñas?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "How do I enroll at De La Salle University Dasmariñas?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "is Ateneo better than CvSU?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "what's the tuition at DLSU-Dasmariñas?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "does CvSU have a campus in Manila?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "is there a CvSU campus in Laguna?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "how do I get to CvSU from Manila by bus?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "what time does the canteen open?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "is there wifi in the dorm?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "how much is the dorm fee per semester?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "magkano ang dorm fee per sem?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "who is the dean of the College of Education?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the current Vice President for Academic Affairs?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "who is the current vice president for research?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the current head of the Human Resource Development Office?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "who is the current university registrar? contact number please",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the current registrar and what is her contact number?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "who is the current dean of CEIT and his contact number?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "sino ang current chairperson ng Department of Computer Studies sa Bacoor?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "what is the tuition fee per unit for BS Nursing?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "how many students are enrolled at CvSU?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "what is the acceptance rate of CvSU?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "when is the entrance exam for 2027?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "when does enrollment for second semester 2026 start?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "what is the cutoff grade for BS Nursing?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "does CvSU accept late enrollees this semester?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "is there a shuttle from Indang to Bacoor campus?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "who won the 2026 university games basketball?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "what is the passing rate of CvSU in the 2027 nursing board exam?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "may scholarship ba para sa varsity players?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "how much is the cvsu dormitory monthly rent?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the current chairperson of the Humanities department?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the current Human Resource director of CvSU?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "who is the current dean of CAS? contact number?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the current dean of the College of Nursing and her contact number?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the current summer term coordinator?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the current University Registrar? Please give the phone number.",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the current director of the Knowledge Management Center? number?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who are the current members of the Board of Regents? summary please",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the current president of CvSU? Summarize.",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the current Vice President for Research and Extension? Give me a summary.",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the current dean of CEIT? (number of students too)",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "who is the current head of the Human Resource Development Office at Bacoor campus?",
+   "cls": "noquote",
+   "kind": "out_of_corpus",
+   "src": "c2"
+  },
+  {
+   "text": "What was CvSU's passing rate in the May 2026 nursing licensure exam?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "How many CvSU examinees passed the September 2026 civil engineering board exam?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "Did CvSU top the October 2026 criminologist licensure exam?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "What was CvSU's passing rate in the April 2026 Civil Engineers Licensure Exam?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "How many new CPAs did CvSU produce in the October 2026 CPA board exam?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "What is CvSU's rank in the 2027 WURI rankings?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "Where did CvSU rank in the 2025 HE Higher Education Ranking?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "What was the theme of CvSU's 121st founding anniversary?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "How many gold medals did the CvSU Hornets win at the 2026 STRASUC Olympics?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "What passing rate did CvSU get in the August 2026 MedTech licensure exam?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "Ano ang passing rate ng CvSU sa February 2027 Criminology board exam?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "Ilang gold medal ang nakuha ng CvSU Hornets sa STRASUC Olympics 2026?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "Who was elected CSG president for AY 2025-2026?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "Who led the oath-taking of the new CSG officers in September 2025?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "Which two CvSU faculty members became Fulbright scholars in 2025?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "When were classes suspended in March 2026 at CvSU?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "What passing rate did CvSU Bacoor get in the February 2027 Criminologist exam?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "What was CvSU's overall performance rating in the May 2027 CPA Licensure Examination?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "How many CvSU examinees passed the June 2027 Architects licensure exam?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "What rank did CvSU achieve in the WURI 2025 rankings?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "How many new licensed Civil Engineers did CvSU produce in the November 2026 exam?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "What was CvSU's passing rate in the March 2027 Civil Engineers Licensure Examination?",
+   "cls": "noquote",
+   "kind": "date_shift",
+   "src": "c2"
+  },
+  {
+   "text": "What are the library's rules on wearing ID and uniform?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "library-rules-and-regulations",
+   "src": "c2"
+  },
+  {
+   "text": "How much does it cost to replace a lost library borrower's card?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "library-rules-and-regulations",
+   "src": "c2"
+  },
+  {
+   "text": "Magkano yung replacement ng lost borrower's card sa library?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "library-rules-and-regulations",
+   "src": "c2"
+  },
+  {
+   "text": "How many rooms does the ladies' dormitory have?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "university-dormitory",
+   "src": "c2"
+  },
+  {
+   "text": "Ilang building ang university dormitory ng CvSU?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "university-dormitory",
+   "src": "c2"
+  },
+  {
+   "text": "May 24-hour staff ba sa dormitory?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "university-dormitory",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the fourth president of CvSU?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "dr-nuestro-named-new-cvsu-president",
+   "src": "c2"
+  },
+  {
+   "text": "Sino ang pumalit kay Dr. Robles bilang presidente ng CvSU?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "dr-nuestro-named-new-cvsu-president",
+   "src": "c2"
+  },
+  {
+   "text": "Sino yung bagong president ng CvSU after ni Dr. Robles?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "dr-nuestro-named-new-cvsu-president",
+   "src": "c2"
+  },
+  {
+   "text": "What passing rate did CvSU get in the August 2025 MedTech licensure exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "medtech-licensure-exam",
+   "src": "c2"
+  },
+  {
+   "text": "Ano ang passing rate ng CvSU Main sa February 2025 Criminology board exam?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "february-2025-criminology",
+   "src": "c2"
+  },
+  {
+   "text": "Did CvSU get 100% in the November 2023 nurses licensure exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "100-passing-rate-in-nursing",
+   "src": "c2"
+  },
+  {
+   "text": "Which two CvSU faculty members became Fulbright scholars in 2022?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "fulbright",
+   "src": "c2"
+  },
+  {
+   "text": "How can students get free access to Scopus and ScienceDirect?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "science-direct-scopus",
+   "src": "c2"
+  },
+  {
+   "text": "What are the lyrics of the CvSU hymn?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "cvsu-hymn",
+   "src": "c2"
+  },
+  {
+   "text": "Where is the CvSU Health Services located?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "health-facilities",
+   "src": "c2"
+  },
+  {
+   "text": "Nasaan ang CvSU Health Services?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "health-facilities",
+   "src": "c2"
+  },
+  {
+   "text": "How many people can Rolle Hall accommodate?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "rolle-hall",
+   "src": "c2"
+  },
+  {
+   "text": "Does CvSU have an Olympic size swimming pool?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "swimming-pool",
+   "src": "c2"
+  },
+  {
+   "text": "May Olympic size pool ba sa CvSU?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "swimming-pool",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the dean of the College of Nursing?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "con-officials",
+   "src": "c2"
+  },
+  {
+   "text": "Who is the head of the University Library?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "library-personnel",
+   "src": "c2"
+  },
+  {
+   "text": "Sino ang campus administrator ng CvSU Bacoor?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "bacoor-campus-officials",
+   "src": "c2"
+  },
+  {
+   "text": "When was the Laya at Diwa monument inaugurated?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "laya-at-diwa",
+   "src": "c2"
+  },
+  {
+   "text": "How many medals did the CvSU Hornets win at the 2025 STRASUC Olympics?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "strasuc",
+   "src": "c2"
+  },
+  {
+   "text": "Ilang gold medal ang nakuha ng CvSU Hornets sa STRASUC Olympics 2025?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "strasuc",
+   "src": "c2"
+  },
+  {
+   "text": "What award did the CvSU Bee Program win in 2021?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "bee-program",
+   "src": "c2"
+  },
+  {
+   "text": "Where was the first BookShare Corner in a Philippine university library set up?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "benetech",
+   "src": "c2"
+  },
+  {
+   "text": "When was the CvSU Learning Center in Dasmariñas established?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "learning-center-in-dasma",
+   "src": "c2"
+  },
+  {
+   "text": "Who was elected CSG president for AY 2023-2024?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "newly-elected-csg",
+   "src": "c2"
+  },
+  {
+   "text": "Sino-sino ang mga guro ng CvSU na kinilala bilang 2025 Natatanging Guro sa Filipino?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "natatanging-guro",
+   "src": "c2"
+  },
+  {
+   "text": "How fast is the dedicated internet at the CvSU Main Campus data center?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "technology-in-the-classroom",
+   "src": "c2"
+  },
+  {
+   "text": "What sports were played in UGames 2025?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "ugames-2025",
+   "src": "c2"
+  },
+  {
+   "text": "Kailan naka-schedule ang comprehensive exams ng Graduate School noong 2020?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "comprehensive-examinations",
+   "src": "c2"
+  },
+  {
+   "text": "What year did the Office of Student Affairs start as a unit of DSAC?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "office-of-student-affairs",
+   "src": "c2"
+  },
+  {
+   "text": "Who manages the CvSU Coffee Processing Center?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "coffee-processing-center",
+   "src": "c2"
+  },
+  {
+   "text": "Is the water refilling station open to concessionaires?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "water-refilling",
+   "src": "c2"
+  },
+  {
+   "text": "Anong award yung nakuha ng CvSU ITSO for the fourth consecutive year?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "itso-platinum",
+   "src": "c2"
+  },
+  {
+   "text": "When were classes suspended in March 2021 at CvSU?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "suspension-of-classes",
+   "src": "c2"
+  },
+  {
+   "text": "Who led the oath-taking of the new CSG officers in September 2023?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "newly-elected-csg",
+   "src": "c2"
+  },
+  {
+   "text": "How much is the fee per page for a Transcript of Records?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Transcript of Records",
+   "src": "c2"
+  },
+  {
+   "text": "Magkano ang bayad sa TOR per page?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "charter",
+   "expect_regex": "TOR",
+   "src": "c2"
+  },
+  {
+   "text": "How many working days does it take to get my TOR?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Transcript of Records|TOR",
+   "src": "c2"
+  },
+  {
+   "text": "What do I need to replace a lost school ID?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Identification Card \\(Lost\\)|Affidavit of Loss",
+   "src": "c2"
+  },
+  {
+   "text": "Magkano ang ID replacement fee kapag nawala ang ID?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "charter",
+   "expect_regex": "ID replacement|Identification Card",
+   "src": "c2"
+  },
+  {
+   "text": "What are the requirements to get a library card as a new student?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Library Card",
+   "src": "c2"
+  },
+  {
+   "text": "How do I apply for a student refund?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Refund",
+   "src": "c2"
+  },
+  {
+   "text": "How do I file a leave of absence?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Leave of Absence",
+   "src": "c2"
+  },
+  {
+   "text": "Paano mag-file ng leave of absence sa registrar?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "charter",
+   "expect_regex": "Leave of Absence",
+   "src": "c2"
+  },
+  {
+   "text": "What is the process for adding or dropping a subject?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Adding/Dropping",
+   "src": "c2"
+  },
+  {
+   "text": "What are the steps for signing the student clearance at the Accounting Office?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Student Clearance",
+   "src": "c2"
+  },
+  {
+   "text": "What do new students need for a medical clearance for enrollment?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Medical Clearance",
+   "src": "c2"
+  },
+  {
+   "text": "How much does a certificate of good moral character cost?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Good Moral",
+   "src": "c2"
+  },
+  {
+   "text": "Magkano ang good moral certificate?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "charter",
+   "expect_regex": "Good Moral",
+   "src": "c2"
+  },
+  {
+   "text": "What are the requirements for transferees from other schools?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "[Tt]ransferee",
+   "src": "c2"
+  },
+  {
+   "text": "Ano ang requirements para sa transferee galing ibang school?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "charter",
+   "expect_regex": "[Tt]ransferee",
+   "src": "c2"
+  },
+  {
+   "text": "How much is the comprehensive exam fee for a master's student?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Comprehensive Examination",
+   "src": "c2"
+  },
+  {
+   "text": "What documents do I need to apply for a scholarship at OSAS?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Scholarship",
+   "src": "c2"
+  },
+  {
+   "text": "How do I shift to another program?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "[Ss]hift",
+   "src": "c2"
+  },
+  {
+   "text": "How much is document authentication at the Records Office?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Authentication",
+   "src": "c2"
+  },
+  {
+   "text": "Paano magpa-replace ng nawalang library card?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "charter",
+   "expect_regex": "Library Card",
+   "src": "c2"
+  },
+  {
+   "text": "What office validates the school ID for library use?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "Validation of School ID",
+   "src": "c2"
+  },
+  {
+   "text": "Ilang minutes ang processing ng lost ID replacement?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "charter",
+   "expect_regex": "Identification Card",
+   "src": "c2"
+  },
+  {
+   "text": "Ano ang mga requirements para makakuha ng library card ang bagong estudyante?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "charter",
+   "expect_regex": "Library Card",
+   "src": "c2"
+  },
+  {
+   "text": "So how do I get my TOR?",
+   "cls": "must_augment",
+   "kind": "followup_first_question",
+   "src": "c2"
+  },
+  {
+   "text": "But how much is the dorm fee?",
+   "cls": "must_augment",
+   "kind": "followup_first_question",
+   "src": "c2"
+  },
+  {
+   "text": "Also, is there a library card fee?",
+   "cls": "must_augment",
+   "kind": "followup_first_question",
+   "src": "c2"
+  },
+  {
+   "text": "Same day release ba ang TOR?",
+   "cls": "must_augment",
+   "kind": "followup_first_question",
+   "src": "c2"
+  },
+  {
+   "text": "And where is the registrar's office?",
+   "cls": "must_augment",
+   "kind": "followup_first_question",
+   "src": "c2"
+  },
+  {
+   "text": "Then how do I pay for the TOR?",
+   "cls": "must_augment",
+   "kind": "followup_first_question",
+   "src": "c2"
+  },
+  {
+   "text": "Or can I just email the registrar?",
+   "cls": "must_augment",
+   "kind": "followup_first_question",
+   "src": "c2"
+  },
+  {
+   "text": "E-mail address of the registrar?",
+   "cls": "must_augment",
+   "kind": "followup_first_question",
+   "src": "c2"
+  },
+  {
+   "text": "So what are the requirements for a good moral certificate?",
+   "cls": "must_augment",
+   "kind": "followup_first_question",
+   "src": "c2"
+  },
+  {
+   "text": "Also how many rooms does the dormitory have?",
+   "cls": "must_augment",
+   "kind": "followup_first_question",
+   "src": "c2"
+  },
+  {
+   "text": "Eh paano kung nawala yung ID ko?",
+   "cls": "must_augment",
+   "kind": "followup_first_question",
+   "src": "c2"
+  },
+  {
+   "text": "Tapos saan ako magbabayad ng TOR?",
+   "cls": "must_augment",
+   "kind": "followup_first_question",
+   "src": "c2"
+  },
+  {
+   "text": "thank you so much for the information, very helpful",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "thanks for the quick and helpful answer",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "wow you really can answer all kinds of questions about the university, impressive",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "your previous answer about enrollment was wrong, the dates are different",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "that answer about the requirements was not clear at all",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "great, that is exactly the information i needed about the campus",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "you gave me the wrong office and the wrong contact number",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "i think the schedule you gave is outdated",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "the link you sent is broken",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "ang bilis mo sumagot, salamat",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "maraming salamat po sa impormasyon",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "maraming salamat po sa tulong ninyo",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "salamat po sa inyong sagot, malaking tulong po ito",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "mali po yung sagot niyo tungkol sa enrollment",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "hindi po yan ang tinatanong ko",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "tama ba talaga yung sinabi mo kanina",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "grabe ang galing mo naman sumagot",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c1"
+  },
+  {
+   "text": "what can you tell me about the university",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "can you give me information about cvsu programs",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "do you know the schedule of classes today",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "do you have information about the campus",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "can i ask about the requirements",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "ano po ang mga pwede kong itanong sa inyo",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "pwede po ba magtanong tungkol sa enrollment",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "may alam ka ba tungkol sa mga campus ng cvsu",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "marunong ka ba mag tagalog",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "are you connected to the registrar",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "can i talk to a real person from the university",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "who is your developer",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "sino nag program sayo",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c1"
+  },
+  {
+   "text": "tnx po",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "thx!! 😊",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "ok po salamat 🙏🙏",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "ayos, salamat",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "sige po, maraming salamat",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "noted po thank you",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "okiee",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "kk got it",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "san po yun",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "ah ok ok",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "😂😂😂",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "👍",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "ganun ba",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "talaga?",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "weh",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "edi wow",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c1"
+  },
+  {
+   "text": "happy new year",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "merry christmas and a happy new year",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "merry christmas everyone",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "happy valentines day",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "happy teachers day po",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "happy birthday cvsu",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "good morning everyone, happy monday",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "congratulations to all the graduates",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "congrats sa mga bagong nurses",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "good luck sa board exam",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "good luck to all board exam takers",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "hello good afternoon po",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "magandang hapon po",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "hi sevi good evening, i have a question",
+   "cls": "never",
+   "kind": "greeting",
+   "src": "c1"
+  },
+  {
+   "text": "hi! i'm a first year student from bacoor. i just want to say your website is nice.",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c1"
+  },
+  {
+   "text": "im a cvsu main campus student",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c1"
+  },
+  {
+   "text": "i study at cvsu bacoor campus, first year bsit",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c1"
+  },
+  {
+   "text": "hello, i am an incoming freshman student and i am very excited to enroll",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c1"
+  },
+  {
+   "text": "my friend is a nursing student in cvsu",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c1"
+  },
+  {
+   "text": "i graduated from cvsu last year and i miss the campus",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c1"
+  },
+  {
+   "text": "im bored",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c1"
+  },
+  {
+   "text": "ang init ngayon sa indang",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c1"
+  },
+  {
+   "text": "gutom na ako, may canteen ba sa campus",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c1"
+  },
+  {
+   "text": "ayoko na mag aral",
+   "cls": "never",
+   "kind": "smalltalk",
+   "src": "c1"
+  },
+  {
+   "text": "what about the other campuses",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c1"
+  },
+  {
+   "text": "and for transferees?",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c1"
+  },
+  {
+   "text": "how about for graduate students",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c1"
+  },
+  {
+   "text": "what about the requirements for transferees",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c1"
+  },
+  {
+   "text": "and the fees?",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c1"
+  },
+  {
+   "text": "how about sa bacoor campus",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c1"
+  },
+  {
+   "text": "yung sa second semester naman",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c1"
+  },
+  {
+   "text": "the one for freshmen",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c1"
+  },
+  {
+   "text": "can you list them all",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c1"
+  },
+  {
+   "text": "give me the link",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c1"
+  },
+  {
+   "text": "pakiulit po yung requirements",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c1"
+  },
+  {
+   "text": "show me the campus map please",
+   "cls": "never",
+   "kind": "other_tier",
+   "src": "c1"
+  },
+  {
+   "text": "where is the map of the campus",
+   "cls": "never",
+   "kind": "other_tier",
+   "src": "c1"
+  },
+  {
+   "text": "summarize what you said about the enrollment",
+   "cls": "never",
+   "kind": "other_tier",
+   "src": "c1"
+  },
+  {
+   "text": "what was my first question",
+   "cls": "never",
+   "kind": "other_tier",
+   "src": "c1"
+  },
+  {
+   "text": "delete my chat history",
+   "cls": "never",
+   "kind": "other_tier",
+   "src": "c1"
+  },
+  {
+   "text": "testing testing",
+   "cls": "never",
+   "kind": "other_tier",
+   "src": "c1"
+  },
+  {
+   "text": "asdf qwer zxcv",
+   "cls": "never",
+   "kind": "other_tier",
+   "src": "c1"
+  },
+  {
+   "text": "...",
+   "cls": "never",
+   "kind": "other_tier",
+   "src": "c1"
+  },
+  {
+   "text": "???",
+   "cls": "never",
+   "kind": "other_tier",
+   "src": "c1"
+  },
+  {
+   "text": "CEIT",
+   "cls": "never",
+   "kind": "entity",
+   "src": "c1"
+  },
+  {
+   "text": "registrar",
+   "cls": "never",
+   "kind": "entity",
+   "src": "c1"
+  },
+  {
+   "text": "Dr. Nuestro",
+   "cls": "never",
+   "kind": "entity",
+   "src": "c1"
+  },
+  {
+   "text": "bacoor campus",
+   "cls": "never",
+   "kind": "entity",
+   "src": "c1"
+  },
+  {
+   "text": "OSAS",
+   "cls": "never",
+   "kind": "entity",
+   "src": "c1"
+  },
+  {
+   "text": "college of nursing",
+   "cls": "never",
+   "kind": "entity",
+   "src": "c1"
+  },
+  {
+   "text": "university library",
+   "cls": "never",
+   "kind": "entity",
+   "src": "c1"
+  },
+  {
+   "text": "GAD",
+   "cls": "never",
+   "kind": "entity",
+   "src": "c1"
+  },
+  {
+   "text": "AACCUP level III",
+   "cls": "never",
+   "kind": "entity",
+   "src": "c1"
+  },
+  {
+   "text": "who is the SSG president of bacoor campus",
+   "cls": "never",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "who is the dean of the college of nursing",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "sino ang dean ng college of education",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "what's the weather in indang today",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "is there a class suspension today because of the typhoon",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "may pasok ba bukas sa cvsu",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "how much is the tuition fee per unit for BSIT",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "magkano ang tuition sa cvsu per semester",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "does cvsu have a medical school in bacoor",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "what is the passing rate of cvsu in the 2027 nursing board exam",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "how do i enroll at university of the philippines",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "is de la salle dasmarinas better than cvsu",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "what time does the canteen close",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "how do i reset my student portal password",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "what is the wifi password in the library",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "ano ang uniform ng cvsu students",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "who won the intramurals this year",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "may scholarship ba para sa mga varsity players sa carmona campus",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "what is the cutoff grade for the nursing program",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "when is the graduation ceremony this year",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "how many students are enrolled in cvsu right now",
+   "cls": "never",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "what are the office hours of the registrar in silang campus",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "paano mag apply ng student assistant sa library",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "who is the president of the philippines",
+   "cls": "never",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "what is the capital of cavite",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "recommend a good restaurant near cvsu",
+   "cls": "noquote",
+   "kind": "notcovered",
+   "src": "c1"
+  },
+  {
+   "text": "What was CvSU's passing rate in the June 2026 architecture licensure exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "2026/06/29/cvsu-a",
+   "src": "c1"
+  },
+  {
+   "text": "Ilan ang pumasa sa June 2026 architect board exam mula sa CvSU?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "2026/06/29/cvsu-a",
+   "src": "c1"
+  },
+  {
+   "text": "What rank did CvSU get in the 2026 WURI rankings?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "cvsu-ranks-217th",
+   "src": "c1"
+  },
+  {
+   "text": "Ano ang ranking ng CvSU sa 2026 HE Higher Education Ranking?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "cvsu-ranks-197th",
+   "src": "c1"
+  },
+  {
+   "text": "How many CvSU examinees passed the March 2026 civil engineering board exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "42-new-licensed-civil",
+   "src": "c1"
+  },
+  {
+   "text": "What is CvSU's passing rate for criminologists in February 2026?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "february-2026-licensure-exam-for-criminologists",
+   "src": "c1"
+  },
+  {
+   "text": "When did CvSU receive AACCUP Level III institutional accreditation?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "aaccup-level-iii",
+   "src": "c1"
+  },
+  {
+   "text": "Saan ginanap yung conferment ng AACCUP Level III institutional accreditation?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "aaccup-level-iii",
+   "src": "c1"
+  },
+  {
+   "text": "What is the theme of WELA 2026?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "cvsu-hosts-wela-2026",
+   "src": "c1"
+  },
+  {
+   "text": "Sino ang nag-initiate ng WELA conference?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "cvsu-hosts-wela-2026",
+   "src": "c1"
+  },
+  {
+   "text": "How many rooms does the ladies dormitory have?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "university-dormitory",
+   "src": "c1"
+  },
+  {
+   "text": "Ilang building ang university dormitory?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "university-dormitory",
+   "src": "c1"
+  },
+  {
+   "text": "May water dispenser ba sa dormitory?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "university-dormitory",
+   "src": "c1"
+  },
+  {
+   "text": "What is the contact number of Hostel Tropicana?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "hostel-tropicana",
+   "src": "c1"
+  },
+  {
+   "text": "When does the application for admission for first semester SY 2025-2026 start?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "first-semester-sy-2025-2026-application",
+   "src": "c1"
+  },
+  {
+   "text": "Kailan nagsimula ang CvSU bilang Indang Intermediate School?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "history",
+   "src": "c1"
+  },
+  {
+   "text": "What was DSAC before it became Cavite State University?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "histor",
+   "src": "c1"
+  },
+  {
+   "text": "Who is the dean of the Graduate School and Open Learning College?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "gs-olc-officials",
+   "src": "c1"
+  },
+  {
+   "text": "Where can I see the list of admission passers for SY 2024-2025?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "admission-result-for-sy-2024-2025",
+   "src": "c1"
+  },
+  {
+   "text": "Which SDG did CvSU score highest in the THE Impact Ratings 2026?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "1001-1500th",
+   "src": "c1"
+  },
+  {
+   "text": "pano mag apply sa cvsu main for freshmen",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "admission",
+   "src": "c1"
+  },
+  {
+   "text": "Who is the CvSU president?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "aaccup-level-iii",
+   "src": "c1"
+  },
+  {
+   "text": "Sino ang president ng CvSU?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "aaccup-level-iii",
+   "src": "c1"
+  },
+  {
+   "text": "What does WURI stand for?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "wuri",
+   "src": "c1"
+  },
+  {
+   "text": "What is DSAC?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "histor",
+   "src": "c1"
+  },
+  {
+   "text": "When did CvSU become a university?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "histor",
+   "src": "c1"
+  },
+  {
+   "text": "Where is the CvSU main campus?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "indang",
+   "src": "c1"
+  },
+  {
+   "text": "How many campuses does CvSU have?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "campus",
+   "src": "c1"
+  },
+  {
+   "text": "Magkano ang bayad sa TOR para sa board exam?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "charter",
+   "expect_pages": [
+    559,
+    560
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "How long until my TOR is ready for release?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    559,
+    560
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "Ano ang mga requirements para makapag-apply sa student dormitory?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "charter",
+   "expect_pages": [
+    529,
+    530
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "What ID do I need to borrow books from the library?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    618,
+    619,
+    825,
+    826,
+    827,
+    965,
+    966,
+    1024,
+    1194,
+    1195,
+    1409,
+    1410,
+    1562,
+    1563,
+    1619,
+    1620,
+    1858,
+    1859,
+    1973,
+    1974,
+    1975
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "Where do I get my student ID as a new student?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    1007,
+    1437,
+    1438,
+    1819
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "How long does student clearance processing take at the College of Medicine?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    738
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "Paano mag-file ng leave of absence?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "charter",
+   "expect_pages": [
+    938
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "Anong requirements ng continuing students for registration?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "charter",
+   "expect_pages": [
+    566,
+    567
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "pwede ba mag borrow ng libro ang alumni sa library",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "charter",
+   "expect_pages": [
+    618,
+    619,
+    825,
+    826,
+    827,
+    965,
+    966,
+    1194,
+    1195,
+    1409,
+    1410,
+    1562,
+    1563,
+    1619,
+    1620,
+    1858,
+    1859,
+    1973
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "how much is the documentary stamp for a certification from the registrar",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    559,
+    560
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "can non-CvSU students use the library",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    614,
+    615,
+    616,
+    618,
+    820,
+    963,
+    964,
+    1191,
+    1192,
+    1406,
+    1407,
+    1408,
+    1559,
+    1560,
+    1614,
+    1615,
+    1855,
+    1856,
+    1967,
+    1968
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "What are the requirements for a good moral certificate?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    592,
+    593,
+    645,
+    656,
+    667,
+    680,
+    691,
+    700,
+    709,
+    759,
+    776,
+    831,
+    902,
+    1063,
+    1224,
+    1300,
+    1542,
+    1642,
+    1698,
+    1944,
+    1999
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "Saan kukuha ng clearance form para sa student clearance?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "charter",
+   "expect_pages": [
+    196,
+    738,
+    829,
+    1102,
+    1103,
+    1549,
+    1743,
+    1753,
+    1764,
+    1777,
+    1841,
+    1842
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "TOR fee per page?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    559,
+    560
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "leave of absence form",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    938
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "good moral fee",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    592,
+    593
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "id replacement fee",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    1008,
+    1820
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "magkano ang TOR",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "charter",
+   "expect_pages": [
+    559,
+    560
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "how many days to process TOR",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    559,
+    560
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "requirements for transferees from other schools",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_pages": [
+    578,
+    579,
+    580,
+    894,
+    895,
+    1069,
+    1070,
+    1071,
+    1204,
+    1205,
+    1206,
+    1295,
+    1296,
+    1527,
+    1528,
+    1696,
+    1697,
+    1934,
+    1935,
+    1938,
+    1939,
+    1940
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "ano ang requirements para sa transferee galing ibang school",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "charter",
+   "expect_pages": [
+    578,
+    579,
+    580,
+    894,
+    895,
+    1069,
+    1070,
+    1071,
+    1204,
+    1205,
+    1206,
+    1295,
+    1296,
+    1527,
+    1528,
+    1696,
+    1697,
+    1934,
+    1935,
+    1938,
+    1939,
+    1940
+   ],
+   "src": "c1"
+  },
+  {
+   "text": "ok tnx po",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c3"
+  },
+  {
+   "text": "thank you sevi!! 🙏🙏",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c3"
+  },
+  {
+   "text": "haha ok sige salamat po ulit",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c3"
+  },
+  {
+   "text": "sige lang, thanks",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c3"
+  },
+  {
+   "text": "ok lang, next question",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c3"
+  },
+  {
+   "text": "wala na akong tanong, salamat",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c3"
+  },
+  {
+   "text": "pasensya na po sa abala",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c3"
+  },
+  {
+   "text": "ganda ng sagot mo hehe",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c3"
+  },
+  {
+   "text": "sana all may sagot",
+   "cls": "never",
+   "kind": "ack",
+   "src": "c3"
+  },
+  {
+   "text": "pwde ba magtanong",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "pwde ba mag ask about sa scholarship",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "may itatanong sana ako tungkol sa TOR",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "u there? i have q about enrollment",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "can you answer in tagalog about the enrollment schedule?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "are you still there?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "you there??",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "test",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "testing 123",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "hello? anyone?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "can you speak tagalog",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "do you understand english",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "may kausap ba ako na tao o robot",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "ano ang pangalan mo",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "gusto ko lang mag hi",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "kumusta ka na sevi",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "good evening po, nandyan pa po ba kayo?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "hindi ko alam kung ano ang itatanong ko",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "ay oo nga pala, may tanong pa ako",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "nakalimutan ko na yung tanong ko",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "Good afternoon po. Ako po si Juan, second year BS Criminology student sa Bacoor campus. May tanong lang po ako.",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "hi! good morning. i'm a first year student in cvsu main, i just want to say hi and thank you.",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "what's your favorite college in cvsu?",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "can u recommend a good course for me",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "should i take BS nursing or BS criminology",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "i love you sevi",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "matulog ka na",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "sorry wrong chat",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "wait what",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "is that the latest info?",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "you're useless",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "walang kwenta sagot mo",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "hindi ko maintindihan",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "paki-explain ulit po",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "hindi yan sagot sa tanong ko",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "mali ang sagot mo, ang tinatanong ko ay tungkol sa library",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "ang hirap naman ng tanong ko hehe",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "that's wrong, cvsu did not rank 217th in wuri",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "mali yan, hindi 217th ang cvsu sa wuri",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "did you just copy that from the 'CvSU earns 3 QS Stars rating' page?",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "i already read the dr nuestro named new cvsu president article",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "ok po salamat sa info tungkol sa dormitory",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "thanks! that passing rate is impressive",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "wow 99% passing rate galing",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "grabe ang galing ng cvsu sa criminology board exam ah",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "salamat sa info about sa criminology board exam",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "nice, cvsu ranks 217th in wuri, congrats",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "wow 95.56% passing rate in june 2026 licensure exam for architects, congrats",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "so cvsu tops july 2024 criminology board exam? wow",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "you already told me about the WELA 2026 conference",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "that GAD workshop thing is not what i asked",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "stop telling me about the gender and development seminar",
+   "cls": "never",
+   "kind": "feedback",
+   "src": "c3"
+  },
+  {
+   "text": "ano po ibig sabihin nun",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c3"
+  },
+  {
+   "text": "and the second one?",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c3"
+  },
+  {
+   "text": "yung nauna",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c3"
+  },
+  {
+   "text": "the first campus you mentioned",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c3"
+  },
+  {
+   "text": "ano nga ulit yung sinabi mo kanina",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c3"
+  },
+  {
+   "text": "the one about the board exam",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c3"
+  },
+  {
+   "text": "yung sa dormitory ulit",
+   "cls": "never",
+   "kind": "pointer",
+   "src": "c3"
+  },
+  {
+   "text": "Indang",
+   "cls": "never",
+   "kind": "bare",
+   "src": "c3"
+  },
+  {
+   "text": "board exam",
+   "cls": "never",
+   "kind": "bare",
+   "src": "c3"
+  },
+  {
+   "text": "enrollment",
+   "cls": "never",
+   "kind": "bare",
+   "src": "c3"
+  },
+  {
+   "text": "WURI",
+   "cls": "never",
+   "kind": "bare",
+   "src": "c3"
+  },
+  {
+   "text": "AACCUP",
+   "cls": "never",
+   "kind": "bare",
+   "src": "c3"
+  },
+  {
+   "text": "criminology",
+   "cls": "never",
+   "kind": "bare",
+   "src": "c3"
+  },
+  {
+   "text": "cvsu main campus",
+   "cls": "never",
+   "kind": "bare",
+   "src": "c3"
+  },
+  {
+   "text": "what time is it",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "what's the weather today in indang",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "sino ang SSG president ngayon",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "is UP better than cvsu",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "how do i enroll in ateneo",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "what is the tuition in mapua",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "How many students does Harvard have?",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "what is the population of cavite province",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "how do i get to cvsu from manila by bus",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "what's the wifi password in the library",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "is there a McDonald's near campus",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "who is the dean of CEIT right now, 2026",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "sino ang bagong dean ng college of nursing ngayong 2026",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "may MD program ba kayo sa bacoor",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "what is the cutoff grade for BS nursing",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "magkano ang dorm fee per month",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "does cvsu have a law school",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "is the criminology board exam hard",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "what are the admission requirements for PUP",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "what is the passing rate of UP in the bar exam",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "anong oras nagsasara ang library ng DLSU",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "paano mag apply sa PLM",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "may scholarship ba sa Mapua para sa criminology",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "sino ang presidente ng UP Los Banos",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "kailan ang enrollment sa PUP",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "ang sakit ng ulo ko sa dami ng requirements",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "gutom na ako, may canteen ba sa main campus",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "nasaan ang pinakamalapit na jollibee sa cvsu indang",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "what's the best dorm in cavite",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "pwede ba akong mag enroll sa UP Diliman kahit galing cvsu",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "ano ang tuition sa De La Salle Dasmarinas",
+   "cls": "never",
+   "kind": "trap",
+   "src": "c3"
+  },
+  {
+   "text": "hello po! magandang gabi. first time ko gumamit nito. ok lang ba magtanong dito tungkol sa enrollment at tuition? salamat po.",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "hi sevi, i'm a parent. my daughter wants to study in cvsu. is this chat the right place to ask about admission? thanks",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "Ako po ay isang alumni ng CvSU Indang. Gusto ko lang po magpasalamat sa unibersidad.",
+   "cls": "never",
+   "kind": "meta",
+   "src": "c3"
+  },
+  {
+   "text": "How many rooms does the Student Housing Dormitory have?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "university-dormitory",
+   "src": "c3"
+  },
+  {
+   "text": "Is the men's dormitory inside the campus?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "university-dormitory",
+   "src": "c3"
+  },
+  {
+   "text": "What is CvSU's passing rate in the June 2026 architecture licensure exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "95-56-passing-rate",
+   "src": "c3"
+  },
+  {
+   "text": "ilan ang pumasa sa June 2026 architect board exam sa cvsu",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "95-56-passing-rate",
+   "src": "c3"
+  },
+  {
+   "text": "What rank did CvSU get in WURI 2026?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "217th",
+   "src": "c3"
+  },
+  {
+   "text": "ano ang ranking ng cvsu sa WURI 2026",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "217th",
+   "src": "c3"
+  },
+  {
+   "text": "In which WURI categories did CvSU rank in 2024?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "wuri-2024",
+   "src": "c3"
+  },
+  {
+   "text": "What was the theme of WELA 2026?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "wela-2026",
+   "src": "c3"
+  },
+  {
+   "text": "When and where was WELA 2026 held?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "wela-2026",
+   "src": "c3"
+  },
+  {
+   "text": "Kailan at saan ginanap ang WELA 2026?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "wela-2026",
+   "src": "c3"
+  },
+  {
+   "text": "What AACCUP institutional accreditation level did CvSU get?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "level-iii-institutional",
+   "src": "c3"
+  },
+  {
+   "text": "Kailan ginanap ang NNQAA conferment ceremony para sa AACCUP Level III?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "level-iii-institutional",
+   "src": "c3"
+  },
+  {
+   "text": "What was CvSU Main's passing rate in the February 2026 criminologist licensure exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "february-2026-licensure-exam-for-criminologists",
+   "src": "c3"
+  },
+  {
+   "text": "Ilang examinee ng CvSU Bacoor ang pumasa sa February 2026 criminology board exam?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "february-2026-licensure-exam-for-criminologists",
+   "src": "c3"
+  },
+  {
+   "text": "How many QS stars did CvSU earn?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "qs-stars",
+   "src": "c3"
+  },
+  {
+   "text": "Anong QS stars rating ang nakuha ng CvSU?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "qs-stars",
+   "src": "c3"
+  },
+  {
+   "text": "What position did CvSU get in the 2026 HE Higher Education Ranking?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "197th",
+   "src": "c3"
+  },
+  {
+   "text": "Who did Dr. Nuestro succeed as CvSU president?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "dr-nuestro-named",
+   "src": "c3"
+  },
+  {
+   "text": "What does IDEAL stand for in Dr. Nuestro's administration goals?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "dr-nuestro-named",
+   "src": "c3"
+  },
+  {
+   "text": "Sino ang ikaapat na presidente ng Cavite State University?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "dr-nuestro-named",
+   "src": "c3"
+  },
+  {
+   "text": "What do outside researchers need to present to use the university library?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "outside-researchers",
+   "src": "c3"
+  },
+  {
+   "text": "Anong araw bukas ang library para sa outside researchers?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "outside-researchers",
+   "src": "c3"
+  },
+  {
+   "text": "Paano makakapasok ang outside researchers sa library ng CvSU?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "outside-researchers",
+   "src": "c3"
+  },
+  {
+   "text": "Who are considered regular users of the CvSU library?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "guide-to-cvsu-library",
+   "src": "c3"
+  },
+  {
+   "text": "Can students enter the library without uniform on Wednesdays?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "library-rules-and-regulations",
+   "src": "c3"
+  },
+  {
+   "text": "How much is the replacement fee for a lost borrower's card at the library?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "library-rules-and-regulations",
+   "src": "c3"
+  },
+  {
+   "text": "magkano ang bayad pag nawala ang borrowers card sa library",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "library-rules-and-regulations",
+   "src": "c3"
+  },
+  {
+   "text": "What is CvSU's passing rate in the October 2024 veterinarians licensure exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "72-new-licensed-veterinarians",
+   "src": "c3"
+  },
+  {
+   "text": "sino ang nakakuha ng sixth place sa October 2024 vet board exam",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "72-new-licensed-veterinarians",
+   "src": "c3"
+  },
+  {
+   "text": "When does the application for admission for first semester SY 2025-2026 begin?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "first-semester-sy-2025-2026",
+   "src": "c3"
+  },
+  {
+   "text": "kailan magsisimula ang application for admission para sa SY 2025-2026",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "first-semester-sy-2025-2026",
+   "src": "c3"
+  },
+  {
+   "text": "How many working days before the event should I file a reservation for Rolle Hall?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "rolle-hall",
+   "src": "c3"
+  },
+  {
+   "text": "ilang tao ang kasya sa Rolle Hall",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "rolle-hall",
+   "src": "c3"
+  },
+  {
+   "text": "magkano ang down payment para sa Rolle Hall reservation",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "rolle-hall",
+   "src": "c3"
+  },
+  {
+   "text": "What is the email of the CvSU Data Protection Officer?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "data-protection-officer",
+   "src": "c3"
+  },
+  {
+   "text": "san makikita ang cvsu health services",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "health-facilities",
+   "src": "c3"
+  },
+  {
+   "text": "What was CvSU called in 1964?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "history",
+   "src": "c3"
+  },
+  {
+   "text": "Ano ang dating pangalan ng CvSU noong 1958?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "history",
+   "src": "c3"
+  },
+  {
+   "text": "When did CvSU become a state university?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "history",
+   "src": "c3"
+  },
+  {
+   "text": "What Republic Act converted Don Severino Agricultural College into Cavite State University?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "mandate-mission-vision",
+   "src": "c3"
+  },
+  {
+   "text": "What is CvSU's overall passing rate in the November 2024 agriculturists licensure exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "agriculturists-licensure-exam",
+   "src": "c3"
+  },
+  {
+   "text": "What is the theme of UGames 2025?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "ugames-2025",
+   "src": "c3"
+  },
+  {
+   "text": "Who won the mystery ingredient category at the Philippine Food Expo 2024?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "food-expo",
+   "src": "c3"
+  },
+  {
+   "text": "What passing rate did CvSU Silang get in the September 2023 LEPT?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "silang-awarded",
+   "src": "c3"
+  },
+  {
+   "text": "What award did CvSU-ITSO receive at the 2023 ITSO Clustering Awards?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "platinum-cluster",
+   "src": "c3"
+  },
+  {
+   "text": "When was the Knowledge Management Center created?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "knowledge-management-center",
+   "src": "c3"
+  },
+  {
+   "text": "What PhD programs does the CvSU graduate school offer?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "course-offerings",
+   "src": "c3"
+  },
+  {
+   "text": "Anong mga PhD program ang inooffer ng CvSU?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "course-offerings",
+   "src": "c3"
+  },
+  {
+   "text": "Which CvSU faculty went to the University of Rhode Island as a Fulbright scholar?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "fulbright",
+   "src": "c3"
+  },
+  {
+   "text": "What did CvSU receive at the 2025 ICONS Awards?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "icons-awards",
+   "src": "c3"
+  },
+  {
+   "text": "What is CvSU's rank in the 2025 THE Impact Rankings?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "2025-the-impact-rankings",
+   "src": "c3"
+  },
+  {
+   "text": "sino ang dean ng college of nursing",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "con-officials",
+   "src": "c3"
+  },
+  {
+   "text": "What is the email of the University Registrar for TOR inquiries?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "contact-us",
+   "src": "c3"
+  },
+  {
+   "text": "anong email ng registrar para sa TOR",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "contact-us",
+   "src": "c3"
+  },
+  {
+   "text": "Why will the Registrar and Cashier's Office not accept transactions on April 4 and 5?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "advisory-from-the-office",
+   "src": "c3"
+  },
+  {
+   "text": "What is the first line of the CvSU hymn?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "hymn",
+   "src": "c3"
+  },
+  {
+   "text": "What are the mission and vision of Cavite State University?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "mission",
+   "src": "c3"
+  },
+  {
+   "text": "Ano ang bisyon ng Cavite State University?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "vision",
+   "src": "c3"
+  },
+  {
+   "text": "Which SDG areas did CvSU rank in for the 2025 THE Impact Rankings?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "2025-the-impact-rankings",
+   "src": "c3"
+  },
+  {
+   "text": "What was the passing rate of CvSU in the July 2024 criminology board exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "july-2024-criminology",
+   "src": "c3"
+  },
+  {
+   "text": "Ilang porsyento ang passing rate ng CvSU sa July 2024 criminology board exam?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "site",
+   "expect_slug": "july-2024-criminology",
+   "src": "c3"
+  },
+  {
+   "text": "How many CvSU examinees took the July 2024 criminologist licensure exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "july-2024-criminology",
+   "src": "c3"
+  },
+  {
+   "text": "Who was the sixth placer in the October 2024 veterinarian licensure exam from CvSU?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "72-new-licensed-veterinarians",
+   "src": "c3"
+  },
+  {
+   "text": "What is the theme of the seagrass data turnover ceremony?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_slug": "seagrass",
+   "src": "c3"
+  },
+  {
+   "text": "Kanino ibinigay ng CvSU ang seagrass research data?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "site",
+   "expect_slug": "seagrass",
+   "src": "c3"
+  },
+  {
+   "text": "What are the requirements for borrowing books from the library?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "borrowing",
+   "src": "c3"
+  },
+  {
+   "text": "How long does it take to borrow a book at the library?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "borrowing",
+   "src": "c3"
+  },
+  {
+   "text": "How do I replace my lost school ID?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "identification\\ card",
+   "src": "c3"
+  },
+  {
+   "text": "paano kumuha ng certificate of good moral character",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "charter",
+   "expect_regex": "good\\ moral",
+   "src": "c3"
+  },
+  {
+   "text": "How do I get a transcript of records from the registrar?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "transcript",
+   "src": "c3"
+  },
+  {
+   "text": "What are the requirements for transferees from another school?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "transferees",
+   "src": "c3"
+  },
+  {
+   "text": "How do I request completion of an incomplete grade?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "completion",
+   "src": "c3"
+  },
+  {
+   "text": "How do I get my clearance signed as a graduating student?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "clearance",
+   "src": "c3"
+  },
+  {
+   "text": "How do I register as a new student?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "registration\\ of\\ new\\ students",
+   "src": "c3"
+  },
+  {
+   "text": "Ano ang requirements para sa library card ng bagong estudyante?",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "charter",
+   "expect_regex": "library\\ card",
+   "src": "c3"
+  },
+  {
+   "text": "How much is the fee for a lost library card replacement?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "lost\\ library\\ card",
+   "src": "c3"
+  },
+  {
+   "text": "Paano manghiram ng libro sa library?",
+   "cls": "gold",
+   "lang": "fil",
+   "corpus": "charter",
+   "expect_regex": "borrowing",
+   "src": "c3"
+  },
+  {
+   "text": "paano mag request ng certificate of enrollment",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "charter",
+   "expect_regex": "certificat",
+   "src": "c3"
+  },
+  {
+   "text": "What is the processing time for a certificate of good moral character?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "good\\ moral",
+   "src": "c3"
+  },
+  {
+   "text": "Who may avail of the borrowing of library materials?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "borrowing",
+   "src": "c3"
+  },
+  {
+   "text": "What do I need to apply for an AACCUP program survey visit?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "aaccup",
+   "src": "c3"
+  },
+  {
+   "text": "How do I request a referral letter to another library?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "referral",
+   "src": "c3"
+  },
+  {
+   "text": "nawala ang school ID ko, paano magpa-replace",
+   "cls": "gold",
+   "lang": "taglish",
+   "corpus": "charter",
+   "expect_regex": "identification\\ card",
+   "src": "c3"
+  },
+  {
+   "text": "What are the steps to get a certification of scholarship?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_regex": "scholarship",
+   "src": "c3"
+  },
+  {
+   "text": "thank u po",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "ok lang",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "sige na nga",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "aba galing ah",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "ganda ng sagot mo",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "wait lang",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "teka",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "hala sorry",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "gets ko na",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "medyo malabo",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "pakiulit nga",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "hay nako",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "eh di wow",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "opo salamat po",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "ay oo nga",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "you're the best 😂😂",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "😊😊 salamat",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "🙏",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "🔥🔥 galing",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "?",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "!!!",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "asdfgh",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "brilliant work",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "great job done",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "good job well done",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "that was fast!",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "you rock",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "nice work sevi",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "very informative, thank you",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "informative answer",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "you answered my question thank you",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "im just testing",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "you are useless",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "this is a waste of time",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "boring",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "ang bagal mo naman",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "answer faster",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "shorter please",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "make it shorter",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "that's a long answer",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "too long",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "can you make that simpler",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "simplify please",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "hello? are you there?",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "still there?",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "are you online",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "are you working",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "anyone there",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "can i talk to a human",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "connect me to a staff",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "i want to talk to a person",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "hows your day",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "kamusta ka",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "how are you today",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "anong oras na",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "what day is it today",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "happy birthday",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "merry christmas",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "good luck",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "the first one",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "the last one",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "option 2",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "letter b",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "yes that one",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "the one you mentioned",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "the office you mentioned",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "that office",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "the same campus",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "next step?",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "and after that?",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "then what?",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "ok and the schedule?",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "wait, the requirements for that?",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "the second campus",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "the first requirement",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "the third step",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "Sevi",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "Cavite State University",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "registrar office",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "library",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "library hours",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "student portal",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "president",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "Transcript of Records",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "ENROLLMENT SCHEDULE",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "ADMISSION REQUIREMENTS",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "TOR REQUIREMENTS",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "Good Moral Certificate",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "nasa main campus na ako",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "i already submitted my requirements last week",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "nag-enroll na ako kahapon",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "tapos na ako mag enroll",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "kumuha na ako ng TOR last month",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "nakapasa ako sa board exam!!!",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "congrats sa mga nakapasa sa board exam",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "proud cvsu graduate here",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "my daughter is studying at cvsu imus",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "I graduated from CvSU in 2015",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "the enrollment was so stressful this year",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "the library was closed when I went there",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "ang tagal ng pila sa registrar kanina",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "I passed the September 2025 psychometricians licensure exam",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "congratulations to the new licensed architects",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "so happy for the new nurses who passed the board",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "my friend told me about you. she said you can answer questions about enrollment.",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "i asked my classmate but he doesn't know the answer either",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "sorry i was asking about the library earlier, never mind",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "nevermind, i found it already on the website",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "hi! good afternoon. i just wanted to say the website is nice. anyway, thanks!",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "hello sevi, kumusta? matagal na akong hindi nakakapunta sa campus. miss ko na.",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "ok so i tried what you said and it worked. thanks a lot!",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "wow that was quick. you answer questions really fast, huh?",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "i am a student of cvsu main campus",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "im from bacoor campus",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "graduating na ako this year",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "we had our gender sensitivity seminar yesterday",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "our professor said the accreditation is next week",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "who is the dean of the College of Engineering and Information Technology",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "who is the current SSG president",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "who is the CSG president this year",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "does CvSU have a medical school",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "what's the weather like in Indang tomorrow",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "how is the traffic going to Indang",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "how much is the jeepney fare from Trece to Indang",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "what are the admission requirements of PUP",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "how do I enroll at Ateneo",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "what courses does UP Los Banos offer",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "is Cavite State University better than PUP",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "who won the UAAP basketball championship",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "what is the CvSU wifi password",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "wifi password sa library",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "what is my grade in math",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "can you check my grades",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "pakicheck ng grades ko",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "when is my exam",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "what is the schedule of my class",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "sino ang teacher ko sa math",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "where can I buy a uniform near campus",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "what is the passing rate of CvSU in the 2030 bar exam",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "did CvSU win the 2026 PBA",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "what is the founding anniversary theme this year",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "who is the head of the procurement office",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "who is the registrar of cvsu",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "is there a nursing program in bacoor campus",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "how many students does cvsu have",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "what is the tuition fee for BSIT in Bacoor",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "pano mag login sa student portal",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "when is the next board exam for criminology",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "who is the dean of CAS",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "sino ang dean ng CEMDS",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "what is the population of Indang",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "who is the mayor of Indang",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "ano ang kapital ng Cavite",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "ilang campus meron ang PUP",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "does cvsu offer law",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "may law school ba ang cvsu",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "does cvsu offer BS Pharmacy",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "may BS Pharmacy ba sa cvsu",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "when will grades be released",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "kailan ilalabas ang grades",
+   "cls": "noquote",
+   "kind": "c4_mixed",
+   "src": "c4"
+  },
+  {
+   "text": "What was CvSU's passing rate in the June 2026 architects licensure exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "95.56%",
+   "src": "c4"
+  },
+  {
+   "text": "How many new civil engineers did CvSU produce?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "42",
+   "src": "c4"
+  },
+  {
+   "text": "Where does CvSU rank in WURI's top 500 Global Innovative Universities?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "217th",
+   "src": "c4"
+  },
+  {
+   "text": "What is CvSU's rank in the THE Sustainability Impact Ratings?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "1001-1500",
+   "src": "c4"
+  },
+  {
+   "text": "Where will the 4th WELA conference be held?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "WELA 2026",
+   "src": "c4"
+  },
+  {
+   "text": "Is CvSU a top performing school in the criminologist licensure exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "crim",
+   "src": "c4"
+  },
+  {
+   "text": "Ilan ang topnotchers ng CvSU sa Psychometricians Licensure Exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "4 topnotchers",
+   "src": "c4"
+  },
+  {
+   "text": "May dormitory ba sa CvSU main campus?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "University Dormitory",
+   "src": "c4"
+  },
+  {
+   "text": "How much is the dormitory fee at CvSU?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "University Dormitory",
+   "src": "c4"
+  },
+  {
+   "text": "Can I borrow books from the CvSU library?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Guide to CvSU Library",
+   "src": "c4"
+  },
+  {
+   "text": "How many books can a student borrow from the library?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Guide to CvSU Library",
+   "src": "c4"
+  },
+  {
+   "text": "Paano kumuha ng library card?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "Library Card",
+   "src": "c4"
+  },
+  {
+   "text": "How do I request a Transcript of Records?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "TOR",
+   "src": "c4"
+  },
+  {
+   "text": "Paano mag request ng TOR sa registrar?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "TOR",
+   "src": "c4"
+  },
+  {
+   "text": "How do I replace a lost school ID?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "ID lost",
+   "src": "c4"
+  },
+  {
+   "text": "Nawala yung ID ko, paano kumuha ng bago?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "ID lost",
+   "src": "c4"
+  },
+  {
+   "text": "How do I get a certificate of good moral character?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "good moral",
+   "src": "c4"
+  },
+  {
+   "text": "What are the steps for clearance signing?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "clearance",
+   "src": "c4"
+  },
+  {
+   "text": "How do I apply as a transferee from another school?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "transferee",
+   "src": "c4"
+  },
+  {
+   "text": "What are the admission requirements for first year students?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Admission Requirements",
+   "src": "c4"
+  },
+  {
+   "text": "Ano ang requirements para sa admission ng freshmen?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Admission Requirements",
+   "src": "c4"
+  },
+  {
+   "text": "How do I apply for a scholarship at CvSU?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "scholarship",
+   "src": "c4"
+  },
+  {
+   "text": "Paano mag apply ng scholarship?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "scholarship",
+   "src": "c4"
+  },
+  {
+   "text": "When was CvSU founded?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "History",
+   "src": "c4"
+  },
+  {
+   "text": "Who is the new president of CvSU?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Dr. Nuestro",
+   "src": "c4"
+  },
+  {
+   "text": "Sino ang bagong presidente ng CvSU?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Dr. Nuestro",
+   "src": "c4"
+  },
+  {
+   "text": "What is the mission of Cavite State University?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Mandate, Mission",
+   "src": "c4"
+  },
+  {
+   "text": "What is the vision of CvSU?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Mandate, Mission",
+   "src": "c4"
+  },
+  {
+   "text": "Does CvSU have a swimming pool?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Swimming Pool",
+   "src": "c4"
+  },
+  {
+   "text": "May swimming pool ba sa CvSU?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Swimming Pool",
+   "src": "c4"
+  },
+  {
+   "text": "What is Hostel Tropicana?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Hostel Tropicana",
+   "src": "c4"
+  },
+  {
+   "text": "What is the contact number of the College of Arts and Sciences?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "CAS Contact Us",
+   "src": "c4"
+  },
+  {
+   "text": "When is the start of classes for AY 2024-2025?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Calendar",
+   "src": "c4"
+  },
+  {
+   "text": "Kailan ang start ng classes sa first semester AY 2024-2025?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Calendar",
+   "src": "c4"
+  },
+  {
+   "text": "What is the address of CvSU Bacoor campus?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Bacoor Campus",
+   "src": "c4"
+  },
+  {
+   "text": "Who are the officials of the Naic campus?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Naic Campus Officials",
+   "src": "c4"
+  },
+  {
+   "text": "Sino ang mga officials ng Imus Campus?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Imus Campus Officials",
+   "src": "c4"
+  },
+  {
+   "text": "What is the QS Stars rating of CvSU?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "QS Stars",
+   "src": "c4"
+  },
+  {
+   "text": "Does CvSU offer graduate programs under CHED-SIKAP?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "GSOLC",
+   "src": "c4"
+  },
+  {
+   "text": "How do I apply for the Doctor of Medicine program?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "MD application",
+   "src": "c4"
+  },
+  {
+   "text": "What was CvSU's passing rate in the nursing board exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "nursing",
+   "src": "c4"
+  },
+  {
+   "text": "How do I request completion of grades?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "completion",
+   "src": "c4"
+  },
+  {
+   "text": "Paano mag request ng change of grades?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "change of grades",
+   "src": "c4"
+  },
+  {
+   "text": "How do I apply for the Teacher Certificate Program?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "TCP",
+   "src": "c4"
+  },
+  {
+   "text": "How do I re-apply for admission in the main campus for the 1st semester?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "RE-APPLICATION",
+   "src": "c4"
+  },
+  {
+   "text": "What did CvSU receive from DENR-EMB?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "eco-friendly",
+   "src": "c4"
+  },
+  {
+   "text": "How do I get a referral letter from the university clinic?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "referral",
+   "src": "c4"
+  },
+  {
+   "text": "Paano makakuha ng certificate of enrollment?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "certificates",
+   "src": "c4"
+  },
+  {
+   "text": "What is the procedure to borrow tools or equipment?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "borrow tools",
+   "src": "c4"
+  },
+  {
+   "text": "How do I request CCTV footage?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "CCTV",
+   "src": "c4"
+  },
+  {
+   "text": "Paano mag-apply sa Alumni Association membership?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "alumni",
+   "src": "c4"
+  },
+  {
+   "text": "Pano kumuha ng TOR",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "TOR",
+   "src": "c4"
+  },
+  {
+   "text": "hw do i get my tor",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "TOR (typo)",
+   "src": "c4"
+  },
+  {
+   "text": "san ang registrar",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "",
+   "src": "c4"
+  },
+  {
+   "text": "wat r ur office hours",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "",
+   "src": "c4"
+  },
+  {
+   "text": "Yung TOR ko, paano makuha?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "TOR",
+   "src": "c4"
+  },
+  {
+   "text": "So how do I enroll?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "enroll",
+   "src": "c4"
+  },
+  {
+   "text": "kung transferee ako, ano ang requirements?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "transferee",
+   "src": "c4"
+  },
+  {
+   "text": "Kung magpapa-enroll ako sa CvSU, saan ako pupunta?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "",
+   "src": "c4"
+  },
+  {
+   "text": "E ano ang requirements sa admission?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "admission",
+   "src": "c4"
+  },
+  {
+   "text": "But how much is the tuition?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "free tuition?",
+   "src": "c4"
+  },
+  {
+   "text": "magkano ang tuition sa cvsu",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "",
+   "src": "c4"
+  },
+  {
+   "text": "HOW DO I GET MY TOR",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "TOR",
+   "src": "c4"
+  },
+  {
+   "text": "ADMISSION REQUIREMENTS FOR FRESHMEN",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "admission",
+   "src": "c4"
+  },
+  {
+   "text": "kailán ang enrollment",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "accent",
+   "src": "c4"
+  },
+  {
+   "text": "Anong requirements sa pag-apply ng scholarship?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "scholarship",
+   "src": "c4"
+  },
+  {
+   "text": "What is the passing rate of CvSU in the Nov 2025 nurses licensure exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "nurses Nov 2025",
+   "src": "c4"
+  },
+  {
+   "text": "How many topnotchers did CvSU produce in the Social Workers licensure exam?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "2 topnotchers",
+   "src": "c4"
+  },
+  {
+   "text": "Anong ranking ng CvSU sa STRASUC Olympics 2024?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "3rd overall",
+   "src": "c4"
+  },
+  {
+   "text": "How do I apply for the varsity athletes admission?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "charter",
+   "expect_text": "varsity",
+   "src": "c4"
+  },
+  {
+   "text": "What are the requirements for foreign students?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Foreign Students",
+   "src": "c4"
+  },
+  {
+   "text": "Is there a job fair at CvSU?",
+   "cls": "gold",
+   "lang": "en",
+   "corpus": "site",
+   "expect_text": "Job Fair",
+   "src": "c4"
+  }
+ ]
+}

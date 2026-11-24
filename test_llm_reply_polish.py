@@ -196,8 +196,12 @@ check("scope prompt not longer", len(prompt) <= OLD_SCOPE_PROMPT_LEN, len(prompt
 
 grounded = HybridChatbot._grounded_prompt("q", [(0.5, SITE_CITE, "text", "site")])
 check("grounded has STRICT RULES", "STRICT RULES" in grounded)
-for n in range(1, 8):
+# Six since the relevance-gate merge: the "answer using ONLY these excerpts"
+# rule moved into the EVIDENCE header.
+for n in range(1, 7):
     check(f"grounded has rule {n}", f"\n{n}. " in grounded)
+check("grounded bans excerpt meta-talk", "Never mention the excerpts" in grounded)
+check("grounded keeps satellite excerpts to their campus", "to that campus only" in grounded)
 
 
 if FAILURES:

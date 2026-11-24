@@ -80,3 +80,6 @@ models/joint_*
 models/eval_joint*.json
 data/eval/slot_preds*.json
 data/eval/slot_failures*.json
+
+# IDE
+.idea/
