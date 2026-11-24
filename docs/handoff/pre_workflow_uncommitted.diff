@@ -1,0 +1,1390 @@
+diff --git a/.env.example b/.env.example
+index 17da468..2d36f5f 100644
+--- a/.env.example
++++ b/.env.example
+@@ -99,15 +99,31 @@ OLLAMA_MODEL=llama3.2:3b
+ # ----------------------------------------------------------------------
+ # OpenAI-compatible config (used when LLM_PROVIDER=openai or localai)
+ # ----------------------------------------------------------------------
++# Under openai/localai EVERY local-LLM caller follows these vars — the fallback
++# tier, the AIS/connectors LLM routers, the agentic loop and the safety judge —
++# and OLLAMA_* is ignored. Thinking models (qwen3, deepseek-r1, ...) get
++# chat_template_kwargs.enable_thinking=false on each request.
++#
+ # Base URL of the OpenAI-compatible API — MUST include the /v1 prefix.
+-#   LocalAI (compose service below):  http://localai:8080/v1
+-#   local LocalAI:                    http://localhost:8080/v1
++#   llama.cpp llama-server on the host: http://127.0.0.1:8080/v1
++#     (CUDA zip from github.com/ggml-org/llama.cpp/releases — the winget
++#     ggml.llamacpp package is the Vulkan build), e.g.
++#     llama-server -m <model>.gguf --alias <id> -ngl all -c 8192 -np 1 -fa on
++#                  --reasoning off --api-key-file <file>
++#   LM Studio:                         http://127.0.0.1:1234/v1
++#   LocalAI (compose service below):   http://localai:8080/v1
++#   from a compose container to a host server: http://host.docker.internal:<port>/v1
++#     (the host server must then bind 0.0.0.0, not 127.0.0.1)
+ # OPENAI_BASE_URL=http://localhost:8080/v1
+-# Model name as the server exposes it (LocalAI: the served id — for a GGUF
+-# installed by URI this is the .gguf filename, e.g. below).
++# Model name as the server exposes it (GET /v1/models — llama-server: --alias;
++# LocalAI: for a GGUF installed by URI this is the .gguf filename, e.g. below).
+ # OPENAI_MODEL=Qwen2.5-3B-Instruct-Q4_K_M.gguf
+-# Optional API key — LocalAI usually needs none; set if your endpoint requires it.
++# Optional API key — sent as a Bearer token. Set it whenever the server has one
++# (llama-server --api-key / --api-key-file); without a key llama-server lets
++# any web page in your browser call it (CORS allows all origins).
+ # OPENAI_API_KEY=
++# A local server with one slot (llama-server -np 1) only queues extra turns:
++# CHAT_MAX_CONCURRENT_TURNS=1
+ 
+ # ----------------------------------------------------------------------
+ # Claude API config (used when LLM_PROVIDER=claude)
+@@ -119,6 +135,13 @@ ANTHROPIC_API_KEY=
+ # Claude model — haiku is fast/cheap, sonnet is higher quality.
+ CLAUDE_MODEL=claude-haiku-4-5
+ 
++# Claude request limits (count Claude API calls, not chat turns). 0 = off.
++# Requests over a limit get the llm_unavailable reply instead of a Claude call.
++CLAUDE_RATE_LIMIT_RPM=20
++CLAUDE_RATE_LIMIT_PER_USER=5
++CLAUDE_RATE_LIMIT_WINDOW=60
++CLAUDE_DAILY_REQUEST_CAP=500
++
+ # ----------------------------------------------------------------------
+ # MCP bridges (AIS finance bridge: see api/ais_mcp.py docstring for its
+ # AIS_MCP_* vars; shared read-only connectors bridge below)
+@@ -177,7 +200,8 @@ AGENTIC_WORKFLOWS_ENABLED=0
+ # a conservative concern-cue prefilter matches, so most chats never pay it.
+ # Fail-safe: any LLM error just falls back to the lexicon verdict.
+ SAFETY_LLM_SECOND_OPINION=0
+-# SAFETY_LLM_MODEL=llama3.2:3b        # defaults to OLLAMA_MODEL / haiku
++# SAFETY_LLM_MODEL=llama3.2:3b        # Ollama: defaults to OLLAMA_MODEL; Claude: haiku
++#                                     # (openai/localai always judge with OPENAI_MODEL)
+ 
+ # Repeat-abuse cooldown (progressive friction). After TRIPS directed-abuse hits
+ # from one session inside WINDOW seconds, further abusive messages get a firm
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index a1ba1cf..8953bed 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -64,6 +64,15 @@ jobs:
+           docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_shorthand_expansion.py
+           docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_place_resolver.py
+ 
++      - name: Gate tests (local LLM providers)
++        # Every local-LLM caller (fallback tier, AIS/connectors routers, safety
++        # judge) must reach the OPENAI_* server under LLM_PROVIDER=openai and
++        # switch thinking off; the probe must not read a sign-in page as a live
++        # server. Throwaway localhost servers only — no model, no network.
++        run: |
++          docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_llm_openai_compat.py
++          docker run --rm -e LLM_PROVIDER=none sevi-api:ci python test_llm_probe.py
++
+       - name: Start API
+         run: docker run -d --name api -p 8000:8000 -e LLM_PROVIDER=none sevi-api:ci
+ 
+diff --git a/.vscode/settings.json b/.vscode/settings.json
+index 1b02bb8..93bd39b 100644
+--- a/.vscode/settings.json
++++ b/.vscode/settings.json
+@@ -1,3 +1,10 @@
+ {
+-    "claudeCodeChat.permissions.yoloMode": true
++    "claudeCodeChat.permissions.yoloMode": true,
++    "python-envs.pythonProjects": [
++        {
++            "path": ".",
++            "envManager": "ms-python.python:venv",
++            "packageManager": "ms-python.python:pip"
++        }
++    ]
+ }
+\ No newline at end of file
+diff --git a/README.md b/README.md
+index ddc9528..33d68e1 100644
+--- a/README.md
++++ b/README.md
+@@ -66,6 +66,8 @@ Charter page or official-site URL that backs them (`ChatResponse.sources`).
+ 
+ ## Quick start
+ 
++The shared Sevi/Nova local admin PIN is in the gitignored `logs/local-admin-pin.txt`. Local HTTP development uses `ADMIN_COOKIE_SECURE=0`. The System panel lists installed Mac models and can switch the running model; update `.env` to retain a selection after restart.
++
+ ### Requirements
+ 
+ - **Python 3.11** (the training/serving environment is pinned to 3.11.9)
+@@ -88,13 +90,13 @@ python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk
+ python scripts/seed_db.py
+ 
+ # 5. Start the API — trained models ship in the repo, no retraining needed
+-uvicorn api.app:app --host 0.0.0.0 --port 8009
++uvicorn api.app:app --env-file .env --host 127.0.0.1 --port 8010
+ ```
+ 
+-- API docs (Swagger UI): http://localhost:8009/docs
+-- Health check: http://localhost:8009/health
++- API docs (Swagger UI): http://localhost:8010/docs
++- Health check: http://localhost:8010/health
+ 
+-On Windows, `run_server.bat` is a one-click launcher for the same server.
++On Windows, `run_server.bat` loads `.env`, uses the project's virtual environment when available, and serves on port 8010. Set `SEVI_API_PORT` to override it and match the web development proxy. For the Mac SSH tunnel, use `OPENAI_BASE_URL=http://127.0.0.1:11435/v1`; native Ollama uses `OLLAMA_BASE_URL=http://127.0.0.1:11435`. Select the exact installed model ID. Runtime selections last until restart; keep the desired model in `.env`.
+ 
+ ### Docker
+ 
+diff --git a/api/agentic_loop.py b/api/agentic_loop.py
+index e8cb882..4293563 100644
+--- a/api/agentic_loop.py
++++ b/api/agentic_loop.py
+@@ -44,6 +44,7 @@ import time
+ from typing import Any, Callable, Optional
+ 
+ from . import ais_mcp
++from .llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target
+ 
+ _logger = logging.getLogger("ais_mcp.agentic")
+ 
+@@ -82,6 +83,8 @@ def _pick_provider() -> Optional[str]:
+     prov = os.getenv("LLM_PROVIDER", "").strip().lower()
+     if prov in ("ollama", "local"):
+         return "ollama"
++    if prov in OPENAI_COMPAT_PROVIDERS:
++        return "openai"
+     if prov in ("claude", "anthropic"):
+         return "anthropic"
+     # auto: prefer local, then Anthropic if a key is present
+@@ -194,25 +197,27 @@ async def _loop_anthropic(message: str, st: _State, call_tool_fn: Callable) -> s
+     return final
+ 
+ 
+-async def _loop_ollama(message: str, st: _State, call_tool_fn: Callable) -> str:
++async def _loop_local(message: str, st: _State, call_tool_fn: Callable) -> str:
++    """OpenAI-style tool loop against Ollama's /v1 shim or, under
++    LLM_PROVIDER=openai|localai, the OPENAI_* server (llama-server, LM Studio)."""
+     import httpx
+ 
+-    url = f"{ais_mcp._OLLAMA_BASE_URL}/v1/chat/completions"
+-    model = ais_mcp._router_ollama_model()
++    target = local_chat_target(ais_mcp._router_ollama_model())
+     msgs: list[dict] = [
+         {"role": "system", "content": _AGENT_SYSTEM},
+         {"role": "user", "content": message},
+     ]
+     final = ""
+ 
+-    async with httpx.AsyncClient(timeout=30.0) as http:
++    async with httpx.AsyncClient(timeout=30.0, headers=target.headers) as http:
+         for _ in range(MAX_STEPS):
+             force_final = st.over_budget()
+-            body = {"model": model, "messages": msgs, "max_tokens": SYNTH_MAX_TOKENS}
++            body = {"model": target.model, "messages": msgs, "max_tokens": SYNTH_MAX_TOKENS,
++                    **target.extra_body}
+             if not force_final:
+                 body["tools"] = ais_mcp._LLM_TOOLS_OPENAI
+                 body["tool_choice"] = "auto"
+-            resp = await http.post(url, json=body)
++            resp = await http.post(target.url, json=body)
+             resp.raise_for_status()
+             msg = ((resp.json().get("choices") or [{}])[0].get("message")) or {}
+             tool_calls = msg.get("tool_calls") or []
+@@ -232,7 +237,8 @@ async def _loop_ollama(message: str, st: _State, call_tool_fn: Callable) -> str:
+                 msgs.append({"role": "tool", "tool_call_id": call.get("id", name), "content": r["content"]})
+         else:
+             msgs.append({"role": "user", "content": "Answer now from the results above; do not call more tools."})
+-            resp = await http.post(url, json={"model": model, "messages": msgs, "max_tokens": SYNTH_MAX_TOKENS})
++            resp = await http.post(target.url, json={"model": target.model, "messages": msgs,
++                                                     "max_tokens": SYNTH_MAX_TOKENS, **target.extra_body})
+             resp.raise_for_status()
+             final = (((resp.json().get("choices") or [{}])[0].get("message")) or {}).get("content", "").strip()
+ 
+@@ -267,7 +273,7 @@ async def run_agentic_read(
+         if provider == "anthropic":
+             final = await _loop_anthropic(message, st, call_tool_fn)
+         else:
+-            final = await _loop_ollama(message, st, call_tool_fn)
++            final = await _loop_local(message, st, call_tool_fn)
+     except ais_mcp.CircuitOpenError:
+         return None  # MCP down — let the single-shot path do its degraded reply
+     except Exception:  # noqa: BLE001 — never block chat on the loop; fall through
+diff --git a/api/ais_mcp.py b/api/ais_mcp.py
+index 48917c8..9804852 100644
+--- a/api/ais_mcp.py
++++ b/api/ais_mcp.py
+@@ -53,18 +53,20 @@ _CALL_TIMEOUT_SECONDS = float(os.environ.get("AIS_MCP_TIMEOUT_SECONDS", "8.0"))
+ # in production if Desk is served from a different host (e.g. behind nginx).
+ _DESK_URL = os.environ.get("AIS_DESK_URL", "http://accounting.localhost:8002").rstrip("/")
+ # Opt-in: when regex misses on an AIS-shaped message, ask an LLM to extract
+-# {tool, args}. Provider chosen by LLM_PROVIDER env (ollama|claude); when
+-# unset, prefers Ollama (local, free) then falls back to Anthropic.
++# {tool, args}. Provider chosen by LLM_PROVIDER env (ollama|openai|localai|
++# claude); when unset, prefers Ollama (local, free) then falls back to Anthropic.
+ _LLM_ROUTER_ENABLED = os.environ.get("AIS_MCP_LLM_ROUTER", "0") == "1"
+ 
+-# Ollama config — uses the OpenAI-compatible /v1/chat/completions endpoint
+-# so we get structured tool_calls back. Any chat model that supports tool
+-# calling works (qwen2.5+, qwen3, llama3.1+, etc.).
+-try:  # single source for the Ollama endpoint default (see api/llm_defaults.py)
+-	from .llm_defaults import ollama_base_url
++# Local LLM config — always the OpenAI-style /chat/completions endpoint so we
++# get structured tool_calls back: Ollama's /v1 shim, or an OpenAI-compatible
++# server (llama-server, LM Studio) under LLM_PROVIDER=openai|localai. Any chat
++# model that supports tool calling works (qwen2.5+, qwen3, llama3.1+, gemma4).
++try:  # single source for the endpoint defaults (see api/llm_defaults.py)
++	from .llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target, ollama_base_url
+ except ImportError:  # standalone/direct import
+-	from llm_defaults import ollama_base_url
++	from llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target, ollama_base_url
+ _OLLAMA_BASE_URL = ollama_base_url()
++_LOCAL_PROVIDERS = frozenset({"ollama"}) | OPENAI_COMPAT_PROVIDERS
+ 
+ 
+ # Router models are read PER CALL so the admin LLM toggle (which rewrites
+@@ -1008,7 +1010,8 @@ async def _llm_route(text: str) -> Optional[tuple[str, dict]]:
+ 	"""Pick a provider and ask it to extract (tool, args) for an AIS query.
+ 
+ 	Provider selection order:
+-	  1. ``LLM_PROVIDER`` env var if set explicitly (ollama | claude/anthropic).
++	  1. ``LLM_PROVIDER`` env var if set explicitly (ollama | openai/localai |
++	     claude/anthropic).
+ 	  2. Else: prefer Ollama (local, free); fall back to Anthropic if Ollama
+ 	     isn't configured.
+ 
+@@ -1020,13 +1023,13 @@ async def _llm_route(text: str) -> Optional[tuple[str, dict]]:
+ 	if not _AIS_SHAPED_RE.search(text):
+ 		return None
+ 	provider = (os.environ.get("LLM_PROVIDER") or "").lower()
+-	if provider == "ollama":
+-		return await _llm_route_ollama(text)
++	if provider in _LOCAL_PROVIDERS:
++		return await _llm_route_local(text)
+ 	if provider in ("claude", "anthropic"):
+ 		return await _llm_route_anthropic(text)
+ 	# Auto: Ollama first (local, no API cost), then Anthropic.
+ 	if _OLLAMA_BASE_URL:
+-		return await _llm_route_ollama(text)
++		return await _llm_route_local(text)
+ 	return await _llm_route_anthropic(text)
+ 
+ 
+@@ -1063,20 +1066,23 @@ async def _llm_route_anthropic(text: str) -> Optional[tuple[str, dict]]:
+ 	return None
+ 
+ 
+-async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict]]:
+-	"""Ask the local Ollama model to pick a tool via OpenAI-style tool calling.
++async def _llm_route_local(text: str) -> Optional[tuple[str, dict]]:
++	"""Ask the local model to pick a tool via OpenAI-style tool calling.
+ 
+-	qwen2.5+, qwen3, and llama3.1+ all support tool calling through Ollama's
+-	``/v1/chat/completions`` endpoint. Model name comes from
++	qwen2.5+, qwen3, llama3.1+ and gemma4 all support tool calling through
++	Ollama's ``/v1/chat/completions`` shim and llama-server / LM Studio. Under
++	LLM_PROVIDER=openai|localai the model is ``OPENAI_MODEL``; on Ollama it is
+ 	``AIS_MCP_OLLAMA_MODEL`` (else ``OLLAMA_MODEL``, default ``qwen3:8b``).
+ 	"""
++	target = local_chat_target(_router_ollama_model())
+ 	t0 = time.monotonic()
+ 	try:
+ 		async with httpx.AsyncClient(timeout=15.0) as http:
+ 			resp = await http.post(
+-				f"{_OLLAMA_BASE_URL}/v1/chat/completions",
++				target.url,
++				headers=target.headers,
+ 				json={
+-					"model": _router_ollama_model(),
++					"model": target.model,
+ 					"messages": [
+ 						{"role": "system", "content": _LLM_SYSTEM},
+ 						{"role": "user", "content": text},
+@@ -1084,12 +1090,13 @@ async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict]]:
+ 					"tools": _LLM_TOOLS_OPENAI,
+ 					"tool_choice": "auto",
+ 					"max_tokens": 256,
++					**target.extra_body,
+ 				},
+ 			)
+ 			resp.raise_for_status()
+ 			data = resp.json()
+ 	except Exception:  # noqa: BLE001 — never block chat on LLM failure
+-		_logger.exception("ais_mcp llm_route provider=ollama failed text=%r", text[:200])
++		_logger.exception("ais_mcp llm_route provider=%s failed text=%r", target.provider, text[:200])
+ 		return None
+ 	elapsed_ms = int((time.monotonic() - t0) * 1000)
+ 
+@@ -1098,8 +1105,8 @@ async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict]]:
+ 	tool_calls = msg.get("tool_calls") or []
+ 	if not tool_calls:
+ 		_logger.info(
+-			"ais_mcp llm_route provider=ollama elapsed=%dms tool=None text=%r",
+-			elapsed_ms, text[:120],
++			"ais_mcp llm_route provider=%s elapsed=%dms tool=None text=%r",
++			target.provider, elapsed_ms, text[:120],
+ 		)
+ 		return None
+ 
+@@ -1112,8 +1119,8 @@ async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict]]:
+ 	# names not in the advertised set; reject those so we fall through to NLU.
+ 	if tool_name not in _KNOWN_TOOL_NAMES:
+ 		_logger.warning(
+-			"ais_mcp llm_route provider=ollama hallucinated_tool=%s text=%r",
+-			tool_name, text[:120],
++			"ais_mcp llm_route provider=%s hallucinated_tool=%s text=%r",
++			target.provider, tool_name, text[:120],
+ 		)
+ 		return None
+ 
+@@ -1124,14 +1131,14 @@ async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict]]:
+ 			args = json.loads(args_raw or "{}")
+ 		except json.JSONDecodeError:
+ 			_logger.warning(
+-				"ais_mcp llm_route provider=ollama bad_args tool=%s args=%r",
+-				tool_name, args_raw,
++				"ais_mcp llm_route provider=%s bad_args tool=%s args=%r",
++				target.provider, tool_name, args_raw,
+ 			)
+ 			return None
+ 
+ 	_logger.info(
+-		"ais_mcp llm_route provider=ollama elapsed=%dms tool=%s args=%s text=%r",
+-		elapsed_ms, tool_name, args, text[:120],
++		"ais_mcp llm_route provider=%s elapsed=%dms tool=%s args=%s text=%r",
++		target.provider, elapsed_ms, tool_name, args, text[:120],
+ 	)
+ 	return tool_name, args
+ 
+@@ -1145,24 +1152,27 @@ async def _llm_glossary_reply(text: str) -> Optional[str]:
+ 	glossary" reply.
+ 	"""
+ 	explicit = (os.environ.get("LLM_PROVIDER") or "").lower().strip()
+-	use_ollama = bool(_OLLAMA_BASE_URL) and explicit in ("", "ollama")
+-	if explicit in ("claude", "anthropic"):
+-		use_ollama = False
++	use_local = explicit in OPENAI_COMPAT_PROVIDERS or (
++		bool(_OLLAMA_BASE_URL) and explicit in ("", "ollama")
++	)
+ 
+ 	t0 = time.monotonic()
+ 	out = ""
+-	if use_ollama:
++	if use_local:
++		target = local_chat_target(_router_ollama_model())
+ 		try:
+ 			async with httpx.AsyncClient(timeout=12.0) as http:
+ 				resp = await http.post(
+-					f"{_OLLAMA_BASE_URL}/v1/chat/completions",
++					target.url,
++					headers=target.headers,
+ 					json={
+-						"model": _router_ollama_model(),
++						"model": target.model,
+ 						"messages": [
+ 							{"role": "system", "content": _LLM_GLOSSARY_SYSTEM},
+ 							{"role": "user", "content": text},
+ 						],
+ 						"max_tokens": 220,
++						**target.extra_body,
+ 					},
+ 				)
+ 				resp.raise_for_status()
+@@ -1171,7 +1181,9 @@ async def _llm_glossary_reply(text: str) -> Optional[str]:
+ 			msg = (choices[0].get("message") if choices else None) or {}
+ 			out = (msg.get("content") or "").strip()
+ 		except Exception:  # noqa: BLE001 — never block chat on LLM failure
+-			_logger.exception("ais_mcp glossary_reply provider=ollama failed text=%r", text[:200])
++			_logger.exception(
++				"ais_mcp glossary_reply provider=%s failed text=%r", target.provider, text[:200],
++			)
+ 			return None
+ 	else:
+ 		if not (_ANTHROPIC_AVAILABLE and os.environ.get("ANTHROPIC_API_KEY")):
+diff --git a/api/app.py b/api/app.py
+index d8ac553..71faae0 100644
+--- a/api/app.py
++++ b/api/app.py
+@@ -1770,7 +1770,13 @@ _chat_runner = ChatTurnRunner(_TURN_LIMIT, _TURN_QUEUE_MAX, _TURN_QUEUE_TIMEOUT)
+ 
+ async def _chat_turn(*args, **kwargs):
+     """Run chatbot.chat off the event loop, under the turn gate."""
+-    return await _chat_runner.run(chatbot.chat, *args, **kwargs)
++    async with _chat_runner.slot():
++        intent, response, confidence, model_used, nlu_data = await asyncio.to_thread(
++            chatbot.chat, *args, **kwargs,
++        )
++        nlu_data = dict(nlu_data or {})
++        nlu_data["_model_version_id"] = chat_logger.model_version_for(model_used)
++        return intent, response, confidence, model_used, nlu_data
+ 
+ 
+ @app.post("/chat", response_model=ChatResponse, tags=["Chat"],
+@@ -1970,6 +1976,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
+         intent=intent,
+         confidence=confidence,
+         model_used=model_used,
++        model_version_id=nlu_data.get("_model_version_id"),
+         session_id=request.session_id,
+         response_time_ms=response_time_ms,
+         device_id=request.device_id,
+@@ -2074,6 +2081,25 @@ async def _ollama_local_models() -> List[str]:
+         return []
+ 
+ 
++async def _openai_compat_models() -> List[str]:
++    """Best-effort list of the models an OpenAI-compatible server (llama-server,
++    LM Studio, LocalAI) exposes at GET {OPENAI_BASE_URL}/models — the ids to
++    POST back as provider=openai. Empty unless that provider is configured."""
++    import httpx
++
++    from .llm_defaults import OPENAI_COMPAT_PROVIDERS, openai_base_url, openai_headers
++
++    if chatbot.llm_provider not in OPENAI_COMPAT_PROVIDERS and not os.getenv("OPENAI_BASE_URL"):
++        return []
++    try:
++        async with httpx.AsyncClient(timeout=3.0) as http:
++            resp = await http.get(f"{openai_base_url()}/models", headers=openai_headers())
++            resp.raise_for_status()
++            return sorted(m.get("id", "") for m in resp.json().get("data", []))
++    except Exception:
++        return []
++
++
+ _LOGS_DASHBOARD_HTML = Path(__file__).resolve().parent.parent / "web" / "logs_dashboard.html"
+ 
+ 
+@@ -2269,13 +2295,20 @@ async def admin_status():
+ @app.get("/admin/llm", tags=["Admin"], dependencies=[Depends(require_admin)])
+ async def get_llm_config():
+     """Which LLM tier is live (provider, model, reachable) plus the locally
+-    available Ollama models. Gated by `X-Admin-Pin`."""
+-    return {**chatbot.llm_status(), "ollama_models": await _ollama_local_models()}
++    available Ollama and OpenAI-compatible models. Gated by `X-Admin-Pin`."""
++    ollama_models, openai_models = await asyncio.gather(
++        _ollama_local_models(), _openai_compat_models(),
++    )
++    return {
++        **chatbot.llm_status(),
++        "ollama_models": ollama_models,
++        "openai_models": openai_models,
++    }
+ 
+ 
+ @app.post("/admin/llm", tags=["Admin"], dependencies=[Depends(require_admin)])
+ async def set_llm_config(request: LlmToggleRequest):
+-    """Hot-swap the responding LLM: provider ollama/claude/none, optional
++    """Hot-swap the responding LLM: provider ollama/openai/localai/claude/none, optional
+     model override. Also steers the AIS/connectors LLM routers (they follow
+     LLM_PROVIDER per call). Takes effect on the next chat turn — no restart."""
+     # set_llm probes the provider (up to 15s) — keep that off the event loop,
+@@ -2284,6 +2317,7 @@ async def set_llm_config(request: LlmToggleRequest):
+     # AttributeError → 500). Preserves the docstring's next-turn semantics.
+     async with _chat_runner.exclusive():
+         status = await asyncio.to_thread(chatbot.set_llm, request.provider, request.model)
++        await asyncio.to_thread(chat_logger.refresh_model_versions)
+     _logger.info(
+         "admin llm toggle: provider=%s model=%s available=%s",
+         status["provider"], status["model"], status["available"],
+@@ -2791,6 +2825,7 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
+             intent=intent,
+             confidence=confidence,
+             model_used=model_used,
++            model_version_id=nlu_data.get("_model_version_id"),
+             session_id=request.session_id,
+             response_time_ms=response_time_ms,
+             device_id=request.device_id,
+diff --git a/api/connectors_mcp.py b/api/connectors_mcp.py
+index 3d3dd50..bcb9a82 100644
+--- a/api/connectors_mcp.py
++++ b/api/connectors_mcp.py
+@@ -59,10 +59,10 @@ _CALL_TIMEOUT_SECONDS = float(os.environ.get("CONNECTORS_MCP_TIMEOUT_SECONDS", "
+ # message (e.g. Filipino/Taglish phrasing), ask an LLM to extract
+ # {tool, args}. Provider chosen like ais_mcp: LLM_PROVIDER env, else Ollama.
+ _LLM_ROUTER_ENABLED = os.environ.get("CONNECTORS_MCP_LLM_ROUTER", "0") == "1"
+-try:  # single source for the Ollama endpoint default (see api/llm_defaults.py)
+-	from .llm_defaults import ollama_base_url
++try:  # single source for the endpoint defaults (see api/llm_defaults.py)
++	from .llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target, ollama_base_url
+ except ImportError:  # standalone/direct import
+-	from llm_defaults import ollama_base_url
++	from llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target, ollama_base_url
+ _OLLAMA_BASE_URL = ollama_base_url()
+ 
+ 
+@@ -283,20 +283,23 @@ async def _llm_route(text: str, available: Optional[set[str]]) -> Optional[tuple
+ 	provider = (os.environ.get("LLM_PROVIDER") or "").lower()
+ 	if provider in ("claude", "anthropic"):
+ 		return await _llm_route_anthropic(text, tools)
+-	if provider == "ollama" or _OLLAMA_BASE_URL:
+-		return await _llm_route_ollama(text, tools)
++	if provider == "ollama" or provider in OPENAI_COMPAT_PROVIDERS or _OLLAMA_BASE_URL:
++		return await _llm_route_local(text, tools)
+ 	return await _llm_route_anthropic(text, tools)
+ 
+ 
+-async def _llm_route_ollama(text: str, tools: list[dict[str, Any]]) -> Optional[tuple[str, dict[str, Any]]]:
++async def _llm_route_local(text: str, tools: list[dict[str, Any]]) -> Optional[tuple[str, dict[str, Any]]]:
++	# Ollama's /v1 shim, or the OPENAI_* server under LLM_PROVIDER=openai|localai.
++	target = local_chat_target(_router_ollama_model())
+ 	t0 = time.monotonic()
+ 	try:
+ 		# 30s: the first call after idle pays the model cold-load (~10s+).
+ 		async with httpx.AsyncClient(timeout=30.0) as http:
+ 			resp = await http.post(
+-				f"{_OLLAMA_BASE_URL}/v1/chat/completions",
++				target.url,
++				headers=target.headers,
+ 				json={
+-					"model": _router_ollama_model(),
++					"model": target.model,
+ 					"messages": [
+ 						{"role": "system", "content": _LLM_SYSTEM},
+ 						{"role": "user", "content": text},
+@@ -304,19 +307,20 @@ async def _llm_route_ollama(text: str, tools: list[dict[str, Any]]) -> Optional[
+ 					"tools": tools,
+ 					"tool_choice": "auto",
+ 					"max_tokens": 192,
++					**target.extra_body,
+ 				},
+ 			)
+ 			resp.raise_for_status()
+ 			data = resp.json()
+ 	except Exception:  # noqa: BLE001 — never block chat on LLM failure
+-		_logger.exception("connectors_mcp llm_route provider=ollama failed text=%r", text[:120])
++		_logger.exception("connectors_mcp llm_route provider=%s failed text=%r", target.provider, text[:120])
+ 		return None
+ 	elapsed_ms = int((time.monotonic() - t0) * 1000)
+ 	choices = data.get("choices") or []
+ 	msg = (choices[0].get("message") if choices else None) or {}
+ 	calls = msg.get("tool_calls") or []
+ 	if not calls:
+-		_logger.info("connectors_mcp llm_route provider=ollama elapsed=%dms tool=None", elapsed_ms)
++		_logger.info("connectors_mcp llm_route provider=%s elapsed=%dms tool=None", target.provider, elapsed_ms)
+ 		return None
+ 	fn = (calls[0].get("function") or {})
+ 	args_raw = fn.get("arguments")
+@@ -327,8 +331,8 @@ async def _llm_route_ollama(text: str, tools: list[dict[str, Any]]) -> Optional[
+ 			return None
+ 	routed = _valid_routed(fn.get("name"), args_raw)
+ 	_logger.info(
+-		"connectors_mcp llm_route provider=ollama elapsed=%dms tool=%s",
+-		elapsed_ms, routed[0] if routed else f"rejected:{fn.get('name')}",
++		"connectors_mcp llm_route provider=%s elapsed=%dms tool=%s",
++		target.provider, elapsed_ms, routed[0] if routed else f"rejected:{fn.get('name')}",
+ 	)
+ 	return routed
+ 
+diff --git a/api/hybrid_chatbot.py b/api/hybrid_chatbot.py
+index 269e22d..671aade 100644
+--- a/api/hybrid_chatbot.py
++++ b/api/hybrid_chatbot.py
+@@ -13,7 +13,7 @@ import hashlib
+ import threading
+ import time
+ import weakref
+-from collections import OrderedDict
++from collections import OrderedDict, deque
+ import urllib.request
+ import urllib.error
+ import numpy as np
+@@ -90,9 +90,11 @@ except ImportError:
+ 
+ # Citizens' Charter retrieval tier (document tier of the hybrid brain)
+ from . import charter_rag, intent_retrieval, site_rag
++from .campus_context import extract_campus as _extract_campus
++from .conversation_polish import is_contextual_followup, satellite_campus, strip_rag_meta
+ # Single source for the Ollama endpoint default (shared with the MCP routers,
+ # safety second-opinion, and /health warm-up).
+-from .llm_defaults import ollama_base_url
++from .llm_defaults import no_think_fields, ollama_base_url
+ # Shared by all three _preprocess copies below AND by both NB trainers, so the
+ # shorthand map has one definition even though the tokenizers are duplicated.
+ from .preprocessing import expand_abbreviations
+@@ -335,7 +337,24 @@ def build_scope_locked_prompt(
+         "- NEVER guess at acronyms. If an acronym isn't in the Campus Glossary above, say you're not sure and recommend asking the registrar.\n"
+         "- For time-sensitive info (deadlines, fees, schedules), always recommend verification with the proper office.\n"
+         "- Disambiguate campus when relevant (Indang vs. Imus vs. other satellite campuses).\n"
+-        "- Respond in the same language as the user (English, Filipino, or Taglish).\n"
++        "- Respond in the same language as the user (English, Filipino, or Taglish).\n\n"
++        "VOICE — you are Sevi, speaking directly to the user:\n"
++        "- Never describe your inputs. Do NOT say \"based on the excerpts\", \"the excerpts "
++        "provided\", \"according to the context\", \"in my knowledge base\", \"the information "
++        "given\", or similar. The user cannot see any excerpts; just answer.\n"
++        "- When you lack a detail, say it plainly in one sentence (\"I don't have the exact "
++        "date for that yet\") and give the most useful next step.\n"
++        "- Answer the exact question first. Offer related details as a short follow-up "
++        "question instead of listing everything.\n"
++        "- Read the conversation so far. A short message like \"why only trece?\" or \"what "
++        "about Imus?\" refers to your previous answer — answer it in that context.\n"
++        "- If the user pushes back on a limitation (e.g. \"just make the list from the "
++        "website\"), acknowledge it in one conversational sentence (\"I can't browse live "
++        "pages, so I can't pull that list for you\") and pivot to something you CAN do — "
++        "such as asking which college or office they need. Never repeat an earlier reply "
++        "or the same list of offices word for word.\n"
++        "- Do not open by restating an assumption you already stated earlier in the "
++        "conversation.\n"
+     )
+     return (base_persona + "\n\n" + glossary_section + scope_section).strip()
+ 
+@@ -512,8 +531,9 @@ class LocalLLM:
+     (http://localhost:11434).  Used as the final fallback when both
+     NB and NN are below their confidence thresholds.
+ 
+-    To use a different local backend (llama.cpp server, LM Studio, etc.)
+-    just point OLLAMA_BASE_URL / OLLAMA_MODEL to the compatible endpoint.
++    Speaks Ollama's native API (/api/tags, /api/chat) only. For a different
++    local backend (llama.cpp's llama-server, LM Studio, LocalAI) use
++    LLM_PROVIDER=openai and OPENAI_BASE_URL / OPENAI_MODEL — OpenAICompatLLM.
+ 
+     Falls back gracefully to None if the server is unreachable so the
+     rest of the chatbot pipeline is unaffected.
+@@ -736,6 +756,9 @@ class OpenAICompatLLM:
+             # 256, not 512 — same worst-case-latency bound as LocalLLM (the
+             # prompt demands <=4 sentences; on CPU the cap is the tail budget).
+             "max_tokens": 256,
++            # Same reason as LocalLLM's think=false: a thinking model spends
++            # the 256-token budget reasoning and returns empty content.
++            **no_think_fields(self.model),
+         }
+         payload = json.dumps(body).encode("utf-8")
+ 
+@@ -749,9 +772,11 @@ class OpenAICompatLLM:
+             with urllib.request.urlopen(req, timeout=self.TIMEOUT_SECONDS) as resp:
+                 data = json.loads(resp.read().decode("utf-8"))
+                 choices = data.get("choices") or []
+-                content = choices[0].get("message", {}).get("content", "") if choices else ""
+-                # Defensive: strip inlined reasoning if a thinking model emits it.
+-                content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL)
++                content = (choices[0].get("message", {}).get("content") or "") if choices else ""
++                # Defensive: strip inlined reasoning if a thinking model emits it —
++                # including a block cut off by max_tokens before its </think>,
++                # which would otherwise reach the user as raw reasoning.
++                content = re.sub(r"<think>.*?(?:</think>|$)", "", content, flags=re.DOTALL)
+                 return content.strip() or None
+         except urllib.error.URLError as e:
+             print(f"[WARNING] OpenAI-compat request failed: {e}")
+@@ -1043,6 +1068,88 @@ class ScopeGate:
+         return random.choice(self.REFUSAL_MESSAGES)
+ 
+ 
++def _env_int(name: str, default: int) -> int:
++    try:
++        return int(os.getenv(name, str(default)).strip())
++    except ValueError:
++        return default
++
++
++class ClaudeRequestLimiter:
++    """
++    Request-count limiter for Claude API calls (not chat turns — most turns
++    are answered by NB/NN and never reach Claude). Protects the API credit
++    balance and the org's Anthropic rate limit.
++
++    Three budgets, each 0 = disabled:
++      CLAUDE_RATE_LIMIT_RPM       — all callers, per sliding window
++      CLAUDE_RATE_LIMIT_PER_USER  — one session/user, per sliding window
++      CLAUDE_DAILY_REQUEST_CAP    — all callers, per UTC day
++    CLAUDE_RATE_LIMIT_WINDOW sets the window in seconds (default 60).
++
++    In-memory, like the chat throttles in app.py: correct for the
++    single-worker uvicorn deployment; counts reset on restart.
++    """
++
++    def __init__(self):
++        self.global_max = _env_int("CLAUDE_RATE_LIMIT_RPM", 20)
++        self.per_user_max = _env_int("CLAUDE_RATE_LIMIT_PER_USER", 5)
++        self.daily_cap = _env_int("CLAUDE_DAILY_REQUEST_CAP", 500)
++        try:
++            self.window = float(os.getenv("CLAUDE_RATE_LIMIT_WINDOW", "60"))
++        except ValueError:
++            self.window = 60.0
++        self._lock = threading.Lock()
++        self._global: deque = deque()
++        self._per_user: dict = {}
++        self._day = ""
++        self._day_count = 0
++
++    def try_acquire(self, caller: Optional[str]) -> Optional[str]:
++        """Record one request and return None, or return why it was refused."""
++        now = time.monotonic()
++        today = time.strftime("%Y-%m-%d", time.gmtime())
++        cutoff = now - self.window
++        with self._lock:
++            if today != self._day:
++                self._day, self._day_count = today, 0
++            if self.daily_cap and self._day_count >= self.daily_cap:
++                return f"daily cap {self.daily_cap} reached"
++
++            while self._global and self._global[0] <= cutoff:
++                self._global.popleft()
++            if self.global_max and len(self._global) >= self.global_max:
++                return f"global limit {self.global_max}/{self.window:.0f}s"
++
++            user_q = None
++            if caller and self.per_user_max:
++                user_q = self._per_user.setdefault(caller, deque())
++                while user_q and user_q[0] <= cutoff:
++                    user_q.popleft()
++                if len(user_q) >= self.per_user_max:
++                    return f"per-user limit {self.per_user_max}/{self.window:.0f}s"
++                # Drop idle callers so the dict can't grow without bound.
++                if len(self._per_user) > 5000:
++                    for k in [k for k, q in self._per_user.items() if not q or q[-1] <= cutoff]:
++                        self._per_user.pop(k, None)
++
++            self._global.append(now)
++            if user_q is not None:
++                user_q.append(now)
++            self._day_count += 1
++            return None
++
++    def snapshot(self) -> dict:
++        with self._lock:
++            return {
++                "window_seconds": self.window,
++                "global_max": self.global_max,
++                "per_user_max": self.per_user_max,
++                "daily_cap": self.daily_cap,
++                "used_today": self._day_count,
++            }
++
++
+ class ClaudeLLM:
+     """
+     Claude API fallback — used when NB+NN are both below threshold and
+@@ -1077,6 +1184,7 @@ class ClaudeLLM:
+         ]
+         self.client = None
+         self.available = False
++        self.limiter = ClaudeRequestLimiter()
+ 
+         if not ANTHROPIC_AVAILABLE:
+             return
+@@ -1110,13 +1218,21 @@ class ClaudeLLM:
+         self,
+         user_message: str,
+         conversation_context: Optional[list] = None,
++        caller: Optional[str] = None,
+     ) -> Optional[str]:
+         """
+-        Returns Claude's reply, the REFUSAL_TOKEN if out of scope, or None on error.
++        Returns Claude's reply, the REFUSAL_TOKEN if out of scope, or None on
++        error or when a request limit is hit (the caller then serves the
++        llm_unavailable reply). `caller` keys the per-user limit.
+         """
+         if not self.available or not self.client:
+             return None
+ 
++        refused = self.limiter.try_acquire(caller)
++        if refused:
++            print(f"[CLAUDE LIMIT] request skipped — {refused}")
++            return None
++
+         messages = []
+         if conversation_context:
+             for turn in conversation_context[-6:]:
+@@ -1127,16 +1243,24 @@ class ClaudeLLM:
+         messages.append({"role": "user", "content": user_message})
+ 
+         try:
++            # No temperature: anthropic SDK 1.x removed sampling parameters
++            # from messages.create(), and models from Opus 4.7 on reject them.
+             response = self.client.messages.create(
+                 model=self.model,
+                 max_tokens=self.MAX_TOKENS,
+-                temperature=0.0,  # P1-6: evidence-gated tier — deterministic
+                 system=self.system_blocks,
+                 messages=messages,
+             )
++            if response.stop_reason == "refusal":
++                return None
+             text_parts = [b.text for b in response.content if getattr(b, "type", "") == "text"]
+             reply = "".join(text_parts).strip()
+             return reply or None
++        except anthropic.RateLimitError as e:
++            # Anthropic's own org/workspace limit, separate from ours above.
++            retry_after = e.response.headers.get("retry-after") if e.response is not None else None
++            print(f"[WARNING] Claude API rate limited (429), retry-after={retry_after}")
++            return None
+         except anthropic.APIStatusError as e:
+             print(f"[WARNING] Claude API status error: {e.status_code} {getattr(e, 'message', '')}")
+             return None
+@@ -1531,9 +1655,9 @@ class HybridChatbot:
+     def set_llm(self, provider: str, model: Optional[str] = None) -> dict:
+         """Hot-swap the LLM fallback at runtime (admin toggle — no restart).
+ 
+-        Also updates the process env (LLM_PROVIDER, OLLAMA_MODEL/CLAUDE_MODEL)
+-        so the AIS and connectors LLM routers — which read the env per call —
+-        follow the same switch.
++        Also updates the process env (LLM_PROVIDER, OLLAMA_MODEL/OPENAI_MODEL/
++        CLAUDE_MODEL) so the AIS and connectors LLM routers — which read the
++        env per call — follow the same switch.
+         """
+         provider = (provider or "none").strip().lower()
+         self.llm_last_error = None
+@@ -1776,6 +1900,23 @@ class HybridChatbot:
+             return None, 0.0
+         return self.nn_model.predict(user_input)
+ 
++    def _last_user_message(self, user_id: Optional[str]) -> Optional[str]:
++        """The session's previous user message, or None."""
++        if not user_id:
++            return None
++        with self._history_lock:
++            turns = self.conversation_history.get(user_id) or []
++            return turns[-1]["user_message"] if turns else None
++
++    def _assumption_already_stated(self, user_id: Optional[str]) -> bool:
++        """Did an earlier reply this session already state the default
++        campus/level assumption? Saying it on every turn reads as robotic."""
++        if not user_id:
++            return False
++        with self._history_lock:
++            turns = list(self.conversation_history.get(user_id) or [])
++        return any(t.get("bot_response", "").startswith(self._ASSUMPTION_PREFIXES) for t in turns)
++
+     def _llm_context(self, user_id: Optional[str]) -> list:
+         """Build the last-3-turns conversation context for the LLM."""
+         if not user_id:
+@@ -1844,7 +1985,11 @@ class HybridChatbot:
+             "results, rankings, or awards; those come only from news excerpts.\n"
+             "5. Keep the answer concise and only cite a source you actually used, "
+             "copying its bracketed label exactly as shown above — never alter the "
+-            "source name, edition, or page number."
++            "source name, edition, or page number.\n"
++            "6. Never mention the excerpts themselves to the user (no \"based on the "
++            "excerpts\", \"the excerpts don't mention\"); answer as Sevi in your own voice.\n"
++            "7. An excerpt about one satellite campus (e.g. Trece Martires, Imus) applies "
++            "to that campus only — never present it as the procedure for all of CvSU."
+             f"{hint}\n\n{excerpts}\n\nQuestion: {user_input}"
+         )
+ 
+@@ -1918,16 +2063,21 @@ class HybridChatbot:
+                     f"about {labels[0]}, or about {labels[1]}? Tap or type the topic.")
+         return text, labels
+ 
++    _ASSUMPTION_PREFIXES = ("Assuming the Main Campus", "Ipagpalagay nating")
++
+     def _maybe_state_assumption(self, response: str, intent: str,
+                                 user_input: str, campus: Optional[str],
+-                                language: Optional[str] = None) -> str:
++                                language: Optional[str] = None,
++                                user_id: Optional[str] = None) -> str:
+         """Prefix an explicit default-context line on answers that vary by
+         campus/level when the turn pinned down neither (P2-8 slot-filling,
+-        stated-assumption branch)."""
++        stated-assumption branch). Stated once per session, not every turn."""
+         if intent not in self._ASSUMPTION_INTENTS or campus:
+             return response
+         if self._CAMPUS_TOKEN_RE.search(user_input) or self._LEVEL_TOKEN_RE.search(user_input):
+             return response
++        if self._assumption_already_stated(user_id):
++            return response
+         if _reply_in_filipino(user_input, language):
+             note = ("Ipagpalagay nating para sa Main Campus (Indang), undergraduate, "
+                     "ang tanong — sabihin lang (hal. \"Imus campus\" o \"graduate\") "
+@@ -2099,23 +2249,38 @@ class HybridChatbot:
+         """
+         return bigram_hits, (score / floor if floor else score)
+ 
+-    def _gather_grounding(self, user_input: str) -> Tuple[list, str, Optional[str]]:
++    def _gather_grounding(self, user_input: str,
++                          campus: Optional[str] = None) -> Tuple[list, str, Optional[str]]:
+         """Collect LLM grounding passages from the charter and site corpora.
+ 
+         Returns (grounding, model_label_suffix, nearest_intent_suggestion)
+         where grounding is [(score, citation, text, corpus), ...] ranked
+         best-first via _cross_corpus_rank_key, capped at 3.
++
++        Campus filter: a passage ABOUT a satellite campus (by its title/URL/
++        citation) is kept only when the question or the session's campus
++        names that campus. Without this, "how do I enroll next year" grounded
++        on the Trece Martires page and presented it as the university-wide
++        procedure. Main-campus and university-wide passages always pass.
+         """
++        wanted = _extract_campus(user_input) or campus
++
++        def in_scope(label: str) -> bool:
++            sat = satellite_campus(label)
++            return sat is None or sat == wanted
++
+         ranked = []  # (rank_key, score, citation, text, corpus)
+         charter_index = charter_rag.get_index()
+         if charter_index is not None:
+-            for p in charter_index.retrieve(user_input, k=3)[:2]:
++            hits = [p for p in charter_index.retrieve(user_input, k=6) if in_scope(p.citation())]
++            for p in hits[:2]:
+                 if p.score >= charter_rag.AUGMENT_MIN_SCORE:
+                     key = self._cross_corpus_rank_key(p.bigram_hits, p.score, charter_rag.AUGMENT_MIN_SCORE)
+                     ranked.append((key, p.score, p.citation(), p.text, "charter"))
+         site_index = site_rag.get_index()
+         if site_index is not None:
+-            for p in site_index.retrieve(user_input, k=3)[:2]:
++            hits = [p for p in site_index.retrieve(user_input, k=6) if in_scope(p.citation())]
++            for p in hits[:2]:
+                 if p.score >= site_rag.AUGMENT_MIN_SCORE:
+                     key = self._cross_corpus_rank_key(p.bigram_hits, p.score, site_rag.AUGMENT_MIN_SCORE)
+                     ranked.append((key, p.score, p.citation(), p.text, "site"))
+@@ -2378,6 +2543,20 @@ class HybridChatbot:
+             nlu_data = {**nlu_data, "suggestions": chips}
+             return self.CLARIFY_INTENT, text, 1.0, "College Programs (which college)", nlu_data
+ 
++        # Step 0.9: Contextual follow-up ("why only trece?", "what about Imus?",
++        # "just give me a list") — only meaningful against the previous turn.
++        # The intent tiers classify the message alone and answer a different
++        # question, so send it to the LLM with the conversation history, and
++        # retrieve against the previous question + this one. Only when the LLM
++        # is up: otherwise a canned answer still beats the static fallback.
++        retrieval_query = user_input
++        if not skip_intents and user_id and is_contextual_followup(user_input):
++            prev_question = self._last_user_message(user_id)
++            if prev_question and self.llm and self.llm.ensure_available():
++                skip_intents = True
++                retrieval_query = f"{prev_question} {user_input}"
++                self._bump("followup_routed_to_llm")
++
+         if not skip_intents:
+             # Step 1: Naive Bayes (+ optional NLU enhancement), arbitrated.
+             # A confident-looking NB answer must also pass the margin check
+@@ -2396,7 +2575,7 @@ class HybridChatbot:
+                     self._bump("naive_bayes_used")
+                     response = self._maybe_state_assumption(
+                         self._select_response(nb_intent, user_input, language),
+-                        nb_intent, user_input, campus, language)
++                        nb_intent, user_input, campus, language, user_id)
+                     return nb_intent, response, nb_confidence, "Naive Bayes (NLU Enhanced)", nlu_data
+                 reasons = []
+                 if not margin_ok:
+@@ -2435,7 +2614,7 @@ class HybridChatbot:
+                     and nn_intent == nb_intent):
+                 response = self._maybe_state_assumption(
+                     self._select_response(nn_intent, user_input, language),
+-                    nn_intent, user_input, campus, language)
++                    nn_intent, user_input, campus, language, user_id)
+                 self._bump("neural_network_used")
+                 return nn_intent, response, nn_confidence, "Neural Network", nlu_data
+             if (nn_intent and nn_intent != nb_intent
+@@ -2475,7 +2654,7 @@ class HybridChatbot:
+             if served is not None:
+                 intent, response, score = served
+                 response = self._maybe_state_assumption(response, intent, user_input,
+-                                                        campus, language)
++                                                        campus, language, user_id)
+                 return intent, response, score, "Intent Retrieval", nlu_data
+ 
+             # Step 2.7: Place Resolver — deterministic campus wayfinding.
+@@ -2527,10 +2706,15 @@ class HybridChatbot:
+             # the LLM with an evidence-gated instruction: answer only from
+             # the excerpts, cite the bracketed source, and say so when they
+             # don't contain the answer instead of improvising.
+-            grounding, charter_suffix, suggestion = self._gather_grounding(user_input)
++            grounding, charter_suffix, suggestion = self._gather_grounding(retrieval_query, campus)
+             llm_input = self._grounded_prompt(user_input, grounding, suggestion, language)
+ 
+-            llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id))
++            if isinstance(self.llm, ClaudeLLM):
++                llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id),
++                                              caller=user_id)
++            else:
++                llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id))
++            llm_reply = strip_rag_meta(llm_reply)
+             # LLM emitted the refusal token → out of scope per the model's own judgment
+             if llm_reply and LLM_REFUSAL_TOKEN in llm_reply:
+                 self._bump("scope_gate_blocked")
+diff --git a/api/llm_defaults.py b/api/llm_defaults.py
+index 838e7cd..f9c0261 100644
+--- a/api/llm_defaults.py
++++ b/api/llm_defaults.py
+@@ -1,11 +1,11 @@
+-"""Single source of truth for the local-LLM endpoint default.
++"""Single source of truth for the local-LLM endpoint defaults.
+ 
+-Every deployment sets OLLAMA_BASE_URL in sevi.env / config/*.env (the
+-in-network `ollama` service, or host.docker.internal for a host install). The
+-fallback here only applies to a bare local dev run — kept in ONE place so the
+-same literal does not drift across the modules that talk to Ollama: the LLM
+-fallback tier (hybrid_chatbot), the AIS / connectors LLM routers, the safety
+-second-opinion, and the /health warm-up probe.
++Every deployment sets OLLAMA_BASE_URL (or OPENAI_BASE_URL) in sevi.env /
++config/*.env (the in-network `ollama` service, or host.docker.internal for a
++host install). The fallbacks here only apply to a bare local dev run — kept in
++ONE place so the same literal does not drift across the modules that talk to
++the local LLM: the LLM fallback tier (hybrid_chatbot), the AIS / connectors LLM
++routers, the agentic loop and the safety second-opinion.
+ 
+ Model names are deliberately NOT defaulted here (or anywhere in code): each LLM
+ wrapper reads its model from the environment (OLLAMA_MODEL / OPENAI_MODEL /
+@@ -13,12 +13,78 @@ CLAUDE_MODEL) and disables itself loudly when unset, rather than baking a
+ specific deployment's model version into the source.
+ """
+ import os
++import re
++from typing import NamedTuple
+ 
+ # Used only when OLLAMA_BASE_URL is unset (bare local dev). Every deployment
+ # overrides it via env; this is the one place the localhost default lives.
+ _DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434"
++# Same for OPENAI_BASE_URL — the API base INCLUDING the /v1 prefix.
++_DEFAULT_OPENAI_BASE_URL = "http://localhost:8080/v1"
++
++# LLM_PROVIDER values served by an OpenAI-compatible server (llama.cpp's
++# llama-server, LM Studio, LocalAI, vLLM ...) addressed through OPENAI_*.
++OPENAI_COMPAT_PROVIDERS = frozenset({"openai", "localai"})
++
++# Hybrid-reasoning families that think by default. Chat answers and tool
++# routing don't need it, and the reasoning eats the whole max_tokens budget
++# (empty content) or leaks into the reply — every caller turns it off.
++THINKING_MODEL_RE = re.compile(r"^(qwen3|deepseek-r1|magistral|gpt-oss)", re.IGNORECASE)
+ 
+ 
+ def ollama_base_url() -> str:
+     """Resolve the Ollama endpoint from OLLAMA_BASE_URL (trailing slash trimmed)."""
+     return os.environ.get("OLLAMA_BASE_URL", _DEFAULT_OLLAMA_BASE_URL).rstrip("/")
++
++
++def openai_base_url() -> str:
++    """Resolve the OpenAI-compatible API base (incl. /v1) from OPENAI_BASE_URL."""
++    return os.environ.get("OPENAI_BASE_URL", _DEFAULT_OPENAI_BASE_URL).rstrip("/")
++
++
++def openai_headers() -> dict:
++    """Request headers for the OpenAI-compatible server. The key is optional —
++    llama-server / LM Studio / LocalAI usually run without one."""
++    headers = {"Content-Type": "application/json", "User-Agent": "DIWA/1.0"}
++    key = os.environ.get("OPENAI_API_KEY", "").strip()
++    if key:
++        headers["Authorization"] = f"Bearer {key}"
++    return headers
++
++
++def no_think_fields(model: str) -> dict:
++    """Extra /chat/completions body fields that switch reasoning off for a
++    hybrid-thinking model on an OpenAI-compatible server (llama-server, LM
++    Studio and vLLM all honour chat_template_kwargs). Empty for other models."""
++    if THINKING_MODEL_RE.match(model or ""):
++        return {"chat_template_kwargs": {"enable_thinking": False}}
++    return {}
++
++
++class LocalChatTarget(NamedTuple):
++    provider: str  # "ollama" | "openai" | "localai" — for log lines
++    url: str       # full POST URL of the chat-completions endpoint
++    model: str
++    headers: dict
++    extra_body: dict  # merge into the request body (thinking switch)
++
++
++def local_chat_target(ollama_model: str) -> LocalChatTarget:
++    """Where a module's local, OpenAI-style chat call goes, read PER CALL so the
++    admin LLM toggle (which rewrites LLM_PROVIDER / *_MODEL) steers it.
++
++    LLM_PROVIDER=openai|localai -> {OPENAI_BASE_URL}/chat/completions with
++    OPENAI_MODEL. Anything else -> Ollama's OpenAI-compatible
++    {OLLAMA_BASE_URL}/v1/chat/completions with the caller's `ollama_model`
++    (its own AIS_MCP_* / CONNECTORS_MCP_* override chain).
++    """
++    provider = (os.environ.get("LLM_PROVIDER") or "").strip().lower()
++    if provider in OPENAI_COMPAT_PROVIDERS:
++        model = os.environ.get("OPENAI_MODEL", "").strip()
++        return LocalChatTarget(
++            provider, f"{openai_base_url()}/chat/completions", model,
++            openai_headers(), no_think_fields(model),
++        )
++    return LocalChatTarget(
++        "ollama", f"{ollama_base_url()}/v1/chat/completions", ollama_model, {}, {},
++    )
+diff --git a/api/logger.py b/api/logger.py
+index 7a65693..9f06a65 100644
+--- a/api/logger.py
++++ b/api/logger.py
+@@ -205,6 +205,20 @@ class ChatLogger:
+         else:
+             print(f"  Database: {self.db_path}")
+ 
++    def model_version_for(self, model_used: Optional[str]) -> Optional[int]:
++        return self.model_versions.get(model_registry.resolve(model_used))
++
++    def refresh_model_versions(self) -> None:
++        """Register a runtime model change while preserving existing versions."""
++        with self.lock:
++            conn, cursor = self._connect()
++            try:
++                versions = model_registry.sync(cursor, dialect="postgres" if self.is_pg else "sqlite")
++                conn.commit()
++                self.model_versions = versions
++            finally:
++                conn.close()
++
+     def _redacted_url(self) -> str:
+         """DATABASE_URL with the password hidden, for logs."""
+         url = self.database_url or ""
+@@ -421,7 +435,8 @@ class ChatLogger:
+         session_id: Optional[str] = None,
+         response_time_ms: Optional[float] = None,
+         device_id: Optional[str] = None,
+-        device_class: Optional[str] = None
++        device_class: Optional[str] = None,
++        model_version_id: Optional[int] = None
+     ) -> Optional[int]:
+         """
+         Log a single chat message to database and file
+@@ -455,7 +470,7 @@ class ChatLogger:
+                 message_id = self._log_to_db(
+                     timestamp, user_id, session_id, user_message,
+                     bot_response, intent, confidence, model_used, response_time_ms,
+-                    device_id, device_class
++                    device_id, device_class, model_version_id=model_version_id
+                 )
+ 
+                 # Log to file
+@@ -479,13 +494,14 @@ class ChatLogger:
+ 
+     def _log_to_db(
+         self, timestamp, user_id, session_id, user_msg, bot_resp, intent, conf, model_used, resp_time,
+-        device_id=None, device_class=None
++        device_id=None, device_class=None, model_version_id=None
+     ) -> Optional[int]:
+         """Log to the database, returns the new row ID."""
+         try:
+             conn, cursor = self._connect()
+ 
+-            model_version_id = self.model_versions.get(model_registry.resolve(model_used))
++            if model_version_id is None:
++                model_version_id = self.model_version_for(model_used)
+             row_id = self._insert_returning_id(cursor, """
+                 INSERT INTO chat_messages
+                 (timestamp, user_id, session_id, user_message, bot_response, intent, confidence, model_used, model_version_id, response_time_ms, device_id, device_class)
+diff --git a/api/model_registry.py b/api/model_registry.py
+index c53d2d8..c99fa76 100644
+--- a/api/model_registry.py
++++ b/api/model_registry.py
+@@ -69,8 +69,10 @@ def _fingerprint(entry: dict) -> tuple:
+         fp = digest.hexdigest()
+         return fp, fp[:12]
+     env_name = entry.get("version_env")
++    provider = os.getenv("LLM_PROVIDER", "").strip().lower()
++    env_name = (entry.get("version_env_by_provider") or {}).get(provider, env_name)
+     if env_name:
+-        value = os.getenv(env_name) or entry.get("version_default") or "unset"
++        value = os.getenv(env_name, "").strip() or entry.get("version_default") or "unset"
+         return f"env:{env_name}={value}", value
+     return f"code:{CODE_VERSION}", f"code-v{CODE_VERSION}"
+ 
+diff --git a/api/safety.py b/api/safety.py
+index d27dcfb..c0030ad 100644
+--- a/api/safety.py
++++ b/api/safety.py
+@@ -403,10 +403,10 @@ SUGGESTIONS = {
+ # ─────────────────────────────────────────────────────────────────────────────
+ 
+ _LLM_SECOND_OPINION = os.environ.get("SAFETY_LLM_SECOND_OPINION", "0") == "1"
+-try:  # single source for the Ollama endpoint default (see api/llm_defaults.py)
+-    from .llm_defaults import ollama_base_url
++try:  # single source for the endpoint defaults (see api/llm_defaults.py)
++    from .llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target, ollama_base_url
+ except ImportError:  # standalone/direct import
+-    from llm_defaults import ollama_base_url
++    from llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target, ollama_base_url
+ _OLLAMA_BASE_URL = ollama_base_url()
+ 
+ # Soft cues that the explicit gate does NOT already catch. Deliberately broad —
+@@ -465,6 +465,8 @@ async def llm_second_opinion(message: str) -> Optional[str]:
+     try:
+         if provider in ("claude", "anthropic"):
+             verdict = await _judge_anthropic(message)
++        elif provider in OPENAI_COMPAT_PROVIDERS:
++            verdict = await _judge_openai(message)
+         else:
+             verdict = await _judge_ollama(message)
+     except Exception:  # noqa: BLE001 — fail-safe, never block chat on judge error
+@@ -501,6 +503,30 @@ async def _judge_ollama(message: str) -> Optional[str]:
+         return (resp.json().get("message") or {}).get("content", "")
+ 
+ 
++async def _judge_openai(message: str) -> Optional[str]:
++    """Same judge over an OpenAI-compatible server (LLM_PROVIDER=openai|localai:
++    llama-server, LM Studio) — they have no Ollama-native /api/chat. The model
++    is OPENAI_MODEL, the one the server actually has loaded."""
++    import httpx
++
++    target = local_chat_target("")
++    body = {
++        "model": target.model,
++        "messages": [
++            {"role": "system", "content": _LLM_JUDGE_SYSTEM},
++            {"role": "user", "content": message},
++        ],
++        "temperature": 0.0,
++        "max_tokens": 8,
++        **target.extra_body,  # thinking off: 8 tokens would all go to reasoning
++    }
++    async with httpx.AsyncClient(timeout=90.0) as http:
++        resp = await http.post(target.url, json=body, headers=target.headers)
++        resp.raise_for_status()
++        choices = resp.json().get("choices") or []
++        return ((choices[0].get("message") if choices else None) or {}).get("content") or ""
++
++
+ async def _judge_anthropic(message: str) -> Optional[str]:
+     try:
+         import anthropic
+diff --git a/data/fixtures/model_lookup.json b/data/fixtures/model_lookup.json
+index 1b776eb..1a3a11c 100644
+--- a/data/fixtures/model_lookup.json
++++ b/data/fixtures/model_lookup.json
+@@ -21,10 +21,13 @@
+   },
+   {
+     "name": "llm_local",
+-    "display_name": "Local LLM (Ollama)",
++    "display_name": "Local LLM",
+     "kind": "llm",
+     "version_env": "OLLAMA_MODEL",
+-    "version_default": "qwen3:8b"
++    "version_env_by_provider": {
++      "openai": "OPENAI_MODEL",
++      "localai": "OPENAI_MODEL"
++    }
+   },
+   {
+     "name": "llm_claude",
+diff --git a/models/CvSU_classifier.pkl b/models/CvSU_classifier.pkl
+index 6e514fd..10b6a7c 100644
+Binary files a/models/CvSU_classifier.pkl and b/models/CvSU_classifier.pkl differ
+diff --git a/models/responses_map.json b/models/responses_map.json
+index bf083f1..dacb727 100644
+--- a/models/responses_map.json
++++ b/models/responses_map.json
+@@ -21,6 +21,11 @@
+     "CvSU holds AACCUP Institutional Accreditation Level III. Several programs are AACCUP-accredited — for example, BS Food Technology at Level IV, and BS Medical Technology, BS Computer Science (Carmona), BS Information Technology (Cavite City), and BS Business Administration at Level III. For the complete, current accreditation list, see https://cvsu.edu.ph. (Accreditation levels are re-evaluated over time — verify the latest at https://cvsu.edu.ph.)",
+     "May AACCUP Institutional Accreditation Level III ang CvSU. Maraming programa ang AACCUP-accredited — halimbawa, Level IV ang BS Food Technology, at Level III ang BS Medical Technology, BS Computer Science (Carmona), BS Information Technology (Cavite City), at BS Business Administration. Para sa kumpletong listahan, tingnan ang https://cvsu.edu.ph."
+   ],
++  "acknowledgement": [
++    "Got it! Is there anything else you'd like to know about CvSU — admissions, programs, fees, scholarships, or campus services?",
++    "Sure! Just ask if anything else about CvSU comes up.",
++    "Sige! May iba pa ba kayong gustong itanong tungkol sa CvSU — admission, programa, bayarin, scholarship, o serbisyo sa campus?"
++  ],
+   "add_drop_subjects": [
+     "Adding or dropping a subject at CvSU is allowed only within the Add/Drop Period, which is typically the first 1–2 weeks of the semester (exact dates published per semester). To add: secure approval from your adviser and submit the add form. To officially drop: submit a drop form through your adviser and the Registrar — an officially dropped subject is recorded as DRP, not as a failing grade. Dropping AFTER the deadline without filing may result in a 5.0 (Failed) grade. For the current Add/Drop window, check the academic calendar and your campus Registrar.",
+     "Adds and drops are processed during the Add/Drop period at the start of each semester. Officially dropped subjects get a DRP code; unofficial drops or drops after the deadline can become 5.0. Coordinate with your adviser and the Registrar.",
+@@ -93,6 +98,10 @@
+     "The Main Campus (Don Severino delas Alas Campus, ~70 hectares) is in Indang, Cavite — roughly 60 km southwest of Manila. CvSU has 11 campuses in the province in all, including satellite campuses in Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario (CCAT), Silang, Tanza, and Trece Martires City. See https://cvsu.edu.ph/category/campuses/ for the directory with addresses.",
+     "Ang Main Campus ng CvSU — ang Don Severino delas Alas Campus, humigit-kumulang 70 ektarya — ay matatagpuan sa Indang, Cavite, mga 60 km timog-kanluran ng Maynila. Sa kasalukuyan, may 11 campus ang CvSU sa lalawigan, kabilang ang mga satellite campus sa Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario (CCAT), Silang, Tanza, at Trece Martires City. Para sa kumpletong directory at address, tingnan ang https://cvsu.edu.ph/category/campuses/."
+   ],
++  "campus_officials": [
++    "Per the CvSU officials roster effective 1 January - 31 December 2026, the CvSU campus heads are:\n- Bacoor City Campus: Asst. Prof. Menvyluz S. Macalalad (Campus Administrator)\n- Carmona Campus: Dr. Jenny Beb F. Espineli (Campus Administrator)\n- Cavite City Campus: Asso. Prof. Ma. Cristina J. Baesa (Campus Administrator)\n- General Trias Campus: Asso. Prof. Marilou P. Luseco (Campus Administrator)\n- Imus Campus: Dr. Armi Grace B. Desingaño (Campus Administrator)\n- Naic Campus: Asst. Prof. Armina B. Pugay (Campus Administrator)\n- Rosario (CCAT) Campus: Dr. Lauro B. Pascua (Campus Administrator)\n- Silang Campus: Dr. Jonathan R. Digma (Campus Administrator)\n- Tanza Campus: Asso. Prof. Mildred A. Sebastian (Campus Administrator)\n- Trece Martires City Campus: Asso. Prof. Noel A. Sedigo (Campus Administrator)\n- Maragondon Campus: Prof. Jazmin P. Cubillo (Principal)\n- Dasmariñas Learning Center Campus: Dr. Gemma S. Legaspi (Center Administrator)\n\nSource: https://cvsu.edu.ph/contact-us-2/ — designations change, so please verify there.",
++    "Ayon sa opisyal na listahan ng CvSU (epektibo 1 Enero - 31 Disyembre 2026), ito ang mga pinuno ng bawat campus:\n- Bacoor City Campus: Asst. Prof. Menvyluz S. Macalalad (Campus Administrator)\n- Carmona Campus: Dr. Jenny Beb F. Espineli (Campus Administrator)\n- Cavite City Campus: Asso. Prof. Ma. Cristina J. Baesa (Campus Administrator)\n- General Trias Campus: Asso. Prof. Marilou P. Luseco (Campus Administrator)\n- Imus Campus: Dr. Armi Grace B. Desingaño (Campus Administrator)\n- Naic Campus: Asst. Prof. Armina B. Pugay (Campus Administrator)\n- Rosario (CCAT) Campus: Dr. Lauro B. Pascua (Campus Administrator)\n- Silang Campus: Dr. Jonathan R. Digma (Campus Administrator)\n- Tanza Campus: Asso. Prof. Mildred A. Sebastian (Campus Administrator)\n- Trece Martires City Campus: Asso. Prof. Noel A. Sedigo (Campus Administrator)\n- Maragondon Campus: Prof. Jazmin P. Cubillo (Principal)\n- Dasmariñas Learning Center Campus: Dr. Gemma S. Legaspi (Center Administrator)\n\nSanggunian: https://cvsu.edu.ph/contact-us-2/"
++  ],
+   "campus_specific": [
+     "CvSU operates 11 campuses in the province of Cavite: the Main Campus in Indang (the Don Severino delas Alas Campus) along with satellite campuses including Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario (the CCAT campus), Silang, Tanza, and Trece Martires City. Program offerings differ per campus. For the verified, current list of campuses with their addresses, program offerings, and contact details, please visit https://cvsu.edu.ph/category/campuses/. Source: https://cvsu.edu.ph/history/",
+     "CvSU's campus system has 11 campuses: the Main Campus in Indang plus satellite campuses across Cavite (Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario/CCAT, Silang, Tanza, Trece Martires City). Programs vary per campus — see https://cvsu.edu.ph/category/campuses/ for the official directory.",
+@@ -118,6 +127,10 @@
+     "Class suspensions follow LGU and/or CvSU official announcements via the verified Facebook page and official channels. Don't rely on unverified posts — check official pages or contact your College.",
+     "Ang class suspension sa CvSU ay sumusunod sa LGU at/o sa opisyal na anunsiyo ng CvSU sa verified Facebook page. Huwag umasa sa hindi opisyal na post — tingnan ang official channels."
+   ],
++  "college_deans": [
++    "Per the CvSU officials roster effective 1 January - 31 December 2026, the CvSU college deans are:\n- CAFENR (College of Agriculture, Food, Environment and Natural Resources): Dr. Abigail P. Daria\n- CAS (College of Arts and Sciences): Dr. Ammie P. Ferrer\n- CCJ (College of Criminal Justice): Dr. Marissa L. Ikan\n- CED (College of Education): Dr. Liza C. Costa\n- CEMDS (College of Economics, Management and Development Studies): Dr. Maria Soledad M. Lising\n- CEIT (College of Engineering and Information Technology): Dr. Willie C. Buclatin\n- COM (College of Medicine): Dr. Eleanor J. Galvez\n- CON (College of Nursing): Dr. Evelyn M. Del Mundo\n- CSPEAR (College of Sports, Physical Education and Recreation): Dr. Victor F. Piores\n- CTHM (College of Tourism and Hospitality Management): Dr. Katherine D. Peren\n- CVMBS (College of Veterinary Medicine and Biomedical Sciences): Dr. Rezin C. Bahia\n- CAPS (College of Advance and Professional Studies): Dr. Bettina Joyce P. Ilagan\n\nSource: https://cvsu.edu.ph/contact-us-2/ — designations change, so please verify there.",
++    "Ayon sa opisyal na listahan ng CvSU (epektibo 1 Enero - 31 Disyembre 2026), ito ang mga dean ng bawat kolehiyo:\n- CAFENR (College of Agriculture, Food, Environment and Natural Resources): Dr. Abigail P. Daria\n- CAS (College of Arts and Sciences): Dr. Ammie P. Ferrer\n- CCJ (College of Criminal Justice): Dr. Marissa L. Ikan\n- CED (College of Education): Dr. Liza C. Costa\n- CEMDS (College of Economics, Management and Development Studies): Dr. Maria Soledad M. Lising\n- CEIT (College of Engineering and Information Technology): Dr. Willie C. Buclatin\n- COM (College of Medicine): Dr. Eleanor J. Galvez\n- CON (College of Nursing): Dr. Evelyn M. Del Mundo\n- CSPEAR (College of Sports, Physical Education and Recreation): Dr. Victor F. Piores\n- CTHM (College of Tourism and Hospitality Management): Dr. Katherine D. Peren\n- CVMBS (College of Veterinary Medicine and Biomedical Sciences): Dr. Rezin C. Bahia\n- CAPS (College of Advance and Professional Studies): Dr. Bettina Joyce P. Ilagan\n\nSanggunian: https://cvsu.edu.ph/contact-us-2/ — nagbabago ang mga designasyon."
++  ],
+   "compare_to_other_school": [
+     "I won't make a 'better than' comparison between schools — every university has its strengths, and the right fit depends on your program, finances, distance, learning style, and goals. What I can say about CvSU (verified from its official site): it is a Philippine state university covered by RA 10931 (free tuition for qualified Filipino undergraduate students), with 11 campuses across Cavite and close to 100 curricular programs. It holds AACCUP Institutional Accreditation Level III (and was recognized as the second top performing state university with the highest number of Level III accredited programs), is ISO 9001:2015 certified, earned a 3-star QS rating, and ranked 217th in the WURI 2026 Top 500 Global Innovative Universities, 197th in the 2026 HE Higher Education Ranking, and 1001-1500th in the Times Higher Education (THE) Sustainability Impact Ratings 2026 (improved from 1501+ in 2024-2025). For further specifics — program accreditations, board pass rates — check https://cvsu.edu.ph and CHED's published data. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+     "I won't rank CvSU against other schools — fit depends on your program, finances, distance, and goals. Verified facts about CvSU: a Philippine SUC covered by RA 10931, 11 campuses across Cavite, close to 100 programs, AACCUP Institutional Accreditation Level III, ISO 9001:2015 certified, QS 3 Stars, 217th in WURI 2026, 197th in the 2026 HE Higher Education Ranking, and 1001-1500th in the THE Sustainability Impact Ratings 2026 (up from 1501+). Check https://cvsu.edu.ph for specifics. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)",
+@@ -173,7 +186,7 @@
+     "CvSU Phone Directory — CvSU Number: 4839250\nNote: To make an outside call, press 9 followed by the number. (e.g. 94150013)\n\nADMINISTRATION BUILDING:\n- OUP — loc. 1001\n- OUP - SECRETARY — loc. 1002\n- OVPAA — loc. 1003\n- OVPAA - SECRETARY — loc. 1004\n- OVPBARG — loc. 1005\n- OVPBARG - SECRETARY — loc. 1006\n- OVPRIE — loc. 1007\n- OVPRIE - SECRETARY — loc. 1008\n- OVPASS — loc. 1009\n- OVPASS - SECRETARY — loc. 1010\n- OVPPD — loc. 1011\n- OVPPD - SECRETARY — loc. 1012\n- ACCOUNTING — loc. 1013\n- BUDGET — loc. 1014\n- CASHIER — loc. 1015\n- COA — loc. 1016\n- HRDO — loc. 1017\n- INTERNAL AUDIT — loc. 1018\n- LEGAL OFFICE — loc. 1019\n- OBS — loc. 1020\n- PACO — loc. 1021\n- PROCUREMENT — loc. 1022\n- RECORDS OFFICE — loc. 1023\n- SUPPLY OFFICE — loc. 1024\n\nOTHER OFFICES:\n- AGRI ECO — loc. 1036\n- ALUMNI — loc. 1049\n- BAMO — loc. 1106\n- BRITE CENTER — loc. 1037\n- CAFENR - ENSCI — loc. 1073\n- CAFENR - ANSCI — loc. 1071\n- CAFENR - CROP — loc. 1072\n- CAFENR - DEAN — loc. 1069\n- CAFENR - FOOD TECH — loc. 1074\n- CAFENR - REGISTRAR — loc. 1070\n- CAS - BIOSCI — loc. 1077\n- CAS - DCOM — loc. 1078\n- CAS - DEAN — loc. 1075\n- CAS - DHUM — loc. 1079\n- CAS - DSS — loc. 1080\n- CAS - PHYSCI — loc. 1081\n- CAS - REGISTRAR — loc. 1076\n- CCJ - DEAN — loc. 1097\n- CCJ - FACULTY — loc. 1099\n- CCJ - REGISTRAR — loc. 1098\n- CDC — loc. 1104\n- CED - REGISTRAR — loc. 1065\n- CED - TED — loc. 1067\n- CED - DEAN — loc. 1064\n- CEIT - DAFE — loc. 1057\n- CEIT - DCEA — loc. 1058\n- CEIT - DCEE — loc. 1059\n- CEIT - DIET — loc. 1060\n- CEIT - DIT 1 — loc. 1061\n- CEIT - DIT 2 — loc. 1062\n- CEIT - REGISTRAR — loc. 1056\n- CEIT - DEAN — loc. 1055\n- CELLAR — loc. 1041\n- CEMDS - DEAN — loc. 1085\n- CEMDS - ECONOMICS — loc. 1087\n- CEMDS - MNGMNT — loc. 1088\n- CEMDS - OFAD — loc. 1089\n- CEMDS - REGISTRAR — loc. 1086\n- COM - DEAN — loc. 1100\n- CON - DEAN — loc. 1090\n- CON - MEDTECH — loc. 1092\n- CON - MIDWIFERY — loc. 1093\n- CON - REGISTRAR — loc. 1091\n- CSPEAR - DEAN — loc. 1094\n- CSPEAR - FACULTY — loc. 1096\n- CSPEAR - REGISTRAR — loc. 1095\n- CTHM - DEAN — loc. 1066\n- CVMBS - DEAN — loc. 1082\n- CVMBS - HOSPITAL — loc. 1084\n- CVMBS - REGISTRAR — loc. 1083\n- DATA CENTER — loc. 1063\n- EMO — loc. 1105\n- ERB — loc. 1028\n- EXTENSION — loc. 1029\n- GAD — loc. 1046\n- GSO — loc. 1027\n- GSOLC — loc. 1042\n- GUARD ADMIN — loc. 1103\n- GUARD GATE 1 — loc. 1044\n- GUARD GATE 2 — loc. 1045\n- HOSTEL — loc. 1035\n- ICTO — loc. 1054\n- ILCLO — loc. 1043\n- INFIRMARY — loc. 1040\n- ITSO — loc. 1032\n- KMC — loc. 1030\n- LIBRARY — loc. 1038\n- MACAPUNO — loc. 1033\n- MUSEUM — loc. 1101\n- NCRDEC — loc. 1034\n- OSAS — loc. 1025\n- PCO — loc. 1051\n- PDO — loc. 1048\n- PRG — loc. 1053\n- QAO — loc. 1047\n- REGISTRAR MAIN — loc. 1026\n- RESEARCH — loc. 1031\n- SAKA — loc. 1102\n- SHS — loc. 1068\n- SPRINT — loc. 1050\n- STARRDEC — loc. 1039\n- USD0 — loc. 1052"
+   ],
+   "dormitory": [
+-    "CvSU offers student dormitories at selected campuses, including the Main Campus in Indang, where a newly constructed Boys' Dormitory was inaugurated during the 120th founding anniversary in January 2026. Slots are limited and priority is given to students from distant areas, so apply early — they fill quickly during enrollment. To apply, secure an application form from OSAS and prepare your Certificate of Registration (proof of enrollment), medical/health clearance, barangay clearance, 2x2 ID photos, and a parent/guardian consent letter. Fees vary per campus and room type; basic utilities are usually included, though electricity may be charged separately. Dormitories enforce a strict curfew, do not allow outside visitors after curfew, and are governed by dormitory policies. For details, contact the Office of Student Affairs & Services (OSAS) at osas@cvsu.edu.ph or visit your campus Student Affairs office.",
++    "CvSU offers student dormitories at selected campuses, including the Main Campus in Indang, where a newly constructed Boys' Dormitory was inaugurated during the 120th founding anniversary in January 2026. Slots are limited and priority is given to students from distant areas, so apply early — they fill quickly during enrollment. To apply, secure an application form from OSAS and prepare your Certificate of Registration (proof of enrollment), medical/health clearance, barangay clearance, 2x2 ID photos, and a parent/guardian consent letter. Fees vary per campus and room type; basic utilities are usually included, though electricity may be charged separately. Dormitories enforce a strict curfew, do not allow outside visitors after curfew, and are governed by dormitory policies. For details, contact the Office of Student Affairs & Services (OSAS) at cvsuosasmain@cvsu.edu.ph or visit your campus Student Affairs office.",
+     "May dormitoryo ang CvSU sa ilang campus, kasama na ang Main Campus sa Indang — kung saan may bagong Boys' Dormitory na binuksan noong ika-120 founding anniversary (Enero 2026). Limitado ang slots, kaya mag-apply nang maaga. Kailangan ng COR, medical clearance, barangay clearance, at pahintulot ng magulang. Para sa detalye ng bayad at patakaran, makipag-ugnayan sa OSAS office ng inyong campus. Salamat sa inyong tanong!"
+   ],
+   "education_programs": [
+@@ -350,10 +363,6 @@
+     "I'm not sure I understand. Try asking about CvSU admissions, programs, tuition fees, or campus services!",
+     "I'm here to help with CvSU-related questions. Try asking about: admissions, programs offered, tuition fees, scholarships, campus locations, or how to contact CvSU."
+   ],
+-  "llm_unavailable": [
+-    "Sorry, I'm having trouble reaching my knowledge base right now — this is on my end, not your question. Please try again in a moment.",
+-    "Pasensya na po, may problema ako sa pagkuha ng impormasyon sa ngayon — wala pong mali sa tanong ninyo. Pakisubukang muli mamaya."
+-  ],
+   "nstp": [
+     "NATIONAL SERVICE TRAINING PROGRAM (NSTP) AT CvSU:\n\nNSTP is MANDATORY for all first-year college students — 2 semesters (NSTP 1 & NSTP 2).\n\nTHREE COMPONENTS (choose one):\n- ROTC: Reserve Officers' Training Corps — military/AFP training\n- CWTS: Civic Welfare Training Service — community development projects\n- LTS: Literacy Training Service — teaching literacy in communities\n\nENROLLMENT:\n- Register during first-year enrollment\n- Coordinate with your college/department for available components\n- Some campuses may offer limited components — check with OSAS\n\nCOMPLETION:\n- NSTP certificate is REQUIRED for graduation\n- Must complete both NSTP 1 and NSTP 2\n\nCONTACT: Office of Student Affairs & Services (OSAS) or your department adviser.",
+     "Ang NSTP (National Service Training Program) ay sapilitan para sa lahat ng unang taon na estudyante sa CvSU. Pumili ng isa sa tatlong component: ROTC, CWTS, o LTS. Dapat makumpleto ang NSTP 1 at NSTP 2 para sa sertipiko na kailangan sa graduation. Makipag-ugnayan sa OSAS o sa iyong departamento para sa detalye."
+@@ -588,17 +597,8 @@
+     "Wi-Fi is available at CvSU in libraries, computer labs, and common areas. Access usually requires campus credentials from ICT/MIS. Coverage and speed vary — report issues to ICT/MIS.",
+     "May Wi-Fi sa CvSU sa mga library, computer lab, at common areas. Karaniwang kailangan ng campus credentials mula sa ICT/MIS. Magreport ng issues sa ICT/MIS."
+   ],
+-  "acknowledgement": [
+-    "Got it! Is there anything else you'd like to know about CvSU — admissions, programs, fees, scholarships, or campus services?",
+-    "Sure! Just ask if anything else about CvSU comes up.",
+-    "Sige! May iba pa ba kayong gustong itanong tungkol sa CvSU — admission, programa, bayarin, scholarship, o serbisyo sa campus?"
+-  ],
+-  "college_deans": [
+-    "Per the CvSU officials roster effective 1 January - 31 December 2026, the CvSU college deans are:\n- CAFENR (College of Agriculture, Food, Environment and Natural Resources): Dr. Abigail P. Daria\n- CAS (College of Arts and Sciences): Dr. Ammie P. Ferrer\n- CCJ (College of Criminal Justice): Dr. Marissa L. Ikan\n- CED (College of Education): Dr. Liza C. Costa\n- CEMDS (College of Economics, Management and Development Studies): Dr. Maria Soledad M. Lising\n- CEIT (College of Engineering and Information Technology): Dr. Willie C. Buclatin\n- COM (College of Medicine): Dr. Eleanor J. Galvez\n- CON (College of Nursing): Dr. Evelyn M. Del Mundo\n- CSPEAR (College of Sports, Physical Education and Recreation): Dr. Victor F. Piores\n- CTHM (College of Tourism and Hospitality Management): Dr. Katherine D. Peren\n- CVMBS (College of Veterinary Medicine and Biomedical Sciences): Dr. Rezin C. Bahia\n- CAPS (College of Advance and Professional Studies): Dr. Bettina Joyce P. Ilagan\n\nSource: https://cvsu.edu.ph/contact-us-2/ — designations change, so please verify there.",
+-    "Ayon sa opisyal na listahan ng CvSU (epektibo 1 Enero - 31 Disyembre 2026), ito ang mga dean ng bawat kolehiyo:\n- CAFENR (College of Agriculture, Food, Environment and Natural Resources): Dr. Abigail P. Daria\n- CAS (College of Arts and Sciences): Dr. Ammie P. Ferrer\n- CCJ (College of Criminal Justice): Dr. Marissa L. Ikan\n- CED (College of Education): Dr. Liza C. Costa\n- CEMDS (College of Economics, Management and Development Studies): Dr. Maria Soledad M. Lising\n- CEIT (College of Engineering and Information Technology): Dr. Willie C. Buclatin\n- COM (College of Medicine): Dr. Eleanor J. Galvez\n- CON (College of Nursing): Dr. Evelyn M. Del Mundo\n- CSPEAR (College of Sports, Physical Education and Recreation): Dr. Victor F. Piores\n- CTHM (College of Tourism and Hospitality Management): Dr. Katherine D. Peren\n- CVMBS (College of Veterinary Medicine and Biomedical Sciences): Dr. Rezin C. Bahia\n- CAPS (College of Advance and Professional Studies): Dr. Bettina Joyce P. Ilagan\n\nSanggunian: https://cvsu.edu.ph/contact-us-2/ — nagbabago ang mga designasyon."
+-  ],
+-  "campus_officials": [
+-    "Per the CvSU officials roster effective 1 January - 31 December 2026, the CvSU campus heads are:\n- Bacoor City Campus: Asst. Prof. Menvyluz S. Macalalad (Campus Administrator)\n- Carmona Campus: Dr. Jenny Beb F. Espineli (Campus Administrator)\n- Cavite City Campus: Asso. Prof. Ma. Cristina J. Baesa (Campus Administrator)\n- General Trias Campus: Asso. Prof. Marilou P. Luseco (Campus Administrator)\n- Imus Campus: Dr. Armi Grace B. Desingaño (Campus Administrator)\n- Naic Campus: Asst. Prof. Armina B. Pugay (Campus Administrator)\n- Rosario (CCAT) Campus: Dr. Lauro B. Pascua (Campus Administrator)\n- Silang Campus: Dr. Jonathan R. Digma (Campus Administrator)\n- Tanza Campus: Asso. Prof. Mildred A. Sebastian (Campus Administrator)\n- Trece Martires City Campus: Asso. Prof. Noel A. Sedigo (Campus Administrator)\n- Maragondon Campus: Prof. Jazmin P. Cubillo (Principal)\n- Dasmariñas Learning Center Campus: Dr. Gemma S. Legaspi (Center Administrator)\n\nSource: https://cvsu.edu.ph/contact-us-2/ — designations change, so please verify there.",
+-    "Ayon sa opisyal na listahan ng CvSU (epektibo 1 Enero - 31 Disyembre 2026), ito ang mga pinuno ng bawat campus:\n- Bacoor City Campus: Asst. Prof. Menvyluz S. Macalalad (Campus Administrator)\n- Carmona Campus: Dr. Jenny Beb F. Espineli (Campus Administrator)\n- Cavite City Campus: Asso. Prof. Ma. Cristina J. Baesa (Campus Administrator)\n- General Trias Campus: Asso. Prof. Marilou P. Luseco (Campus Administrator)\n- Imus Campus: Dr. Armi Grace B. Desingaño (Campus Administrator)\n- Naic Campus: Asst. Prof. Armina B. Pugay (Campus Administrator)\n- Rosario (CCAT) Campus: Dr. Lauro B. Pascua (Campus Administrator)\n- Silang Campus: Dr. Jonathan R. Digma (Campus Administrator)\n- Tanza Campus: Asso. Prof. Mildred A. Sebastian (Campus Administrator)\n- Trece Martires City Campus: Asso. Prof. Noel A. Sedigo (Campus Administrator)\n- Maragondon Campus: Prof. Jazmin P. Cubillo (Principal)\n- Dasmariñas Learning Center Campus: Dr. Gemma S. Legaspi (Center Administrator)\n\nSanggunian: https://cvsu.edu.ph/contact-us-2/"
++  "llm_unavailable": [
++    "Sorry, I'm having trouble reaching my knowledge base right now — this is on my end, not your question. Please try again in a moment.",
++    "Pasensya na po, may problema ako sa pagkuha ng impormasyon sa ngayon — wala pong mali sa tanong ninyo. Pakisubukang muli mamaya."
+   ]
+ }
+\ No newline at end of file
+diff --git a/run_server.bat b/run_server.bat
+index c8cc20d..064da2e 100644
+--- a/run_server.bat
++++ b/run_server.bat
+@@ -1,7 +1,12 @@
+ @echo off
++setlocal
++cd /d "%~dp0"
++if not defined SEVI_API_PORT set "SEVI_API_PORT=8010"
++set "SEVI_PYTHON=python"
++if exist ".venv\Scripts\python.exe" set "SEVI_PYTHON=.venv\Scripts\python.exe"
+ echo Starting CvSU Chatbot API Server...
+ echo.
+ REM api.app is the only entrypoint. The legacy root app.py was retired — it
+ REM served the same logger routes without authentication.
+-python -m uvicorn api.app:app --host 127.0.0.1 --port 8000
++"%SEVI_PYTHON%" -m uvicorn api.app:app --env-file .env --host 127.0.0.1 --port %SEVI_API_PORT%
+ pause
+diff --git a/scripts/eval_run_inprocess.py b/scripts/eval_run_inprocess.py
+index 9aba2b9..55f0bd4 100644
+--- a/scripts/eval_run_inprocess.py
++++ b/scripts/eval_run_inprocess.py
+@@ -21,15 +21,28 @@ import uuid
+ 
+ ap = argparse.ArgumentParser()
+ ap.add_argument("--limit", type=int, default=0)
+-ap.add_argument("--model", default=None, help="override OLLAMA_MODEL")
++ap.add_argument("--model", default=None, help="override OLLAMA_MODEL (OPENAI_MODEL under LLM_PROVIDER=openai|localai)")
+ ap.add_argument("--out", default="data/eval/responses_new.json")
+ ap.add_argument("--dataset", default="data/eval/mirror_qa.json")
+ _args = ap.parse_args()
+ 
++ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++
++# Load the repo .env BEFORE the setdefaults below. hybrid_chatbot loads it too,
++# but only on import — by then the setdefaults had already pinned
++# LLM_PROVIDER=ollama, so a .env on LLM_PROVIDER=openai was silently ignored
++# and every LLM-tier item graded as llm_unavailable.
++try:
++    from dotenv import load_dotenv
++    load_dotenv(os.path.join(ROOT, ".env"))
++except ImportError:
++    pass
++
+ os.environ.setdefault("SEVI_ALLOW_UNVERIFIED_MODELS", "1")
+ os.environ.setdefault("OLLAMA_BASE_URL", "http://localhost:11434")
+ if _args.model:
+-    os.environ["OLLAMA_MODEL"] = _args.model
++    _openai = os.environ.get("LLM_PROVIDER", "").strip().lower() in ("openai", "localai")
++    os.environ["OPENAI_MODEL" if _openai else "OLLAMA_MODEL"] = _args.model
+ # Default to what the deployment actually serves. The previous default was
+ # llama3.2:3b, which silently graded a DIFFERENT model than production and
+ # made the result incomparable to any run taken from the live stack.
+@@ -37,7 +50,6 @@ os.environ.setdefault("OLLAMA_MODEL", "qwen3:8b")
+ os.environ.setdefault("LLM_PROVIDER", "ollama")
+ os.environ.pop("DATABASE_URL", None)  # avoid Postgres; not needed for predict()
+ 
+-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ sys.path.insert(0, ROOT)
+ os.chdir(ROOT)
+ 
