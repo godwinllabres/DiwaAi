@@ -166,7 +166,12 @@ def main() -> int:
 			"expected and preserved by review, not by the generator. Fix a bad "
 			"title here rather than in the code. printed page = pdf page - "
 			"page_offset, for pdf pages >= printed_from. 'pages' is an inclusive "
-			"[first, last] range of PDF page numbers."
+			"[first, last] range of PDF page numbers. 'campuses' (hand-authored, "
+			"checked against each campus divider page of the FY 2026 edition) tags "
+			"inclusive pdf page ranges with the campus they document: main | all | "
+			"toc | a satellite key; retrieval restricts to main+all unless the "
+			"question or session names a satellite. Re-check the ranges for a new "
+			"edition."
 		),
 		"document": DOC_NAME,
 		"edition": EDITION,
@@ -175,6 +180,18 @@ def main() -> int:
 		"printed_from": printed_from,
 		"sections": sections,
 	}
+
+	# The campus page ranges are hand-authored (the generator cannot detect
+	# them), so carry them forward instead of dropping them on --write.
+	try:
+		with open(STRUCTURE_PATH, encoding="utf-8") as fh:
+			previous = json.load(fh)
+	except (OSError, ValueError):
+		previous = {}
+	if previous.get("campuses"):
+		doc = {k: v for k, v in doc.items() if k != "sections"}
+		doc["campuses"] = previous["campuses"]
+		doc["sections"] = sections
 
 	if not args.write:
 		print("\n-- sample --", file=sys.stderr)

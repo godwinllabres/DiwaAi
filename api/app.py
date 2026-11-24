@@ -1084,7 +1084,8 @@ class ResponseSource(str, Enum):
     CONVERSATION_RECAP = "conversation_recap"  # session recap from chat history
     SMALLTALK       = "smalltalk"          # curated benign small talk (jokes)
     COLLEGE_PROGRAMS = "college_programs" # complete per-college program list
-    FALLBACK        = "fallback"
+    DEAN_LOOKUP     = "dean_lookup"        # one college's dean from the curated roster
+    FALLBACK       = "fallback"
     REFUSAL         = "refusal"
 
 
@@ -1404,6 +1405,8 @@ def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optiona
         return ResponseSource.SMALLTALK, None
     if m == "College Programs":
         return ResponseSource.COLLEGE_PROGRAMS, None
+    if m == "Dean Lookup":
+        return ResponseSource.DEAN_LOOKUP, None
     if m.startswith("NonsenseGate"):
         return ResponseSource.REFUSAL, RefusalReason.NONSENSE
     if m.startswith("ScopeGate") or "(out-of-scope)" in m:
@@ -1874,6 +1877,17 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
     # intent has the richer answer plus the map card.
     if _campus_directory.is_directory_turn(request.message, campus_routing.campus):
         text, info = _campus_directory.build_answer(campus_routing.campus)
+        # Record it in chatbot history (same key as chat()) so a follow-up
+        # ("why only trece?") anchors on this turn, not an older one.
+        history_key = request.session_id or request.user_id
+        if history_key:
+            await asyncio.to_thread(
+                chatbot.record_turn, history_key,
+                user_input=original_message, response=text,
+                intent="campus_location", confidence=1.0,
+                model_used="CampusDirectory (charter contact table)",
+                session_id=request.session_id,
+            )
         return await _short_circuit_response(
             request, original_message, start_time,
             text=text,

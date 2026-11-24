@@ -28,11 +28,14 @@ import logging
 import os
 import threading
 from dataclasses import dataclass
-from typing import Optional
+from typing import Collection, Optional
+
+import numpy as np
 
 from . import charter_pages
 from .charter_pages import split_pages
 from . import lexical_rank
+from .campus_context import is_campus_term
 
 _logger = logging.getLogger("diwa.charter_rag")
 
@@ -83,6 +86,11 @@ class Passage:
 	# quoting requires >= 1: single common words ("time", "delivery") can win
 	# the cosine ranking, but a real charter question phrase-matches the text.
 	bigram_hits: int = 0
+	# bigram_hits minus bigrams made only of campus-name words.
+	topic_bigram_hits: int = 0
+	# Campus the page documents (charter_pages.campus_of): "main", "all",
+	# "toc", or a satellite key.
+	campus: str = "all"
 
 	def citation(self) -> str:
 		"""Names the service and the printed page, not just the PDF index —
@@ -145,13 +153,32 @@ class CharterIndex:
 		# thresholds above; see api/lexical_rank.py for the full rationale.
 		analyzer = self._vectorizer.build_analyzer()
 		self._bm25 = lexical_rank.BM25Index([analyzer(t) for _, t in self._chunks])
+		# Campus tag per chunk, from the page ranges in charter_structure.json
+		# (chunks never cross a page). Lets the chatbot keep a satellite's
+		# procedure out of a generic answer — see retrieve(campuses=).
+		self._campus = np.array(
+			[charter_pages.campus_of(p) for p, _ in self._chunks], dtype=object)
+		# frozenset(scope) -> bool mask; a handful of scopes, so cached. An
+		# unlocked race only recomputes the same value.
+		self._scope_masks: dict[frozenset, np.ndarray] = {}
 		_logger.info("charter index ready: %d chunks", len(self._chunks))
 
 	@property
 	def available(self) -> bool:
 		return self._matrix is not None
 
-	def retrieve(self, query: str, k: int = 3) -> list[Passage]:
+	def _scope_mask(self, campuses: Collection[str]) -> np.ndarray:
+		scope = frozenset(campuses)
+		mask = self._scope_masks.get(scope)
+		if mask is None:
+			mask = np.isin(self._campus, list(scope))
+			self._scope_masks[scope] = mask
+		return mask
+
+	def retrieve(self, query: str, k: int = 3,
+	             campuses: Optional[Collection[str]] = None) -> list[Passage]:
+		"""Top-k passages. campuses restricts to chunks tagged with one of
+		those keys, BEFORE the candidate cap; None = whole charter."""
 		if not self.available or not query or not query.strip():
 			return []
 		from sklearn.metrics.pairwise import linear_kernel
@@ -166,12 +193,14 @@ class CharterIndex:
 		query_terms = list(analyzer(query))
 		terms = {t for t in query_terms if " " not in t}
 		query_bigrams = {t for t in query_terms if " " in t}
+		topic_bigrams = {t for t in query_bigrams if not is_campus_term(t)}
 		# Candidate pool: fused BM25+cosine order (LEXICAL_RANKER=fused,
 		# the default) or the legacy pure-cosine order (=tfidf). Only
 		# cosine-positive docs are admitted, so the calibrated serving
 		# score below keeps its meaning in both modes.
 		order = lexical_rank.candidate_order(
-			scores, self._bm25, query_terms, cap=max(k * 4, 8))
+			scores, self._bm25, query_terms, cap=max(k * 4, 8),
+			mask=self._scope_mask(campuses) if campuses is not None else None)
 		passages = []
 		for i in order:
 			text_lc = self._chunks[i][1].lower()
@@ -185,6 +214,8 @@ class CharterIndex:
 					page=self._chunks[i][0],
 					text=self._chunks[i][1],
 					bigram_hits=len(query_bigrams & chunk_terms),
+					topic_bigram_hits=len(topic_bigrams & chunk_terms),
+					campus=str(self._campus[i]),
 				)
 			)
 		passages.sort(key=lambda p: p.score, reverse=True)

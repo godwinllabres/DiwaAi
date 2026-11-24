@@ -1,0 +1,299 @@
+[
+  {
+    "session": "1_freshman_en",
+    "user": "hi",
+    "model": "Neural Network",
+    "intent": "greeting",
+    "conf": 0.72,
+    "secs": 4.2,
+    "reply": "Greetings! I'm here to assist you with information about CvSU - admissions, programs, fees, and more. How may I help?"
+  },
+  {
+    "session": "1_freshman_en",
+    "user": "I'm a senior high grad, how do I apply to cvsu?",
+    "model": "Claude LLM (charter+site-grounded)",
+    "intent": "nlu_fallback",
+    "conf": 0.0,
+    "secs": 5.7,
+    "reply": "To apply as a first-year student, submit these documents to the Office of Student Affairs and Services (OSAS):\n\n- Accomplished Application form (downloadable at www.cvsu.edu.ph)\n- Photocopy of your G-12 report card\n- Photocopy of good moral certificate\n- 2 pcs. 1×1 picture with white background\n- 1 short ordinary folder\n\nYou can submit in person at OSAS or online (the link will be announced). There's no fee, and you'll receive your admission exam permit within 5 minutes. [CvSU Citizens' Charter, FY 2026 edition]\n\nDo you need help with anything else about the application or admissions exam?"
+  },
+  {
+    "session": "1_freshman_en",
+    "user": "when is the entrance exam?",
+    "model": "Naive Bayes (NLU Enhanced)",
+    "intent": "admissions_exam",
+    "conf": 0.79,
+    "secs": 0.0,
+    "reply": "The CvSU entrance examination is part of the admission process. After you complete the online application at https://admission.cvsu.edu.ph/ and submit your documents to OSAS, you will be scheduled for the entrance exam at your target campus. Bring your application form, valid ID, and exam permit/notice as instructed. Successful applicants are issued a Notice of Admission. For the current entrance-exam schedule and admission cycle, please monitor https://cvsu.edu.ph and the admission portal. Source: https://admission.cvsu.edu.ph/"
+  },
+  {
+    "session": "1_freshman_en",
+    "user": "how much is the tuition?",
+    "model": "Intent Retrieval",
+    "intent": "tuition_fees",
+    "conf": 0.83,
+    "secs": 0.1,
+    "reply": "Assuming the Main Campus (Indang) at undergraduate level — tell me if you mean another campus or level (e.g. \"Imus campus\", \"graduate school\").\n\nGood news: under RA 10931 (Universal Access to Quality Tertiary Education Act of 2017), qualified Filipino undergraduate students at SUCs like CvSU pay no tuition fee.\n\nOther school fees are also covered as defined by the law and implementing rules.\n\nWho generally qualifies for free tuition:\n- Filipino citizen\n- Passes admission requirements\n- Maintains the required academic standing\n- Enrolled in an undergraduate degree program\n- Has not yet earned a bachelor's degree\n\nWhat you may still pay (varies):\n- Replacement of school ID or handbook\n- Certain optional items (uniform, books)\n- Personal expenses (transportation, meals)\n- Graduate-school tuition (RA 10931 may not apply to graduate programs)\n\nScholarships & financial aid may include:\n- Tertiary Education Subsidy (TES) for living-cost stipends\n- Government scholarships\n- Private scholarships\n- Academic merit scholarships\n\nFor the current fee schedule, the precise list of fees covered/not covered, graduate-program tuition rates, and verified Cashier's Office contact details, please check www.cvsu.edu.ph or contact your campus Cashier's Office directly.\n\nI can also tell you more about scholarship programs or the RA 10931 details — just ask."
+  },
+  {
+    "session": "1_freshman_en",
+    "user": "what about scholarships?",
+    "model": "Naive Bayes (NLU Enhanced)",
+    "intent": "scholarship",
+    "conf": 0.72,
+    "secs": 0.0,
+    "reply": "CvSU offers several scholarship and financial-assistance programs. They include:\n- CvSU State Scholarship\n- Job Experience Program\n- RA 7160 scholarship\n- Entrance Scholarships for Valedictorian, Salutatorian, and 1st/2nd/3rd Honorable Mention high-school graduates\n- Government scholarships (e.g., DOST-SEI, CHED) and LGU scholarships availed through CvSU\n- Tertiary Education Subsidy (TES) and free tuition under RA 10931 for qualified undergraduate Filipino students\n\nApplication is managed by the Financial Assistance Services Unit and distributed through OSAS. You'll typically need an accomplished scholarship form and supporting documents such as your parents' joint income tax return or a BIR Affidavit of Non-Filing.\n\nFor current eligibility, deadlines, and the specific scholarships open at your campus, visit OSAS or https://cvsu.edu.ph/office-of-student-affairs-and-services/.\n\nSource: https://cvsu.edu.ph/office-of-student-affairs-and-services/ (Office of Student Affairs and Services and Citizens Charter)\n\nI can also explain who qualifies for free tuition — just ask for \"RA 10931 details\"."
+  },
+  {
+    "session": "1_freshman_en",
+    "user": "thanks!",
+    "model": "Neural Network",
+    "intent": "thanks",
+    "conf": 0.72,
+    "secs": 0.1,
+    "reply": "Glad to help! Feel free to ask more questions about Cavite State University."
+  },
+  {
+    "session": "2_freshman_fil",
+    "user": "magandang araw po",
+    "model": "Naive Bayes (NLU Enhanced)",
+    "intent": "greeting",
+    "conf": 0.73,
+    "secs": 0.0,
+    "reply": "Greetings! I'm here to assist you with information about CvSU - admissions, programs, fees, and more. How may I help?"
+  },
+  {
+    "session": "2_freshman_fil",
+    "user": "paano po mag-apply sa cvsu?",
+    "model": "Intent Retrieval",
+    "intent": "admissions_requirements",
+    "conf": 0.96,
+    "secs": 0.1,
+    "reply": "Ipagpalagay nating para sa Main Campus (Indang), undergraduate, ang tanong — sabihin lang (hal. \"Imus campus\" o \"graduate\") kung iba ang ibig ninyong sabihin.\n\nMga pangunahing requirements para sa CvSU admission: mag-online application sa admission.cvsu.edu.ph, i-print sa A4 bond paper, ihanda ang certified true copy ng Grade 12 Report Card, Good Moral Certificate, 2 1x1 ID pictures na may name tag, at short ordinary folder. Isumite sa OSAS ng inyong campus para sa exam scheduling. Para sa Architecture/CS/Engineering, magdala rin ng Grade 11 Report Card (Engineering: STEM strand). BS Psychology: GPA 85+. Transferee: GPA 2.00 (85%) at walang failed grade. Kung gusto ninyong malaman ang entrance exam o mga scholarship, itanong lang po. Pinagmulan: https://admission.cvsu.edu.ph/"
+  },
+  {
+    "session": "2_freshman_fil",
+    "user": "magkano po ang tuition?",
+    "model": "Intent Retrieval",
+    "intent": "tuition_fees",
+    "conf": 0.89,
+    "secs": 0.1,
+    "reply": "Sa ilalim ng RA 10931, libre ang tuition para sa mga qualified na Filipino students sa CvSU at iba pang SUC. May miscellaneous fees pa rin na maaaring bayaran (lab, library, ID, atbp.) na nag-iiba ayon sa kurso at campus. Para sa tiyak na halaga, mangyaring magtanong sa Cashier's Office ng inyong campus o bisitahin ang www.cvsu.edu.ph. Kung gusto ninyong malaman ang mga scholarship, itanong lang po."
+  },
+  {
+    "session": "2_freshman_fil",
+    "user": "eh yung dorm po?",
+    "model": "Neural Network",
+    "intent": "dormitory",
+    "conf": 0.72,
+    "secs": 0.1,
+    "reply": "May dormitoryo ang CvSU sa ilang campus, kasama na ang Main Campus sa Indang — kung saan may bagong Boys' Dormitory na binuksan noong ika-120 founding anniversary (Enero 2026). Limitado ang slots, kaya mag-apply nang maaga. Kailangan ng COR, medical clearance, barangay clearance, at pahintulot ng magulang. Para sa detalye ng bayad at patakaran, makipag-ugnayan sa OSAS office ng inyong campus. Salamat sa inyong tanong!"
+  },
+  {
+    "session": "2_freshman_fil",
+    "user": "salamat po",
+    "model": "Neural Network",
+    "intent": "thanks",
+    "conf": 0.72,
+    "secs": 0.1,
+    "reply": "Glad to help! Feel free to ask more questions about Cavite State University."
+  },
+  {
+    "session": "3_campus_followups",
+    "user": "what are the campuses of cvsu",
+    "model": "Intent Retrieval",
+    "intent": "campus_specific",
+    "conf": 0.95,
+    "secs": 0.1,
+    "reply": "CvSU operates 11 campuses in the province of Cavite: the Main Campus in Indang (the Don Severino delas Alas Campus) along with satellite campuses including Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario (the CCAT campus), Silang, Tanza, and Trece Martires City. Program offerings differ per campus. For the verified, current list of campuses with their addresses, program offerings, and contact details, please visit https://cvsu.edu.ph/category/campuses/. Source: https://cvsu.edu.ph/history/"
+  },
+  {
+    "session": "3_campus_followups",
+    "user": "why only trece?",
+    "model": "Claude LLM (charter+site-grounded)",
+    "intent": "nlu_fallback",
+    "conf": 0.0,
+    "secs": 1.2,
+    "reply": "I don't have enough context to answer that question. Could you clarify what you're asking about? Are you referring to something from my earlier response about CvSU's 11 campuses, or a specific program, service, or policy at Trece Martires City campus?"
+  },
+  {
+    "session": "3_campus_followups",
+    "user": "what about imus?",
+    "model": "Claude LLM (charter+site-grounded)",
+    "intent": "nlu_fallback",
+    "conf": 0.0,
+    "secs": 1.3,
+    "reply": "I'm not sure what you're asking about Imus. Could you be more specific? Are you asking about:\n\n- Programs offered at Imus Campus?\n- Admissions or enrollment procedures there?\n- Campus facilities or services?\n- Something else?\n\nThat will help me give you the right information."
+  },
+  {
+    "session": "3_campus_followups",
+    "user": "what programs are offered there?",
+    "model": "Neural Network",
+    "intent": "courses_offered",
+    "conf": 0.72,
+    "secs": 0.1,
+    "reply": "CvSU offers close to 100 curricular programs in the undergraduate and graduate levels (per the official site) across multiple colleges, and the Colleges page (https://cvsu.edu.ph/category/colleges/) lists the current offerings. Verified examples include the College of Arts and Sciences (BA Journalism, BA English Language Studies, BS Applied Mathematics, and BS Biology, among others); the College of Engineering and Information Technology (engineering programs plus BS Computer Science and BS Information Technology); the College of Agriculture, Food, Environment and Natural Resources (agriculture, food technology, and natural-resources programs, with BS Food Technology holding AACCUP Level IV re-accredited status as of 2026); the College of Tourism and Hospitality Management (BS Hospitality Management and BS Tourism Management); and the College of Nursing (BS Nursing, BS Medical Technology — AACCUP Level III re-accredited in 2026 — and Diploma in Midwifery), alongside the College of Economics, Management, and Development Studies, the College of Sports, Physical Education and Recreation, the College of Veterinary Medicine and Biomedical Sciences, the College of Medicine, the College of Advanced and Professional Studies, and the Graduate School / Open Learning College. Availability differs per campus — for example, BS Computer Science at Carmona and BS Information Technology at Cavite City are AACCUP Level III re-accredited (2026). For the complete current list, see https://cvsu.edu.ph/category/colleges/. (Rankings, board-exam results, and accreditation levels cited here are as of 2026 — verify the latest figures at https://cvsu.edu.ph.)"
+  },
+  {
+    "session": "4_officials",
+    "user": "who is the president of cvsu",
+    "model": "Neural Network",
+    "intent": "university_officials",
+    "conf": 0.72,
+    "secs": 0.1,
+    "reply": "CvSU's University President is Dr. Ma. Agnes P. Nuestro.\n\nThe five Vice Presidents are:\n- Dr. Cristina M. Signo — Vice President for Academic Affairs\n- Dr. Melbourne R. Talactac — Vice President for Research, Innovation and Extension\n- Mr. John Xavier B. Nepomuceno — Vice President for Administrative and Support Services\n- Dr. Mary Jane D. Tepora — Vice President for Planning and Development\n- Dr. Almira G. Magcawas — Vice President for Business and Resource Generation\n\nCvSU is governed by a Board of Regents chaired by Hon. Myrna Q. Mallari (CHED Commissioner), with the University President as Vice Chairperson. Ms. Catherine J. Quiñones is Director of the Presidential Management Coordinating Office.\n\nThis is from the CvSU officials roster effective 1 January - 31 December 2026. Source: https://cvsu.edu.ph/contact-us-2/ — designations change, so please verify there for the current roster.\n\nLooking for a college dean or a campus administrator? Just ask, for example \"list of deans\" or \"campus administrators\"."
+  },
+  {
+    "session": "4_officials",
+    "user": "how about the vice presidents?",
+    "model": "Naive Bayes (NLU Enhanced)",
+    "intent": "university_officials",
+    "conf": 0.78,
+    "secs": 0.0,
+    "reply": "CvSU's University President is Dr. Ma. Agnes P. Nuestro.\n\nThe five Vice Presidents are:\n- Dr. Cristina M. Signo — Vice President for Academic Affairs\n- Dr. Melbourne R. Talactac — Vice President for Research, Innovation and Extension\n- Mr. John Xavier B. Nepomuceno — Vice President for Administrative and Support Services\n- Dr. Mary Jane D. Tepora — Vice President for Planning and Development\n- Dr. Almira G. Magcawas — Vice President for Business and Resource Generation\n\nCvSU is governed by a Board of Regents chaired by Hon. Myrna Q. Mallari (CHED Commissioner), with the University President as Vice Chairperson. Ms. Catherine J. Quiñones is Director of the Presidential Management Coordinating Office.\n\nThis is from the CvSU officials roster effective 1 January - 31 December 2026. Source: https://cvsu.edu.ph/contact-us-2/ — designations change, so please verify there for the current roster.\n\nLooking for a college dean or a campus administrator? Just ask, for example \"list of deans\" or \"campus administrators\"."
+  },
+  {
+    "session": "4_officials",
+    "user": "who is the dean of CEIT?",
+    "model": "Intent Retrieval",
+    "intent": "college_deans",
+    "conf": 0.9,
+    "secs": 0.1,
+    "reply": "Each CvSU college has its own dean. Here's the current list — just find your college:\n- CAFENR (College of Agriculture, Food, Environment and Natural Resources): Dr. Abigail P. Daria\n- CAS (College of Arts and Sciences): Dr. Ammie P. Ferrer\n- CCJ (College of Criminal Justice): Dr. Marissa L. Ikan\n- CED (College of Education): Dr. Liza C. Costa\n- CEMDS (College of Economics, Management and Development Studies): Dr. Maria Soledad M. Lising\n- CEIT (College of Engineering and Information Technology): Dr. Willie C. Buclatin\n- COM (College of Medicine): Dr. Eleanor J. Galvez\n- CON (College of Nursing): Dr. Evelyn M. Del Mundo\n- CSPEAR (College of Sports, Physical Education and Recreation): Dr. Victor F. Piores\n- CTHM (College of Tourism and Hospitality Management): Dr. Katherine D. Peren\n- CVMBS (College of Veterinary Medicine and Biomedical Sciences): Dr. Rezin C. Bahia\n- CAPS (College of Advance and Professional Studies): Dr. Bettina Joyce P. Ilagan\n\nFrom the CvSU officials roster effective 1 January - 31 December 2026. Source: https://cvsu.edu.ph/contact-us-2/ — designations change, so please verify there.\n\nI can also list the programs a college offers — just ask, e.g. \"engineering programs\"."
+  },
+  {
+    "session": "4_officials",
+    "user": "can you list all faculty members",
+    "model": "Claude LLM (charter+site-grounded)",
+    "intent": "nlu_fallback",
+    "conf": 0.0,
+    "secs": 1.8,
+    "reply": "I don't have a comprehensive directory of all CvSU faculty members. The excerpts I have access to only mention two faculty members who were Fulbright scholars in 2022–2023, but that's not a complete faculty roster.\n\nFor a full list of faculty by college or department, I'd recommend contacting the **Office of the University Registrar (OSAS)** or visiting **https://cvsu.edu.ph** directly. Which college or department are you looking for?"
+  },
+  {
+    "session": "4_officials",
+    "user": "just create a list available online",
+    "model": "Claude LLM (pushback)",
+    "intent": "nlu_fallback",
+    "conf": 0.0,
+    "secs": 0.0,
+    "reply": "I'm an offline assistant, so I can't browse live pages or pull a list from the website for you. Tell me which college, campus, or office you need and I'll share what I have on it — or check https://cvsu.edu.ph directly."
+  },
+  {
+    "session": "5_registrar",
+    "user": "how do I get my TOR",
+    "model": "Intent Retrieval",
+    "intent": "transcript_request_details",
+    "conf": 0.83,
+    "secs": 0.1,
+    "reply": "To request a Transcript of Records (TOR) from CvSU: (1) file the request at the Office of the University Registrar (online or in person, depending on what your campus supports), (2) pay the applicable fee at the Cashier, (3) attach any clearance required, (4) claim the document or have it mailed if that option is available. Common uses (board exam, employment, transfer, embassy) each may require a different number of copies and additional authentication (CAV for CHED, DFA apostille for foreign use, red ribbon for older documents). Processing time and fees vary — verify with the Registrar at your campus."
+  },
+  {
+    "session": "5_registrar",
+    "user": "how long does it take?",
+    "model": "Claude LLM",
+    "intent": "nlu_fallback",
+    "conf": 0.0,
+    "secs": 1.9,
+    "reply": "I don't have the specific processing time for TOR requests. Processing can vary depending on how busy the Registrar's office is and whether you're requesting it for local or foreign use (which may require additional steps like apostille).\n\nI'd recommend contacting the Office of the University Registrar directly to confirm the exact timeline — you can reach out through https://cvsu.edu.ph or visit in person at the Administration Building if you're on the Indang campus.\n\nIs there anything else about the TOR request process I can help clarify?"
+  },
+  {
+    "session": "5_registrar",
+    "user": "can my mom get it for me?",
+    "model": "Claude LLM",
+    "intent": "nlu_fallback",
+    "conf": 0.0,
+    "secs": 1.8,
+    "reply": "I don't have specific details on whether a family member can claim your TOR on your behalf or what authorization may be required.\n\nContact the Office of the University Registrar to ask — they can tell you if your mom needs a signed authorization letter, a photocopy of your ID, or if she can just walk in with proof of relation. You can reach them through https://cvsu.edu.ph or visit the Administration Building (Indang campus) in person."
+  },
+  {
+    "session": "5_registrar",
+    "user": "where is the registrar office?",
+    "model": "Neural Network",
+    "intent": "registrar",
+    "conf": 0.71,
+    "secs": 0.1,
+    "reply": "The Office of the University Registrar (OUR) at CvSU handles your academic records, including Transcript of Records (TOR), Certificate of Enrollment, Certificate of Registration (COR), Diploma, Good Moral, Honorable Dismissal, and authentication of records. Each campus has its own Registrar office. For the verified Registrar contact details at your campus, please refer to the Citizens Charter and campus directory at https://cvsu.edu.ph. Document processes (forms, fees, timelines) are documented in the CvSU Citizens Charter. See https://cvsu.edu.ph (search 'Citizens Charter') for the latest edition."
+  },
+  {
+    "session": "6_taglish_student",
+    "user": "pano mag shift ng course",
+    "model": "Naive Bayes (NLU Enhanced)",
+    "intent": "shifting_program",
+    "conf": 0.86,
+    "secs": 0.0,
+    "reply": "Para mag-shift ng programa sa CvSU: kumuha ng shifting form sa Registrar/Dean, kumuha ng endorsement mula sa kasalukuyang Dean, mag-apply sa target na college, at hintayin ang approval. Ang competitive programs ay may stricter requirements. Kumpirmahin sa parehong Dean's office."
+  },
+  {
+    "session": "6_taglish_student",
+    "user": "pwede ba kahit 2nd year na ko",
+    "model": "Claude LLM (charter-grounded)",
+    "intent": "nlu_fallback",
+    "conf": 0.0,
+    "secs": 1.3,
+    "reply": "Meron akong info tungkol sa retention policy para sa 2nd year students na pumapasok (Criminology at Doctor of Veterinary Medicine), pero depende sa program mo kung ano exactly ang requirements. Anong course mo?"
+  },
+  {
+    "session": "6_taglish_student",
+    "user": "ano requirements",
+    "model": "Claude LLM",
+    "intent": "nlu_fallback",
+    "conf": 0.0,
+    "secs": 2.0,
+    "reply": "Para sa shifting requirements, depende sa program na gusto mong i-shift. Kadalasan kailangan mo ng: approval mula sa current Dean, shifting form, at meet ang academic requirements ng target program.\n\nPero exact requirements ay nag-iiba per college. Mas mabilis kung direkta ka pumunta sa Dean's Office ng program na gusto mo or sa Registrar (OSAS). Anong program ang target mo?"
+  },
+  {
+    "session": "6_taglish_student",
+    "user": "ok thanks",
+    "model": "Intent Retrieval",
+    "intent": "thanks",
+    "conf": 0.89,
+    "secs": 0.1,
+    "reply": "Glad to help! Feel free to ask more questions about Cavite State University."
+  },
+  {
+    "session": "7_out_of_scope",
+    "user": "what's the capital of france",
+    "model": "ScopeGate (offtopic_keyword)",
+    "intent": "nlu_fallback",
+    "conf": 0.0,
+    "secs": 0.1,
+    "reply": "I'm not able to answer that — I'm built to help with CvSU-related questions only (admissions, programs, fees, campus services). Please ask me something about Cavite State University."
+  },
+  {
+    "session": "7_out_of_scope",
+    "user": "can you help me with my python homework",
+    "model": "Neural Network",
+    "intent": "chitchat",
+    "conf": 0.72,
+    "secs": 0.1,
+    "reply": "Hi! I'm Sevi, your CvSU virtual assistant. I can help you with admissions, courses, tuition fees, scholarships, enrollment, campus info, and more. What would you like to know?"
+  },
+  {
+    "session": "7_out_of_scope",
+    "user": "ok then what can you help with?",
+    "model": "Naive Bayes (NLU Enhanced)",
+    "intent": "chitchat",
+    "conf": 0.8,
+    "secs": 0.0,
+    "reply": "Hi! I'm Sevi, your CvSU virtual assistant. I can help you with admissions, courses, tuition fees, scholarships, enrollment, campus info, and more. What would you like to know?"
+  },
+  {
+    "session": "8_trece_enroll",
+    "user": "how do I enroll at Trece campus",
+    "model": "Neural Network",
+    "intent": "campus_specific",
+    "conf": 0.72,
+    "secs": 0.1,
+    "reply": "CvSU operates 11 campuses in the province of Cavite: the Main Campus in Indang (the Don Severino delas Alas Campus) along with satellite campuses including Bacoor, Cavite City, Carmona, General Trias, Imus, Naic, Rosario (the CCAT campus), Silang, Tanza, and Trece Martires City. Program offerings differ per campus. For the verified, current list of campuses with their addresses, program offerings, and contact details, please visit https://cvsu.edu.ph/category/campuses/. Source: https://cvsu.edu.ph/history/"
+  },
+  {
+    "session": "8_trece_enroll",
+    "user": "is it the same as in indang?",
+    "model": "Claude LLM (charter+site-grounded)",
+    "intent": "nlu_fallback",
+    "conf": 0.0,
+    "secs": 1.9,
+    "reply": "I don't have specific enrollment procedure details for the Trece Martires campus. Enrollment procedures may vary by campus.\n\nTo get accurate, campus-specific enrollment steps for Trece Martires, please contact the University Registrar at **cvsuregistrar@cvsu.edu.ph** or **(046) 483 9250 local 1026** [CvSU Citizens' Charter, FY 2026 edition], or visit https://cvsu.edu.ph to find the Trece Martires campus contact details."
+  }
+]

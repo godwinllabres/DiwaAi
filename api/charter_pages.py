@@ -165,6 +165,10 @@ class PageIndex:
 	def __init__(self, path: str = STRUCTURE_PATH):
 		self._starts: list[int] = []
 		self._sections: list[dict] = []
+		# Campus page ranges ("campuses" key): which campus each contiguous
+		# part of the charter documents. Empty = every page is "all".
+		self._campus_starts: list[int] = []
+		self._campus_ranges: list[tuple[int, int, str]] = []
 		self._offset = 0
 		self._printed_from = 1
 		self._pdf_pages = 0
@@ -191,6 +195,13 @@ class PageIndex:
 		)
 		self._sections = sections
 		self._starts = [s["pages"][0] for s in sections]
+		ranges = sorted(
+			(int(c["pages"][0]), int(c["pages"][-1]), str(c["campus"]))
+			for c in raw.get("campuses") or []
+			if c.get("pages") and c.get("campus")
+		)
+		self._campus_ranges = ranges
+		self._campus_starts = [r[0] for r in ranges]
 		_logger.info(
 			"charter structure ready: %d sections, %s %s, page offset %d",
 			len(sections), self.document, self.edition, self._offset,
@@ -224,12 +235,25 @@ class PageIndex:
 			document=self.document, edition=self.edition, **info,
 		)
 
+	def campus_of(self, pdf_page: int) -> str:
+		"""Campus key of the part of the charter a page belongs to: "main",
+		"all" (university-wide), "toc" (list of services), or a satellite key.
+		A page in no range is "all", so a missing "campuses" key filters
+		nothing."""
+		i = bisect_right(self._campus_starts, pdf_page) - 1
+		if i >= 0:
+			first, last, campus = self._campus_ranges[i]
+			if first <= pdf_page <= last:
+				return campus
+		return "all"
+
 	def snapshot(self) -> dict:
 		"""Operational summary for /admin/status."""
 		pages = sum(s["pages"][-1] - s["pages"][0] + 1 for s in self._sections)
 		return {
 			"available": self.available,
 			"sections": len(self._sections),
+			"campus_ranges": len(self._campus_ranges),
 			"pages_in_a_section": pages,
 			"edition": self.edition,
 			"page_offset": self._offset,
@@ -293,6 +317,13 @@ def describe(pdf_page: int) -> PageInfo:
 	"""PageInfo for a charter page — never raises, never returns None."""
 	index = get_index()
 	return index.describe(pdf_page) if index else PageInfo(pdf_page=pdf_page)
+
+
+def campus_of(pdf_page: int) -> str:
+	"""Campus key for a charter page — "all" when the structure file is
+	missing, so retrieval then filters nothing (the pre-tagging behaviour)."""
+	index = get_index()
+	return index.campus_of(pdf_page) if index else "all"
 
 
 def cite_page(pdf_page: int) -> str:

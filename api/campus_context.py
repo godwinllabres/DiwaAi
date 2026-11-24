@@ -4,7 +4,8 @@
 and ten satellites. Instead of silently assuming Indang, this module:
 
   1. remembers which campus a session is talking about (any mention sticks,
-     with a TTL) — "I'm from CvSU Imus" → campus=Imus;
+     with a TTL, except an objection like "why only trece?") —
+     "I'm from CvSU Imus" → campus=Imus;
   2. when a campus-dependent question arrives WITHOUT a campus and the
      session has one → rewrites the message to carry it ("Where is the
      campus located? (Imus Campus)") so the intent tiers, the charter RAG
@@ -46,6 +47,27 @@ _ALIAS_RES = [
     (canonical, re.compile(r"\b(" + "|".join(re.escape(a) for a in aliases) + r")\b", re.IGNORECASE))
     for canonical, aliases in CAMPUSES.items()
 ]
+
+# Retrieval scope keys — the same keys data/charter_structure.json's
+# "campuses" ranges use. "all" (university-wide) and "toc" are not campuses.
+CAMPUS_KEYS: dict[str, str] = {
+    "Indang (Main Campus)": "main",
+    "Bacoor City Campus": "bacoor",
+    "Carmona Campus": "carmona",
+    "Cavite City Campus": "cavite_city",
+    "CvSU-CCAT Campus (Rosario)": "ccat",
+    "General Trias City Campus": "general_trias",
+    "Imus City Campus": "imus",
+    "Maragondon Campus": "maragondon",
+    "Naic Campus": "naic",
+    "Silang Campus": "silang",
+    "Tanza Campus": "tanza",
+    "Trece Martires City Campus": "trece",
+}
+# Dasmariñas City Learning Center has its own charter section but is
+# deliberately NOT in CAMPUSES (no clarify chip, no campus_directory entry):
+# this alias only unlocks its chunks when a question names it.
+_DASMA_RE = re.compile(r"\bdasma(?:ri[nñ]as)?\b", re.IGNORECASE)
 
 # Campus-dependent question: a location/where ask about "the campus/school/
 # CvSU" in general. Specific-place asks ("where is the library") stay with
@@ -159,7 +181,9 @@ def resolve(session_key: Optional[str], text: str) -> CampusRouting:
     """
     state = _session(session_key) if session_key else {"campus": None, "pending": None, "at": 0.0}
     mentioned = extract_campus(text)
-    if mentioned:
+    # "why only trece?" objects to a campus; it must not become the session's
+    # campus (that re-admitted the Trece chunk for the next 30 minutes).
+    if mentioned and not is_contrastive_campus_mention(text):
         state["campus"] = mentioned
 
     # Pending is single-shot: consume or clear it on the very next turn, so a
@@ -183,6 +207,127 @@ def resolve(session_key: Optional[str], text: str) -> CampusRouting:
         return CampusRouting("clarify")
 
     return CampusRouting("none", state["campus"])
+
+
+# "why only trece?" / "bakit trece lang?" complains that a campus was singled
+# out; it does not ask about that campus, so it must not scope retrieval to it.
+_EXCLUSIVE_COMPLAINT_RE = re.compile(
+    r"^\W*(why|bakit)\b.*\b(only|just|lang)\b", re.IGNORECASE
+)
+
+
+def is_exclusive_complaint(text: str) -> bool:
+    return bool(_EXCLUSIVE_COMPLAINT_RE.search(text or ""))
+
+
+_ANY_ALIAS = "|".join(re.escape(a) for aliases in CAMPUSES.values() for a in aliases)
+# "not trece", "hindi sa Imus", "other than the main campus".
+_NEGATED_CAMPUS_RE = re.compile(
+    r"\b(?:not|hindi|instead of|other than|maliban sa)\s+(?:sa\s+|the\s+)?(?:" + _ANY_ALIAS + r")\b",
+    re.IGNORECASE,
+)
+
+
+def is_contrastive_campus_mention(text: str) -> bool:
+    """A short message that names a campus only to object to it ("why only
+    trece?", "bakit trece lang?", "not Imus"), not to ask about it."""
+    if not text or len(re.findall(r"[\w'’]+", text)) > 8:
+        return False
+    return bool(is_exclusive_complaint(text) or _NEGATED_CAMPUS_RE.search(text))
+
+
+def strip_campus_mentions(text: str) -> str:
+    """The message with every campus alias removed, whitespace collapsed."""
+    for _, pattern in _ALIAS_RES:
+        text = pattern.sub(" ", text)
+    return " ".join(text.split())
+
+
+# Tokens of campus names. A query bigram made only of these ("trece campus",
+# "martires city") says where, not what, so it must not pass the verbatim
+# tier's phrase-match gate on its own.
+_CAMPUS_TOKENS = frozenset(
+    w for aliases in CAMPUSES.values() for a in aliases for w in a.split()
+) | {"campus", "campuses", "city", "cvsu", "dasma", "dasmarinas", "dasmariñas"}
+
+
+def is_campus_term(term: str) -> bool:
+    """True when every word of an analyzer term is part of a campus name."""
+    words = term.lower().split()
+    return bool(words) and all(w in _CAMPUS_TOKENS for w in words)
+
+
+def campus_key(canonical: Optional[str]) -> Optional[str]:
+    """Scope key for a canonical CAMPUSES name (None passes through)."""
+    return CAMPUS_KEYS.get(canonical) if canonical else None
+
+
+def query_campus_key(text: str) -> Optional[str]:
+    """Scope key of the campus a message names, if any."""
+    if not text or is_exclusive_complaint(text) or is_contrastive_campus_mention(text):
+        return None
+    key = campus_key(extract_campus(text))
+    if key is None and _DASMA_RE.search(text):
+        key = "dasmarinas"
+    return key
+
+
+def retrieval_scope(text: str, session_campus: Optional[str] = None) -> frozenset:
+    """Chunk campus tags a question may be grounded on.
+
+    A satellite named by the message (or, failing that, the session's campus)
+    → that campus + university-wide chunks. Otherwise main campus +
+    university-wide: a generic question must not be answered from a
+    satellite's procedure. "toc" (the charter's list of services) is never in
+    scope — it names services without describing them.
+    """
+    key = query_campus_key(text) or campus_key(session_campus)
+    if key and key != "main":
+        return frozenset({key, "all"})
+    return frozenset({"main", "all"})
+
+
+# Site-corpus tagging aliases: CAMPUSES' plus the "CvSU Main" spelling news
+# titles use. Built per key so a doc naming two campuses is detectable.
+_DOC_ALIASES: dict[str, list[str]] = {}
+for _canonical, _aliases in CAMPUSES.items():
+    _DOC_ALIASES.setdefault(CAMPUS_KEYS[_canonical], []).extend(_aliases)
+_DOC_ALIASES["main"] = _DOC_ALIASES["main"] + ["cvsu main", "main campuses"]
+_DOC_ALIASES["dasmarinas"] = ["dasma", "dasmarinas", "dasmariñas"]
+_DOC_ALIAS_RES = {
+    key: re.compile(r"\b(" + "|".join(re.escape(a) for a in aliases) + r")\b", re.IGNORECASE)
+    for key, aliases in _DOC_ALIASES.items()
+}
+_ALIAS_ALT = "|".join(re.escape(a) for aliases in _DOC_ALIASES.values() for a in aliases)
+# "CvSU Silang posts ...", "CvSU-Imus ..." — the alias directly after CvSU.
+# A bare "^CvSU " prefix over-tags ("CvSU turns over ... LGU Maragondon").
+_CVSU_PREFIX_RE = re.compile(r"^\s*cvsu\s*[-–]?\s*(main|" + _ALIAS_ALT + r")\b", re.IGNORECASE)
+# 2018 program pages titled with just the town ("Silang", "Trece Martires City").
+_TOWN_ONLY_RE = re.compile(r"^\s*(" + _ALIAS_ALT + r")(?:\s+city)?\s*$", re.IGNORECASE)
+_CAMPUS_WORD_DOC_RE = re.compile(r"\b(campus(?:es)?|ccat)\b", re.IGNORECASE)
+
+
+def doc_campus_key(title: str, url: str) -> str:
+    """Campus tag for an official-site document, from its title and slug.
+
+    The corpus rewrites every URL to cvsu.edu.ph, so the campus can only be
+    read off the title/slug. A satellite tag needs exactly one campus named
+    AND evidence the doc is about that campus (a "campus" word, the alias
+    right after "CvSU", or a town-only title); news that merely mentions a
+    town, and posts listing several campuses, stay "all".
+    """
+    title = (title or "").replace("–", " ").replace("-", " ")
+    slug = (url or "").rstrip("/").rsplit("/", 1)[-1].replace("-", " ")
+    text = f"{title} {slug}"
+    hits = {key for key, rx in _DOC_ALIAS_RES.items() if rx.search(text)}
+    if len(hits) != 1:
+        return "all"
+    key = next(iter(hits))
+    # Main needs the same evidence: "Indang LGU" / "Don Severino" history
+    # news is university-wide and must stay visible to satellite sessions.
+    if _CAMPUS_WORD_DOC_RE.search(text) or _CVSU_PREFIX_RE.search(title) or _TOWN_ONLY_RE.search(title):
+        return key
+    return "all"
 
 
 def snapshot() -> dict:

@@ -90,8 +90,12 @@ except ImportError:
 
 # Citizens' Charter retrieval tier (document tier of the hybrid brain)
 from . import charter_rag, intent_retrieval, site_rag
-from .campus_context import extract_campus as _extract_campus
-from .conversation_polish import is_contextual_followup, satellite_campus, strip_rag_meta
+from .campus_context import (extract_campus, is_contrastive_campus_mention,
+                             strip_campus_mentions)
+from .campus_context import retrieval_scope as _retrieval_scope
+from .conversation_polish import (dedupe_reply, followup_kind, is_live_lookup,
+                                  is_pushback, pivot_reply, strip_rag_meta,
+                                  wants_repeat)
 # Single source for the Ollama endpoint default (shared with the MCP routers,
 # safety second-opinion, and /health warm-up).
 from .llm_defaults import no_think_fields, ollama_base_url
@@ -338,23 +342,22 @@ def build_scope_locked_prompt(
         "- For time-sensitive info (deadlines, fees, schedules), always recommend verification with the proper office.\n"
         "- Disambiguate campus when relevant (Indang vs. Imus vs. other satellite campuses).\n"
         "- Respond in the same language as the user (English, Filipino, or Taglish).\n\n"
-        "VOICE — you are Sevi, speaking directly to the user:\n"
-        "- Never describe your inputs. Do NOT say \"based on the excerpts\", \"the excerpts "
-        "provided\", \"according to the context\", \"in my knowledge base\", \"the information "
-        "given\", or similar. The user cannot see any excerpts; just answer.\n"
-        "- When you lack a detail, say it plainly in one sentence (\"I don't have the exact "
-        "date for that yet\") and give the most useful next step.\n"
-        "- Answer the exact question first. Offer related details as a short follow-up "
-        "question instead of listing everything.\n"
-        "- Read the conversation so far. A short message like \"why only trece?\" or \"what "
-        "about Imus?\" refers to your previous answer — answer it in that context.\n"
-        "- If the user pushes back on a limitation (e.g. \"just make the list from the "
-        "website\"), acknowledge it in one conversational sentence (\"I can't browse live "
-        "pages, so I can't pull that list for you\") and pivot to something you CAN do — "
-        "such as asking which college or office they need. Never repeat an earlier reply "
-        "or the same list of offices word for word.\n"
-        "- Do not open by restating an assumption you already stated earlier in the "
-        "conversation.\n"
+        # Kept short (~130 tokens): every local-CPU turn pays this prefill.
+        # Small models still leak "Based on the excerpts provided..." anyway;
+        # conversation_polish.strip_rag_meta is the deterministic net.
+        "VOICE — you are Sevi, talking directly to the user:\n"
+        "- Never mention excerpts, context, sources given to you, or a knowledge base "
+        "(no \"based on the excerpts\", \"according to the context\"); the user cannot "
+        "see them. Just answer.\n"
+        "- Answer the exact question first; offer related details as a one-line "
+        "follow-up question instead of listing everything.\n"
+        "- A short message like \"why only trece?\" or \"what about Imus?\" refers to "
+        "your previous answer.\n"
+        "- If the user pushes back on a limitation, acknowledge it in one sentence "
+        "(\"I'm an offline assistant, so I can't browse live pages for you\") and offer "
+        "what you can do, such as asking which college or office they need.\n"
+        "- Never repeat an earlier reply or list word for word, and do not restate an "
+        "assumption you already made.\n"
     )
     return (base_persona + "\n\n" + glossary_section + scope_section).strip()
 
@@ -616,7 +619,7 @@ class LocalLLM:
         if self.system_prompt:
             messages.append({"role": "system", "content": self.system_prompt})
         if conversation_context:
-            messages.extend(conversation_context[-6:])  # last 3 turns
+            messages.extend(conversation_context[-8:])  # last 4 turns (pre-truncated by _llm_context)
         messages.append({"role": "user", "content": user_message})
 
         body = {
@@ -745,7 +748,7 @@ class OpenAICompatLLM:
         if self.system_prompt:
             messages.append({"role": "system", "content": self.system_prompt})
         if conversation_context:
-            messages.extend(conversation_context[-6:])  # last 3 turns
+            messages.extend(conversation_context[-8:])  # last 4 turns (pre-truncated by _llm_context)
         messages.append({"role": "user", "content": user_message})
 
         body = {
@@ -1235,7 +1238,7 @@ class ClaudeLLM:
 
         messages = []
         if conversation_context:
-            for turn in conversation_context[-6:]:
+            for turn in conversation_context[-8:]:  # last 4 turns
                 role = turn.get("role")
                 content = turn.get("content")
                 if role in ("user", "assistant") and content:
@@ -1304,6 +1307,35 @@ _LIST_REF_LOOKBACK = 6
 # reads at most two digits, so anything past 20 items is unreachable anyway.
 _MAX_LIST_ITEMS = 20
 _MAX_LIST_ITEM_CHARS = 120
+
+# Program-level session slot. Stricter than _LEVEL_TOKEN_RE: "how to
+# graduate with honors" must not set level=graduate.
+_LEVEL_SLOT_RES = (
+    ("graduate", re.compile(
+        r"\b(?:graduate (?:school|programs?|studies|level|students?)|grad school|masteral"
+        r"|master'?s|masters|doctoral|doctorate|ph\.?d)\b", re.IGNORECASE)),
+    ("undergraduate", re.compile(
+        r"\b(?:undergrad(?:uate)?|freshm[ae]n|first[- ]year college|transferee"
+        r"|bachelor'?s)\b", re.IGNORECASE)),
+)
+
+
+def _level_slot(text: str) -> Optional[str]:
+    """"graduate" / "undergraduate" when the message names a program level."""
+    for level, rx in _LEVEL_SLOT_RES:
+        if rx.search(text or ""):
+            return level
+    return None
+
+
+# A contextual follow-up is only routed against a turn this recent. History
+# is keyed by user_id and can span visits; "what about Imus?" a day later is
+# a new question.
+FOLLOWUP_MAX_GAP_S = _env_int("FOLLOWUP_MAX_GAP_S", 900)
+# Previous turns a follow-up cannot lean on: refusals, chitchat, recaps.
+_NO_FOLLOWUP_AFTER = ("NonsenseGate", "ScopeGate", "SafetyGate", "Small Talk",
+                      "Conversation Recap")
+_CONTENT_TIERS = ("Naive Bayes", "Neural Network", "Intent Retrieval")
 
 
 def _numbered_items(text: str) -> list:
@@ -1378,6 +1410,7 @@ class HybridChatbot:
     SMALLTALK_INTENT = "smalltalk"
     # Complete per-college program list from data/college_programs.json.
     PROGRAMS_INTENT = "college_programs"
+    DEANS_INTENT = "college_deans"
     # P2-8: margin-triggered disambiguation. When NB clears the confidence bar
     # but its top-2 are a near-tie ACROSS topic families, guessing answers one
     # question and ignores the other — ask instead (2 chip options via
@@ -1473,6 +1506,7 @@ class HybridChatbot:
             "conversation_recap_used": 0,
             "smalltalk_used": 0,
             "college_programs_used": 0,
+            "followup_routed_to_llm": 0,
             "llm_unavailable": 0,
             "fallback_used": 0,
             "nlu_enhanced": 0
@@ -1729,6 +1763,15 @@ class HybridChatbot:
             if not short or not full or short == full or place_id == "main":
                 continue
             glossary.append((short, full))
+        # Offices the LLM mixed up live ("Office of the University Registrar
+        # (OSAS)", 3 of 12 LLM turns, 2026-11-23/24). Roles as the curated
+        # admissions/registrar/scholarship answers describe them.
+        glossary += [
+            ("OSAS", "Office of Student Affairs and Services — admission "
+                     "applications, scholarships, student services. NOT the Registrar"),
+            ("OUR", "Office of the University Registrar — TOR, COR, diplomas "
+                    "and academic records. NOT OSAS"),
+        ]
         print(f"[OK] Campus glossary built — {len(glossary)} entries injected into LLM prompt")
         return glossary
 
@@ -1906,7 +1949,164 @@ class HybridChatbot:
             return None
         with self._history_lock:
             turns = self.conversation_history.get(user_id) or []
-            return turns[-1]["user_message"] if turns else None
+            return turns[-1].get("user_message") if turns else None
+
+    _DEAN_CUE_RE = re.compile(r"\b(?:dean|deans|dekano)\b", re.IGNORECASE)
+    _DEANS_LIST_RE = re.compile(r"\bdean['’]?s\s+list(?:er)?s?\b", re.IGNORECASE)
+    # Subject words people use for a college in dean questions ("dean ng
+    # engineering"). Dean questions only: as program aliases they are too
+    # broad ("engineering programs" is the all-colleges question).
+    _DEAN_SUBJECT_WORDS = (
+        ("engineering", "CEIT"), ("information technology", "CEIT"),
+        ("nursing", "CON"), ("education", "CED"), ("agriculture", "CAFENR"),
+        ("criminology", "CCJ"), ("criminal justice", "CCJ"),
+        ("tourism", "CTHM"), ("hospitality", "CTHM"),
+        ("hospitality management", "CTHM"), ("tourism management", "CTHM"),
+        ("veterinary", "CVMBS"), ("veterinary medicine", "CVMBS"), ("vet med", "CVMBS"), ("medicine", "COM"),
+        ("arts and sciences", "CAS"), ("economics", "CEMDS"),
+        ("management", "CEMDS"), ("sports", "CSPEAR"), ("physical education", "CSPEAR"),
+    )
+    _DEAN_LINE_RE = re.compile(r"^-\s*([A-Z]{2,7})\s*\(([^)]+)\):\s*(.+?)\s*$")
+
+    def _dean_roster(self) -> Tuple[dict, Optional[str]]:
+        """{abbr: (full_name, dean)} parsed from the English college_deans
+        answer, plus its source URL. Cached; empty when the answer is missing."""
+        cached = getattr(self, "_dean_roster_cache", None)
+        if cached is not None:
+            return cached
+        roster, source = {}, None
+        variants = self.responses_map.get(self.DEANS_INTENT) or []
+        if variants:
+            english = min(variants, key=_filipino_ratio)
+            for line in english.split("\n"):
+                m = self._DEAN_LINE_RE.match(line.strip())
+                if m:
+                    roster[m.group(1).upper()] = (m.group(2).strip(), m.group(3).strip())
+            src = re.search(r"Source:\s*(https?://\S+?)[\s.,;)]*(?:\s|$)", english)
+            source = src.group(1) if src else None
+        self._dean_roster_cache = (roster, source)
+        return self._dean_roster_cache
+
+    # Dean questions about something other than who the dean is — the office,
+    # its location or contact details — belong to the place resolver / RAG
+    # ("where is the CEIT dean's office?" must get directions, review 2026-11-24).
+    _DEAN_NOT_IDENTITY_RE = re.compile(
+        r"\b(?:office|offices|opisina|where|saan|nasaan|located|location|room|building|"
+        r"floor|address|direction|directions|map|contact|email|e-mail|phone|number|"
+        r"tel|telephone|mobile|call|reach|hours|schedule|appointment|consult|"
+        r"secretary|signature|sign)\b",
+        re.IGNORECASE,
+    )
+
+    def _dean_colleges_named(self, user_input: str, roster: dict) -> set:
+        """Every college the message names: abbreviation, full name or subject
+        word (program alias as a fallback). A subject word inside a longer
+        matched name or
+        word ("medicine" in "veterinary medicine", "management" in "hospitality
+        management") does not count separately."""
+        low = user_input.lower()
+        spans = []  # (start, end, abbr)
+        for abbr, (full, _) in roster.items():
+            for m in re.finditer(rf"(?<![A-Za-z]){re.escape(abbr)}(?![A-Za-z])", user_input,
+                                 re.IGNORECASE):
+                spans.append((m.start(), m.end(), abbr))
+            for m in re.finditer(re.escape(full.lower()), low):
+                spans.append((m.start(), m.end(), abbr))
+        for word, abbr in self._DEAN_SUBJECT_WORDS:
+            if abbr in roster:
+                for m in re.finditer(rf"\b{re.escape(word)}\b", low):
+                    spans.append((m.start(), m.end(), abbr))
+        kept = {abbr for s, e, abbr in spans
+                if not any(s2 <= s and e <= e2 and (e2 - s2) > (e - s) for s2, e2, _ in spans)}
+        if kept:
+            return kept
+        # Program aliases only as a last resort: they return the first alias
+        # hit, so "veterinary medicine" could come back as Medicine.
+        try:
+            from .college_programs import find_college
+        except ImportError:
+            find_college = None
+        college = find_college(user_input) if find_college else None
+        if college and str(college.get("abbr", "")).upper() in roster:
+            kept.add(str(college["abbr"]).upper())
+        return kept
+
+    def _dean_lookup_reply(self, user_input: str, filipino: bool) -> Optional[str]:
+        """One dean when the message asks WHO a dean is AND names exactly one
+        college; None otherwise (no college or several → the curated full
+        list answers; office/location/contact asks → the later tiers)."""
+        if (not self._DEAN_CUE_RE.search(user_input or "")
+                or self._DEANS_LIST_RE.search(user_input)
+                or self._DEAN_NOT_IDENTITY_RE.search(user_input)):
+            return None
+        roster, source = self._dean_roster()
+        if not roster:
+            return None
+        hits = self._dean_colleges_named(user_input, roster)
+        if len(hits) != 1:
+            return None
+        abbr = hits.pop()
+        full, dean = roster[abbr]
+        if filipino:
+            text = (f"Ang dekano ng {full} ({abbr}) ay si {dean}. "
+                    "Gusto ba ninyong makita ang mga dekano ng ibang kolehiyo?")
+            note = (f"Mula sa 2026 roster ng mga opisyal ng CvSU — {source}" if source else "")
+        else:
+            text = (f"The dean of the {full} ({abbr}) is {dean}. "
+                    "Want the deans of the other colleges too?")
+            note = (f"From the 2026 CvSU officials roster — {source}" if source else "")
+        return f"{text}\n\n{note}" if note else text
+
+    _SMALLTALK_INTENTS = frozenset({"chitchat", "greeting"})
+    # "there"/"that campus" pointing at the session's campus.
+    _PLACE_BACKREF_RE = re.compile(
+        r"\b(?:there|over there|that campus|doon|dun|diyan|dyan|jan)\b\s*[?.!]*\s*$"
+        r"|\b(?:in|at|sa) (?:that|this) campus\b",
+        re.IGNORECASE,
+    )
+
+    def _unrepeated_reply(self, intent: str, response: str, user_input: str,
+                          language: Optional[str]) -> str:
+        """Another same-language variant of `intent`, or a short pointer to
+        the answer just given when there is no other variant."""
+        want_filipino = _reply_in_filipino(user_input, language)
+        variants = self.responses_map.get(intent) or []
+        # Same language = ties with the served variant on Filipino ratio, the
+        # relative ranking _select_response used to pick it (absolute
+        # thresholds misread proper-noun-heavy lists).
+        served = _filipino_ratio(response)
+        same_lang = [v for v in variants if v.strip() != response.strip()
+                     and (_filipino_ratio(v) >= served - 0.02 if want_filipino
+                          else _filipino_ratio(v) <= served + 0.02)]
+        if same_lang:
+            return max(same_lang, key=lambda v: ("http" in v, len(v), v))
+        if want_filipino:
+            return ("Nasa sagot ko po sa itaas ang impormasyong iyan. "
+                    "May partikular po ba kayong gustong malaman mula roon?")
+        return ("That's covered in my answer just above. "
+                "Is there a specific part you'd like me to focus on?")
+
+    def _last_bot_response(self, user_id: Optional[str]) -> Optional[str]:
+        """The session's previous assistant reply, or None. chat() records
+        history after predict(), so inside predict() this is the prior turn."""
+        if not user_id:
+            return None
+        with self._history_lock:
+            turns = self.conversation_history.get(user_id) or []
+            return turns[-1].get("bot_response") if turns else None
+
+    def _last_turn_recent(self, user_id: Optional[str]) -> bool:
+        """The session's previous turn is within FOLLOWUP_MAX_GAP_S (a turn
+        without a timestamp counts as recent, as in _followup_route)."""
+        if not user_id:
+            return False
+        with self._history_lock:
+            turns = self.conversation_history.get(user_id) or []
+            last = turns[-1] if turns else None
+        if not last:
+            return False
+        now = time.time()
+        return now - last.get("at", now) <= FOLLOWUP_MAX_GAP_S
 
     def _assumption_already_stated(self, user_id: Optional[str]) -> bool:
         """Did an earlier reply this session already state the default
@@ -1917,24 +2117,127 @@ class HybridChatbot:
             turns = list(self.conversation_history.get(user_id) or [])
         return any(t.get("bot_response", "").startswith(self._ASSUMPTION_PREFIXES) for t in turns)
 
-    def _llm_context(self, user_id: Optional[str]) -> list:
-        """Build the last-3-turns conversation context for the LLM."""
+    @staticmethod
+    def _clip(text: str, limit: int) -> str:
+        """Cut at a whitespace boundary at or before `limit` chars, marked " …"."""
+        text = text or ""
+        if len(text) <= limit:
+            return text
+        cut = text[:limit]
+        space = cut.rfind(" ")
+        return (cut[:space] if space > limit // 2 else cut).rstrip() + " …"
+
+    def _llm_context(self, user_id: Optional[str], turns: int = 3,
+                     max_chars: int = 600) -> list:
+        """Build the last-`turns` conversation context for the LLM.
+
+        Gate refusals are skipped (same injection rationale as the recap), and
+        each message is truncated: curated replies run to ~2.8k chars, and on
+        CPU Ollama the prefill of untruncated history is the latency budget.
+        """
         if not user_id:
             return []
         # Copy the slice under the lock, then build the message list outside it.
         # Slicing a list another thread is appending to (or deleting from, when
         # a session ages past _MAX_HISTORY_TURNS) can otherwise read a torn view.
         with self._history_lock:
-            turns = list(self.conversation_history.get(user_id, [])[-3:])
+            recent = list(self.conversation_history.get(user_id, [])[-turns:])
         context = []
-        for turn in turns:
-            context.append({"role": "user", "content": turn["user_message"]})
-            context.append({"role": "assistant", "content": turn["bot_response"]})
+        for turn in recent:
+            if str(turn.get("model_used", "")).startswith(("NonsenseGate", "ScopeGate", "SafetyGate")):
+                continue
+            context.append({"role": "user", "content": self._clip(turn["user_message"], 300)})
+            context.append({"role": "assistant",
+                            "content": self._clip(turn["bot_response"], max_chars)})
         return context
+
+    def _session_slots(self, user_id: Optional[str]) -> dict:
+        """Lightweight per-session slots derived from recent history.
+
+        Derived rather than stored, so there is no extra state to evict:
+        campus (last non-contrastive mention), level (graduate/undergraduate),
+        last_topic (intent of the last curated answer), anchor_question (last
+        user message that was not itself a routed follow-up), last_turn.
+        """
+        slots = {"campus": None, "level": None, "last_topic": None,
+                 "anchor_question": None, "last_turn": None}
+        if not user_id:
+            return slots
+        with self._history_lock:
+            recent = [dict(t) for t in
+                      (getattr(self, "conversation_history", {}).get(user_id) or [])[-10:]]
+        if not recent:
+            return slots
+        slots["last_turn"] = recent[-1]
+        for turn in reversed(recent):
+            message = turn.get("user_message") or ""
+            if slots["campus"] is None:
+                mentioned = extract_campus(message)
+                if mentioned and not is_contrastive_campus_mention(message):
+                    slots["campus"] = mentioned
+            if slots["level"] is None and turn.get("level"):
+                slots["level"] = turn["level"]
+            if (slots["last_topic"] is None
+                    and str(turn.get("model_used", "")).startswith(_CONTENT_TIERS)):
+                slots["last_topic"] = turn.get("intent")
+                slots["_topic_message"] = message
+            if slots["anchor_question"] is None and not turn.get("contextual_followup"):
+                slots["anchor_question"] = message
+        return slots
+
+    def _followup_route(self, user_input: str, user_id: Optional[str],
+                        campus: Optional[str] = None) -> Optional[Tuple[str, str]]:
+        """(retrieval_query, kind) when this message is a follow-up to a
+        recent content turn and the LLM can take it; else None.
+
+        The retrieval query anchors on the last real question, not the last
+        message, so "how to enroll" → "why only trece?" → "what about Imus?"
+        still retrieves on enrollment. A campus named only to object to it
+        ("why only trece?") is stripped so it cannot pull that campus back in.
+        """
+        if not user_id or _ORDINAL_REF_RE.match(user_input or ""):
+            return None
+        kind = followup_kind(user_input)
+        slots = None
+        if kind is None and self._PLACE_BACKREF_RE.search(user_input or ""):
+            # "what programs are offered there?" after "what about Imus?" —
+            # "there" is the session's campus (live audit 2026-11-24). Only a
+            # short message, and only when a campus is actually in play.
+            if len(re.findall(r"[\w'’]+", user_input)) <= 10:
+                slots = self._session_slots(user_id)
+                if campus or slots["campus"]:
+                    kind = "place"
+        if kind is None:
+            return None
+        slots = slots or self._session_slots(user_id)
+        last = slots["last_turn"]
+        if not last:
+            return None
+        now = time.time()
+        if now - last.get("at", now) > FOLLOWUP_MAX_GAP_S:
+            return None
+        if (str(last.get("model_used", "")).startswith(_NO_FOLLOWUP_AFTER)
+                or last.get("intent") == self.LLM_UNAVAILABLE_INTENT):
+            return None
+        if not (self.llm and self.llm.ensure_available()):
+            return None
+        anchor = slots["anchor_question"] or last.get("user_message") or ""
+        tail = (strip_campus_mentions(user_input)
+                if is_contrastive_campus_mention(user_input) else user_input)
+        query = f"{anchor[:200]} {tail}"
+        if kind == "place":
+            # Retrieve on the campus itself, not the anchor's topic. The turn's
+            # routed campus wins so the query and the campus filter agree.
+            query = f"{campus or slots['campus']} {tail}"
+        if slots["last_topic"] and slots.get("_topic_message") == anchor:
+            # Strengthen BM25 with the curated topic the anchor was answered as.
+            query += " " + self._intent_topic_label(slots["last_topic"], False)
+        return query[:300], kind
 
     @staticmethod
     def _grounded_prompt(user_input: str, grounding: list, suggestion: Optional[str] = None,
-                         language: Optional[str] = None) -> str:
+                         language: Optional[str] = None, *,
+                         followup: Optional[str] = None) -> str:
         """Evidence-gated prompt for the LLM tier.
 
         grounding: [(score, citation, text, corpus_label), ...] best-first.
@@ -1951,6 +2254,11 @@ class HybridChatbot:
         and "fil" say anything; "auto"/None leaves the model to mirror.
         """
         hint = f' If helpful, invite the user to ask about "{suggestion}".' if suggestion else ""
+        if followup == "pushback":
+            # followup_kind(): the user is objecting to the previous answer.
+            hint += (" The user is pushing back on your previous answer: acknowledge "
+                     "in one sentence what you cannot do, offer a narrower next step, "
+                     "and do not repeat your previous reply.")
         if language == "fil":
             hint += (" Write the entire answer in Filipino (Tagalog), whatever "
                      "language the question is in. Keep official names, office "
@@ -1987,7 +2295,7 @@ class HybridChatbot:
             "copying its bracketed label exactly as shown above — never alter the "
             "source name, edition, or page number.\n"
             "6. Never mention the excerpts themselves to the user (no \"based on the "
-            "excerpts\", \"the excerpts don't mention\"); answer as Sevi in your own voice.\n"
+            "excerpts\", \"batay sa mga excerpt\"); answer as Sevi in your own voice.\n"
             "7. An excerpt about one satellite campus (e.g. Trece Martires, Imus) applies "
             "to that campus only — never present it as the procedure for all of CvSU."
             f"{hint}\n\n{excerpts}\n\nQuestion: {user_input}"
@@ -2063,7 +2371,10 @@ class HybridChatbot:
                     f"about {labels[0]}, or about {labels[1]}? Tap or type the topic.")
         return text, labels
 
-    _ASSUMPTION_PREFIXES = ("Assuming the Main Campus", "Ipagpalagay nating")
+    # Opening words of every assumption note: _assumption_already_stated
+    # matches on them, so rewording a note must update this tuple.
+    _ASSUMPTION_PREFIXES = ("Assuming the Main Campus", "Ipagpalagay nating",
+                            "Heads up:", "Paalala:")
 
     def _maybe_state_assumption(self, response: str, intent: str,
                                 user_input: str, campus: Optional[str],
@@ -2071,13 +2382,27 @@ class HybridChatbot:
                                 user_id: Optional[str] = None) -> str:
         """Prefix an explicit default-context line on answers that vary by
         campus/level when the turn pinned down neither (P2-8 slot-filling,
-        stated-assumption branch). Stated once per session, not every turn."""
+        stated-assumption branch). Stated once per session, not every turn.
+        A campus or level remembered from an earlier turn counts as pinned."""
         if intent not in self._ASSUMPTION_INTENTS or campus:
             return response
         if self._CAMPUS_TOKEN_RE.search(user_input) or self._LEVEL_TOKEN_RE.search(user_input):
             return response
         if self._assumption_already_stated(user_id):
             return response
+        slots = self._session_slots(user_id) if user_id else {}
+        if slots.get("campus") or slots.get("level") == "undergraduate":
+            return response
+        if slots.get("level") == "graduate":
+            # The curated answers are undergraduate; say so once instead of
+            # assuming a level the user already ruled out.
+            if _reply_in_filipino(user_input, language):
+                note = ("Paalala: para sa undergraduate ang sagot na ito — itanong lang ang "
+                        "tungkol sa graduate school kung iyon ang kailangan ninyo.")
+            else:
+                note = ("Heads up: this answer covers undergraduate programs — ask me about "
+                        "graduate school specifically if that's what you need.")
+            return f"{note}\n\n{response}"
         if _reply_in_filipino(user_input, language):
             note = ("Ipagpalagay nating para sa Main Campus (Indang), undergraduate, "
                     "ang tanong — sabihin lang (hal. \"Imus campus\" o \"graduate\") "
@@ -2249,40 +2574,38 @@ class HybridChatbot:
         """
         return bigram_hits, (score / floor if floor else score)
 
-    def _gather_grounding(self, user_input: str,
-                          campus: Optional[str] = None) -> Tuple[list, str, Optional[str]]:
+    def _gather_grounding(self, user_input: str, campus: Optional[str] = None,
+                          scope_text: Optional[str] = None) -> Tuple[list, str, Optional[str]]:
         """Collect LLM grounding passages from the charter and site corpora.
 
         Returns (grounding, model_label_suffix, nearest_intent_suggestion)
         where grounding is [(score, citation, text, corpus), ...] ranked
         best-first via _cross_corpus_rank_key, capped at 3.
 
-        Campus filter: a passage ABOUT a satellite campus (by its title/URL/
-        citation) is kept only when the question or the session's campus
-        names that campus. Without this, "how do I enroll next year" grounded
-        on the Trece Martires page and presented it as the university-wide
-        procedure. Main-campus and university-wide passages always pass.
+        Campus scope: every chunk carries a campus tag (charter: the page
+        ranges in data/charter_structure.json; site: the doc's title/slug).
+        Retrieval keeps main-campus + university-wide chunks unless the
+        message (scope_text, default user_input) or the session's campus
+        names a satellite — then that satellite + university-wide. Without
+        this, "how can I enroll next year" grounded on the Trece Martires and
+        Dasmariñas pages and presented them as the general procedure. The
+        filter runs before the candidate cap, so in-scope recall is kept.
         """
-        wanted = _extract_campus(user_input) or campus
-
-        def in_scope(label: str) -> bool:
-            sat = satellite_campus(label)
-            return sat is None or sat == wanted
-
+        scope = _retrieval_scope(scope_text if scope_text is not None else user_input, campus)
         ranked = []  # (rank_key, score, citation, text, corpus)
         charter_index = charter_rag.get_index()
         if charter_index is not None:
-            hits = [p for p in charter_index.retrieve(user_input, k=6) if in_scope(p.citation())]
-            for p in hits[:2]:
+            hits = charter_index.retrieve(user_input, k=2, campuses=scope)
+            for p in hits:
                 if p.score >= charter_rag.AUGMENT_MIN_SCORE:
-                    key = self._cross_corpus_rank_key(p.bigram_hits, p.score, charter_rag.AUGMENT_MIN_SCORE)
+                    key = self._cross_corpus_rank_key(p.topic_bigram_hits, p.score, charter_rag.AUGMENT_MIN_SCORE)
                     ranked.append((key, p.score, p.citation(), p.text, "charter"))
         site_index = site_rag.get_index()
         if site_index is not None:
-            hits = [p for p in site_index.retrieve(user_input, k=6) if in_scope(p.citation())]
-            for p in hits[:2]:
+            hits = site_index.retrieve(user_input, k=2, campuses=scope)
+            for p in hits:
                 if p.score >= site_rag.AUGMENT_MIN_SCORE:
-                    key = self._cross_corpus_rank_key(p.bigram_hits, p.score, site_rag.AUGMENT_MIN_SCORE)
+                    key = self._cross_corpus_rank_key(p.topic_bigram_hits, p.score, site_rag.AUGMENT_MIN_SCORE)
                     ranked.append((key, p.score, p.citation(), p.text, "site"))
         ranked.sort(key=lambda r: r[0], reverse=True)
         grounding = [(score, cite, text, corpus) for _, score, cite, text, corpus in ranked[:3]]
@@ -2304,27 +2627,32 @@ class HybridChatbot:
         return grounding, suffix, suggestion
 
     def _verbatim_document_reply(
-        self, user_input: str
+        self, user_input: str, campus: Optional[str] = None
     ) -> Optional[Tuple[str, str, float, str]]:
         """Step 3.5 body — best verbatim charter/site passage, or None.
 
         Gated by BOTH gates (nonsense + scope) so gibberish or off-topic
         queries can't dredge up an arbitrary quote, by stricter score
         thresholds than the augmentation path, and by >= 1 bigram hit.
+        Campus-scoped like _gather_grounding, so a satellite's procedure is
+        never quoted as the general answer. The bigram must carry a topic
+        word: within one satellite's pages "Trece Campus" alone matched the
+        library page for "how do I enroll at Trece campus".
         """
         if not (self.nonsense_gate.allows(user_input)[0] and self.scope_gate.allows(user_input)[0]):
             return None
+        scope = _retrieval_scope(user_input, campus)
         best = None  # (rank_key, score, intent_tag, reply, model_label, stat_key)
         charter_index = charter_rag.get_index()
         if charter_index is not None:
-            passages = charter_index.retrieve(user_input, k=1)
+            passages = charter_index.retrieve(user_input, k=1, campuses=scope)
             if (
                 passages
                 and passages[0].score >= charter_rag.QUOTE_MIN_SCORE
-                and passages[0].bigram_hits >= 1
+                and passages[0].topic_bigram_hits >= 1
             ):
                 key = self._cross_corpus_rank_key(
-                    passages[0].bigram_hits, passages[0].score, charter_rag.QUOTE_MIN_SCORE
+                    passages[0].topic_bigram_hits, passages[0].score, charter_rag.QUOTE_MIN_SCORE
                 )
                 best = (
                     key, passages[0].score, "charter_info",
@@ -2333,14 +2661,14 @@ class HybridChatbot:
                 )
         site_index = site_rag.get_index()
         if site_index is not None:
-            passages = site_index.retrieve(user_input, k=1)
+            passages = site_index.retrieve(user_input, k=1, campuses=scope)
             if (
                 passages
                 and passages[0].score >= site_rag.QUOTE_MIN_SCORE
-                and passages[0].bigram_hits >= 1
+                and passages[0].topic_bigram_hits >= 1
             ):
                 key = self._cross_corpus_rank_key(
-                    passages[0].bigram_hits, passages[0].score, site_rag.QUOTE_MIN_SCORE
+                    passages[0].topic_bigram_hits, passages[0].score, site_rag.QUOTE_MIN_SCORE
                 )
                 if best is None or key > best[0]:
                     best = (
@@ -2528,6 +2856,14 @@ class HybridChatbot:
             self._bump("college_programs_used")
             return self.PROGRAMS_INTENT, programs, 1.0, "College Programs", nlu_data
 
+        # Step 0.75: "who is the dean of CEIT" → that one dean, not the whole
+        # 12-dean roster (live audit 2026-11-24). Read from the curated
+        # college_deans answer, so it can never disagree with it.
+        dean = self._dean_lookup_reply(user_input, filipino)
+        if dean is not None:
+            self._bump("dean_lookup_used")
+            return self.DEANS_INTENT, dean, 1.0, "Dean Lookup", nlu_data
+
         # Step 0.8: the same ask with no college named — "the programs offered
         # by our college", verbatim from UAT. The cue is unambiguous and the
         # only missing token is one the user can supply in a tap, but the tier
@@ -2547,15 +2883,18 @@ class HybridChatbot:
         # "just give me a list") — only meaningful against the previous turn.
         # The intent tiers classify the message alone and answer a different
         # question, so send it to the LLM with the conversation history, and
-        # retrieve against the previous question + this one. Only when the LLM
-        # is up: otherwise a canned answer still beats the static fallback.
+        # retrieve against the anchor question + this one. Only when the LLM
+        # is up, and only after a recent content turn — see _followup_route.
         retrieval_query = user_input
-        if not skip_intents and user_id and is_contextual_followup(user_input):
-            prev_question = self._last_user_message(user_id)
-            if prev_question and self.llm and self.llm.ensure_available():
-                skip_intents = True
-                retrieval_query = f"{prev_question} {user_input}"
-                self._bump("followup_routed_to_llm")
+        followup = None if skip_intents else self._followup_route(user_input, user_id, campus)
+        if followup:
+            skip_intents = True
+            retrieval_query, fu_kind = followup
+            if fu_kind == "place" and not campus:
+                # "there" = the session's campus: scope grounding to it.
+                campus = self._session_slots(user_id)["campus"]
+            nlu_data = {**nlu_data, "contextual_followup": True, "followup_kind": fu_kind}
+            self._bump("followup_routed_to_llm")
 
         if not skip_intents:
             # Step 1: Naive Bayes (+ optional NLU enhancement), arbitrated.
@@ -2701,19 +3040,45 @@ class HybridChatbot:
                 self._bump("scope_gate_blocked")
                 return self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, f"ScopeGate ({reason})", nlu_data
 
+            # Live-lookup pushback ("just create a list available online") after
+            # a previous answer: the same grounding would regenerate the same
+            # fallback, so acknowledge the limitation and pivot without a
+            # generation. Needs a pushback opener AND a live-lookup ask AND a
+            # recent previous turn, so "what is on the website for admission"
+            # still reaches the LLM.
+            llm_label = "Claude LLM" if isinstance(self.llm, ClaudeLLM) else "Local LLM"
+            prev_reply = self._last_bot_response(user_id)
+            if (prev_reply and self._last_turn_recent(user_id)
+                    and is_pushback(user_input) and is_live_lookup(user_input)):
+                self._bump("llm_pushback_pivot")
+                return (self.FALLBACK_INTENT, pivot_reply(filipino, True), 0.0,
+                        f"{llm_label} (pushback)", nlu_data)
+
             # Official-source grounding — gather the best passages from BOTH
             # corpora (Citizens' Charter + official website) and hand them to
             # the LLM with an evidence-gated instruction: answer only from
             # the excerpts, cite the bracketed source, and say so when they
             # don't contain the answer instead of improvising.
-            grounding, charter_suffix, suggestion = self._gather_grounding(retrieval_query, campus)
-            llm_input = self._grounded_prompt(user_input, grounding, suggestion, language)
+            # Scope from THIS message + the session campus, not the
+            # concatenated follow-up query: a previous turn naming Trece must
+            # not lock the answer to Trece.
+            grounding, charter_suffix, suggestion = self._gather_grounding(
+                retrieval_query, campus, scope_text=user_input)
+            prompt_question = user_input
+            if nlu_data.get("followup_kind") == "place" and campus:
+                # Resolve the back-reference for the model; left to itself it
+                # asked "which campus?" right after Imus was named (live, 2026-11-24).
+                prompt_question = f'{user_input} ("there" = {campus})'
+            llm_input = self._grounded_prompt(prompt_question, grounding, suggestion, language,
+                                              followup=nlu_data.get("followup_kind"))
 
+            # A follow-up gets one more turn: its anchor question may sit two
+            # turns back ("how to enroll" → "why only trece?" → "what about Imus?").
+            ctx = self._llm_context(user_id, turns=4 if nlu_data.get("contextual_followup") else 3)
             if isinstance(self.llm, ClaudeLLM):
-                llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id),
-                                              caller=user_id)
+                llm_reply = self.llm.generate(llm_input, conversation_context=ctx, caller=user_id)
             else:
-                llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id))
+                llm_reply = self.llm.generate(llm_input, conversation_context=ctx)
             llm_reply = strip_rag_meta(llm_reply)
             # LLM emitted the refusal token → out of scope per the model's own judgment
             if llm_reply and LLM_REFUSAL_TOKEN in llm_reply:
@@ -2730,18 +3095,37 @@ class HybridChatbot:
                     print(f"[LLM GUARD] reply withheld ({guard_reason}) q={user_input[:80]!r}")
                     return (self.FALLBACK_INTENT, self.LLM_GUARD_MESSAGE, 0.0,
                             f"LLM Guard ({guard_reason.split(':', 1)[0]})", nlu_data)
-                if _LLM_PROSE_REFUSAL_RE.match(llm_reply.strip()):
+                # Again after the guard: stripping an invented citation can
+                # leave an orphaned "According to, X". Idempotent.
+                llm_reply = strip_rag_meta(llm_reply)
+                if llm_reply and _LLM_PROSE_REFUSAL_RE.match(llm_reply.strip()):
                     # The model declined in prose without the refusal token.
                     # Keep its wording (often more helpful than the canned
                     # refusal — e.g. redirecting a medical ask to the clinic)
                     # but label the turn out-of-scope so provenance, the OOS
                     # metrics, and the anti-pattern miner see a refusal.
+                    # Before the repeat pivot: a repeated refusal must keep
+                    # its redirect, not become "I won't repeat myself".
                     self._bump("scope_gate_blocked")
                     provider_label = "Claude" if isinstance(self.llm, ClaudeLLM) else "Ollama"
                     return self.FALLBACK_INTENT, llm_reply, 0.0, f"{provider_label} (out-of-scope)", nlu_data
-                self._bump("llm_fallback_used")
-                provider_label = "Claude LLM" if isinstance(self.llm, ClaudeLLM) else "Local LLM"
-                return self.FALLBACK_INTENT, llm_reply, 0.0, f"{provider_label}{charter_suffix}", nlu_data
+                # Same 3-bullet fallback twice in one reply, or the previous
+                # turn's reply served again: drop the in-reply duplicate; on a
+                # cross-turn repeat pivot instead (unless a repeat was asked).
+                llm_reply, repeated = dedupe_reply(llm_reply, prev_reply)
+                # Re-asking the identical question counts as wanting it again.
+                last_question = self._last_user_message(user_id) or ""
+                same_question = last_question.strip().lower() == user_input.strip().lower()
+                if repeated and llm_reply and not (wants_repeat(user_input) or same_question):
+                    self._bump("llm_repeat_pivot")
+                    live = is_pushback(user_input) and is_live_lookup(user_input)
+                    return (self.FALLBACK_INTENT, pivot_reply(filipino, live), 0.0,
+                            f"{llm_label} (repeat-pivot)", nlu_data)
+                # Nothing left after scrubbing (the reply was only boilerplate)
+                # falls through to the degraded path below.
+                if llm_reply:
+                    self._bump("llm_fallback_used")
+                    return self.FALLBACK_INTENT, llm_reply, 0.0, f"{llm_label}{charter_suffix}", nlu_data
 
             # Reached the model but it returned nothing (timeout / API error /
             # empty) — the assistant is degraded, not the user's phrasing.
@@ -2755,7 +3139,7 @@ class HybridChatbot:
         # but the Citizens' Charter or the official website has a strongly-
         # matching passage. Quote the best one with a citation instead of
         # shrugging. Beats both fallbacks, so it runs before them.
-        served = self._verbatim_document_reply(user_input)
+        served = self._verbatim_document_reply(user_input, campus)
         if served is not None:
             tag, reply, score, label = served
             return tag, reply, score, label, nlu_data
@@ -2795,10 +3179,12 @@ class HybridChatbot:
         Returns:
             (intent, response, confidence, model_used, nlu_data)
         """
-        # Conversation history keys on user_id, but anonymous web sessions may
-        # only carry a session_id — fall back so multi-turn LLM context works
-        # for them too.
-        user_id = user_id or session_id
+        # Conversation history keys on the session (one chat tab), falling back
+        # to user_id. app.py's campus routing keys on the same value
+        # (session_id or user_id); keying history on user_id instead mixed
+        # two tabs' turns, so "there" in a Trece tab resolved to the Imus
+        # named in another tab (review 2026-11-24).
+        user_id = session_id or user_id
 
         # Resolve "10" against a list the bot itself just printed, BEFORE the
         # classifiers see it (see _resolve_list_reference).
@@ -2808,10 +3194,31 @@ class HybridChatbot:
         else:
             nlu_extra = {}
 
+        previous_reply = self._last_bot_response(user_id)
+        previous_user = self._last_user_message(user_id)
         intent, response, confidence, model_used, nlu_data = self.predict(
             user_input, user_id, skip_intents=skip_intents, campus=campus,
             language=language)
         nlu_data = {**nlu_data, **nlu_extra}
+
+        # Small talk that is really an off-topic ask ("can you help me with my
+        # python homework" → chitchat greeting, live audit 2026-11-24): the
+        # classifiers have no off-topic class, so ScopeGate decides here.
+        if intent in self._SMALLTALK_INTENTS and not self.scope_gate.allows(user_input)[0]:
+            self._bump("scope_gate_blocked")
+            intent, response, confidence, model_used = (
+                self.FALLBACK_INTENT, self.scope_gate.refusal(), 0.0, "ScopeGate (smalltalk)")
+
+        # A curated answer identical to the previous reply ("who is the
+        # president" → "how about the vice presidents?" served the same roster
+        # twice, live audit 2026-11-24). LLM replies have their own check in
+        # predict(); this covers the curated tiers.
+        if (intent != self.FALLBACK_INTENT and intent in self.responses_map
+                and previous_reply and response and response.strip() == previous_reply.strip()
+                and not wants_repeat(user_input)
+                and " ".join(user_input.lower().split()) != " ".join((previous_user or "").lower().split())):
+            response = self._unrepeated_reply(intent, response, user_input, language)
+            self._bump("curated_repeat_avoided")
 
         # Track conversation (bounded LRU — see __init__).
         if user_id:
@@ -2869,6 +3276,10 @@ class HybridChatbot:
                 "is_follow_up": nlu_data.get("is_follow_up", False),
                 # Lets the NEXT turn resolve a bare "10" against this reply.
                 "list_items": _numbered_items(response),
+                # Session slots (_session_slots) and follow-up routing read these.
+                "at": time.time(),
+                "contextual_followup": bool(nlu_data.get("contextual_followup")),
+                "level": _level_slot(user_input),
             })
             # Drop the enumeration from the turn that just aged out of the
             # pointable window — _resolve_list_reference will never read it
@@ -2914,6 +3325,7 @@ class HybridChatbot:
             "place_resolver_percentage": pct("place_resolver_used"),
             "llm_fallback_used": stats.get("llm_fallback_used", 0),
             "llm_fallback_percentage": pct("llm_fallback_used"),
+            "followup_routed_to_llm": stats.get("followup_routed_to_llm", 0),
             "llm_unavailable": stats.get("llm_unavailable", 0),
             "llm_unavailable_percentage": pct("llm_unavailable"),
             "fallback_used": stats.get("fallback_used", 0),

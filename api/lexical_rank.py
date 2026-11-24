@@ -29,7 +29,7 @@ from __future__ import annotations
 import math
 import os
 from collections import Counter
-from typing import Sequence
+from typing import Optional, Sequence
 
 import numpy as np
 
@@ -124,7 +124,8 @@ def rrf_fuse(score_lists: Sequence[np.ndarray], pool: int) -> list[int]:
 
 
 def candidate_order(cosine_scores: np.ndarray, bm25: BM25Index | None,
-                    query_tokens: Sequence[str], cap: int) -> list[int]:
+                    query_tokens: Sequence[str], cap: int,
+                    mask: Optional[np.ndarray] = None) -> list[int]:
 	"""Candidate doc order for a retrieval pool of size `cap`.
 
 	fused mode: RRF over (cosine, BM25), each voting its top 2×cap.
@@ -132,9 +133,19 @@ def candidate_order(cosine_scores: np.ndarray, bm25: BM25Index | None,
 	Both modes return only docs with cosine > 0: the calibrated serving score
 	is coverage-weighted *cosine*, so a zero-cosine doc can never be served
 	and admitting it would only burn a pool slot.
+
+	mask (bool per doc) zeroes out-of-scope docs in BOTH rankers before the
+	vote, so they neither take pool slots nor push in-scope docs past the
+	cap — filtering before top-k instead of after keeps recall. None = no
+	filter (byte-identical to the unmasked behaviour).
 	"""
+	if mask is not None:
+		cosine_scores = np.where(mask, cosine_scores, 0.0)
 	if ranker_mode() == "fused" and bm25 is not None and bm25.size == len(cosine_scores):
-		order = rrf_fuse((cosine_scores, bm25.scores(query_tokens)), pool=max(cap * 2, 16))
+		bm25_scores = bm25.scores(query_tokens)
+		if mask is not None:
+			bm25_scores = np.where(mask, bm25_scores, 0.0)
+		order = rrf_fuse((cosine_scores, bm25_scores), pool=max(cap * 2, 16))
 	else:
 		order = np.argsort(cosine_scores)[::-1].tolist()
 	out = []

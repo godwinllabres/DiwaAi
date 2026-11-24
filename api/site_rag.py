@@ -41,9 +41,12 @@ import time
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
-from typing import Optional
+from typing import Collection, Optional
+
+import numpy as np
 
 from . import lexical_rank
+from .campus_context import doc_campus_key, is_campus_term
 
 _logger = logging.getLogger("diwa.site_rag")
 
@@ -190,6 +193,11 @@ class Passage:
 	date: str
 	text: str
 	bigram_hits: int = 0
+	# bigram_hits minus bigrams made only of campus-name words.
+	topic_bigram_hits: int = 0
+	# Campus the doc is about (campus_context.doc_campus_key): "main", "all"
+	# or a satellite key.
+	campus: str = "all"
 
 	def citation(self) -> str:
 		when = f", {self.date}" if self.date else ""
@@ -320,13 +328,29 @@ class SiteIndex:
 		# thresholds; see api/lexical_rank.py for the full rationale.
 		analyzer = self._vectorizer.build_analyzer()
 		self._bm25 = lexical_rank.BM25Index([analyzer(t) for *_, t in self._chunks])
+		# Campus tag per chunk. Every stored URL is cvsu.edu.ph, so the tag is
+		# read off the doc's title/slug (chunks repeat their doc's title+URL).
+		self._campus = np.array(
+			[doc_campus_key(t, u) for t, u, _, _ in self._chunks], dtype=object)
+		self._scope_masks: dict[frozenset, np.ndarray] = {}
 		_logger.info("site index ready: %d chunks", len(self._chunks))
 
 	@property
 	def available(self) -> bool:
 		return self._matrix is not None
 
-	def retrieve(self, query: str, k: int = 3) -> list[Passage]:
+	def _scope_mask(self, campuses: Collection[str]) -> np.ndarray:
+		scope = frozenset(campuses)
+		mask = self._scope_masks.get(scope)
+		if mask is None:
+			mask = np.isin(self._campus, list(scope))
+			self._scope_masks[scope] = mask
+		return mask
+
+	def retrieve(self, query: str, k: int = 3,
+	             campuses: Optional[Collection[str]] = None) -> list[Passage]:
+		"""Top-k passages. campuses restricts to docs tagged with one of
+		those keys, BEFORE the candidate cap; None = whole corpus."""
 		if not self.available or not query or not query.strip():
 			return []
 		from sklearn.metrics.pairwise import linear_kernel
@@ -340,12 +364,14 @@ class SiteIndex:
 		query_terms = list(analyzer(query))
 		terms = {t for t in query_terms if " " not in t}
 		query_bigrams = {t for t in query_terms if " " in t}
+		topic_bigrams = {t for t in query_bigrams if not is_campus_term(t)}
 		# Candidate pool: fused BM25+cosine order (LEXICAL_RANKER=fused,
 		# the default) or the legacy pure-cosine order (=tfidf). Only
 		# cosine-positive docs are admitted, so the calibrated serving
 		# score below keeps its meaning in both modes.
 		order = lexical_rank.candidate_order(
-			scores, self._bm25, query_terms, cap=max(k * 4, 8))
+			scores, self._bm25, query_terms, cap=max(k * 4, 8),
+			mask=self._scope_mask(campuses) if campuses is not None else None)
 		passages = []
 		for i in order:
 			title, url, date, text = self._chunks[i]
@@ -362,6 +388,8 @@ class SiteIndex:
 					date=date,
 					text=text,
 					bigram_hits=len(query_bigrams & chunk_terms),
+					topic_bigram_hits=len(topic_bigrams & chunk_terms),
+					campus=str(self._campus[i]),
 				)
 			)
 		passages.sort(key=lambda p: p.score, reverse=True)
