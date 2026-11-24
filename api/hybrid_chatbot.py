@@ -13,7 +13,7 @@ import hashlib
 import threading
 import time
 import weakref
-from collections import OrderedDict
+from collections import OrderedDict, deque
 import urllib.request
 import urllib.error
 import numpy as np
@@ -90,9 +90,11 @@ except ImportError:
 
 # Citizens' Charter retrieval tier (document tier of the hybrid brain)
 from . import charter_rag, intent_retrieval, site_rag
+from .campus_context import extract_campus as _extract_campus
+from .conversation_polish import is_contextual_followup, satellite_campus, strip_rag_meta
 # Single source for the Ollama endpoint default (shared with the MCP routers,
 # safety second-opinion, and /health warm-up).
-from .llm_defaults import ollama_base_url
+from .llm_defaults import no_think_fields, ollama_base_url
 # Shared by all three _preprocess copies below AND by both NB trainers, so the
 # shorthand map has one definition even though the tokenizers are duplicated.
 from .preprocessing import expand_abbreviations
@@ -335,7 +337,24 @@ def build_scope_locked_prompt(
         "- NEVER guess at acronyms. If an acronym isn't in the Campus Glossary above, say you're not sure and recommend asking the registrar.\n"
         "- For time-sensitive info (deadlines, fees, schedules), always recommend verification with the proper office.\n"
         "- Disambiguate campus when relevant (Indang vs. Imus vs. other satellite campuses).\n"
-        "- Respond in the same language as the user (English, Filipino, or Taglish).\n"
+        "- Respond in the same language as the user (English, Filipino, or Taglish).\n\n"
+        "VOICE — you are Sevi, speaking directly to the user:\n"
+        "- Never describe your inputs. Do NOT say \"based on the excerpts\", \"the excerpts "
+        "provided\", \"according to the context\", \"in my knowledge base\", \"the information "
+        "given\", or similar. The user cannot see any excerpts; just answer.\n"
+        "- When you lack a detail, say it plainly in one sentence (\"I don't have the exact "
+        "date for that yet\") and give the most useful next step.\n"
+        "- Answer the exact question first. Offer related details as a short follow-up "
+        "question instead of listing everything.\n"
+        "- Read the conversation so far. A short message like \"why only trece?\" or \"what "
+        "about Imus?\" refers to your previous answer — answer it in that context.\n"
+        "- If the user pushes back on a limitation (e.g. \"just make the list from the "
+        "website\"), acknowledge it in one conversational sentence (\"I can't browse live "
+        "pages, so I can't pull that list for you\") and pivot to something you CAN do — "
+        "such as asking which college or office they need. Never repeat an earlier reply "
+        "or the same list of offices word for word.\n"
+        "- Do not open by restating an assumption you already stated earlier in the "
+        "conversation.\n"
     )
     return (base_persona + "\n\n" + glossary_section + scope_section).strip()
 
@@ -512,8 +531,9 @@ class LocalLLM:
     (http://localhost:11434).  Used as the final fallback when both
     NB and NN are below their confidence thresholds.
 
-    To use a different local backend (llama.cpp server, LM Studio, etc.)
-    just point OLLAMA_BASE_URL / OLLAMA_MODEL to the compatible endpoint.
+    Speaks Ollama's native API (/api/tags, /api/chat) only. For a different
+    local backend (llama.cpp's llama-server, LM Studio, LocalAI) use
+    LLM_PROVIDER=openai and OPENAI_BASE_URL / OPENAI_MODEL — OpenAICompatLLM.
 
     Falls back gracefully to None if the server is unreachable so the
     rest of the chatbot pipeline is unaffected.
@@ -736,6 +756,9 @@ class OpenAICompatLLM:
             # 256, not 512 — same worst-case-latency bound as LocalLLM (the
             # prompt demands <=4 sentences; on CPU the cap is the tail budget).
             "max_tokens": 256,
+            # Same reason as LocalLLM's think=false: a thinking model spends
+            # the 256-token budget reasoning and returns empty content.
+            **no_think_fields(self.model),
         }
         payload = json.dumps(body).encode("utf-8")
 
@@ -749,9 +772,11 @@ class OpenAICompatLLM:
             with urllib.request.urlopen(req, timeout=self.TIMEOUT_SECONDS) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 choices = data.get("choices") or []
-                content = choices[0].get("message", {}).get("content", "") if choices else ""
-                # Defensive: strip inlined reasoning if a thinking model emits it.
-                content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL)
+                content = (choices[0].get("message", {}).get("content") or "") if choices else ""
+                # Defensive: strip inlined reasoning if a thinking model emits it —
+                # including a block cut off by max_tokens before its </think>,
+                # which would otherwise reach the user as raw reasoning.
+                content = re.sub(r"<think>.*?(?:</think>|$)", "", content, flags=re.DOTALL)
                 return content.strip() or None
         except urllib.error.URLError as e:
             print(f"[WARNING] OpenAI-compat request failed: {e}")
@@ -1043,6 +1068,88 @@ class ScopeGate:
         return random.choice(self.REFUSAL_MESSAGES)
 
 
+def _env_int(name: str, default: int) -> int:
+    try:
+        return int(os.getenv(name, str(default)).strip())
+    except ValueError:
+        return default
+
+
+class ClaudeRequestLimiter:
+    """
+    Request-count limiter for Claude API calls (not chat turns — most turns
+    are answered by NB/NN and never reach Claude). Protects the API credit
+    balance and the org's Anthropic rate limit.
+
+    Three budgets, each 0 = disabled:
+      CLAUDE_RATE_LIMIT_RPM       — all callers, per sliding window
+      CLAUDE_RATE_LIMIT_PER_USER  — one session/user, per sliding window
+      CLAUDE_DAILY_REQUEST_CAP    — all callers, per UTC day
+    CLAUDE_RATE_LIMIT_WINDOW sets the window in seconds (default 60).
+
+    In-memory, like the chat throttles in app.py: correct for the
+    single-worker uvicorn deployment; counts reset on restart.
+    """
+
+    def __init__(self):
+        self.global_max = _env_int("CLAUDE_RATE_LIMIT_RPM", 20)
+        self.per_user_max = _env_int("CLAUDE_RATE_LIMIT_PER_USER", 5)
+        self.daily_cap = _env_int("CLAUDE_DAILY_REQUEST_CAP", 500)
+        try:
+            self.window = float(os.getenv("CLAUDE_RATE_LIMIT_WINDOW", "60"))
+        except ValueError:
+            self.window = 60.0
+        self._lock = threading.Lock()
+        self._global: deque = deque()
+        self._per_user: dict = {}
+        self._day = ""
+        self._day_count = 0
+
+    def try_acquire(self, caller: Optional[str]) -> Optional[str]:
+        """Record one request and return None, or return why it was refused."""
+        now = time.monotonic()
+        today = time.strftime("%Y-%m-%d", time.gmtime())
+        cutoff = now - self.window
+        with self._lock:
+            if today != self._day:
+                self._day, self._day_count = today, 0
+            if self.daily_cap and self._day_count >= self.daily_cap:
+                return f"daily cap {self.daily_cap} reached"
+
+            while self._global and self._global[0] <= cutoff:
+                self._global.popleft()
+            if self.global_max and len(self._global) >= self.global_max:
+                return f"global limit {self.global_max}/{self.window:.0f}s"
+
+            user_q = None
+            if caller and self.per_user_max:
+                user_q = self._per_user.setdefault(caller, deque())
+                while user_q and user_q[0] <= cutoff:
+                    user_q.popleft()
+                if len(user_q) >= self.per_user_max:
+                    return f"per-user limit {self.per_user_max}/{self.window:.0f}s"
+                # Drop idle callers so the dict can't grow without bound.
+                if len(self._per_user) > 5000:
+                    for k in [k for k, q in self._per_user.items() if not q or q[-1] <= cutoff]:
+                        self._per_user.pop(k, None)
+
+            self._global.append(now)
+            if user_q is not None:
+                user_q.append(now)
+            self._day_count += 1
+            return None
+
+    def snapshot(self) -> dict:
+        with self._lock:
+            return {
+                "window_seconds": self.window,
+                "global_max": self.global_max,
+                "per_user_max": self.per_user_max,
+                "daily_cap": self.daily_cap,
+                "used_today": self._day_count,
+            }
+
+
 class ClaudeLLM:
     """
     Claude API fallback — used when NB+NN are both below threshold and
@@ -1077,6 +1184,7 @@ class ClaudeLLM:
         ]
         self.client = None
         self.available = False
+        self.limiter = ClaudeRequestLimiter()
 
         if not ANTHROPIC_AVAILABLE:
             return
@@ -1110,11 +1218,19 @@ class ClaudeLLM:
         self,
         user_message: str,
         conversation_context: Optional[list] = None,
+        caller: Optional[str] = None,
     ) -> Optional[str]:
         """
-        Returns Claude's reply, the REFUSAL_TOKEN if out of scope, or None on error.
+        Returns Claude's reply, the REFUSAL_TOKEN if out of scope, or None on
+        error or when a request limit is hit (the caller then serves the
+        llm_unavailable reply). `caller` keys the per-user limit.
         """
         if not self.available or not self.client:
+            return None
+
+        refused = self.limiter.try_acquire(caller)
+        if refused:
+            print(f"[CLAUDE LIMIT] request skipped — {refused}")
             return None
 
         messages = []
@@ -1127,16 +1243,24 @@ class ClaudeLLM:
         messages.append({"role": "user", "content": user_message})
 
         try:
+            # No temperature: anthropic SDK 1.x removed sampling parameters
+            # from messages.create(), and models from Opus 4.7 on reject them.
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=self.MAX_TOKENS,
-                temperature=0.0,  # P1-6: evidence-gated tier — deterministic
                 system=self.system_blocks,
                 messages=messages,
             )
+            if response.stop_reason == "refusal":
+                return None
             text_parts = [b.text for b in response.content if getattr(b, "type", "") == "text"]
             reply = "".join(text_parts).strip()
             return reply or None
+        except anthropic.RateLimitError as e:
+            # Anthropic's own org/workspace limit, separate from ours above.
+            retry_after = e.response.headers.get("retry-after") if e.response is not None else None
+            print(f"[WARNING] Claude API rate limited (429), retry-after={retry_after}")
+            return None
         except anthropic.APIStatusError as e:
             print(f"[WARNING] Claude API status error: {e.status_code} {getattr(e, 'message', '')}")
             return None
@@ -1531,9 +1655,9 @@ class HybridChatbot:
     def set_llm(self, provider: str, model: Optional[str] = None) -> dict:
         """Hot-swap the LLM fallback at runtime (admin toggle — no restart).
 
-        Also updates the process env (LLM_PROVIDER, OLLAMA_MODEL/CLAUDE_MODEL)
-        so the AIS and connectors LLM routers — which read the env per call —
-        follow the same switch.
+        Also updates the process env (LLM_PROVIDER, OLLAMA_MODEL/OPENAI_MODEL/
+        CLAUDE_MODEL) so the AIS and connectors LLM routers — which read the
+        env per call — follow the same switch.
         """
         provider = (provider or "none").strip().lower()
         self.llm_last_error = None
@@ -1776,6 +1900,23 @@ class HybridChatbot:
             return None, 0.0
         return self.nn_model.predict(user_input)
 
+    def _last_user_message(self, user_id: Optional[str]) -> Optional[str]:
+        """The session's previous user message, or None."""
+        if not user_id:
+            return None
+        with self._history_lock:
+            turns = self.conversation_history.get(user_id) or []
+            return turns[-1]["user_message"] if turns else None
+
+    def _assumption_already_stated(self, user_id: Optional[str]) -> bool:
+        """Did an earlier reply this session already state the default
+        campus/level assumption? Saying it on every turn reads as robotic."""
+        if not user_id:
+            return False
+        with self._history_lock:
+            turns = list(self.conversation_history.get(user_id) or [])
+        return any(t.get("bot_response", "").startswith(self._ASSUMPTION_PREFIXES) for t in turns)
+
     def _llm_context(self, user_id: Optional[str]) -> list:
         """Build the last-3-turns conversation context for the LLM."""
         if not user_id:
@@ -1844,7 +1985,11 @@ class HybridChatbot:
             "results, rankings, or awards; those come only from news excerpts.\n"
             "5. Keep the answer concise and only cite a source you actually used, "
             "copying its bracketed label exactly as shown above — never alter the "
-            "source name, edition, or page number."
+            "source name, edition, or page number.\n"
+            "6. Never mention the excerpts themselves to the user (no \"based on the "
+            "excerpts\", \"the excerpts don't mention\"); answer as Sevi in your own voice.\n"
+            "7. An excerpt about one satellite campus (e.g. Trece Martires, Imus) applies "
+            "to that campus only — never present it as the procedure for all of CvSU."
             f"{hint}\n\n{excerpts}\n\nQuestion: {user_input}"
         )
 
@@ -1918,15 +2063,20 @@ class HybridChatbot:
                     f"about {labels[0]}, or about {labels[1]}? Tap or type the topic.")
         return text, labels
 
+    _ASSUMPTION_PREFIXES = ("Assuming the Main Campus", "Ipagpalagay nating")
+
     def _maybe_state_assumption(self, response: str, intent: str,
                                 user_input: str, campus: Optional[str],
-                                language: Optional[str] = None) -> str:
+                                language: Optional[str] = None,
+                                user_id: Optional[str] = None) -> str:
         """Prefix an explicit default-context line on answers that vary by
         campus/level when the turn pinned down neither (P2-8 slot-filling,
-        stated-assumption branch)."""
+        stated-assumption branch). Stated once per session, not every turn."""
         if intent not in self._ASSUMPTION_INTENTS or campus:
             return response
         if self._CAMPUS_TOKEN_RE.search(user_input) or self._LEVEL_TOKEN_RE.search(user_input):
+            return response
+        if self._assumption_already_stated(user_id):
             return response
         if _reply_in_filipino(user_input, language):
             note = ("Ipagpalagay nating para sa Main Campus (Indang), undergraduate, "
@@ -2099,23 +2249,38 @@ class HybridChatbot:
         """
         return bigram_hits, (score / floor if floor else score)
 
-    def _gather_grounding(self, user_input: str) -> Tuple[list, str, Optional[str]]:
+    def _gather_grounding(self, user_input: str,
+                          campus: Optional[str] = None) -> Tuple[list, str, Optional[str]]:
         """Collect LLM grounding passages from the charter and site corpora.
 
         Returns (grounding, model_label_suffix, nearest_intent_suggestion)
         where grounding is [(score, citation, text, corpus), ...] ranked
         best-first via _cross_corpus_rank_key, capped at 3.
+
+        Campus filter: a passage ABOUT a satellite campus (by its title/URL/
+        citation) is kept only when the question or the session's campus
+        names that campus. Without this, "how do I enroll next year" grounded
+        on the Trece Martires page and presented it as the university-wide
+        procedure. Main-campus and university-wide passages always pass.
         """
+        wanted = _extract_campus(user_input) or campus
+
+        def in_scope(label: str) -> bool:
+            sat = satellite_campus(label)
+            return sat is None or sat == wanted
+
         ranked = []  # (rank_key, score, citation, text, corpus)
         charter_index = charter_rag.get_index()
         if charter_index is not None:
-            for p in charter_index.retrieve(user_input, k=3)[:2]:
+            hits = [p for p in charter_index.retrieve(user_input, k=6) if in_scope(p.citation())]
+            for p in hits[:2]:
                 if p.score >= charter_rag.AUGMENT_MIN_SCORE:
                     key = self._cross_corpus_rank_key(p.bigram_hits, p.score, charter_rag.AUGMENT_MIN_SCORE)
                     ranked.append((key, p.score, p.citation(), p.text, "charter"))
         site_index = site_rag.get_index()
         if site_index is not None:
-            for p in site_index.retrieve(user_input, k=3)[:2]:
+            hits = [p for p in site_index.retrieve(user_input, k=6) if in_scope(p.citation())]
+            for p in hits[:2]:
                 if p.score >= site_rag.AUGMENT_MIN_SCORE:
                     key = self._cross_corpus_rank_key(p.bigram_hits, p.score, site_rag.AUGMENT_MIN_SCORE)
                     ranked.append((key, p.score, p.citation(), p.text, "site"))
@@ -2378,6 +2543,20 @@ class HybridChatbot:
             nlu_data = {**nlu_data, "suggestions": chips}
             return self.CLARIFY_INTENT, text, 1.0, "College Programs (which college)", nlu_data
 
+        # Step 0.9: Contextual follow-up ("why only trece?", "what about Imus?",
+        # "just give me a list") — only meaningful against the previous turn.
+        # The intent tiers classify the message alone and answer a different
+        # question, so send it to the LLM with the conversation history, and
+        # retrieve against the previous question + this one. Only when the LLM
+        # is up: otherwise a canned answer still beats the static fallback.
+        retrieval_query = user_input
+        if not skip_intents and user_id and is_contextual_followup(user_input):
+            prev_question = self._last_user_message(user_id)
+            if prev_question and self.llm and self.llm.ensure_available():
+                skip_intents = True
+                retrieval_query = f"{prev_question} {user_input}"
+                self._bump("followup_routed_to_llm")
+
         if not skip_intents:
             # Step 1: Naive Bayes (+ optional NLU enhancement), arbitrated.
             # A confident-looking NB answer must also pass the margin check
@@ -2396,7 +2575,7 @@ class HybridChatbot:
                     self._bump("naive_bayes_used")
                     response = self._maybe_state_assumption(
                         self._select_response(nb_intent, user_input, language),
-                        nb_intent, user_input, campus, language)
+                        nb_intent, user_input, campus, language, user_id)
                     return nb_intent, response, nb_confidence, "Naive Bayes (NLU Enhanced)", nlu_data
                 reasons = []
                 if not margin_ok:
@@ -2435,7 +2614,7 @@ class HybridChatbot:
                     and nn_intent == nb_intent):
                 response = self._maybe_state_assumption(
                     self._select_response(nn_intent, user_input, language),
-                    nn_intent, user_input, campus, language)
+                    nn_intent, user_input, campus, language, user_id)
                 self._bump("neural_network_used")
                 return nn_intent, response, nn_confidence, "Neural Network", nlu_data
             if (nn_intent and nn_intent != nb_intent
@@ -2475,7 +2654,7 @@ class HybridChatbot:
             if served is not None:
                 intent, response, score = served
                 response = self._maybe_state_assumption(response, intent, user_input,
-                                                        campus, language)
+                                                        campus, language, user_id)
                 return intent, response, score, "Intent Retrieval", nlu_data
 
             # Step 2.7: Place Resolver — deterministic campus wayfinding.
@@ -2527,10 +2706,15 @@ class HybridChatbot:
             # the LLM with an evidence-gated instruction: answer only from
             # the excerpts, cite the bracketed source, and say so when they
             # don't contain the answer instead of improvising.
-            grounding, charter_suffix, suggestion = self._gather_grounding(user_input)
+            grounding, charter_suffix, suggestion = self._gather_grounding(retrieval_query, campus)
             llm_input = self._grounded_prompt(user_input, grounding, suggestion, language)
 
-            llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id))
+            if isinstance(self.llm, ClaudeLLM):
+                llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id),
+                                              caller=user_id)
+            else:
+                llm_reply = self.llm.generate(llm_input, conversation_context=self._llm_context(user_id))
+            llm_reply = strip_rag_meta(llm_reply)
             # LLM emitted the refusal token → out of scope per the model's own judgment
             if llm_reply and LLM_REFUSAL_TOKEN in llm_reply:
                 self._bump("scope_gate_blocked")

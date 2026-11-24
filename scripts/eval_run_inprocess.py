@@ -21,15 +21,28 @@ import uuid
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--limit", type=int, default=0)
-ap.add_argument("--model", default=None, help="override OLLAMA_MODEL")
+ap.add_argument("--model", default=None, help="override OLLAMA_MODEL (OPENAI_MODEL under LLM_PROVIDER=openai|localai)")
 ap.add_argument("--out", default="data/eval/responses_new.json")
 ap.add_argument("--dataset", default="data/eval/mirror_qa.json")
 _args = ap.parse_args()
 
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Load the repo .env BEFORE the setdefaults below. hybrid_chatbot loads it too,
+# but only on import — by then the setdefaults had already pinned
+# LLM_PROVIDER=ollama, so a .env on LLM_PROVIDER=openai was silently ignored
+# and every LLM-tier item graded as llm_unavailable.
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(ROOT, ".env"))
+except ImportError:
+    pass
+
 os.environ.setdefault("SEVI_ALLOW_UNVERIFIED_MODELS", "1")
 os.environ.setdefault("OLLAMA_BASE_URL", "http://localhost:11434")
 if _args.model:
-    os.environ["OLLAMA_MODEL"] = _args.model
+    _openai = os.environ.get("LLM_PROVIDER", "").strip().lower() in ("openai", "localai")
+    os.environ["OPENAI_MODEL" if _openai else "OLLAMA_MODEL"] = _args.model
 # Default to what the deployment actually serves. The previous default was
 # llama3.2:3b, which silently graded a DIFFERENT model than production and
 # made the result incomparable to any run taken from the live stack.
@@ -37,7 +50,6 @@ os.environ.setdefault("OLLAMA_MODEL", "qwen3:8b")
 os.environ.setdefault("LLM_PROVIDER", "ollama")
 os.environ.pop("DATABASE_URL", None)  # avoid Postgres; not needed for predict()
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 os.chdir(ROOT)
 

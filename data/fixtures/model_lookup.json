@@ -21,10 +21,13 @@
   },
   {
     "name": "llm_local",
-    "display_name": "Local LLM (Ollama)",
+    "display_name": "Local LLM",
     "kind": "llm",
     "version_env": "OLLAMA_MODEL",
-    "version_default": "qwen3:8b"
+    "version_env_by_provider": {
+      "openai": "OPENAI_MODEL",
+      "localai": "OPENAI_MODEL"
+    }
   },
   {
     "name": "llm_claude",

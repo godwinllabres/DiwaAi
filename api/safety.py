@@ -403,10 +403,10 @@ SUGGESTIONS = {
 # ─────────────────────────────────────────────────────────────────────────────
 
 _LLM_SECOND_OPINION = os.environ.get("SAFETY_LLM_SECOND_OPINION", "0") == "1"
-try:  # single source for the Ollama endpoint default (see api/llm_defaults.py)
-    from .llm_defaults import ollama_base_url
+try:  # single source for the endpoint defaults (see api/llm_defaults.py)
+    from .llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target, ollama_base_url
 except ImportError:  # standalone/direct import
-    from llm_defaults import ollama_base_url
+    from llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target, ollama_base_url
 _OLLAMA_BASE_URL = ollama_base_url()
 
 # Soft cues that the explicit gate does NOT already catch. Deliberately broad —
@@ -465,6 +465,8 @@ async def llm_second_opinion(message: str) -> Optional[str]:
     try:
         if provider in ("claude", "anthropic"):
             verdict = await _judge_anthropic(message)
+        elif provider in OPENAI_COMPAT_PROVIDERS:
+            verdict = await _judge_openai(message)
         else:
             verdict = await _judge_ollama(message)
     except Exception:  # noqa: BLE001 — fail-safe, never block chat on judge error
@@ -499,6 +501,30 @@ async def _judge_ollama(message: str) -> Optional[str]:
         resp = await http.post(f"{_OLLAMA_BASE_URL}/api/chat", json=body)
         resp.raise_for_status()
         return (resp.json().get("message") or {}).get("content", "")
+
+
+async def _judge_openai(message: str) -> Optional[str]:
+    """Same judge over an OpenAI-compatible server (LLM_PROVIDER=openai|localai:
+    llama-server, LM Studio) — they have no Ollama-native /api/chat. The model
+    is OPENAI_MODEL, the one the server actually has loaded."""
+    import httpx
+
+    target = local_chat_target("")
+    body = {
+        "model": target.model,
+        "messages": [
+            {"role": "system", "content": _LLM_JUDGE_SYSTEM},
+            {"role": "user", "content": message},
+        ],
+        "temperature": 0.0,
+        "max_tokens": 8,
+        **target.extra_body,  # thinking off: 8 tokens would all go to reasoning
+    }
+    async with httpx.AsyncClient(timeout=90.0) as http:
+        resp = await http.post(target.url, json=body, headers=target.headers)
+        resp.raise_for_status()
+        choices = resp.json().get("choices") or []
+        return ((choices[0].get("message") if choices else None) or {}).get("content") or ""
 
 
 async def _judge_anthropic(message: str) -> Optional[str]:

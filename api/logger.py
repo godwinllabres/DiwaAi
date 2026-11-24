@@ -205,6 +205,20 @@ class ChatLogger:
         else:
             print(f"  Database: {self.db_path}")
 
+    def model_version_for(self, model_used: Optional[str]) -> Optional[int]:
+        return self.model_versions.get(model_registry.resolve(model_used))
+
+    def refresh_model_versions(self) -> None:
+        """Register a runtime model change while preserving existing versions."""
+        with self.lock:
+            conn, cursor = self._connect()
+            try:
+                versions = model_registry.sync(cursor, dialect="postgres" if self.is_pg else "sqlite")
+                conn.commit()
+                self.model_versions = versions
+            finally:
+                conn.close()
+
     def _redacted_url(self) -> str:
         """DATABASE_URL with the password hidden, for logs."""
         url = self.database_url or ""
@@ -421,7 +435,8 @@ class ChatLogger:
         session_id: Optional[str] = None,
         response_time_ms: Optional[float] = None,
         device_id: Optional[str] = None,
-        device_class: Optional[str] = None
+        device_class: Optional[str] = None,
+        model_version_id: Optional[int] = None
     ) -> Optional[int]:
         """
         Log a single chat message to database and file
@@ -455,7 +470,7 @@ class ChatLogger:
                 message_id = self._log_to_db(
                     timestamp, user_id, session_id, user_message,
                     bot_response, intent, confidence, model_used, response_time_ms,
-                    device_id, device_class
+                    device_id, device_class, model_version_id=model_version_id
                 )
 
                 # Log to file
@@ -479,13 +494,14 @@ class ChatLogger:
 
     def _log_to_db(
         self, timestamp, user_id, session_id, user_msg, bot_resp, intent, conf, model_used, resp_time,
-        device_id=None, device_class=None
+        device_id=None, device_class=None, model_version_id=None
     ) -> Optional[int]:
         """Log to the database, returns the new row ID."""
         try:
             conn, cursor = self._connect()
 
-            model_version_id = self.model_versions.get(model_registry.resolve(model_used))
+            if model_version_id is None:
+                model_version_id = self.model_version_for(model_used)
             row_id = self._insert_returning_id(cursor, """
                 INSERT INTO chat_messages
                 (timestamp, user_id, session_id, user_message, bot_response, intent, confidence, model_used, model_version_id, response_time_ms, device_id, device_class)

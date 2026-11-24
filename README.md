@@ -66,6 +66,8 @@ Charter page or official-site URL that backs them (`ChatResponse.sources`).
 
 ## Quick start
 
+The shared Sevi/Nova local admin PIN is in the gitignored `logs/local-admin-pin.txt`. Local HTTP development uses `ADMIN_COOKIE_SECURE=0`. The System panel lists installed Mac models and can switch the running model; update `.env` to retain a selection after restart.
+
 ### Requirements
 
 - **Python 3.11** (the training/serving environment is pinned to 3.11.9)
@@ -88,13 +90,13 @@ python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk
 python scripts/seed_db.py
 
 # 5. Start the API — trained models ship in the repo, no retraining needed
-uvicorn api.app:app --host 0.0.0.0 --port 8009
+uvicorn api.app:app --env-file .env --host 127.0.0.1 --port 8010
 ```
 
-- API docs (Swagger UI): http://localhost:8009/docs
-- Health check: http://localhost:8009/health
+- API docs (Swagger UI): http://localhost:8010/docs
+- Health check: http://localhost:8010/health
 
-On Windows, `run_server.bat` is a one-click launcher for the same server.
+On Windows, `run_server.bat` loads `.env`, uses the project's virtual environment when available, and serves on port 8010. Set `SEVI_API_PORT` to override it and match the web development proxy. For the Mac SSH tunnel, use `OPENAI_BASE_URL=http://127.0.0.1:11435/v1`; native Ollama uses `OLLAMA_BASE_URL=http://127.0.0.1:11435`. Select the exact installed model ID. Runtime selections last until restart; keep the desired model in `.env`.
 
 ### Docker
 

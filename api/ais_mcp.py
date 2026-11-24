@@ -53,18 +53,20 @@ _CALL_TIMEOUT_SECONDS = float(os.environ.get("AIS_MCP_TIMEOUT_SECONDS", "8.0"))
 # in production if Desk is served from a different host (e.g. behind nginx).
 _DESK_URL = os.environ.get("AIS_DESK_URL", "http://accounting.localhost:8002").rstrip("/")
 # Opt-in: when regex misses on an AIS-shaped message, ask an LLM to extract
-# {tool, args}. Provider chosen by LLM_PROVIDER env (ollama|claude); when
-# unset, prefers Ollama (local, free) then falls back to Anthropic.
+# {tool, args}. Provider chosen by LLM_PROVIDER env (ollama|openai|localai|
+# claude); when unset, prefers Ollama (local, free) then falls back to Anthropic.
 _LLM_ROUTER_ENABLED = os.environ.get("AIS_MCP_LLM_ROUTER", "0") == "1"
 
-# Ollama config — uses the OpenAI-compatible /v1/chat/completions endpoint
-# so we get structured tool_calls back. Any chat model that supports tool
-# calling works (qwen2.5+, qwen3, llama3.1+, etc.).
-try:  # single source for the Ollama endpoint default (see api/llm_defaults.py)
-	from .llm_defaults import ollama_base_url
+# Local LLM config — always the OpenAI-style /chat/completions endpoint so we
+# get structured tool_calls back: Ollama's /v1 shim, or an OpenAI-compatible
+# server (llama-server, LM Studio) under LLM_PROVIDER=openai|localai. Any chat
+# model that supports tool calling works (qwen2.5+, qwen3, llama3.1+, gemma4).
+try:  # single source for the endpoint defaults (see api/llm_defaults.py)
+	from .llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target, ollama_base_url
 except ImportError:  # standalone/direct import
-	from llm_defaults import ollama_base_url
+	from llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target, ollama_base_url
 _OLLAMA_BASE_URL = ollama_base_url()
+_LOCAL_PROVIDERS = frozenset({"ollama"}) | OPENAI_COMPAT_PROVIDERS
 
 
 # Router models are read PER CALL so the admin LLM toggle (which rewrites
@@ -1008,7 +1010,8 @@ async def _llm_route(text: str) -> Optional[tuple[str, dict]]:
 	"""Pick a provider and ask it to extract (tool, args) for an AIS query.
 
 	Provider selection order:
-	  1. ``LLM_PROVIDER`` env var if set explicitly (ollama | claude/anthropic).
+	  1. ``LLM_PROVIDER`` env var if set explicitly (ollama | openai/localai |
+	     claude/anthropic).
 	  2. Else: prefer Ollama (local, free); fall back to Anthropic if Ollama
 	     isn't configured.
 
@@ -1020,13 +1023,13 @@ async def _llm_route(text: str) -> Optional[tuple[str, dict]]:
 	if not _AIS_SHAPED_RE.search(text):
 		return None
 	provider = (os.environ.get("LLM_PROVIDER") or "").lower()
-	if provider == "ollama":
-		return await _llm_route_ollama(text)
+	if provider in _LOCAL_PROVIDERS:
+		return await _llm_route_local(text)
 	if provider in ("claude", "anthropic"):
 		return await _llm_route_anthropic(text)
 	# Auto: Ollama first (local, no API cost), then Anthropic.
 	if _OLLAMA_BASE_URL:
-		return await _llm_route_ollama(text)
+		return await _llm_route_local(text)
 	return await _llm_route_anthropic(text)
 
 
@@ -1063,20 +1066,23 @@ async def _llm_route_anthropic(text: str) -> Optional[tuple[str, dict]]:
 	return None
 
 
-async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict]]:
-	"""Ask the local Ollama model to pick a tool via OpenAI-style tool calling.
+async def _llm_route_local(text: str) -> Optional[tuple[str, dict]]:
+	"""Ask the local model to pick a tool via OpenAI-style tool calling.
 
-	qwen2.5+, qwen3, and llama3.1+ all support tool calling through Ollama's
-	``/v1/chat/completions`` endpoint. Model name comes from
+	qwen2.5+, qwen3, llama3.1+ and gemma4 all support tool calling through
+	Ollama's ``/v1/chat/completions`` shim and llama-server / LM Studio. Under
+	LLM_PROVIDER=openai|localai the model is ``OPENAI_MODEL``; on Ollama it is
 	``AIS_MCP_OLLAMA_MODEL`` (else ``OLLAMA_MODEL``, default ``qwen3:8b``).
 	"""
+	target = local_chat_target(_router_ollama_model())
 	t0 = time.monotonic()
 	try:
 		async with httpx.AsyncClient(timeout=15.0) as http:
 			resp = await http.post(
-				f"{_OLLAMA_BASE_URL}/v1/chat/completions",
+				target.url,
+				headers=target.headers,
 				json={
-					"model": _router_ollama_model(),
+					"model": target.model,
 					"messages": [
 						{"role": "system", "content": _LLM_SYSTEM},
 						{"role": "user", "content": text},
@@ -1084,12 +1090,13 @@ async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict]]:
 					"tools": _LLM_TOOLS_OPENAI,
 					"tool_choice": "auto",
 					"max_tokens": 256,
+					**target.extra_body,
 				},
 			)
 			resp.raise_for_status()
 			data = resp.json()
 	except Exception:  # noqa: BLE001 — never block chat on LLM failure
-		_logger.exception("ais_mcp llm_route provider=ollama failed text=%r", text[:200])
+		_logger.exception("ais_mcp llm_route provider=%s failed text=%r", target.provider, text[:200])
 		return None
 	elapsed_ms = int((time.monotonic() - t0) * 1000)
 
@@ -1098,8 +1105,8 @@ async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict]]:
 	tool_calls = msg.get("tool_calls") or []
 	if not tool_calls:
 		_logger.info(
-			"ais_mcp llm_route provider=ollama elapsed=%dms tool=None text=%r",
-			elapsed_ms, text[:120],
+			"ais_mcp llm_route provider=%s elapsed=%dms tool=None text=%r",
+			target.provider, elapsed_ms, text[:120],
 		)
 		return None
 
@@ -1112,8 +1119,8 @@ async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict]]:
 	# names not in the advertised set; reject those so we fall through to NLU.
 	if tool_name not in _KNOWN_TOOL_NAMES:
 		_logger.warning(
-			"ais_mcp llm_route provider=ollama hallucinated_tool=%s text=%r",
-			tool_name, text[:120],
+			"ais_mcp llm_route provider=%s hallucinated_tool=%s text=%r",
+			target.provider, tool_name, text[:120],
 		)
 		return None
 
@@ -1124,14 +1131,14 @@ async def _llm_route_ollama(text: str) -> Optional[tuple[str, dict]]:
 			args = json.loads(args_raw or "{}")
 		except json.JSONDecodeError:
 			_logger.warning(
-				"ais_mcp llm_route provider=ollama bad_args tool=%s args=%r",
-				tool_name, args_raw,
+				"ais_mcp llm_route provider=%s bad_args tool=%s args=%r",
+				target.provider, tool_name, args_raw,
 			)
 			return None
 
 	_logger.info(
-		"ais_mcp llm_route provider=ollama elapsed=%dms tool=%s args=%s text=%r",
-		elapsed_ms, tool_name, args, text[:120],
+		"ais_mcp llm_route provider=%s elapsed=%dms tool=%s args=%s text=%r",
+		target.provider, elapsed_ms, tool_name, args, text[:120],
 	)
 	return tool_name, args
 
@@ -1145,24 +1152,27 @@ async def _llm_glossary_reply(text: str) -> Optional[str]:
 	glossary" reply.
 	"""
 	explicit = (os.environ.get("LLM_PROVIDER") or "").lower().strip()
-	use_ollama = bool(_OLLAMA_BASE_URL) and explicit in ("", "ollama")
-	if explicit in ("claude", "anthropic"):
-		use_ollama = False
+	use_local = explicit in OPENAI_COMPAT_PROVIDERS or (
+		bool(_OLLAMA_BASE_URL) and explicit in ("", "ollama")
+	)
 
 	t0 = time.monotonic()
 	out = ""
-	if use_ollama:
+	if use_local:
+		target = local_chat_target(_router_ollama_model())
 		try:
 			async with httpx.AsyncClient(timeout=12.0) as http:
 				resp = await http.post(
-					f"{_OLLAMA_BASE_URL}/v1/chat/completions",
+					target.url,
+					headers=target.headers,
 					json={
-						"model": _router_ollama_model(),
+						"model": target.model,
 						"messages": [
 							{"role": "system", "content": _LLM_GLOSSARY_SYSTEM},
 							{"role": "user", "content": text},
 						],
 						"max_tokens": 220,
+						**target.extra_body,
 					},
 				)
 				resp.raise_for_status()
@@ -1171,7 +1181,9 @@ async def _llm_glossary_reply(text: str) -> Optional[str]:
 			msg = (choices[0].get("message") if choices else None) or {}
 			out = (msg.get("content") or "").strip()
 		except Exception:  # noqa: BLE001 — never block chat on LLM failure
-			_logger.exception("ais_mcp glossary_reply provider=ollama failed text=%r", text[:200])
+			_logger.exception(
+				"ais_mcp glossary_reply provider=%s failed text=%r", target.provider, text[:200],
+			)
 			return None
 	else:
 		if not (_ANTHROPIC_AVAILABLE and os.environ.get("ANTHROPIC_API_KEY")):

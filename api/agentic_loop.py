@@ -44,6 +44,7 @@ import time
 from typing import Any, Callable, Optional
 
 from . import ais_mcp
+from .llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target
 
 _logger = logging.getLogger("ais_mcp.agentic")
 
@@ -82,6 +83,8 @@ def _pick_provider() -> Optional[str]:
     prov = os.getenv("LLM_PROVIDER", "").strip().lower()
     if prov in ("ollama", "local"):
         return "ollama"
+    if prov in OPENAI_COMPAT_PROVIDERS:
+        return "openai"
     if prov in ("claude", "anthropic"):
         return "anthropic"
     # auto: prefer local, then Anthropic if a key is present
@@ -194,25 +197,27 @@ async def _loop_anthropic(message: str, st: _State, call_tool_fn: Callable) -> s
     return final
 
 
-async def _loop_ollama(message: str, st: _State, call_tool_fn: Callable) -> str:
+async def _loop_local(message: str, st: _State, call_tool_fn: Callable) -> str:
+    """OpenAI-style tool loop against Ollama's /v1 shim or, under
+    LLM_PROVIDER=openai|localai, the OPENAI_* server (llama-server, LM Studio)."""
     import httpx
 
-    url = f"{ais_mcp._OLLAMA_BASE_URL}/v1/chat/completions"
-    model = ais_mcp._router_ollama_model()
+    target = local_chat_target(ais_mcp._router_ollama_model())
     msgs: list[dict] = [
         {"role": "system", "content": _AGENT_SYSTEM},
         {"role": "user", "content": message},
     ]
     final = ""
 
-    async with httpx.AsyncClient(timeout=30.0) as http:
+    async with httpx.AsyncClient(timeout=30.0, headers=target.headers) as http:
         for _ in range(MAX_STEPS):
             force_final = st.over_budget()
-            body = {"model": model, "messages": msgs, "max_tokens": SYNTH_MAX_TOKENS}
+            body = {"model": target.model, "messages": msgs, "max_tokens": SYNTH_MAX_TOKENS,
+                    **target.extra_body}
             if not force_final:
                 body["tools"] = ais_mcp._LLM_TOOLS_OPENAI
                 body["tool_choice"] = "auto"
-            resp = await http.post(url, json=body)
+            resp = await http.post(target.url, json=body)
             resp.raise_for_status()
             msg = ((resp.json().get("choices") or [{}])[0].get("message")) or {}
             tool_calls = msg.get("tool_calls") or []
@@ -232,7 +237,8 @@ async def _loop_ollama(message: str, st: _State, call_tool_fn: Callable) -> str:
                 msgs.append({"role": "tool", "tool_call_id": call.get("id", name), "content": r["content"]})
         else:
             msgs.append({"role": "user", "content": "Answer now from the results above; do not call more tools."})
-            resp = await http.post(url, json={"model": model, "messages": msgs, "max_tokens": SYNTH_MAX_TOKENS})
+            resp = await http.post(target.url, json={"model": target.model, "messages": msgs,
+                                                     "max_tokens": SYNTH_MAX_TOKENS, **target.extra_body})
             resp.raise_for_status()
             final = (((resp.json().get("choices") or [{}])[0].get("message")) or {}).get("content", "").strip()
 
@@ -267,7 +273,7 @@ async def run_agentic_read(
         if provider == "anthropic":
             final = await _loop_anthropic(message, st, call_tool_fn)
         else:
-            final = await _loop_ollama(message, st, call_tool_fn)
+            final = await _loop_local(message, st, call_tool_fn)
     except ais_mcp.CircuitOpenError:
         return None  # MCP down — let the single-shot path do its degraded reply
     except Exception:  # noqa: BLE001 — never block chat on the loop; fall through

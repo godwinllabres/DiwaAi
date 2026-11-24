@@ -1770,7 +1770,13 @@ _chat_runner = ChatTurnRunner(_TURN_LIMIT, _TURN_QUEUE_MAX, _TURN_QUEUE_TIMEOUT)
 
 async def _chat_turn(*args, **kwargs):
     """Run chatbot.chat off the event loop, under the turn gate."""
-    return await _chat_runner.run(chatbot.chat, *args, **kwargs)
+    async with _chat_runner.slot():
+        intent, response, confidence, model_used, nlu_data = await asyncio.to_thread(
+            chatbot.chat, *args, **kwargs,
+        )
+        nlu_data = dict(nlu_data or {})
+        nlu_data["_model_version_id"] = chat_logger.model_version_for(model_used)
+        return intent, response, confidence, model_used, nlu_data
 
 
 @app.post("/chat", response_model=ChatResponse, tags=["Chat"],
@@ -1970,6 +1976,7 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         intent=intent,
         confidence=confidence,
         model_used=model_used,
+        model_version_id=nlu_data.get("_model_version_id"),
         session_id=request.session_id,
         response_time_ms=response_time_ms,
         device_id=request.device_id,
@@ -2070,6 +2077,25 @@ async def _ollama_local_models() -> List[str]:
             resp = await http.get(f"{base}/api/tags")
             resp.raise_for_status()
             return sorted(m.get("name", "") for m in resp.json().get("models", []))
+    except Exception:
+        return []
+
+
+async def _openai_compat_models() -> List[str]:
+    """Best-effort list of the models an OpenAI-compatible server (llama-server,
+    LM Studio, LocalAI) exposes at GET {OPENAI_BASE_URL}/models — the ids to
+    POST back as provider=openai. Empty unless that provider is configured."""
+    import httpx
+
+    from .llm_defaults import OPENAI_COMPAT_PROVIDERS, openai_base_url, openai_headers
+
+    if chatbot.llm_provider not in OPENAI_COMPAT_PROVIDERS and not os.getenv("OPENAI_BASE_URL"):
+        return []
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as http:
+            resp = await http.get(f"{openai_base_url()}/models", headers=openai_headers())
+            resp.raise_for_status()
+            return sorted(m.get("id", "") for m in resp.json().get("data", []))
     except Exception:
         return []
 
@@ -2269,13 +2295,20 @@ async def admin_status():
 @app.get("/admin/llm", tags=["Admin"], dependencies=[Depends(require_admin)])
 async def get_llm_config():
     """Which LLM tier is live (provider, model, reachable) plus the locally
-    available Ollama models. Gated by `X-Admin-Pin`."""
-    return {**chatbot.llm_status(), "ollama_models": await _ollama_local_models()}
+    available Ollama and OpenAI-compatible models. Gated by `X-Admin-Pin`."""
+    ollama_models, openai_models = await asyncio.gather(
+        _ollama_local_models(), _openai_compat_models(),
+    )
+    return {
+        **chatbot.llm_status(),
+        "ollama_models": ollama_models,
+        "openai_models": openai_models,
+    }
 
 
 @app.post("/admin/llm", tags=["Admin"], dependencies=[Depends(require_admin)])
 async def set_llm_config(request: LlmToggleRequest):
-    """Hot-swap the responding LLM: provider ollama/claude/none, optional
+    """Hot-swap the responding LLM: provider ollama/openai/localai/claude/none, optional
     model override. Also steers the AIS/connectors LLM routers (they follow
     LLM_PROVIDER per call). Takes effect on the next chat turn — no restart."""
     # set_llm probes the provider (up to 15s) — keep that off the event loop,
@@ -2284,6 +2317,7 @@ async def set_llm_config(request: LlmToggleRequest):
     # AttributeError → 500). Preserves the docstring's next-turn semantics.
     async with _chat_runner.exclusive():
         status = await asyncio.to_thread(chatbot.set_llm, request.provider, request.model)
+        await asyncio.to_thread(chat_logger.refresh_model_versions)
     _logger.info(
         "admin llm toggle: provider=%s model=%s available=%s",
         status["provider"], status["model"], status["available"],
@@ -2791,6 +2825,7 @@ async def batch_chat(requests: List[ChatRequest], http_request: Request):
             intent=intent,
             confidence=confidence,
             model_used=model_used,
+            model_version_id=nlu_data.get("_model_version_id"),
             session_id=request.session_id,
             response_time_ms=response_time_ms,
             device_id=request.device_id,

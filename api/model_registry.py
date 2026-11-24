@@ -69,8 +69,10 @@ def _fingerprint(entry: dict) -> tuple:
         fp = digest.hexdigest()
         return fp, fp[:12]
     env_name = entry.get("version_env")
+    provider = os.getenv("LLM_PROVIDER", "").strip().lower()
+    env_name = (entry.get("version_env_by_provider") or {}).get(provider, env_name)
     if env_name:
-        value = os.getenv(env_name) or entry.get("version_default") or "unset"
+        value = os.getenv(env_name, "").strip() or entry.get("version_default") or "unset"
         return f"env:{env_name}={value}", value
     return f"code:{CODE_VERSION}", f"code-v{CODE_VERSION}"
 

@@ -59,10 +59,10 @@ _CALL_TIMEOUT_SECONDS = float(os.environ.get("CONNECTORS_MCP_TIMEOUT_SECONDS", "
 # message (e.g. Filipino/Taglish phrasing), ask an LLM to extract
 # {tool, args}. Provider chosen like ais_mcp: LLM_PROVIDER env, else Ollama.
 _LLM_ROUTER_ENABLED = os.environ.get("CONNECTORS_MCP_LLM_ROUTER", "0") == "1"
-try:  # single source for the Ollama endpoint default (see api/llm_defaults.py)
-	from .llm_defaults import ollama_base_url
+try:  # single source for the endpoint defaults (see api/llm_defaults.py)
+	from .llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target, ollama_base_url
 except ImportError:  # standalone/direct import
-	from llm_defaults import ollama_base_url
+	from llm_defaults import OPENAI_COMPAT_PROVIDERS, local_chat_target, ollama_base_url
 _OLLAMA_BASE_URL = ollama_base_url()
 
 
@@ -283,20 +283,23 @@ async def _llm_route(text: str, available: Optional[set[str]]) -> Optional[tuple
 	provider = (os.environ.get("LLM_PROVIDER") or "").lower()
 	if provider in ("claude", "anthropic"):
 		return await _llm_route_anthropic(text, tools)
-	if provider == "ollama" or _OLLAMA_BASE_URL:
-		return await _llm_route_ollama(text, tools)
+	if provider == "ollama" or provider in OPENAI_COMPAT_PROVIDERS or _OLLAMA_BASE_URL:
+		return await _llm_route_local(text, tools)
 	return await _llm_route_anthropic(text, tools)
 
 
-async def _llm_route_ollama(text: str, tools: list[dict[str, Any]]) -> Optional[tuple[str, dict[str, Any]]]:
+async def _llm_route_local(text: str, tools: list[dict[str, Any]]) -> Optional[tuple[str, dict[str, Any]]]:
+	# Ollama's /v1 shim, or the OPENAI_* server under LLM_PROVIDER=openai|localai.
+	target = local_chat_target(_router_ollama_model())
 	t0 = time.monotonic()
 	try:
 		# 30s: the first call after idle pays the model cold-load (~10s+).
 		async with httpx.AsyncClient(timeout=30.0) as http:
 			resp = await http.post(
-				f"{_OLLAMA_BASE_URL}/v1/chat/completions",
+				target.url,
+				headers=target.headers,
 				json={
-					"model": _router_ollama_model(),
+					"model": target.model,
 					"messages": [
 						{"role": "system", "content": _LLM_SYSTEM},
 						{"role": "user", "content": text},
@@ -304,19 +307,20 @@ async def _llm_route_ollama(text: str, tools: list[dict[str, Any]]) -> Optional[
 					"tools": tools,
 					"tool_choice": "auto",
 					"max_tokens": 192,
+					**target.extra_body,
 				},
 			)
 			resp.raise_for_status()
 			data = resp.json()
 	except Exception:  # noqa: BLE001 — never block chat on LLM failure
-		_logger.exception("connectors_mcp llm_route provider=ollama failed text=%r", text[:120])
+		_logger.exception("connectors_mcp llm_route provider=%s failed text=%r", target.provider, text[:120])
 		return None
 	elapsed_ms = int((time.monotonic() - t0) * 1000)
 	choices = data.get("choices") or []
 	msg = (choices[0].get("message") if choices else None) or {}
 	calls = msg.get("tool_calls") or []
 	if not calls:
-		_logger.info("connectors_mcp llm_route provider=ollama elapsed=%dms tool=None", elapsed_ms)
+		_logger.info("connectors_mcp llm_route provider=%s elapsed=%dms tool=None", target.provider, elapsed_ms)
 		return None
 	fn = (calls[0].get("function") or {})
 	args_raw = fn.get("arguments")
@@ -327,8 +331,8 @@ async def _llm_route_ollama(text: str, tools: list[dict[str, Any]]) -> Optional[
 			return None
 	routed = _valid_routed(fn.get("name"), args_raw)
 	_logger.info(
-		"connectors_mcp llm_route provider=ollama elapsed=%dms tool=%s",
-		elapsed_ms, routed[0] if routed else f"rejected:{fn.get('name')}",
+		"connectors_mcp llm_route provider=%s elapsed=%dms tool=%s",
+		target.provider, elapsed_ms, routed[0] if routed else f"rejected:{fn.get('name')}",
 	)
 	return routed
 
