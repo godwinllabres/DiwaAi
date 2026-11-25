@@ -486,10 +486,14 @@
     ]
   },
   {
-    "key": "gsolc",
-    "abbr": "GS-OLC",
-    "full_name": "Graduate School and Open Learning College",
+    "key": "caps",
+    "abbr": "CAPS",
+    "full_name": "College of Advanced and Professional Studies",
     "aliases": [
+      "college of advanced and professional studies",
+      "college of advance and professional studies",
+      "advanced and professional studies",
+      "caps",
       "graduate school and open learning college",
       "open learning college",
       "cvsu graduate school",
@@ -502,92 +506,88 @@
       "gs-olc",
       "gsolc"
     ],
-    "source_url": "https://cvsu.edu.ph/2018/01/13/ogs-olc-program-offerings/",
-    "source_date": "2018-01-13",
+    "source_url": "https://cvsu.edu.ph/programs-offered-caps/",
+    "source_date": "2026-11-05",
+    "verified_date": "2026-11-25",
+    "source_label": "CAPS program catalog",
     "programs": [
       {
-        "name": "Doctor of Philosophy in Agriculture",
-        "majors": [
-          "Crop Science",
-          "Animal Science",
-          "Crop Protection"
-        ]
-      },
-      {
-        "name": "Doctor of Philosophy in Education",
-        "majors": [
-          "Education Management"
-        ]
-      },
-      {
-        "name": "Doctor of Philosophy in Management*",
+        "name": "Master in Agriculture",
         "majors": []
-      },
-      {
-        "name": "Master of Arts in Education",
-        "majors": [
-          "Biology",
-          "Chemistry",
-          "Curriculum and Instruction",
-          "Educational Management",
-          "Mathematics",
-          "Elementary Education",
-          "Secondary Education"
-        ]
-      },
-      {
-        "name": "Master of Agriculture",
-        "majors": [
-          "Animal Science",
-          "Crop Science"
-        ]
-      },
-      {
-        "name": "Master of Engineering",
-        "majors": [
-          "Computer Engineering",
-          "Water Engineering and Management",
-          "General Civil Engineering",
-          "Construction Management",
-          "Structural Engineering"
-        ]
-      },
-      {
-        "name": "Master in Information Technology",
-        "majors": []
-      },
-      {
-        "name": "Master of Management",
-        "majors": []
-      },
-      {
-        "name": "Master of Business Administration",
-        "majors": [
-          "With Thesis",
-          "Non-Thesis"
-        ]
-      },
-      {
-        "name": "Master of Professional Studies",
-        "majors": [
-          "Public Administration"
-        ]
       },
       {
         "name": "Master of Science in Agriculture",
-        "majors": [
-          "Animal Science",
-          "Crop Protection",
-          "Crop Science"
-        ]
+        "majors": []
+      },
+      {
+        "name": "Doctor of Philosophy in Agriculture",
+        "majors": []
+      },
+      {
+        "name": "Master of Arts in English Language Studies",
+        "majors": []
       },
       {
         "name": "Master of Science in Biology",
         "majors": []
       },
       {
-        "name": "MASTER OF SCIENCE IN FOOD SCIENCE",
+        "name": "Master of Arts in Education",
         "majors": []
+      },
+      {
+        "name": "Doctor of Philosophy in Education",
+        "majors": []
+      },
+      {
+        "name": "Master in Business Administration",
+        "majors": []
+      },
+      {
+        "name": "Master in Management",
+        "majors": []
+      },
+      {
+        "name": "Master in Public Administration",
+        "majors": []
+      },
+      {
+        "name": "Doctor of Philosophy in Management",
+        "majors": []
+      },
+      {
+        "name": "Master in Engineering",
+        "majors": []
+      },
+      {
+        "name": "Master in Information Technology",
+        "majors": []
+      },
+      {
+        "name": "Master of Science in Food Science",
+        "majors": []
+      }
+    ],
+    "note": {
+      "en": "The catalog lists degree titles only. For majors, tracks, and which programs accept applicants this semester, confirm with CAPS at (046) 890-5926.",
+      "fil": "Mga pangalan lang ng degree ang nasa catalog. Para sa mga major, track, at kung aling programa ang tumatanggap ng aplikante ngayong semestre, kumpirmahin po sa CAPS sa (046) 890-5926."
+    },
+    "contact": {
+      "office": "CAPS",
+      "phone": "(046) 890-5926",
+      "source_url": "https://cvsu.edu.ph/contact-us-2/",
+      "source_label": "CvSU directory"
+    },
+    "changes": {
+      "en": "The CAPS catalog adds the Master of Arts in English Language Studies and lists the Master in Public Administration as its own degree.",
+      "fil": "Dagdag sa CAPS catalog ang Master of Arts in English Language Studies, at hiwalay nang degree ang Master in Public Administration."
+    },
+    "superseded_sources": [
+      {
+        "url": "https://cvsu.edu.ph/2018/01/13/ogs-olc-program-offerings/",
+        "date": "2018-01-13",
+        "label": "GS-OLC page",
+        "program_count": 13
       }
     ]
   }

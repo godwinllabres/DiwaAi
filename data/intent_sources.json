@@ -101,6 +101,14 @@
     "label": "",
     "score": 0.5251
    }
+  ],
+  "graduate_programs": [
+   {
+    "kind": "site",
+    "locator": "https://cvsu.edu.ph/programs-offered-caps/",
+    "label": "Programs Offered CAPS",
+    "score": 1.0
+   }
   ]
  }
 }

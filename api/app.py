@@ -908,10 +908,26 @@ _PHONE_COLLAPSE_RE = re.compile(
 )
 
 
+# Numbers recorded WITH their source in data/college_programs.json (the CAPS
+# line, from the CvSU directory page) are verified, not rotted: they pass.
+# Every other office number is still withheld.
+try:
+    from .college_programs import verified_phone_digits as _verified_phone_digits
+    _VERIFIED_PHONE_DIGITS = _verified_phone_digits()
+except Exception:  # pragma: no cover - registry is optional, never fatal
+    _VERIFIED_PHONE_DIGITS = frozenset()
+
+
+def _phone_or_placeholder(match: "re.Match") -> str:
+    if re.sub(r"\D", "", match.group(0)) in _VERIFIED_PHONE_DIGITS:
+        return match.group(0)
+    return _PHONE_PLACEHOLDER
+
+
 def _redact_office_phones(text: str, intent: Optional[str] = None) -> str:
     if not text or intent in _PHONE_REDACT_EXEMPT_INTENTS:
         return text
-    redacted, hits = _PHONE_RE.subn(_PHONE_PLACEHOLDER, text)
+    redacted, hits = _PHONE_RE.subn(_phone_or_placeholder, text)
     if hits < 2:  # 0 or 1 replacement — no placeholder chain to collapse
         return redacted
     return _PHONE_COLLAPSE_RE.sub(_PHONE_PLACEHOLDER, redacted)
@@ -1085,6 +1101,7 @@ class ResponseSource(str, Enum):
     SMALLTALK       = "smalltalk"          # curated benign small talk (jokes)
     COLLEGE_PROGRAMS = "college_programs" # complete per-college program list
     DEAN_LOOKUP     = "dean_lookup"        # one college's dean from the curated roster
+    SOURCE_FRESHNESS = "source_freshness"  # "is this the latest?" about the previous reply's source
     FALLBACK       = "fallback"
     REFUSAL         = "refusal"
 
@@ -1409,6 +1426,8 @@ def _classify_source(model_used: Optional[str]) -> tuple[ResponseSource, Optiona
         return ResponseSource.COLLEGE_PROGRAMS, None
     if m == "Dean Lookup":
         return ResponseSource.DEAN_LOOKUP, None
+    if m == "Source Freshness":
+        return ResponseSource.SOURCE_FRESHNESS, None
     if m.startswith("NonsenseGate"):
         return ResponseSource.REFUSAL, RefusalReason.NONSENSE
     if m.startswith("ScopeGate") or "(out-of-scope)" in m:

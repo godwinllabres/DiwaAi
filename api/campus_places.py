@@ -838,11 +838,14 @@ _INTENT_TO_DIRECTORY: Dict[str, Directory] = {
         hours="24-hour residence; office Mon–Fri 8:00 AM – 5:00 PM",
     ),
     "graduate_programs": Directory(
-        office="CvSU Graduate School",
+        # Renamed from the Graduate School and Open Learning College; the
+        # direct line and loc. 1042 are the CAPS dean's entries in the CvSU
+        # directory (https://cvsu.edu.ph/contact-us-2/, read 2026-11-25).
+        office="College of Advanced and Professional Studies (CAPS)",
         location="Central campus, near the library",
         place_id="grad",
         email="gs.olc@cvsu.edu.ph",
-        phone=f"{_CVSU_TRUNK} loc. 1042",
+        phone=f"(046) 890-5926 · {_CVSU_TRUNK} loc. 1042",
         hours=_OFFICE_HOURS,
     ),
     "career_opportunity": Directory(

@@ -105,18 +105,62 @@ def format_college(college: dict, filipino: bool = False) -> str:
         for major in program.get("majors", []):
             lines.append(f"    - Major in {major}")
     count = len(college["programs"])
-    published = _format_date(college.get("source_date", ""))
     if filipino:
         header = (f"Ito ang kompletong listahan ng {count} programa ng "
                   f"{college['full_name']} ({college['abbr']}):")
-        footer = (f"Pinagmulan: opisyal na pahina ng CvSU, huling na-update "
-                  f"noong {published} — {college.get('source_url', '')}")
     else:
         header = (f"{college['full_name']} ({college['abbr']}) offers these "
                   f"{count} programs:")
-        footer = (f"Source: the official CvSU page for this college, last "
-                  f"published {published} — {college.get('source_url', '')}")
-    return "\n".join([header, "", *lines, "", footer])
+    footer = source_line(college, filipino)
+    note = (college.get("note") or {}).get("fil" if filipino else "en")
+    tail = [note, footer] if note else [footer]
+    return "\n".join([header, "", *lines, "", *tail])
+
+
+def source_line(college: dict, filipino: bool = False) -> str:
+    """"Source: …" for the college's current page. A page with no publication
+    date states when it was last verified instead of inventing one."""
+    url = college.get("source_url", "")
+    if college.get("source_date"):
+        published = _format_date(college["source_date"])
+        if filipino:
+            return f"Pinagmulan: opisyal na pahina ng CvSU, huling na-update noong {published} — {url}"
+        return f"Source: the official CvSU page for this college, last published {published} — {url}"
+    checked = _format_date(college.get("verified_date", ""))
+    label = college.get("source_label") or "official CvSU page"
+    if filipino:
+        return f"Pinagmulan: {label} ng CvSU (walang petsa ang pahina; sinuri noong {checked}) — {url}"
+    return f"Source: CvSU's {label} (the page is undated; checked {checked}) — {url}"
+
+
+def college_by_key(key: str) -> Optional[dict]:
+    return next((c for c in _load() if c.get("key") == key), None)
+
+
+def college_for_url(text: str) -> Optional[Tuple[dict, bool]]:
+    """(college, is_current) for the first registry page cited in `text`:
+    is_current False when the cited page is one the college's current
+    source superseded. None when no registry page is cited."""
+    if not text:
+        return None
+    for college in _load():
+        if college.get("source_url") and college["source_url"] in text:
+            return college, True
+        for old in college.get("superseded_sources", []):
+            if old.get("url") and old["url"] in text:
+                return college, False
+    return None
+
+
+def verified_phone_digits() -> frozenset:
+    """Digits of every contact number recorded with a source page in the
+    registry — the only office numbers chat output may show verbatim."""
+    return frozenset(
+        re.sub(r"\D", "", c["contact"]["phone"]) for c in _load()
+        if (c.get("contact") or {}).get("phone") and c["contact"].get("source_url"))
+
+
+format_date = _format_date
 
 
 def college_program_reply(text: str, filipino: bool = False) -> Optional[str]:

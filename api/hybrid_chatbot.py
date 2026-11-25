@@ -109,6 +109,8 @@ except ImportError:  # pragma: no cover - smalltalk is optional, never fatal
     def _smalltalk_reply(text, filipino=False):  # type: ignore[misc]
         return None
 
+from . import source_freshness
+
 try:
     from .college_programs import (
         college_program_reply as _college_program_reply,
@@ -1472,6 +1474,8 @@ class HybridChatbot:
     # Complete per-college program list from data/college_programs.json.
     PROGRAMS_INTENT = "college_programs"
     DEANS_INTENT = "college_deans"
+    # "is this the latest?" about the previous reply (api/source_freshness.py).
+    FRESHNESS_INTENT = "source_freshness"
     # P2-8: margin-triggered disambiguation. When NB clears the confidence bar
     # but its top-2 are a near-tie ACROSS topic families, guessing answers one
     # question and ignores the other — ask instead (2 chip options via
@@ -2171,6 +2175,30 @@ class HybridChatbot:
         with self._history_lock:
             turns = self.conversation_history.get(user_id) or []
             return turns[-1].get("bot_response") if turns else None
+
+    def _previous_answer_turn(self, user_id: Optional[str]) -> Optional[dict]:
+        """The most recent turn that answered something, for a freshness
+        question about it; None when there is none to refer to (no history,
+        too old, or the last reply was small talk, a refusal, a recap or a
+        clarifying question). Earlier freshness replies are skipped, so
+        "is this current for AY 2026-2027?" after "is this the latest?" still
+        refers to the list."""
+        if not user_id:
+            return None
+        with self._history_lock:
+            turns = [dict(t) for t in (self.conversation_history.get(user_id) or [])[-6:]]
+        now = time.time()
+        for turn in reversed(turns):
+            if turn.get("intent") == self.FRESHNESS_INTENT:
+                continue
+            if now - turn.get("at", now) > FOLLOWUP_MAX_GAP_S:
+                return None
+            if (str(turn.get("model_used", "")).startswith(_NO_FOLLOWUP_AFTER)
+                    or turn.get("intent") in (self.LLM_UNAVAILABLE_INTENT, self.FALLBACK_INTENT,
+                                              self.CLARIFY_INTENT)):
+                return None
+            return turn
+        return None
 
     def _last_turn_recent(self, user_id: Optional[str]) -> bool:
         """The session's previous turn is within FOLLOWUP_MAX_GAP_S (a turn
@@ -3027,6 +3055,18 @@ class HybridChatbot:
             self._bump("conversation_recap_used")
             return self.RECAP_INTENT, recap, 1.0, "Conversation Recap", nlu_data
 
+        # Step 0.55: "is this the latest?" / "updated pa ba ito?" asks about
+        # the previous reply's SOURCE. It has no topic words, so the
+        # conversational guard (2.9) greeted the student instead (2026-11-25).
+        # Answered from that reply's citation and the program registry — no LLM.
+        fresh = source_freshness.freshness_ask(user_input)
+        if fresh is not None:
+            filipino = _reply_in_filipino(source_freshness.strip_years(user_input), language)
+            reply = source_freshness.freshness_reply(
+                fresh, self._previous_answer_turn(user_id), filipino=filipino)
+            self._bump("source_freshness_used")
+            return self.FRESHNESS_INTENT, reply, 1.0, "Source Freshness", nlu_data
+
         # Step 0.6: Benign small talk — states the scope boundary and still
         # answers. Curated content only; see api/smalltalk.py for the GAD screen.
         filipino = _reply_in_filipino(user_input, language)
@@ -3200,7 +3240,11 @@ class HybridChatbot:
         # ("wow, you can answer questions like that?", "nice", "are you a
         # bot") is answered from curated content here and never reaches
         # retrieval or the LLM. See _conversational_guard_result.
-        guarded = self._conversational_guard_result(user_input, nb_intent, nb_confidence, language)
+        # A turn follow-up routing already claimed leans on the previous answer;
+        # it has no topic words of its own by construction, so the guard would
+        # always call it small talk.
+        guarded = (None if followup else
+                   self._conversational_guard_result(user_input, nb_intent, nb_confidence, language))
         if guarded is not None:
             intent, response = guarded
             self._bump("conversational_guard_used")

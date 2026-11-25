@@ -256,7 +256,12 @@ _REQUEST_VERBS = ("tell|give|show|explain|list|help|provide|find|answer|say|shar
                   "confirm|clarify|elaborate|summarize|repeat|translate|send|point")
 _BOT_ADDRESS_RE = re.compile(
     r"^\W*(?:hi|hello|hey|ok|okay|so|sevi|diwa)?\W*"
-    r"(?:(?:are|were|am|is)\s+(?:you|u|this|sevi|diwa)\b"
+    r"(?:(?:are|were|am|is)\s+(?:you|u|sevi|diwa)\b"
+    # "is this sevi / a bot / real" asks about the bot; "is this the latest /
+    # still current / accurate" asks about the previous ANSWER (2026-11-25).
+    r"|is\s+this\b(?!\s+(?:list\s+|info\s+|information\s+|answer\s+|one\s+)?(?:still\s+)?(?:the\s+)?"
+    r"(?:latest|newest|most\s+recent|current|updated|up[\s-]?to[\s-]?date|outdated|old|new|"
+    r"accurate|correct|right|true|valid|official|final|complete|all)\b)"
     r"|(?:do|did|does|can|could|will|would|should|have|has)\s+(?:you|u)\s+(?!(?:" + _REQUEST_VERBS + r")\b)"
     r"|(?:what|whats|what's|who|whos|who's|where|when|how)\s+(?:is|are|was|were)?\s*(?:your|ur)\b"
     r"|(?:what|whats|what's)\s+(?:can|do)\s+(?:you|u)\s+(?:do|know)\b"
